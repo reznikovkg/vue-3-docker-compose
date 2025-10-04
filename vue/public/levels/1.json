@@ -1,0 +1,13 @@
+{
+  "objects": [
+    { "id": "door.1", "type": "game-object", "x": 120, "y": 220, "tooltip": "Найдите ключ, чтобы открыть дверь", "isActive": false, "condition": "key" },
+    { "id": "key.1", "type": "item", "x": 650, "y": 400, "tooltip": "Возьмите, чтобы открыть дверь", "count": 1 }
+  ],
+  "playerTransform": { "x": 200, "y": 350, "isRun": false, "toLeft": false },
+  "completeCondition": {
+    "id": "door.1",
+    "property": "isActive",
+    "value": true
+  },
+  "background": "bg.png"
+}
