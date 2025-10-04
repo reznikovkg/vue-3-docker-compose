@@ -13,15 +13,17 @@ const props = defineProps({
 
 <style scoped lang="scss">
 .fire {
-  width: 100%;
-  height: 100%;
+  width: 70%;
+  height: 70%;
   background-size: contain;
   background-repeat: no-repeat;
   animation: play 1s steps(1) infinite;
 }
 .camp-fire {
   width: 100px;
-  height: 240px;
+  height: 150px;
+  display: flex;
+  justify-content: center;
   background-image: url("@/assets/objects/bonfire/logs.png");
   background-size: contain;
 }
