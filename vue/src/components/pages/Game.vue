@@ -1,16 +1,16 @@
 <template>
   <div class="window">
     <div
-        v-if="!gameState.isLoading"
-        class="game"
-        :style="{
-          backgroundImage: `url(${bg})`,
-          backgroundSize: 'cover'
-        }"
+      v-if="!gameState.isLoading"
+      class="game"
+      :style="{
+        backgroundImage: `url(${bg})`,
+        backgroundSize: 'cover'
+      }"
     >
       <SceneScreen
-          :scene="list"
-          :player-transform="playerTransform"
+        :scene="list"
+        :player-transform="playerTransform"
       />
       <Inventory/>
       <WinScreen v-if="gameState.state === 1"/>

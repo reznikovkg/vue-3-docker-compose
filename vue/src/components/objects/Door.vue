@@ -1,7 +1,7 @@
 <template>
   <div
-      class="door"
-      :class="{ 'door__open': item?.isActive }">
+    class="door"
+    :class="{ 'door__open': item?.isActive }">
   </div>
 </template>
 

@@ -1,11 +1,11 @@
 <template>
   <div class="inventory">
     <div
-        v-for="(item, index) in inventory"
-        :key="item.id"
-        class="item"
-        :class="{ item__selected: index === selectedId }"
-        @click="() => select(index)"
+      v-for="(item, index) in inventory"
+      :key="item.id"
+      class="item"
+      :class="{ item__selected: index === selectedId }"
+      @click="() => select(index)"
     >
       <img v-if="item.id.length > 0" class="slot-icon" :src="`/src/assets/items/${item.id}.png`" alt="" />
       <span v-if="item.count > 1" class="slot-count">{{ item.count }}</span>

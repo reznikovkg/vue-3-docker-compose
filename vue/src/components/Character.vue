@@ -1,7 +1,7 @@
 <template>
   <div
-      class="character"
-      :class="{ 'character__run': playerTransform.isRun, 'character__left': playerTransform.toLeft }"
+    class="character"
+    :class="{ 'character__run': playerTransform.isRun, 'character__left': playerTransform.toLeft }"
   >
   </div>
 </template>

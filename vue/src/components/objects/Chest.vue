@@ -1,8 +1,8 @@
 <template>
   <div class="parent">
     <div
-        class="chest"
-        :class="{ 'chest__open': item?.isActive }">
+      class="chest"
+      :class="{ 'chest__open': item?.isActive }">
     </div>
   </div>
 </template>

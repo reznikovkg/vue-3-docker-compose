@@ -1,29 +1,29 @@
 <template>
   <div class="scene" ref="sceneRef">
     <div
-        v-for="item in scene"
-        class="area"
-        :style="{ left: item.x + 'px', top: item.y + 'px'}"
-        @mousemove="(event) => onMouseMove(event)"
-        @mouseenter="() => showTooltip(item.tooltip)"
-        @mouseleave="() => hideTooltip()"
+      v-for="item in scene"
+      class="area"
+      :style="{ left: item.x + 'px', top: item.y + 'px'}"
+      @mousemove="(event) => onMouseMove(event)"
+      @mouseenter="() => showTooltip(item.tooltip)"
+      @mouseleave="() => hideTooltip()"
     >
       <component
-          :id="item.id"
-          :is="gameObjects[item.id.split('.')[0]]" class="game-object"
-          :item="item"
-          @click="()=>select(item)"/>
+        :id="item.id"
+        :is="gameObjects[item.id.split('.')[0]]" class="game-object"
+        :item="item"
+        @click="()=>select(item)"/>
     </div>
     <Character
-        class="area"
-        :style="{ left: playerTransform.x + 'px', top: playerTransform.y + 'px'}"
+      class="area"
+      :style="{ left: playerTransform.x + 'px', top: playerTransform.y + 'px'}"
     >
 
     </Character>
     <div
-        v-if="tooltipVisible"
-        class="tooltip"
-        :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
+      v-if="tooltipVisible"
+      class="tooltip"
+      :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
     >
       {{ tooltipText }}
     </div>
