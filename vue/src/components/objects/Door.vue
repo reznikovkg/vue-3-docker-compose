@@ -6,8 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, defineProps, ref} from 'vue'
-import { useStore } from 'vuex'
+import { defineProps } from 'vue'
 const props = defineProps({
   item: Object,
 });

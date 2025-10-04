@@ -1,5 +1,3 @@
-import store from "@/store/index.js";
-
 const MUTATIONS = {
     ADD_TO_INVENTORY: 'ADD_TO_INVENTORY',
     SELECT_INVENTORY_ITEM: 'SELECT_INVENTORY_ITEM',
@@ -19,29 +17,30 @@ export default {
         getInventory: (state) => state.inventoryItems,
         getInventorySelectedIndex: (state) => state.inventorySelectedIndex,
         getEmptySlotsCount: (state) => state.inventoryItems.filter(slot => slot.id.length === 0).length,
-        getSelectedItem: (state) => state.inventorySelectedIndex < 0 ? "" : state.inventoryItems[state.inventorySelectedIndex]
+        getSelectedItem: (state) => state.inventorySelectedIndex < 0 ? "" : state.inventoryItems[state.inventorySelectedIndex],
     },
     mutations: {
         [MUTATIONS.ADD_TO_INVENTORY]: (state, item) => {
-            let key = item.id
+            let key = item.id;
             let inventoryItem = state.inventoryItems.find(item => item.id === key);
             if(inventoryItem) {
                 inventoryItem.count += item.count;
-            } else {
-                let empty = state.inventoryItems.find(item => item.id.length === 0);
-                if (empty) {
-                    empty.id = key;
-                    empty.count = item.count;
-                }
+                return;
+            }
+            let empty = state.inventoryItems.find(item => item.id.length === 0);
+            if (empty) {
+                empty.id = key;
+                empty.count = item.count;
             }
         },
         [MUTATIONS.USE_ITEM]: (state) => {
             let item = state.inventoryItems[state.inventorySelectedIndex];
-            if(item.count > 0 && item.id !== "") {
-                item.count -= 1;
-                if(item.count <= 0) {
-                    item.id = "";
-                }
+            if(item.count <= 0 || item.id === "") {
+                return;
+            }
+            item.count -= 1;
+            if(item.count <= 0) {
+                item.id = "";
             }
         },
         [MUTATIONS.SELECT_INVENTORY_ITEM]: (state, id) => {
@@ -54,10 +53,10 @@ export default {
     },
     actions: {
         addToInventory: (store, item) => {
-            store.commit(MUTATIONS.ADD_TO_INVENTORY, item)
+            store.commit(MUTATIONS.ADD_TO_INVENTORY, item);
         },
         useSelectedItem: (store) => {
-            store.commit(MUTATIONS.USE_ITEM)
+            store.commit(MUTATIONS.USE_ITEM);
         },
         selectInventoryItem: (store, id) => {
             store.commit(MUTATIONS.SELECT_INVENTORY_ITEM, id);

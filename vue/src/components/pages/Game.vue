@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from 'vue';
+import { computed, onMounted } from 'vue';
 import SceneScreen from '../screens/SceneScreen.vue';
 import Inventory from '../Inventory.vue';
 import store from "@/store/index.js";

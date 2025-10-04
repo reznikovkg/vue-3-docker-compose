@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import {defineProps, defineEmits, ref, onMounted} from 'vue';
+import { defineProps, ref } from 'vue';
 import Door from "@/components/objects/Door.vue";
 import Character from "@/components/Character.vue";
 import Key from "@/components/items/Key.vue";

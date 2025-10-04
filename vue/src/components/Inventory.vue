@@ -14,8 +14,8 @@
 </template>
 
 <script setup>
-import {ref, defineProps, defineEmits, computed} from 'vue';
-import {useStore} from "vuex";
+import { computed } from 'vue';
+import { useStore } from "vuex";
 const store = useStore()
 const inventory = computed(() => store.getters['inventory/getInventory'])
 const selectedId = computed(() => store.getters['inventory/getInventorySelectedIndex']);
