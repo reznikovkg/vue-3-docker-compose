@@ -4,9 +4,9 @@
         v-for="item in scene"
         class="area"
         :style="{ left: item.x + 'px', top: item.y + 'px'}"
-        @mousemove="onMouseMove"
-        @mouseenter="showTooltip(item.tooltip)"
-        @mouseleave="hideTooltip"
+        @mousemove="(event) => onMouseMove(event)"
+        @mouseenter="() => showTooltip(item.tooltip)"
+        @mouseleave="() => hideTooltip()"
     >
       <component
           :id="item.id"
@@ -35,9 +35,9 @@ import { defineProps, ref } from 'vue';
 import Door from "@/components/objects/Door.vue";
 import Character from "@/components/Character.vue";
 import Key from "@/components/items/Key.vue";
-import store from "@/store/index.js";
 import Bonfire from "@/components/objects/Bonfire.vue";
 import Chest from "@/components/objects/Chest.vue";
+import { useStore } from "vuex";
 
 const gameObjects = {
   "door" : Door,
@@ -55,17 +55,18 @@ const tooltipVisible = ref(false)
 const tooltipX = ref(0)
 const tooltipY = ref(0)
 const sceneRef = ref(null)
+const store = useStore()
 
-function showTooltip(text) {
+const showTooltip = (text) => {
   tooltipText.value = text
   tooltipVisible.value = true
 }
 
-function hideTooltip() {
+const hideTooltip = () => {
   tooltipVisible.value = false
 }
 
-function onMouseMove(event) {
+const onMouseMove = (event) => {
   if (!sceneRef.value) return
 
   const rect = sceneRef.value.getBoundingClientRect()
@@ -79,7 +80,7 @@ const select = (item) => {
 }
 </script>
 
-<style>
+<style scoped lang="less">
 .scene {
   position: relative;
   width: 600px;

@@ -1,7 +1,7 @@
 <template>
   <div
       class="door"
-      :class="{ 'door-open': item?.isActive }">
+      :class="{ 'door__open': item?.isActive }">
   </div>
 </template>
 
@@ -12,14 +12,14 @@ const props = defineProps({
 });
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .door {
   width: 100px;
   height: 150px;
   background-image: url("@/assets/objects/door.png");
-}
-.door-open {
-  margin-left: 70px;
-  width: 30px;
+  &__open {
+    margin-left: 70px;
+    width: 30px;
+  }
 }
 </style>

@@ -2,7 +2,7 @@
   <div class="parent">
     <div
         class="chest"
-        :class="{ 'chest-open': item?.isActive }">
+        :class="{ 'chest__open': item?.isActive }">
     </div>
   </div>
 </template>
@@ -14,7 +14,7 @@ const props = defineProps({
 });
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .parent {
   height: 150px;
   display: flex;
@@ -27,9 +27,9 @@ const props = defineProps({
   background-size: contain;
   background-repeat: no-repeat;
   background-image: url("@/assets/objects/chest/chest.jpg");
-}
-.chest-open {
-  height: 60px;
-  background-image: url("@/assets/objects/chest/chest-open.webp");
+  &__open {
+    height: 60px;
+    background-image: url("@/assets/objects/chest/chest-open.webp");
+  }
 }
 </style>

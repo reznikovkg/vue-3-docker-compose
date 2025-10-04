@@ -23,10 +23,11 @@
 import { computed, onMounted } from 'vue'
 import SceneScreen from '../screens/SceneScreen.vue'
 import Inventory from '../Inventory.vue'
-import store from "@/store/index.js"
 import LoadScreen from "@/components/screens/LoadScreen.vue"
 import WinScreen from "@/components/screens/WinScreen.vue"
+import { useStore } from "vuex";
 
+const store = useStore()
 const bg = computed(() => new URL(`/src/assets/backgrounds/${store.getters.getBackgroundName}`, import.meta.url).href)
 const list = computed(() => store.getters.getSceneObjects)
 const playerTransform = computed(() => store.getters.getPlayerTransform)
@@ -38,7 +39,7 @@ onMounted(() => {
 })
 </script>
 
-<style>
+<style scoped lang="less">
 .window{
   position: relative;
   width: 900px;

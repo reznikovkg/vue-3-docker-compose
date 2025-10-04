@@ -49,16 +49,16 @@ export default createStore({
       state.nextLevel += 1
     },
     [MUTATIONS.TRY_TAKE]: (state, item) => {
-      let key = item.id
-      if ((item.count ?? 0) <= 1) {
+      const key = item.id
+      if (!item.count || item.count <= 1) {
         state.objects = state.objects.filter(item => item.id !== key)
         return
       }
       item.count -= 1
     },
     [MUTATIONS.TRY_ACTIVATE]: (state, item) => {
-      let id = item.id
-      let object = state.objects.find(item => item.id === id)
+      const id = item.id
+      const object = state.objects.find(item => item.id === id)
       if(object && object.isActive === false) {
         object.isActive = true
         if (state.completeCondition.id !== item.id) {
@@ -83,53 +83,56 @@ export default createStore({
     }
   },
   actions: {
-    loadScenes: async (store) => {
+    loadScenes: (store) => {
       store.commit(MUTATIONS.START_LOADING)
-      const response = await fetch(`/levels/${store.getters.getNextLevel}.json`)
-      const data = await response.json()
-      await store.dispatch('inventory/reset')
-      store.commit(MUTATIONS.SET_SCENES, data)
+      fetch(`/levels/${store.getters.getNextLevel}.json`).then(res => {
+        res.json().then(data => {
+          console.log(data)
+          store.commit(MUTATIONS.SET_SCENES, data)
+          store.dispatch('inventory/reset')
+        })
+      })
     },
-    interactWithItem: async (store, item) => {
+    interactWithItem: (store, item) => {
       store.commit(MUTATIONS.STOP_PLAYER)
       if(item.type === 'item') {
         if(store.getters['inventory/getEmptySlotsCount'] <= 0) {
           return
         }
         store.commit(MUTATIONS.TRY_TAKE, item)
-        let itemKey = item.id.split('.')[0]
-        await store.dispatch('inventory/addToInventory', {id: itemKey, count: 1})
+        const itemKey = item.id.split('.')[0]
+        store.dispatch('inventory/addToInventory', {id: itemKey, count: 1})
         return
       }
       if(item.isActive) {
         return
       }
-      let selected = store.getters['inventory/getSelectedItem']
+      const selected = store.getters['inventory/getSelectedItem']
       if(item.condition && selected.id !== item.condition) {
         return
       }
       if(item.condition) {
-        await store.dispatch('inventory/useSelectedItem')
+        store.dispatch('inventory/useSelectedItem')
       }
       store.commit(MUTATIONS.TRY_ACTIVATE, item)
-      let reward = item.reward
+      const reward = item.reward
       if(reward) {
-        await store.dispatch('inventory/addToInventory', {id: reward.id, count: reward.count})
+        store.dispatch('inventory/addToInventory', {id: reward.id, count: reward.count})
       }
     },
-    selectObject: async (store, item) => {
-      let speed = 1
+    selectObject: (store, item) => {
+      const speed = 1
       store.commit(MUTATIONS.STOP_PLAYER)
       if (!item) {
         return
       }
-      let intervalId = setInterval(() => {
-        let pos = store.getters.getPlayerTransform
-        let x = item.x - pos.x
-        let y = item.y - pos.y
-        let magnitude = Math.sqrt(x * x + y * y)
-        let dx = x * speed / magnitude
-        let dy = y * speed / magnitude
+      const intervalId = setInterval(() => {
+        const pos = store.getters.getPlayerTransform
+        const x = item.x - pos.x
+        const y = item.y - pos.y
+        const magnitude = Math.sqrt(x * x + y * y)
+        const dx = x * speed / magnitude
+        const dy = y * speed / magnitude
         if (magnitude < 10) {
           clearInterval(intervalId)
           store.dispatch('interactWithItem', item)

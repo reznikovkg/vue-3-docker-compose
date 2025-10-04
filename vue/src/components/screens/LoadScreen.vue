@@ -4,7 +4,7 @@
   </div>
 </template>
 
-<style>
+<style scoped lang="less">
 .load-screen {
   width: 100%;
   height: 100%;

@@ -10,12 +10,12 @@
 <script setup>
 import store from "@/store/index.js";
 
-let loadScene = () => {
+const loadScene = () => {
   store.dispatch("loadScenes")
 }
 </script>
 
-<style>
+<style scoped lang="less">
 .win-screen {
   position: absolute;
   width: 100%;
