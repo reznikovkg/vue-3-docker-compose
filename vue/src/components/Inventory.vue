@@ -14,14 +14,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useStore } from "vuex";
+import { computed } from 'vue'
+import { useStore } from "vuex"
 const store = useStore()
 const inventory = computed(() => store.getters['inventory/getInventory'])
-const selectedId = computed(() => store.getters['inventory/getInventorySelectedIndex']);
+const selectedId = computed(() => store.getters['inventory/getInventorySelectedIndex'])
 
 function select(index) {
-  store.dispatch("inventory/selectInventoryItem", index);
+  store.dispatch("inventory/selectInventoryItem", index)
 }
 </script>
 

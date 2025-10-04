@@ -17,7 +17,7 @@ const props = defineProps({
   height: 100%;
   background-size: contain;
   background-repeat: no-repeat;
-  animation: play 1s steps(1) infinite; /* 12 кадров */
+  animation: play 1s steps(1) infinite;
  }
 .logs {
   width: 100px;

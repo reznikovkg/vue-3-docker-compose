@@ -21,48 +21,48 @@ export default {
     },
     mutations: {
         [MUTATIONS.ADD_TO_INVENTORY]: (state, item) => {
-            let key = item.id;
+            let key = item.id
             let inventoryItem = state.inventoryItems.find(item => item.id === key);
             if(inventoryItem) {
-                inventoryItem.count += item.count;
-                return;
+                inventoryItem.count += item.count
+                return
             }
             let empty = state.inventoryItems.find(item => item.id.length === 0);
             if (empty) {
-                empty.id = key;
-                empty.count = item.count;
+                empty.id = key
+                empty.count = item.count
             }
         },
         [MUTATIONS.USE_ITEM]: (state) => {
             let item = state.inventoryItems[state.inventorySelectedIndex];
             if(item.count <= 0 || item.id === "") {
-                return;
+                return
             }
             item.count -= 1;
             if(item.count <= 0) {
-                item.id = "";
+                item.id = ""
             }
         },
         [MUTATIONS.SELECT_INVENTORY_ITEM]: (state, id) => {
-            state.inventorySelectedIndex = id;
+            state.inventorySelectedIndex = id
         },
         [MUTATIONS.RESET]: (state) => {
-            state.inventorySelectedIndex = -1;
-            state.inventoryItems = Array.from({ length: 7 }, () => ({ id: "", count: 0 }));
+            state.inventorySelectedIndex = -1
+            state.inventoryItems = Array.from({ length: 7 }, () => ({ id: "", count: 0 }))
         }
     },
     actions: {
         addToInventory: (store, item) => {
-            store.commit(MUTATIONS.ADD_TO_INVENTORY, item);
+            store.commit(MUTATIONS.ADD_TO_INVENTORY, item)
         },
         useSelectedItem: (store) => {
-            store.commit(MUTATIONS.USE_ITEM);
+            store.commit(MUTATIONS.USE_ITEM)
         },
         selectInventoryItem: (store, id) => {
-            store.commit(MUTATIONS.SELECT_INVENTORY_ITEM, id);
+            store.commit(MUTATIONS.SELECT_INVENTORY_ITEM, id)
         },
         reset: (store) => {
-            store.commit(MUTATIONS.RESET);
+            store.commit(MUTATIONS.RESET)
         }
     }
 }
