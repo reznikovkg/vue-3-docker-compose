@@ -16,7 +16,7 @@ import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
 const store = useStore()
 const count = computed(() => store.getters.getCount)
-const list = computed(() => store.getters['list/getList'])
+const list = computed(() => store.getters['list/getSceneObjects'])
 
 const value = ref(1)
 const timeout = ref(0)
