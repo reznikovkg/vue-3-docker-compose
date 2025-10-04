@@ -20,12 +20,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import SceneScreen from '../screens/SceneScreen.vue'
-import Inventory from '../Inventory.vue'
+import { computed, onMounted } from "vue"
+import SceneScreen from "../screens/SceneScreen.vue"
+import Inventory from "../Inventory.vue"
 import LoadScreen from "@/components/screens/LoadScreen.vue"
 import WinScreen from "@/components/screens/WinScreen.vue"
-import { useStore } from "vuex";
+import { useStore } from "vuex"
 
 const store = useStore()
 const bg = computed(() => new URL(`/src/assets/backgrounds/${store.getters.getBackgroundName}`, import.meta.url).href)

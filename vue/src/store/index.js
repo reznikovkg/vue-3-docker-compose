@@ -87,7 +87,6 @@ export default createStore({
       store.commit(MUTATIONS.START_LOADING)
       fetch(`/levels/${store.getters.getNextLevel}.json`).then(res => {
         res.json().then(data => {
-          console.log(data)
           store.commit(MUTATIONS.SET_SCENES, data)
           store.dispatch('inventory/reset')
         })

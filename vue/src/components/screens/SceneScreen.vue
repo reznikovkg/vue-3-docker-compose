@@ -31,13 +31,13 @@
 </template>
 
 <script setup>
-import { defineProps, ref } from 'vue';
-import Door from "@/components/objects/Door.vue";
-import Character from "@/components/Character.vue";
-import Key from "@/components/items/Key.vue";
-import Bonfire from "@/components/objects/Bonfire.vue";
-import Chest from "@/components/objects/Chest.vue";
-import { useStore } from "vuex";
+import { defineProps, ref } from "vue"
+import Door from "@/components/objects/Door.vue"
+import Character from "@/components/Character.vue"
+import Key from "@/components/items/Key.vue"
+import Bonfire from "@/components/objects/Bonfire.vue"
+import Chest from "@/components/objects/Chest.vue"
+import { useStore } from "vuex"
 
 const gameObjects = {
   "door" : Door,
