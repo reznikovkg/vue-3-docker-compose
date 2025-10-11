@@ -7,7 +7,10 @@
 <script setup lang="ts">
 import { defineProps } from "vue"
 const props = defineProps({
-  item: Object,
+  item: {
+    type: Object,
+    required: true,
+  },
 });
 </script>
 

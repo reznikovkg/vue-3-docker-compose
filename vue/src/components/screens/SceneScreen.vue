@@ -10,9 +10,10 @@
     >
       <component
         :id="item.id"
-        :is="gameObjects[item.id.split('.')[0]]" class="game-object"
+        :is="gameObjects[item.id.split('.')[0]]"
         :item="item"
-        @click="()=>select(item)"/>
+        class="game-object"
+        @click="() => select(item)"/>
     </div>
     <Character
       class="area"

@@ -1,7 +1,7 @@
 <template>
   <div
     class="character"
-    :class="{ 'character__run': playerTransform.isRun, 'character__left': playerTransform.toLeft }"
+    :class="{ 'character--run': playerTransform.isRun, 'character--left': playerTransform.toLeft }"
   >
   </div>
 </template>
@@ -21,14 +21,14 @@ const playerTransform = computed(() => store.getters.getPlayerTransform)
   background-repeat: no-repeat;
   background-image: url("@/assets/character/idle.png");
   background-size: contain;
-  &__run {
+  &--run {
     width: 100px;
     height: 150px;
     background-repeat: no-repeat;
     animation: run 1s steps(1) infinite;
     background-size: contain;
   }
-  &__left {
+  &--left {
     transform: scaleX(-1);
   }
 }
