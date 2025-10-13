@@ -1,0 +1,13 @@
+{
+  "objects": [
+    { "id": "bonfire.1", "type": "game-object", "x": 500, "y": 350, "tooltip": "Найдите огниво, чтобы зажечь огонь", "isActive": false, "condition": "flint", "reward": { "id": "ash", "count": 1 } },
+    { "id": "chest.1", "type": "game-object", "x": 300, "y": 300, "tooltip": "Откройте сундук", "isActive": false, "reward": { "id": "flint", "count": "inf" } }
+  ],
+  "playerTransform": { "x": 200, "y": 350, "isRun": false, "toLeft": false },
+  "completeCondition": {
+    "id": "bonfire.1",
+    "property": "isActive",
+    "value": true
+  },
+  "background": "minecraft.jpg"
+}
