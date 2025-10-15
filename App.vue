@@ -1,51 +1,37 @@
 <template>
   <div id="app">
-    <div class="container"> 
+    <div class="container">
       <div class="grid">
         <GameBoard
           :grid-width="gridWidth"
           :grid-height="gridHeight"
           :selected-object="selectedObject"
           :game-mode="gameMode"
-          @update-grid="gameGrid = $event"
           ref="gameBoard"
         />
       </div>
       <div class="objects">
-        <Toolbar @set-mode="setGameMode" :current-mode="gameMode" />
-        <ObjectSelector @select-object="selectedObject = $event" />
+        <Toolbar @set-mode="mode => store.dispatch('setGameMode', mode)" :current-mode="gameMode" />
+        <ObjectSelector @select-object="object => store.dispatch('setSelectedObject', object)" />
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue';
+import { useStore } from 'vuex';
 import GameBoard from './components/GameBoard.vue';
 import ObjectSelector from './components/ObjectSelector.vue';
 import Toolbar from './components/Toolbar.vue';
 
-export default {
-  name: 'App',
-  components: {
-    GameBoard,
-    ObjectSelector,
-    Toolbar,
-  },
-  data() {
-    return {
-      gridWidth: 10, 
-      gridHeight: 10,
-      selectedObject: null,
-      gameMode: 'place',
-      gameGrid: []
-    };
-  },
-  methods: {
-    setGameMode(mode) {
-      this.gameMode = mode;
-    }
-  }
-};
+const store = useStore();
+
+const gridWidth = computed(() => store.getters.getGridWidth);
+const gridHeight = computed(() => store.getters.getGridHeight);
+const selectedObject = computed(() => store.getters.getSelectedObject);
+const gameMode = computed(() => store.getters.getGameMode);
+
 </script>
 
 <style leng="less">
@@ -80,4 +66,3 @@ export default {
   margin-left: 100px;
 }
 </style>
-
