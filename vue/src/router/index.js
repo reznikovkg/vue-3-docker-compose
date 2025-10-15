@@ -2,10 +2,12 @@ import { createWebHistory, createRouter } from 'vue-router'
 
 import IndexPage from './../components/pages/IndexPage.vue'
 import ExamplePage from './../components/pages/ExamplePage.vue'
+import DynamicGridPage from './../components/pages/DynamicGridPage.vue'
 
 export const ROUTES = {
   EXAMPLE: 'EXAMPLE',
   INDEX: 'INDEX',
+  GRID: 'GRID',
 }
 
 const routes = [
@@ -18,6 +20,11 @@ const routes = [
     name: ROUTES.INDEX,
     path: '/',
     component: IndexPage
+  },
+  {
+    name: ROUTES.GRID,
+    path: '/dynamic-grid',
+    component: DynamicGridPage
   },
 ]
 
