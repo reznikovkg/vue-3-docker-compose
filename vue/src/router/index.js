@@ -1,23 +1,24 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
-import IndexPage from './../components/pages/IndexPage.vue'
-import ExamplePage from './../components/pages/ExamplePage.vue'
+import  IndexPage  from './../components/pages/IndexPage.vue'
+import  DictophonePage  from '../components/pages/DictophonePage.vue'
+
 
 export const ROUTES = {
-  EXAMPLE: 'EXAMPLE',
   INDEX: 'INDEX',
+  DICTOPHONE: 'DICTOPHONE'
 }
 
 const routes = [
   {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
-  },
-  {
     name: ROUTES.INDEX,
     path: '/',
     component: IndexPage
+  },
+      {
+    name: ROUTES.DICTOPHONE,
+    path: '/dictophone',
+    component: DictophonePage
   },
 ]
 
