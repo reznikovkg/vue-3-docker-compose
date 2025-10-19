@@ -142,6 +142,9 @@ export default createStore ({
       if (confirm('Are you sure you want to delete all recordings?')) {
         commit('CLEAR_ALL_RECORDINGS')
       }
+    },
+    saveRecord({commit}){
+        commit('SAVE_RECORDING', id)
     }
   },
 
@@ -149,5 +152,3 @@ export default createStore ({
     dictophone
   }
 })
-
-
