@@ -1,33 +1,47 @@
 <template>
   <div class="voice-recorder">
     <h2 class="title">Dictophone </h2>
-
-    <RouterLink :to="{ name: $route.name }">To Index</RouterLink>
-
     <div class="controls">
       <button
         @click="() => startRecording()"
         :disabled="isRecording"
         class="button button-primary"
       >
-        🎤 Start Recording
+         Start Recording
       </button>
 
       <button
         @click="() => stopRecording()"
         :disabled="!isRecording"
-        class="button button-secondary"
+        class=".button-secondary"
       >
-        ⏹️ Stop
+         Stop
       </button>
 
       <button
         @click="() => clearAllRecordings()"
         :disabled="!hasRecordings"
-        class="button button-danger"
+        class=".button-secondary"
       >
-        🗑️ Clear All
+        Clear All
       </button>
+
+      <button
+        @click="() => saveRecord()"
+        :disabled="isRecording"
+        class=".button-secondary"
+      >
+        Save
+      </button>
+
+      <button
+        @click="() => discardRecording()"
+        :disabled="isRecording"
+        class=".button-secondary"
+      >
+        Discard
+      </button>
+
     </div>
 
     <div class="status">
@@ -101,8 +115,10 @@ const startRecording = () => store.dispatch('dictophone/startRecording')
 const stopRecording = () => store.dispatch('dictophone/stopRecording')
 const deleteRecording = (id: string) => store.dispatch('dictophone/deleteRecording', id)
 const clearAllRecordings = () => store.dispatch('dictophone/clearAllRecordings')
+const saveRecord = () => store.dispatch('dictophone/saveRecording')
+const discardRecording = () => store.dispatch('dictophone/discardRecording')
 
-onUnmounted(() => {
+    onUnmounted(() => {
   if (isRecording.value) {
     stopRecording()
   }
