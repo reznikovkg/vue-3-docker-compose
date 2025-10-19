@@ -1,0 +1,19 @@
+// Bloc principal
+.sprite-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  // Élément BEM
+  &__char {
+    display: inline-block;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  // Modificateur : si on veut une animation spéciale
+  &--hoverable {
+    .sprite-text__char:hover {
+      transform: scale(1.1);
+    }
+  }
+}
