@@ -299,36 +299,36 @@ watch(draftName, (value) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
-}
 
-.recorder-page__header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: left;
-}
-
-.recorder-page__title {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--recorder-text-strong);
-}
-
-.recorder-page__subtitle {
-  margin: 0;
-  font-size: 15px;
-  color: var(--recorder-text-muted);
-}
-
-@media (prefers-color-scheme: dark) {
-  .recorder-page {
-    --recorder-text-strong: #f8fafc;
-    --recorder-text-muted: rgba(226, 232, 240, 0.7);
+  &__header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
   }
 
-  .recorder-page__title {
-    text-shadow: 0 8px 28px rgba(30, 58, 138, 0.35);
+  &__title {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--recorder-text-strong);
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 15px;
+    color: var(--recorder-text-muted);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    & {
+      --recorder-text-strong: #f8fafc;
+      --recorder-text-muted: rgba(226, 232, 240, 0.7);
+    }
+
+    &__title {
+      text-shadow: 0 8px 28px rgba(30, 58, 138, 0.35);
+    }
   }
 }
 </style>

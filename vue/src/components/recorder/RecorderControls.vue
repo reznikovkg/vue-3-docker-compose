@@ -46,64 +46,68 @@ const emitToggle = () => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
 
-.recorder-controls__primary {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.recorder-controls__button {
-  padding: 12px 24px;
-  border-radius: 28px;
-  border: none;
-  background: linear-gradient(135deg, #ef4444, #facc15);
-  color: #0b0f19;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 18px rgba(239, 68, 68, 0.35);
+  &__primary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
 
-  &:disabled {
-    background: linear-gradient(135deg, #9ca3af, #d1d5db);
-    color: rgba(11, 15, 25, 0.6);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-  }
-}
-
-.recorder-controls__status {
-  font-size: 14px;
-  color: var(--recorder-text-muted);
-
-  &--active {
-    color: #facc15;
-    text-shadow: 0 0 6px rgba(250, 204, 21, 0.45);
-  }
-}
-
-.recorder-controls__error {
-  margin: 0;
-  font-size: 13px;
-  color: #f87171;
-}
-
-:global(body.dark) .recorder-controls__button {
-  background: linear-gradient(135deg, #dc2626, #f97316);
-  color: #0b0f19;
-}
-
-@media (prefers-color-scheme: dark) {
-  .recorder-controls__button {
-    background: linear-gradient(135deg, #dc2626, #f97316);
+  &__button {
+    padding: 12px 24px;
+    border-radius: 28px;
+    border: none;
+    background: linear-gradient(135deg, #ef4444, #facc15);
     color: #0b0f19;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(239, 68, 68, 0.35);
+    }
+
+    &:disabled {
+      background: linear-gradient(135deg, #9ca3af, #d1d5db);
+      color: rgba(11, 15, 25, 0.6);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+  }
+
+  &__status {
+    font-size: 14px;
+    color: var(--recorder-text-muted);
+
+    &--active {
+      color: #facc15;
+      text-shadow: 0 0 6px rgba(250, 204, 21, 0.45);
+    }
+  }
+
+  &__error {
+    margin: 0;
+    font-size: 13px;
+    color: #f87171;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &__button {
+      background: linear-gradient(135deg, #dc2626, #f97316);
+      color: #0b0f19;
+    }
+  }
+}
+
+:global(body.dark) {
+  .recorder-controls {
+    &__button {
+      background: linear-gradient(135deg, #dc2626, #f97316);
+      color: #0b0f19;
+    }
   }
 }
 </style>
