@@ -1,0 +1,8 @@
+// Константы для mutations в соответствии с требованиями преподавателя
+// Все mutations должны быть в UPPERCASE
+
+export const MOVE_BOAT = 'MOVE_BOAT'
+export const ADD_FISH_TO_INVENTORY = 'ADD_FISH_TO_INVENTORY'
+export const CLEAR_INVENTORY = 'CLEAR_INVENTORY'
+export const SET_BOAT_COORDINATES = 'SET_BOAT_COORDINATES'
+
