@@ -1,28 +1,30 @@
 <template>
   <div class="shape-picker">
-    <h3>Выберите фигуру:</h3>
-    <div class="shapes-grid">
+    <h3 class="shape-picker__title">Выберите фигуру:</h3>
+    <div class="shape-picker__grid">
       <div
         v-for="shape in availableShapes"
         :key="shape.id"
-        @click="selectShape(shape)"
-        class="shape-option"
-        :class="{ selected: selectedShape?.id === shape.id }"
+        class="shape-picker__option"
+        :class="{
+          'shape-picker__option--selected': selectedShape?.id === shape.id,
+        }"
+        @click="() => selectShape(shape)"
       >
-        <div class="shape-preview">
-          <div class="preview-3d">
-            <div 
-              v-for="(part, index) in shape.layout" 
+        <div class="shape-picker__preview">
+          <div class="shape-picker__preview-3d">
+            <div
+              v-for="(part, index) in shape.layout"
               :key="index"
-              class="preview-part"
+              class="shape-picker__preview-part"
               :style="{
                 left: `${part.x * 25 + 25}%`,
-                top: `${part.y * 25 + 25}%`
+                top: `${part.y * 25 + 25}%`,
               }"
             ></div>
           </div>
         </div>
-        <span class="shape-name">{{ shape.name }}</span>
+        <span class="shape-picker__name">{{ shape.name }}</span>
       </div>
     </div>
   </div>
@@ -55,78 +57,78 @@ const selectShape = (shape: Shape): void => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .shape-picker {
   margin-bottom: 20px;
-}
 
-h3 {
-  font-size: 16px;
-  color: #2F4F4F;
-  margin-bottom: 15px;
-  text-align: center;
-}
+  &__title {
+    font-size: 16px;
+    color: #2f4f4f;
+    margin-bottom: 12px;
+    text-align: center;
+  }
 
-.shapes-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px; 
+  }
 
-.shape-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-  border: 2px solid #B0C4DE;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: white;
-}
+  &__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px; 
+    border: 2px solid #b0c4de;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
 
-.shape-option:hover {
-  border-color: #87CEEB;
-  transform: translateY(-2px);
-}
+    &:hover {
+      border-color: #87ceeb;
+      transform: translateY(-2px);
+    }
 
-.shape-option.selected {
-  border-color: #32CD32;
-  background: #F0FFF0;
-  box-shadow: 0 2px 8px rgba(50, 205, 50, 0.3);
-}
+    &--selected {
+      border-color: #32cd32;
+      background: #f0fff0;
+      box-shadow: 0 2px 6px rgba(50, 205, 50, 0.3);
+    }
+  }
 
-.shape-preview {
-  width: 60px;
-  height: 60px;
-  background: #caf4f7;
-  border: 1px solid #32CD32;
-  border-radius: 4px;
-  margin-bottom: 8px;
-  position: relative;
-  overflow: hidden;
-}
+  &__preview {
+    width: 50px; 
+    height: 50px;
+    background: #caf4f7;
+    border: 1px solid #32cd32;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    position: relative;
+    overflow: hidden;
+  }
 
-.preview-3d {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform: rotate(45deg) scale(0.7);
-}
+  &__preview-3d {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform: rotate(45deg) scale(0.7);
+  }
 
-.preview-part {
-  position: absolute;
-  width: 20%;
-  height: 20%;
-  background: #8B4513;
-  border: 1px solid #654321;
-  border-radius: 2px;
-}
+  &__preview-part {
+    position: absolute;
+    width: 20%;
+    height: 20%;
+    background: #8b4513;
+    border: 1px solid #654321;
+    border-radius: 2px;
+  }
 
-.shape-name {
-  font-size: 12px;
-  color: #2F4F4F;
-  font-weight: 500;
-  text-align: center;
+  &__name {
+    font-size: 11px;
+    color: #2f4f4f;
+    font-weight: 500;
+    text-align: center;
+  }
 }
 </style>

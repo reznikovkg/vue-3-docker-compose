@@ -19,6 +19,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
+    "less": "^4.4.2",
+    "less-loader": "^12.3.0",
     "sass-embedded": "^1.92.1",
     "vite": "^7.0.6",
     "vite-plugin-vue-devtools": "^8.0.0"

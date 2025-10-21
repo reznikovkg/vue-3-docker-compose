@@ -1,14 +1,16 @@
 <template>
   <div class="mode-switcher">
     <button
-      @click="switchMode('add')"
-      :class="{ active: gameMode === 'add' }"
+      class="mode-switcher__button"
+      :class="{ 'mode-switcher__button--active': gameMode === 'add' }"
+      @click="() => switchMode('add')"
     >
       Добавить
     </button>
     <button
-      @click="switchMode('remove')"
-      :class="{ active: gameMode === 'remove' }"
+      class="mode-switcher__button"
+      :class="{ 'mode-switcher__button--active': gameMode === 'remove' }"
+      @click="() => switchMode('remove')"
     >
       Удалить
     </button>
@@ -28,34 +30,34 @@ const switchMode = (mode: 'add' | 'remove'): void => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .mode-switcher {
   margin-bottom: 20px;
   display: flex;
   gap: 10px;
-}
 
-button {
-  flex: 1;
-  padding: 12px 16px;
-  border: 2px solid #B0C4DE;
-  border-radius: 8px;
-  cursor: pointer;
-  background: white;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
+  &__button {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #b0c4de;
+    border-radius: 8px;
+    cursor: pointer;
+    background: white;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
 
-button:hover {
-  background: #F5F5F5;
-  border-color: #87CEEB;
-}
+    &:hover {
+      background: #f5f5f5;
+      border-color: #87ceeb;
+    }
 
-button.active {
-  background: #20B2AA;
-  color: white;
-  border-color: #20B2AA;
-  font-weight: bold;
+    &--active {
+      background: #20b2aa;
+      color: white;
+      border-color: #20b2aa;
+      font-weight: bold;
+    }
+  }
 }
 </style>
