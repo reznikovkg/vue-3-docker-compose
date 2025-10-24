@@ -20,9 +20,9 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'; 
-import GameBoard from './components/GameBoard.vue';
-import ObjectSelector from './components/ObjectSelector.vue';
-import Toolbar from './components/Toolbar.vue';
+import GameBoard from './components/GameBoard1.vue';
+import ObjectSelector from './components/ObjectSelector1.vue';
+import Toolbar from './components/Toolbar1.vue';
 
 export default {
   name: 'App',
