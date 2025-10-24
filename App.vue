@@ -3,38 +3,62 @@
     <div class="container">
       <div class="grid">
         <GameBoard
-          :grid-width="gridWidth"
+          :grid-width="gridWidth"        
           :grid-height="gridHeight"
           :selected-object="selectedObject"
           :game-mode="gameMode"
-          ref="gameBoard"
+          ref="gameBoard"                
         />
       </div>
       <div class="objects">
-        <Toolbar @set-mode="mode => store.dispatch('setGameMode', mode)" :current-mode="gameMode" />
-        <ObjectSelector @select-object="object => store.dispatch('setSelectedObject', object)" />
+        <Toolbar @set-mode="(mode) => setGameModeHandler(mode)" :current-mode="gameMode" />
+        <ObjectSelector @select-object="(object) => setSelectedObjectHandler(object)" />
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { computed } from 'vue';
-import { useStore } from 'vuex';
+<script>
+import { mapGetters, mapActions } from 'vuex'; 
 import GameBoard from './components/GameBoard.vue';
 import ObjectSelector from './components/ObjectSelector.vue';
 import Toolbar from './components/Toolbar.vue';
 
-const store = useStore();
-
-const gridWidth = computed(() => store.getters.getGridWidth);
-const gridHeight = computed(() => store.getters.getGridHeight);
-const selectedObject = computed(() => store.getters.getSelectedObject);
-const gameMode = computed(() => store.getters.getGameMode);
-
+export default {
+  name: 'App',
+  components: {
+    GameBoard,
+    ObjectSelector,
+    Toolbar,
+  },
+  computed: {
+    ...mapGetters([
+      'getGridWidth',
+      'getGridHeight',
+      'getSelectedObject',
+      'getGameMode'
+    ]),
+    gridWidth() { return this.getGridWidth; },
+    gridHeight() { return this.getGridHeight; },
+    selectedObject() { return this.getSelectedObject; },
+    gameMode() { return this.getGameMode; }
+  },
+  methods: {
+    ...mapActions([
+      'setGameMode',
+      'setSelectedObject'
+    ]),
+    setGameModeHandler(mode) {
+      this.setGameMode(mode);
+    },
+    setSelectedObjectHandler(object) {
+      this.setSelectedObject(object);
+    }
+  }
+};
 </script>
 
-<style leng="less">
+<style scoped lang="less"> 
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   text-align: center;

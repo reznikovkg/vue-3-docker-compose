@@ -1,13 +1,13 @@
 <template>
   <div class="object-selector">
-    <h3>Выберите объект:</h3>
-    <div class="object-list">
+    <h3 class="object-selector__title">Выберите объект:</h3>
+    <div class="object-selector__list">
       <div
-        v-for="obj in availableObjects"
-        :key="obj.id"
-        @click="() => selectObject(obj)"
-        class="object-preview"
-        :style="{ backgroundColor: obj.color }"
+        v-for="obj in availableObjects"  
+        :key="obj.id"                    
+        :style="{ backgroundColor: obj.color }" 
+        class="object-preview"           
+        @click="() => selectObject(obj)" 
       >
       </div>
     </div>
@@ -56,18 +56,20 @@ export default {
 };
 </script>
 
-<style scoped leng="less">
+<style scoped lang="less">
+
 .object-selector {
   margin-bottom: 20px;
-}
-h3 {
-  font-size: 25px;
-  color: #000000; 
-  margin-bottom: 30px;
-}
-.object-list {
-  display: flex;
-  gap: 15px;
+
+  &__title {
+    font-size: 25px;
+    color: #000000; 
+    margin-bottom: 30px;
+  }
+  &__list {
+    display: flex;
+    gap: 15px;
+  }
 }
 .object-preview {
   width: 60px;
@@ -76,8 +78,9 @@ h3 {
   border-radius: 5px;
   cursor: pointer;
   transition: transform 0.2s ease;
-}
-.object-preview:hover {
-  transform: scale(1.1);
+
+  &:hover {
+    transform: scale(1.1);
+  }
 }
 </style>
