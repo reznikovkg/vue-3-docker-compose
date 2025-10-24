@@ -5,7 +5,7 @@
         class="recorder-controls__button"
         type="button"
         :disabled="isProcessing"
-        @click="emitToggle"
+        @click="() => emitToggle()"
       >
         {{ isRecording ? 'Остановить запись' : 'Начать запись' }}
       </button>

@@ -12,7 +12,7 @@
       :is-processing="isProcessing"
       :status-text="statusText"
       :error-message="errorMessage"
-      @toggle="toggleRecording"
+      @toggle="() => toggleRecording()"
     />
 
     <RecorderDraft
@@ -20,16 +20,16 @@
       :draft-name="draftName"
       :duration-label="draftDurationLabel"
       :can-save="canSaveDraft"
-      @save="saveDraft"
-      @discard="discardDraft"
-      @update:name="updateDraftName"
+      @save="() => saveDraft()"
+      @discard="() => discardDraft()"
+      @update:name="(value) => updateDraftName(value)"
     />
 
     <RecorderList
       :entries="entries"
       :format-date="formatDate"
       :format-duration="formatDuration"
-      @remove="removeEntry"
+      @remove="(id) => removeEntry(id)"
     />
   </main>
 </template>
@@ -232,7 +232,7 @@ const toggleRecording = () => {
     return
   }
 
-  void startRecording()
+  startRecording()
 }
 
 const saveDraft = () => {
@@ -250,7 +250,7 @@ const saveDraft = () => {
 
 const discardDraft = () => {
   draftName.value = ''
-  void store.dispatch('recorder/setDraft', null)
+  store.dispatch('recorder/setDraft', null)
 }
 
 const updateDraftName = (value: string) => {
@@ -258,11 +258,11 @@ const updateDraftName = (value: string) => {
 }
 
 const removeEntry = (id: string) => {
-  void store.dispatch('recorder/removeEntry', id)
+  store.dispatch('recorder/removeEntry', id)
 }
 
 onMounted(() => {
-  void store.dispatch('recorder/init')
+  store.dispatch('recorder/init')
 })
 
 onBeforeUnmount(() => {
@@ -281,7 +281,7 @@ watch(draftName, (value) => {
     return
   }
 
-  void store.dispatch('recorder/setDraft', {
+  store.dispatch('recorder/setDraft', {
     ...draft.value,
     name: value
   })

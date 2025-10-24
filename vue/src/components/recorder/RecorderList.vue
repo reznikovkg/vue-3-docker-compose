@@ -24,11 +24,15 @@
             {{ formatDuration(entry.duration) }}
           </span>
         </div>
-        <audio class="recorder-list__audio" :src="entry.dataUrl" controls />
+        <audio
+          class="recorder-list__audio"
+          :src="entry.dataUrl"
+          controls
+        />
         <button
           class="recorder-list__remove"
           type="button"
-          @click="emitRemove(entry.id)"
+          @click="() => emitRemove(entry.id)"
         >
           Удалить
         </button>

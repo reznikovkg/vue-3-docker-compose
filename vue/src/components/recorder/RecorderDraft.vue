@@ -12,7 +12,7 @@
         type="text"
         :value="draftName"
         placeholder="Введите название"
-        @input="handleNameInput"
+        @input="(event) => handleNameInput(event)"
       >
     </label>
 
@@ -28,14 +28,14 @@
         class="recorder-draft__button recorder-draft__button--accent"
         type="button"
         :disabled="!canSave"
-        @click="emitSave"
+        @click="() => emitSave()"
       >
         Сохранить запись
       </button>
       <button
         class="recorder-draft__button recorder-draft__button--ghost"
         type="button"
-        @click="emitDiscard"
+        @click="() => emitDiscard()"
       >
         Удалить
       </button>
