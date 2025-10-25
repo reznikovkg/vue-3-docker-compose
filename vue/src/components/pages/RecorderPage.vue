@@ -22,7 +22,7 @@
       :can-save="canSaveDraft"
       @save="() => saveDraft()"
       @discard="() => discardDraft()"
-      @update:name="(value) => updateDraftName(value)"
+      @update:name="updateDraftName"
     />
 
     <RecorderList
@@ -48,21 +48,7 @@ const isRecording = ref(false)
 const isProcessing = ref(false)
 const errorMessage = ref('')
 
-const draftName = computed({
-  get: () => draft.value?.name || '',
-  set: (value: string) => {
-    const currentDraft = draft.value
-
-    if (!currentDraft || currentDraft.name === value) {
-      return
-    }
-
-    store.dispatch('recorder/setDraft', {
-      ...currentDraft,
-      name: value
-    })
-  }
-})
+const draftName = ref('')
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const mediaStream = ref<MediaStream | null>(null)
 const audioChunks = ref<Blob[]>([])
@@ -107,6 +93,25 @@ const statusText = computed(() => {
 const draftDurationLabel = computed(() => {
   return draft.value ? `Длительность: ${formatDuration(draft.value.duration)}` : ''
 })
+
+const setDraft = (entry: RecordingEntry | null) => {
+  store.dispatch('recorder/setDraft', entry)
+  draftName.value = entry?.name || ''
+}
+
+const updateDraftName = (value: string) => {
+  draftName.value = value
+
+  const currentDraft = draft.value
+  if (!currentDraft || currentDraft.name === value) {
+    return
+  }
+
+  setDraft({
+    ...currentDraft,
+    name: value
+  })
+}
 
 const cleanupStream = () => {
   if (!mediaStream.value) {
@@ -178,7 +183,7 @@ const handleStop = () => {
       }
 
       errorMessage.value = ''
-      return store.dispatch('recorder/setDraft', entry)
+      return setDraft(entry)
     })
     .catch((error) => {
       errorMessage.value = 'Не удалось обработать запись'
@@ -261,11 +266,7 @@ const saveDraft = () => {
 }
 
 const discardDraft = () => {
-  store.dispatch('recorder/setDraft', null)
-}
-
-const updateDraftName = (value: string) => {
-  draftName.value = value
+  setDraft(null)
 }
 
 const removeEntry = (id: string) => {
@@ -273,7 +274,9 @@ const removeEntry = (id: string) => {
 }
 
 onMounted(() => {
-  store.dispatch('recorder/init')
+  store.dispatch('recorder/init').then(() => {
+    draftName.value = draft.value?.name || ''
+  })
 })
 
 onBeforeUnmount(() => {
