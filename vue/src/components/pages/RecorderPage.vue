@@ -22,7 +22,7 @@
       :can-save="canSaveDraft"
       @save="() => saveDraft()"
       @discard="() => discardDraft()"
-      @update:name="updateDraftName"
+      @update:name="(value) => updateDraftName(value)"
     />
 
     <RecorderList
