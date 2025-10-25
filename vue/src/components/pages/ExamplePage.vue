@@ -123,7 +123,7 @@ const boardStyle = computed(() => {
    - Genera un gridSize x gridSize de colores aleatorios
    - Asegura que no haya matches iniciales (regenerando celdas concretas)
    =========================== */
-const initializeGame = async () => {
+const initializeGame = () => {
   // crear grid básica
   let idCounter = 0
   const newGrid = []
@@ -139,10 +139,10 @@ const initializeGame = async () => {
   matchedSet.value = new Set()
 
   // eliminar coincidencias iniciales (bucle seguro)
-  await removeInitialMatches()
+  removeInitialMatches()
 }
 
-async function removeInitialMatches() {
+function removeInitialMatches() {
   let matches = findMatches()
   // mientras haya coincidencias: regenera las celdas implicadas
   while (matches.length > 0) {
@@ -152,7 +152,7 @@ async function removeInitialMatches() {
     }
     matches = findMatches()
     // pequeña pausa opcional para evitar bloqueo extremo
-    await new Promise((r) => setTimeout(r, 0))
+    new Promise((r) => setTimeout(r, 0))
   }
 }
 
@@ -230,14 +230,14 @@ function findMatches() {
 /* ===========================
    Procesar matches (eliminar -> gravedad -> rellenar -> chain reaction)
    =========================== */
-async function processMatchesAndCollapse() {
+function processMatchesAndCollapse() {
   let matches = findMatches()
   if (matches.length === 0) return false
 
   // marcar matched para animación
   matchedSet.value = new Set(matches.map(m => m.id))
   // espera pequeña para animación
-  await new Promise((r) => setTimeout(r, 300))
+  new Promise((r) => setTimeout(r, 300))
 
   // eliminar (poner color = null)
   for (const m of matches) {
@@ -247,17 +247,17 @@ async function processMatchesAndCollapse() {
   matchedSet.value = new Set()
 
   // aplicar gravedad
-  await applyGravity()
+  applyGravity()
 
   // rellenar vacíos desde arriba
-  await refillFromTop()
+  refillFromTop()
 
   // posibles nuevas coincidencias (chain reaction)
-  await new Promise((r) => setTimeout(r, 120))
+  new Promise((r) => setTimeout(r, 120))
   return true
 }
 
-async function applyGravity() {
+function applyGravity() {
   // repetimos hasta que no se mueva nada
   let moved
   do {
@@ -272,12 +272,12 @@ async function applyGravity() {
       }
     }
     if (moved) {
-      await new Promise((r) => setTimeout(r, 80))
+      new Promise((r) => setTimeout(r, 80))
     }
   } while (moved)
 }
 
-async function refillFromTop() {
+function refillFromTop() {
   for (let x = 0; x < gridSize.value; x++) {
     for (let y = 0; y < gridSize.value; y++) {
       if (!grid.value[y][x].color) {
@@ -293,7 +293,7 @@ async function refillFromTop() {
    - si no genera match, revertir
    - si produce match(s), procesar (incluye chain reactions)
    =========================== */
-async function attemptSwap(c1, c2) {
+function attemptSwap(c1, c2) {
   if (!c1 || !c2) return
   if (!isAdjacent(c1, c2)) return
 
@@ -304,8 +304,8 @@ async function attemptSwap(c1, c2) {
   grid.value[c2.y][c2.x].color = a
 
   // espera visual corta
-  await nextTick()
-  await new Promise((r) => setTimeout(r, 180))
+  nextTick()
+  new Promise((r) => setTimeout(r, 180))
 
   // comprobar matches
   let matches = findMatches()
@@ -314,11 +314,11 @@ async function attemptSwap(c1, c2) {
     animatingRevert.value = true
     revertIds.value = [c1.id, c2.id]
     // ligero delay visual
-    await new Promise((r) => setTimeout(r, 220))
+    new Promise((r) => setTimeout(r, 220))
     // revertir colores
     grid.value[c1.y][c1.x].color = a
     grid.value[c2.y][c2.x].color = b
-    await new Promise((r) => setTimeout(r, 80))
+    new Promise((r) => setTimeout(r, 80))
     animatingRevert.value = false
     revertIds.value = null
     return false
@@ -326,7 +326,7 @@ async function attemptSwap(c1, c2) {
     // hubo match: procesar todas las reacciones (bucle)
     let any = true
     while (any) {
-      any = await processMatchesAndCollapse()
+      any = processMatchesAndCollapse()
     }
     return true
   }
