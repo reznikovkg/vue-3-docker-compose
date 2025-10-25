@@ -3,7 +3,7 @@
     <header class="game-page__header">
       <h1 class="game-page__title">✨ Match-3 Game</h1>
       <p class="game-page__subtitle">
-        Игра “3 в ряд” по прототипу игры “сокровеща монтесумы"
+        Игра “3 в ряд”
       </p>
     </header>
 
