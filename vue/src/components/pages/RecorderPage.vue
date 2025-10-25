@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import RecorderControls from '@/components/recorder/RecorderControls.vue'
 import RecorderDraft from '@/components/recorder/RecorderDraft.vue'
@@ -48,7 +48,21 @@ const isRecording = ref(false)
 const isProcessing = ref(false)
 const errorMessage = ref('')
 
-const draftName = ref('')
+const draftName = computed({
+  get: () => draft.value?.name || '',
+  set: (value: string) => {
+    const currentDraft = draft.value
+
+    if (!currentDraft || currentDraft.name === value) {
+      return
+    }
+
+    store.dispatch('recorder/setDraft', {
+      ...currentDraft,
+      name: value
+    })
+  }
+})
 const mediaRecorder = ref<MediaRecorder | null>(null)
 const mediaStream = ref<MediaStream | null>(null)
 const audioChunks = ref<Blob[]>([])
@@ -243,13 +257,10 @@ const saveDraft = () => {
   const trimmedName = draftName.value.trim()
   store.dispatch('recorder/saveDraft', {
     name: trimmedName || draft.value.name
-  }).then(() => {
-    draftName.value = ''
   })
 }
 
 const discardDraft = () => {
-  draftName.value = ''
   store.dispatch('recorder/setDraft', null)
 }
 
@@ -270,21 +281,6 @@ onBeforeUnmount(() => {
     stopRecording()
   }
   cleanupStream()
-})
-
-watch(draft, (value) => {
-  draftName.value = value?.name || ''
-}, { immediate: true })
-
-watch(draftName, (value) => {
-  if (!draft.value || draft.value.name === value) {
-    return
-  }
-
-  store.dispatch('recorder/setDraft', {
-    ...draft.value,
-    name: value
-  })
 })
 </script>
 
