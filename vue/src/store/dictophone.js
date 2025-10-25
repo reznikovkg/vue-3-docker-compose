@@ -67,51 +67,56 @@ export default {
   },
   actions: {
     startRecording({ commit, state }) {
-      return new Promise(async (resolve) => {
+      return new Promise((resolve) => {
         try {
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             throw new Error('Audio recording is not supported in this browser')
           }
 
-          const stream = await navigator.mediaDevices.getUserMedia({
+          navigator.mediaDevices.getUserMedia({
             audio: {
               echoCancellation: true,
               noiseSuppression: true,
               sampleRate: 44100
             }
-          })
+          }).then((stream) => {
+            const mediaRecorder = new MediaRecorder(stream)
+            commit('SET_AUDIO_CHUNKS', [])
+            commit('SET_ERROR', null)
+            commit('SET_HAS_UNSAVED_RECORDING', false)
 
-          const mediaRecorder = new MediaRecorder(stream)
-          commit('SET_AUDIO_CHUNKS', [])
-          commit('SET_ERROR', null)
-          commit('SET_HAS_UNSAVED_RECORDING', false)
-
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-              commit('ADD_AUDIO_CHUNK', event.data)
+            mediaRecorder.ondataavailable = (event) => {
+              if (event.data.size > 0) {
+                commit('ADD_AUDIO_CHUNK', event.data)
+              }
             }
-          }
 
-          mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(state.audioChunks, { type: 'audio/webm' })
-            const audioUrl = URL.createObjectURL(audioBlob)
+            mediaRecorder.onstop = () => {
+              const audioBlob = new Blob(state.audioChunks, { type: 'audio/webm' })
+              const audioUrl = URL.createObjectURL(audioBlob)
 
-            commit('SET_CURRENT_AUDIO_URL', audioUrl)
-            commit('SET_HAS_UNSAVED_RECORDING', true)
+              commit('SET_CURRENT_AUDIO_URL', audioUrl)
+              commit('SET_HAS_UNSAVED_RECORDING', true)
 
-            stream.getTracks().forEach(track => track.stop())
-          }
+              stream.getTracks().forEach(track => track.stop())
+            }
 
-          mediaRecorder.onerror = (event) => {
-            console.error('MediaRecorder error:', event)
-            commit('SET_ERROR', 'Recording error occurred')
-            commit('SET_RECORDING', false)
-          }
+            mediaRecorder.onerror = (event) => {
+              console.error('MediaRecorder error:', event)
+              commit('SET_ERROR', 'Recording error occurred')
+              commit('SET_RECORDING', false)
+            }
 
-          mediaRecorder.start(1000)
-          commit('SET_MEDIA_RECORDER', mediaRecorder)
-          commit('SET_RECORDING', true)
-          resolve(true)
+            mediaRecorder.start(1000)
+            commit('SET_MEDIA_RECORDER', mediaRecorder)
+            commit('SET_RECORDING', true)
+            resolve(true)
+
+          }).catch((err) => {
+            console.error('Error starting recording:', err)
+            commit('SET_ERROR', `Failed to access microphone: ${err.message}`)
+            resolve(false)
+          })
 
         } catch (err) {
           console.error('Error starting recording:', err)
