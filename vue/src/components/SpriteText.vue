@@ -12,17 +12,14 @@
 <script setup>
 import { computed } from 'vue'
 
-// Définition des props
 const props = defineProps({
-  label: { type: String, required: true },
-  config: { type: Object, required: true },
+  label: String,
+  config: Object,
   fontSize: { type: Number, default: 60 }
 })
 
-// Convertit le label en tableau de caractères
 const labelChars = computed(() => props.label.toUpperCase().split(''))
 
-// Fonction fléchée pour récupérer le style de chaque caractère
 const getCharStyle = (char) => {
   const pos = props.config.spriteMap[char] ?? [0, 0]
   const [col, row] = pos
@@ -41,7 +38,3 @@ const getCharStyle = (char) => {
   }
 }
 </script>
-
-<style lang="less" scoped>
-@import '@/styles/sprite-text.less';
-</style>

@@ -1,19 +1,38 @@
-// Bloc principal
 .sprite-text {
   display: flex;
   align-items: center;
   gap: 4px;
 
-  // Élément BEM
   &__char {
     display: inline-block;
-    transition: transform 0.2s ease-in-out;
+  }
+}
+
+.sprite-debug {
+  display: grid;
+  grid-template-columns: repeat(6, auto);
+  gap: 2px;
+  margin-top: 20px;
+
+  &__cell {
+    position: relative;
+    border: 1px solid #ccc;
   }
 
-  // Modificateur : si on veut une animation spéciale
-  &--hoverable {
-    .sprite-text__char:hover {
-      transform: scale(1.1);
-    }
+  &__label {
+    position: absolute;
+    bottom: 0;
+    right: 2px;
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.7);
   }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: white;
 }

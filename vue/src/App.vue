@@ -1,26 +1,20 @@
 <template>
-  <main class="app">
-    <div>
-      <SpriteText label="HELLO123" :config="config" :fontSize="63" />
-      <SpriteDebug :config="config" />
-    </div>
+  <main>
+    <SpriteGrid :config="config" />
   </main>
 </template>
 
 <script setup>
-import SpriteText from './components/SpriteText.vue'
-import SpriteDebug from './components/SpriteDebug.vue'
+import SpriteGrid from './components/SpriteGrid.vue'
 import sprite from './assets/font-sprite.png'
 
-// ⚙️ Le même mapping qu’avant
 const spriteMap = {
-  'A': [0, 0], 'B': [1, 0], 'C': [2, 0], 'D': [3, 0], 'E': [4, 0], 'F': [5, 0],
-  'G': [0, 1], 'H': [1, 1], 'I': [2, 1], 'J': [3, 1], 'K': [4, 1], 'L': [5, 1],
-  'M': [0, 2], 'N': [1, 2], 'O': [2, 2], 'P': [3, 2], 'Q': [4, 2], 'R': [5, 2],
-  'S': [0, 3], 'T': [1, 3], 'U': [2, 3], 'V': [3, 3], 'W': [4, 3], 'X': [5, 3],
-  'Y': [0, 4], 'Z': [1, 4],
-  '0': [2, 4], '1': [3, 4], '2': [4, 4], '3': [5, 4],
-  '4': [0, 5], '5': [1, 5], '6': [2, 5], '7': [3, 5], '8': [4, 5], '9': [5, 5]
+  'A': [0, 0], 'B': [1, 0], 'C': [2, 0], 'D': [3, 0], 'E': [4, 0], 'F': [5, 0], 'G': [6, 0],
+  'H': [0, 1], 'I': [1, 1], 'J': [2, 1], 'K': [3, 1], 'L': [4, 1], 'M': [5, 1],
+  'N': [0, 2], 'O': [1, 2], 'P': [2, 2], 'Q': [3, 2], 'R': [4, 2], 'S': [5, 2], 'T': [6, 2],
+  'U': [0, 3], 'V': [1, 3], 'W': [2, 3], 'X': [3, 3], 'Y': [4, 3], 'Z': [5, 3],
+  '0': [0, 4], '1': [1, 4], '2': [2, 4], '3': [3, 4], '4': [4, 4],
+  '5': [0, 5], '6': [1, 5], '7': [2, 5], '8': [3, 5], '9': [4, 5]
 }
 
 const config = {
@@ -33,12 +27,12 @@ const config = {
 }
 </script>
 
-<style scoped>
-.app {
+<style>
+main {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  height: 100vh;
   background: white;
-  min-height: 100vh;
 }
 </style>
