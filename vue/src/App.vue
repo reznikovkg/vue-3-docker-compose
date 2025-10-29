@@ -1,9 +1,19 @@
 <template>
-  <RouterView />
+  <main>
+    <SpriteText text="HELLO IT IS ME" />
+  </main>
 </template>
 
 <script setup>
+import SpriteText from './components/SpriteText.vue'
 </script>
 
-<style scoped lang="scss">
+<style>
+main {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: white;
+}
 </style>
