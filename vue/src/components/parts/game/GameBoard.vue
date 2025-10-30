@@ -106,10 +106,28 @@ const setBoard = () => {
 
   markMatches()
 }
+const markMatches = () => {
+  const matches: Gem[] = findMatches(rows.value)
 
-const findMatches = (items: any) => {
-  const matches = []
+  const newRows: Gem[][] = [ ...rows.value ]
+  matches.forEach((match: Gem) => {
+    newRows[match.row][match.col].flag = true
+  })
+}
+const findMatches = (items: Gem[][]) => {
+  const matches: Gem[] = []
   const size = items.length
+
+  const horizontalMatches = findHorizontalMatches(items, size)
+  matches.push(...horizontalMatches)
+
+  const verticalMatches = findVerticalMatches(items, size)
+  matches.push(...verticalMatches)
+
+  return matches
+}
+const findHorizontalMatches = (items: Gem[][], size: number) => {
+  const matches = []
 
   for (let rowIndex = 0; rowIndex < size; rowIndex++) {
     let count = 1
@@ -133,6 +151,11 @@ const findMatches = (items: any) => {
       }
     }
   }
+
+  return matches
+}
+const findVerticalMatches = (items: Gem[][], size: number) => {
+  const matches = []
 
   for (let cIndex = 0; cIndex < size; cIndex++) {
     let count = 1
@@ -158,15 +181,6 @@ const findMatches = (items: any) => {
   }
 
   return matches
-}
-
-const markMatches = () => {
-  const matches = findMatches(rows.value)
-
-  const newRows = [ ...rows.value ]
-  matches.forEach((match) => {
-    newRows[match.row][match.col].flag = true
-  })
 }
 
 onMounted(() => {
