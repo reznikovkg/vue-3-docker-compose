@@ -1,0 +1,8 @@
+export interface GemType {
+  id: number
+  type: number
+  row: number
+  color: string
+  col: number
+  flag?: boolean
+}
