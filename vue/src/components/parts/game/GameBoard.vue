@@ -2,6 +2,9 @@
   <div class="game-board">
     <div class="game-board__control">
       <div class="select">
+        <button @click="() => setBoard()">
+          update
+        </button>
         <label for="grid-size" class="select__label">
           Размер сетки:
         </label>
@@ -32,7 +35,11 @@
           :key="col.id"
           class="game-board__col"
         >
-          <div class="game-board__col-item">
+          <div
+            class="game-board__col-item"
+            :class="{ mark: col.flag }"
+            :style="{ background: col.color }"
+          >
             {{ col.type }}
           </div>
         </div>
@@ -48,24 +55,40 @@ interface Gem {
   id: number
   type: number
   row: number
+  color: string
   col: number
+  flag?: boolean
 }
 
 const AVAILABLE_SIZES = [4, 5, 6, 7, 8]
 const MAX = 8
+const GEM_COLORS = [
+  '#FF6B6B', // Красный
+  '#4ECDC4', // Бирюзовый
+  '#45B7D1', // Голубой
+  '#96CEB4', // Зеленый
+  '#FFEAA7', // Желтый
+  '#DDA0DD', // Сливовый
+  '#98D8C8', // Мятный
+  '#F7DC6F'  // Светло-желтый
+]
 
 const gridSize = ref(8)
 const rows = ref<Gem[][]>([])
 const nextGemId = ref(1)
 
 const generateGemId = () => nextGemId.value++
-const getRandomGemType = () => Math.floor(Math.random() * MAX) + 1
-const createGem = (row: number, col: number) => ({
-  id: generateGemId(),
-  type: getRandomGemType(),
-  row,
-  col
-})
+const getRandomGemType = () => Math.floor(Math.random() * GEM_COLORS.length) + 1
+const createGem = (row: number, col: number) => {
+  const type = getRandomGemType()
+  return {
+    id: generateGemId(),
+    type,
+    row,
+    color: GEM_COLORS[type - 1],
+    col,
+  }
+}
 const setBoard = () => {
   const size = gridSize.value
   const newBoard: Gem[][] = []
@@ -80,6 +103,70 @@ const setBoard = () => {
   }
 
   rows.value = newBoard
+
+  markMatches()
+}
+
+const findMatches = (items: any) => {
+  const matches = []
+  const size = items.length
+
+  for (let rowIndex = 0; rowIndex < size; rowIndex++) {
+    let count = 1
+
+    for (let colIndex = 1; colIndex < size; colIndex++) {
+      if (items[rowIndex][colIndex].type === items[rowIndex][colIndex - 1].type) {
+        count++
+      } else {
+        if (count >= 3) {
+          for(let countedIndex = colIndex - count; countedIndex < colIndex; countedIndex++) {
+            matches.push(items[rowIndex][countedIndex])
+          }
+        }
+        count = 1
+      }
+    }
+
+    if (count >= 3) {
+      for (let countedIndex = size - count; countedIndex < size; countedIndex++) {
+        matches.push(items[rowIndex][countedIndex])
+      }
+    }
+  }
+
+  for (let cIndex = 0; cIndex < size; cIndex++) {
+    let count = 1
+
+    for (let rIndex = 1; rIndex < size; rIndex++) {
+      if (items[rIndex][cIndex].type === items[rIndex - 1][cIndex].type) {
+        count++
+      } else {
+        if (count >= 3) {
+          for(let countedIndex = rIndex - count; countedIndex < rIndex; countedIndex++) {
+            matches.push(items[countedIndex][cIndex])
+          }
+        }
+        count = 1
+      }
+    }
+
+    if (count >= 3) {
+      for (let countedIndex = size - count; countedIndex < size; countedIndex++) {
+        matches.push(items[countedIndex][cIndex])
+      }
+    }
+  }
+
+  return matches
+}
+
+const markMatches = () => {
+  const matches = findMatches(rows.value)
+
+  const newRows = [ ...rows.value ]
+  matches.forEach((match) => {
+    newRows[match.row][match.col].flag = true
+  })
 }
 
 onMounted(() => {
@@ -95,10 +182,15 @@ onMounted(() => {
     margin-top: 8px;
   }
 
-  &__col {
+  &__col-item {
     font-size: 16px;
     padding: 8px;
     border: 1px solid;
+  }
+
+  .mark {
+    color: white;
+    font-weight: 800;
   }
 }
 </style>
