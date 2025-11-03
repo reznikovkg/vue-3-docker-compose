@@ -60,11 +60,11 @@ const nextGemId = ref(1)
 
 const generateGemId = () => nextGemId.value++
 const getRandomGemType = () => Math.floor(Math.random() * GEM_COLORS.length) + 1
-const createGem = (row: number, col: number) => {
+const createGem = (row: number, col: number, defaultType?: string) => {
   const type = getRandomGemType()
   return {
     id: generateGemId(),
-    type,
+    type: defaultType || type,
     row,
     color: GEM_COLORS[type - 1],
     col,
@@ -89,11 +89,16 @@ const setBoard = () => {
 }
 const markMatches = () => {
   const matches: GemType[] = findMatches(rows.value)
+  const uniqueMatches = [...new Set(matches)]
 
   const newRows: GemType[][] = [ ...rows.value ]
-  matches.forEach((match: GemType) => {
+  uniqueMatches.forEach((match: GemType) => {
     newRows[match.row][match.col].flag = true
   })
+
+  setTimeout(() => {
+    rows.value = changePosition(newRows)
+  }, 2000)
 }
 const findMatches = (items: GemType[][]) => {
   const matches: GemType[] = []
@@ -106,6 +111,31 @@ const findMatches = (items: GemType[][]) => {
   matches.push(...verticalMatches)
 
   return matches
+}
+const changePosition = (items: GemType[][]) => {
+  const size = items.length
+  const newItems: GemType[][] = Array.from({ length: size }, () => ([]))
+
+  for (let cIndex = 0; cIndex < size; cIndex++) {
+    const collectColumns = []
+
+    for (let rIndex = 0; rIndex < size; rIndex++) {
+      collectColumns.push(items[rIndex][cIndex])
+    }
+
+    const filterCollectedColumns = collectColumns.filter((col) => !col.flag)
+    const emptyCount = size - filterCollectedColumns.length
+    const newColumns = [
+      ...Array.from({ length: emptyCount }, () => createGem(0, 0, '0')),
+      ...filterCollectedColumns
+    ]
+
+    for (let rIndex = 0; rIndex < size; rIndex++) {
+      newItems[rIndex][cIndex] = newColumns[rIndex]
+    }
+  }
+
+  return newItems
 }
 
 onMounted(() => {
