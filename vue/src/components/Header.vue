@@ -1,7 +1,7 @@
 <template>
   <header class="menu">
     <Link
-      v-for="item in items"
+      v-for="item in items.filter((item) => $route.name !== item.to.name)"
       :key="item.label"
       class="menu__link"
       :to="item.to"
@@ -19,7 +19,8 @@ import { ROUTES } from '@/router';
 
 const items = ref([
   { label: 'Main', to: { name: ROUTES.MAIN } },
-  { label: 'Rules', to: { name: ROUTES.INFO } },
+  { label: 'Rules', to: { name: ROUTES.RULES } },
+  { label: 'Levels', to: { name: ROUTES.LEVELS } },
 ]);
 </script>
 

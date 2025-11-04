@@ -3,10 +3,10 @@
     <nav class="menu">
       <ul class="menu__list">
         <li>
-          <Link class="menu__link" :to="{ name: $routes.GAME }">Game</Link>
+          <Link class="menu__link" :to="{ name: $routes.LEVELS }">Game</Link>
         </li>
         <li>
-          <Link class="menu__link" :to="{ name: $routes.INFO }">Rules</Link>
+          <Link class="menu__link" :to="{ name: $routes.RULES }">Rules</Link>
         </li>
       </ul>
     </nav>

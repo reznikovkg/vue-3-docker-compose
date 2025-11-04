@@ -4,12 +4,14 @@ import MainPage from '../pages/MainPage.vue';
 
 import Layout from '@/modules/Layout.vue';
 import GamePage from '@/pages/GamePage.vue';
-import InfoPage from '@/pages/InfoPage.vue';
+import LevelsPage from '@/pages/LevelsPage.vue';
+import RulesPage from '@/pages/RulesPage.vue';
 
 export const ROUTES = {
   MAIN: 'MAIN',
   GAME: 'GAME',
-  INFO: 'INFO',
+  RULES: 'RULES',
+  LEVELS: 'LEVELS',
 };
 
 const routes = [
@@ -23,14 +25,19 @@ const routes = [
         component: MainPage,
       },
       {
-        name: ROUTES.GAME,
-        path: 'game',
-        component: GamePage,
+        name: ROUTES.RULES,
+        path: 'rules',
+        component: RulesPage,
       },
       {
-        name: ROUTES.INFO,
-        path: 'info',
-        component: InfoPage,
+        name: ROUTES.LEVELS,
+        path: 'game',
+        component: LevelsPage,
+      },
+      {
+        name: ROUTES.GAME,
+        path: 'game/:id',
+        component: GamePage,
       },
     ],
   },
