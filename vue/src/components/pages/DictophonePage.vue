@@ -1,41 +1,61 @@
 <template>
-  <div class="voice-recorder">
-    <h2 class="title">Dictophone </h2>
+  <main class="voice-recorder">
+    <h1 class="voice-recorder__title">Dictophone</h1>
 
-    <RouterLink :to="{ name: $route.name }">To Index</RouterLink>
-
-    <div class="controls">
+    <div class="voice-recorder__controls">
       <button
-        @click="() => startRecording()"
+        @click="handleStartRecording"
         :disabled="isRecording"
-        class="button button-primary"
+        class="voice-recorder__button voice-recorder__button--primary"
       >
-        🎤 Start Recording
+        Start Recording
       </button>
 
       <button
-        @click="() => stopRecording()"
+        @click="handleStopRecording"
         :disabled="!isRecording"
-        class="button button-secondary"
+        class="voice-recorder__button voice-recorder__button--secondary"
       >
-        ⏹️ Stop
+        Stop
       </button>
 
       <button
-        @click="() => clearAllRecordings()"
+        @click="handleClearAllRecordings"
         :disabled="!hasRecordings"
-        class="button button-danger"
+        class="voice-recorder__button voice-recorder__button--secondary"
       >
-        🗑️ Clear All
+        Clear All
+      </button>
+
+      <button
+        @click="handleSaveRecord"
+        :disabled="isRecording"
+        class="voice-recorder__button voice-recorder__button--secondary"
+      >
+        Save
+      </button>
+
+      <button
+        @click="handleDiscardRecording"
+        :disabled="isRecording"
+        class="voice-recorder__button voice-recorder__button--secondary"
+      >
+        Discard
       </button>
     </div>
 
-    <div class="status">
-      <div v-if="isRecording" class="recording-indicator">
-        <span class="pulse"></span>
-        Recording...
+    <div class="voice-recorder__status">
+      <div
+        v-if="isRecording"
+        class="voice-recorder__indicator voice-recorder__indicator--recording"
+      >
+        <span class="recorder"></span>
+        Recording
       </div>
-      <div v-else-if="currentAudioUrl" class="ready-indicator">
+      <div
+        v-else-if="currentAudioUrl"
+        class="voice-recorder__indicator voice-recorder__indicator--ready"
+      >
         ✅ Recording ready
       </div>
     </div>
@@ -44,28 +64,37 @@
       v-if="currentAudioUrl"
       :src="currentAudioUrl"
       controls
-      class="audio-player"
+      class="voice-recorder__audio-player"
     ></audio>
 
-    <div v-if="recordings" class="recordings-section">
-      <h3 class="subtitle">Recordings ({{ recordingsCount }})</h3>
+    <div
+      v-if="recordings"
+      class="voice-recorder__recordings"
+    >
+      <h3 class="voice-recorder__subtitle">
+        Recordings ({{ recordingsCount }})
+      </h3>
 
-      <div class="recordings-list">
+      <div class="voice-recorder__list">
         <div
           v-for="recording in recordings"
           :key="recording.id"
-          class="recording-item"
+          class="voice-recorder__item"
         >
-          <div class="recording-info">
-            <span class="recording-name">{{ recording.name }}</span>
-            <span class="recording-date">{{ recording.date }}</span>
+          <div class="voice-recorder__item-info">
+            <span class="voice-recorder__item-name">{{ recording.name }}</span>
+            <span class="voice-recorder__item-date">{{ recording.date }}</span>
           </div>
 
-          <div class="recording-controls">
-            <audio :src="recording.url" controls class="recording-audio"></audio>
+          <div class="voice-recorder__item-controls">
+            <audio
+              :src="recording.url"
+              controls
+              class="voice-recorder__item-audio"
+            ></audio>
             <button
-              @click="() => deleteRecording(recording.id)"
-              class="button button-small button-danger"
+              @click="() => handleDeleteRecording(recording.id)"
+              class="voice-recorder__button voice-recorder__button--small voice-recorder__button--danger"
             >
               Delete
             </button>
@@ -73,23 +102,28 @@
         </div>
       </div>
 
-      <div class="summary">
+      <div class="voice-recorder__summary">
         Total recordings: {{ recordingsCount }}
       </div>
     </div>
 
-    <div v-else class="empty-state">
+    <div
+      v-else
+      class="voice-recorder__empty"
+    >
       <p>No recordings yet. Start by clicking the record button!</p>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
-import {router} from "@/router";
+import { router } from "@/router"
+
 
 const store = useStore()
+
 
 const isRecording = computed(() => store.getters['dictophone/getIsRecording'])
 const recordings = computed(() => store.getters['dictophone/getRecordings'])
@@ -97,10 +131,21 @@ const currentAudioUrl = computed(() => store.getters['dictophone/getCurrentAudio
 const hasRecordings = computed(() => store.getters['dictophone/getHasRecordings'])
 const recordingsCount = computed(() => store.getters['dictophone/getRecordingsCount'])
 
+
 const startRecording = () => store.dispatch('dictophone/startRecording')
 const stopRecording = () => store.dispatch('dictophone/stopRecording')
 const deleteRecording = (id: string) => store.dispatch('dictophone/deleteRecording', id)
 const clearAllRecordings = () => store.dispatch('dictophone/clearAllRecordings')
+const saveRecord = () => store.dispatch('dictophone/saveRecording')
+const discardRecording = () => store.dispatch('dictophone/discardRecording')
+
+
+const handleStartRecording = () => startRecording()
+const handleStopRecording = () => stopRecording()
+const handleDeleteRecording = (id: string) => deleteRecording(id)
+const handleClearAllRecordings = () => clearAllRecordings()
+const handleSaveRecord = () => saveRecord()
+const handleDiscardRecording = () => discardRecording()
 
 onUnmounted(() => {
   if (isRecording.value) {
@@ -109,188 +154,162 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .voice-recorder {
+  $self: &;
   max-width: 600px;
   margin: 0 auto;
   padding: 2rem;
-}
 
-.title {
-  color: #2c3e50;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.subtitle {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-}
-
-.controls {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.button-primary {
-  background-color: #42b883;
-  color: white;
-}
-
-.button-primary:hover:not(:disabled) {
-  background-color: #369870;
-}
-
-.button-secondary {
-  background-color: #3498db;
-  color: white;
-}
-
-.button-secondary:hover:not(:disabled) {
-  background-color: #2980b9;
-}
-
-.button-danger {
-  background-color: #e74c3c;
-  color: white;
-}
-
-.button-danger:hover:not(:disabled) {
-  background-color: #c0392b;
-}
-
-.button-small {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
-.status {
-  text-align: center;
-  margin-bottom: 2rem;
-  min-height: 2rem;
-}
-
-.recording-indicator {
-  color: #e74c3c;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.pulse {
-  width: 12px;
-  height: 12px;
-  background-color: #e74c3c;
-  border-radius: 50%;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 1;
+  &__title {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    text-align: center;
   }
-  50% {
-    opacity: 0.4;
+
+  &__subtitle {
+    color: #2c3e50;
+    margin-bottom: 1rem;
   }
-  100% {
-    opacity: 1;
+
+  &__controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
   }
-}
 
-.ready-indicator {
-  color: #27ae60;
-  font-weight: bold;
-}
+  &__button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
 
-.audio-player {
-  width: 100%;
-  margin-bottom: 2rem;
-}
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
-.recordings-section {
-  margin-top: 2rem;
-}
+    &--primary {
+      background-color: #42b883;
+      color: white;
 
-.recordings-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
+      &:hover:not(:disabled) {
+        background-color: #369870;
+      }
+    }
 
-.recording-item {
-  border: 1px solid #e1e1e1;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-}
+    &--secondary {
+      background-color: #3498db;
+      color: white;
 
-.recording-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
+      &:hover:not(:disabled) {
+        background-color: #2980b9;
+      }
+    }
 
-.recording-name {
-  font-weight: bold;
-  color: #2c3e50;
-}
+    &--danger {
+      background-color: #e74c3c;
+      color: white;
 
-.recording-date {
-  color: #7f8c8d;
-  font-size: 0.875rem;
-}
+      &:hover:not(:disabled) {
+        background-color: #c0392b;
+      }
+    }
 
-.recording-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
+    &--small {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+  }
 
-.recording-audio {
-  flex: 1;
-}
+  &__status {
+    text-align: center;
+    margin-bottom: 2rem;
+    min-height: 2rem;
+  }
 
-.summary {
-  text-align: center;
-  color: #7f8c8d;
-  font-size: 0.875rem;
-  margin-top: 1rem;
-}
+  &__indicator {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 
-.empty-state {
-  text-align: center;
-  color: #7f8c8d;
-  padding: 2rem;
-}
+    &--recording {
+      color: #e74c3c;
+    }
 
-.error-message {
-  background-color: #fee;
-  border: 1px solid #e74c3c;
-  color: #c0392b;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-  text-align: center;
+    &--ready {
+      color: #27ae60;
+    }
+  }
+
+
+  &__audio-player {
+    width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  &__recordings {
+    margin-top: 2rem;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  &__item {
+    border: 1px solid #e1e1e1;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+
+    &-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    &-name {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    &-date {
+      color: #7f8c8d;
+      font-size: 0.875rem;
+    }
+
+    &-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    &-audio {
+      flex: 1;
+    }
+  }
+
+  &__summary {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+  }
+
+  &__empty {
+    text-align: center;
+    color: #7f8c8d;
+    padding: 2rem;
+  }
 }
 </style>
