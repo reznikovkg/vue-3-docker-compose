@@ -37,8 +37,9 @@
         >
           <div
             class="game-board__col-item"
-            :class="{ mark: col.flag }"
+            :class="{ mark: col.flag, selected: col.selected }"
             :style="{ background: col.color }"
+            @click="() => handleClick(col)"
           >
             {{ col.type }}
           </div>
@@ -57,7 +58,42 @@ import { GEM_COLORS, AVAILABLE_SIZES } from "@/services/constants"
 const gridSize = ref(8)
 const rows = ref<GemType[][]>([])
 const nextGemId = ref(1)
+const selectedGem = ref<GemType | null>(null)
 
+const handleClick = (item: GemType) => {
+  const newRows: GemType[][] = rows.value.map(row =>
+    row.map(col => ({...col}))
+  )
+
+  if (selectedGem.value) {
+    if (selectedGem.value.id === item.id) {
+      newRows[item.row][item.col].selected = false
+      rows.value = newRows
+      selectedGem.value = null
+      return
+    }
+
+    const nextOrPrevCol = Math.abs(selectedGem.value.col - item.col)
+    const nextOrPrevRow = Math.abs(selectedGem.value.row - item.row)
+    if ((nextOrPrevCol === 0 && nextOrPrevRow === 1) || (nextOrPrevCol === 1 && nextOrPrevRow === 0)) {
+      newRows[selectedGem.value.row][selectedGem.value.col] = {
+        ...item
+      }
+      newRows[item.row][item.col] = {
+        ...selectedGem.value,
+        selected: false
+      }
+      rows.value = newRows
+      selectedGem.value = null
+    }
+  } else {
+    selectedGem.value = item
+    newRows[item.row][item.col].selected = true
+    rows.value = newRows
+  }
+
+  markMatches()
+}
 const generateGemId = () => nextGemId.value++
 const getRandomGemType = () => Math.floor(Math.random() * GEM_COLORS.length) + 1
 const createGem = (row: number, col: number, defaultType?: string) => {
@@ -96,9 +132,7 @@ const markMatches = () => {
     newRows[match.row][match.col].flag = true
   })
 
-  setTimeout(() => {
-    rows.value = changePosition(newRows)
-  }, 2000)
+  rows.value = changePosition(newRows)
 }
 const findMatches = (items: GemType[][]) => {
   const matches: GemType[] = []
@@ -126,7 +160,7 @@ const changePosition = (items: GemType[][]) => {
     const filterCollectedColumns = collectColumns.filter((col) => !col.flag)
     const emptyCount = size - filterCollectedColumns.length
     const newColumns = [
-      ...Array.from({ length: emptyCount }, () => createGem(0, 0, '0')),
+      ...Array.from({ length: emptyCount }, () => createGem(0, 0)),
       ...filterCollectedColumns
     ]
 
@@ -160,6 +194,11 @@ onMounted(() => {
   .mark {
     color: white;
     font-weight: 800;
+  }
+
+  .selected {
+    font-weight: 800;
+    border: 2px solid green;
   }
 }
 </style>
