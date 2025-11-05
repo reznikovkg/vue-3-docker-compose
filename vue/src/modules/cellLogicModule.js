@@ -1,7 +1,8 @@
 export const CELL_SIZE = 40;
 
-export const getCellLogic = (store, componentInstance) => {
-  
+export const getCellLogic = (store, componentInstanceContext) => {
+  const { highlightedCells, selectedObject, gameMode } = componentInstanceContext;
+
   const getGridData = () => ({
       gridWidth: store.getters.getGridWidth,
       gridHeight: store.getters.getGridHeight,
@@ -14,38 +15,64 @@ export const getCellLogic = (store, componentInstance) => {
   const isValidCell = (row, col, width, height) => {
     return row >= 0 && row < height && col >= 0 && col < width;
   };
-  
+
   const isCellOccupied = (row, col, grid, width, height) => {
-    if (!isValidCell(row, col, width, height)) return true;
+    if (!isValidCell(row, col, width, height)) 
+    {
+      return true;
+    }
     return grid[row]?.[col]?.isOccupied || false;
   };
 
   const getCellBackgroundColor = (row, col, grid, width, height, cellData) => {
-    if (!isValidCell(row, col, width, height)) return '#a1f1ad';
-    
-    if (cellData && cellData.isOccupied && cellData.occupyingObjectColor) {
+    if (!isValidCell(row, col, width, height)) return 'rgba(161, 241, 173, 1)';
+
+    const highlightedInfo = highlightedCells.value.find(h => h.row === row && h.col === col);
+
+    if (selectedObject.value && gameMode.value === 'place' && highlightedInfo) 
+    {
+      if (highlightedInfo.isError) 
+      {
+        return 'rgba(255, 0, 0, 0.5)'; 
+      } 
+      else
+      {
+        return 'rgba(76, 175, 80, 0.5)'; 
+      }
+    }
+
+    if (cellData && cellData.isOccupied && cellData.occupyingObjectColor) 
+    {
       return cellData.occupyingObjectColor;
     }
-    return '#a1f1ad';
+    return 'rgba(161, 241, 173, 1)';
   };
 
   const getCellBorderColor = (row, col, grid, width, height, cellData) => {
-    if (!isValidCell(row, col, width, height)) return '#73f173';
-    
-    if (cellData && cellData.isOccupied && cellData.occupyingObjectColor) {
+    if (!isValidCell(row, col, width, height)) 
+    {
+      return 'rgba(115, 241, 115, 1 )'; 
+    }
+
+    const highlightedInfo = highlightedCells.value.find(h => h.row === row && h.col === col);
+
+    if (selectedObject.value && gameMode.value === 'place' && highlightedInfo) 
+    {
+      if (highlightedInfo.isError) 
+      {
+        return 'rgba(255, 0, 0, 0.5)'; 
+      }
+      else 
+      {
+        return 'rgba(76, 175, 80, 0.5)'; 
+      }
+    }
+
+    if (cellData && cellData.isOccupied && cellData.occupyingObjectColor) 
+    {
       return cellData.occupyingObjectColor;
     }
-    return '#73f173';
-  };
-
-  const isCellHighlightedPreview = (row, col, highlightedCells, selectedObject, gameMode) => {
-    if (!selectedObject || gameMode !== 'place' || !highlightedCells) return false;
-    return highlightedCells.some(h => h.row === row && h.col === col && !h.isError);
-  };
-
-  const isCellHighlightedError = (row, col, highlightedCells, selectedObject, gameMode) => {
-    if (!selectedObject || gameMode !== 'place' || !highlightedCells) return false;
-    return highlightedCells.some(h => h.row === row && h.col === col && h.isError);
+    return 'rgba(115, 241, 115, 1)';
   };
 
   return {
@@ -54,8 +81,6 @@ export const getCellLogic = (store, componentInstance) => {
     isValidCell,
     isCellOccupied,
     getCellBackgroundColor,
-    getCellBorderColor,
-    isCellHighlightedPreview,
-    isCellHighlightedError,
+    getCellBorderColor
   };
 };

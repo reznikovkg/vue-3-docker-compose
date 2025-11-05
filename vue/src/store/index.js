@@ -17,7 +17,7 @@ const MUTATIONS = {
 export default createStore({
   state() {
     return {
-      gridWidth: 10,
+       gridWidth: 10,
       gridHeight: 10,
       selectedObject: null,
       gameMode: 'place',
@@ -127,22 +127,28 @@ export default createStore({
     },
 
     initializeGrid: ({ commit, state }) => {
-      const finalGrid = Array(state.gridHeight).fill(null).map((_, rowIndex) =>
-        Array(state.gridWidth).fill(null).map((_, colIndex) => ({
-          row: rowIndex,
-          col: colIndex,
-          isOccupied: false,
-          occupyingObjectId: null,
-          occupyingObjectColor: null,
-        }))
-      );
+      const finalGrid = [];
+      for (let rowIndex = 0; rowIndex < state.gridHeight; rowIndex++) {
+        const rowArray = [];
+        for (let colIndex = 0; colIndex < state.gridWidth; colIndex++) {
+          rowArray.push({
+            row: rowIndex,
+            col: colIndex,
+            isOccupied: false,
+            occupyingObjectId: null,
+            occupyingObjectColor: null,
+          });
+        }
+        finalGrid.push(rowArray);
+      }
       commit(MUTATIONS.SET_GRID, finalGrid);
       commit(MUTATIONS.SET_ALL_PLACED_OBJECTS, []);
       commit(MUTATIONS.SET_NEXT_OBJECT_ID, 1);
     },
 
     placeObject: ({ commit, state, dispatch }, { originRow, originCol }) => {
-      if (!state.selectedObject || state.gameMode !== 'place') {
+      if (!state.selectedObject || state.gameMode !== 'place') 
+      {
         return;
       }
 
@@ -154,13 +160,15 @@ export default createStore({
         const targetRow = originRow + shapePart.y;
         const targetCol = originCol + shapePart.x;
 
-        if (targetRow < 0 || targetRow >= state.gridHeight || targetCol < 0 || targetCol >= state.gridWidth) {
+        if (targetRow < 0 || targetRow >= state.gridHeight || targetCol < 0 || targetCol >= state.gridWidth) 
+        {
           canPlace = false;
           alert('Объект выходит за границы поля');
           return;
         }
 
-        if (state.grid[targetRow]?.[targetCol]?.isOccupied) {
+        if (state.grid[targetRow]?.[targetCol]?.isOccupied) 
+        {
           canPlace = false;
           alert('Невозможно разместить объект: клетки заняты');
           return;
@@ -168,7 +176,8 @@ export default createStore({
         cellsToOccupy.push({ row: targetRow, col: targetCol });
       }
 
-      if (canPlace) {
+      if (canPlace)
+      {
         const newObjectId = state.nextObjectId++;
         const placedObjectData = {
           id: newObjectId,
@@ -184,22 +193,19 @@ export default createStore({
     },
 
     deleteObject: ({ commit, state }, { row, col }) => {
-      if (state.gameMode !== 'delete') {
+      if (state.gameMode !== 'delete') 
+      {
         return;
       }
 
       const cellData = state.grid[row]?.[col];
-      if (!cellData || !cellData.isOccupied || !cellData.occupyingObjectId) {
+      if (!cellData || !cellData.isOccupied || !cellData.occupyingObjectId) 
+      {
         return; 
       }
 
       const objectIdToDelete = cellData.occupyingObjectId;
       const objectIndex = state.allPlacedObjects.findIndex(obj => obj.id === objectIdToDelete);
-
-      if (objectIndex === -1) {
-        console.error(`Object with ID ${objectIdToDelete} not found in allPlacedObjects.`);
-        return;
-      }
 
       const objectToDelete = state.allPlacedObjects[objectIndex];
       commit(MUTATIONS.REMOVE_OBJECT_FROM_GRID, { objectToDelete });

@@ -1,4 +1,5 @@
 <template>
+  <RouterView />
   <div id="app">
     <div class="container">
       <div class="grid">
@@ -16,7 +17,6 @@
       </div>
     </div>
   </div>
-  <RouterView />
 </template>
 
 <script setup>
