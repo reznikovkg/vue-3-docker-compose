@@ -12,7 +12,11 @@ export const findHorizontalMatches = (items: GemType[][], size: number) => {
       } else {
         if (count >= 3) {
           for(let countedIndex = colIndex - count; countedIndex < colIndex; countedIndex++) {
-            matches.push(items[rowIndex][countedIndex])
+            const item = {
+              ...items[rowIndex][countedIndex],
+              row: rowIndex,
+            }
+            matches.push(item)
           }
         }
         count = 1
@@ -21,7 +25,12 @@ export const findHorizontalMatches = (items: GemType[][], size: number) => {
 
     if (count >= 3) {
       for (let countedIndex = size - count; countedIndex < size; countedIndex++) {
-        matches.push(items[rowIndex][countedIndex])
+        const item = {
+          ...items[rowIndex][countedIndex],
+          row: rowIndex,
+          col: countedIndex,
+        }
+        matches.push(item)
       }
     }
   }
@@ -41,7 +50,12 @@ export const findVerticalMatches = (items: GemType[][], size: number) => {
       } else {
         if (count >= 3) {
           for(let countedIndex = rIndex - count; countedIndex < rIndex; countedIndex++) {
-            matches.push(items[countedIndex][cIndex])
+            const item = {
+              ...items[countedIndex][cIndex],
+              row: rIndex,
+              col: cIndex,
+            }
+            matches.push(item)
           }
         }
         count = 1
@@ -50,7 +64,12 @@ export const findVerticalMatches = (items: GemType[][], size: number) => {
 
     if (count >= 3) {
       for (let countedIndex = size - count; countedIndex < size; countedIndex++) {
-        matches.push(items[countedIndex][cIndex])
+        const item = {
+          ...items[countedIndex][cIndex],
+          row: countedIndex,
+          col: cIndex,
+        }
+        matches.push(item)
       }
     }
   }

@@ -31,17 +31,17 @@
         class="game-board__row"
       >
         <div
-          v-for="col in cols"
-          :key="col.id"
+          v-for="col in rows[rowIndex]"
+          :key="rows[col.row][col.col].id"
           class="game-board__col"
         >
           <div
             class="game-board__col-item"
-            :class="{ mark: col.flag, selected: col.selected }"
-            :style="{ background: col.color }"
-            @click="() => handleClick(col)"
+            :class="{ mark: rows[col.row][col.col].flag, selected: rows[col.row][col.col].selected }"
+            :style="{ background: rows[col.row][col.col].color }"
+            @click="() => handleClick(rows[col.row][col.col])"
           >
-            {{ col.type }}
+            {{ rows[col.row][col.col].type }}
           </div>
         </div>
       </div>
@@ -61,9 +61,7 @@ const nextGemId = ref(1)
 const selectedGem = ref<GemType | null>(null)
 
 const handleClick = (item: GemType) => {
-  const newRows: GemType[][] = rows.value.map(row =>
-    row.map(col => ({...col}))
-  )
+  const newRows: GemType[][] = JSON.parse(JSON.stringify(rows.value))
 
   if (selectedGem.value) {
     if (selectedGem.value.id === item.id) {
@@ -132,7 +130,7 @@ const markMatches = () => {
   const matches: GemType[] = findMatches(rows.value)
   const uniqueMatches = [...new Set(matches)]
 
-  const newRows: GemType[][] = [ ...rows.value ]
+  const newRows: GemType[][] = JSON.parse(JSON.stringify(rows.value))
   uniqueMatches.forEach((match: GemType) => {
     newRows[match.row][match.col].flag = true
   })
@@ -165,12 +163,16 @@ const changePosition = (items: GemType[][]) => {
     const filterCollectedColumns = collectColumns.filter((col) => !col.flag)
     const emptyCount = size - filterCollectedColumns.length
     const newColumns = [
-      ...Array.from({ length: emptyCount }, () => createGem(0, 0)),
-      ...filterCollectedColumns
+      ...Array.from({ length: emptyCount }, (_, index) => createGem(index, cIndex)),
+      ...filterCollectedColumns.map((item, index) => ({ ...item, row: index, col: cIndex }))
     ]
 
     for (let rIndex = 0; rIndex < size; rIndex++) {
-      newItems[rIndex][cIndex] = newColumns[rIndex]
+      newItems[rIndex][cIndex] = {
+        ...newColumns[rIndex],
+        row: rIndex,
+        col: cIndex,
+      }
     }
   }
 
