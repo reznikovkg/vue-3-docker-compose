@@ -2,9 +2,6 @@
   <div class="game-board">
     <div class="game-board__control">
       <div class="select">
-        <button @click="() => setBoard()">
-          update
-        </button>
         <label for="grid-size" class="select__label">
           Размер сетки:
         </label>
@@ -153,7 +150,9 @@ const markMatches = () => {
       })
       rows.value = rowsWithRemoving
 
-      resolve(rowsWithRemoving)
+      setTimeout(() => {
+        resolve(rowsWithRemoving)
+      }, 300)
     })
       .then((rowsWithRemoving: any) => changePosition(rowsWithRemoving))
       .then((rowsAfterRemoving) => {
@@ -172,7 +171,6 @@ const markMatches = () => {
           })
           rows.value = finalRows
 
-          console.log('row: ', rows.value)
           // проверяем новые совпадения
           markMatches()
         }, 500)
