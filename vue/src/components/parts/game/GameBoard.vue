@@ -63,6 +63,7 @@ const selectedGem = ref<GemType | null>(null)
 
 const handleClick = (item: GemType) => {
   const newRows: GemType[][] = JSON.parse(JSON.stringify(rows.value))
+  const copyOriginalRows = JSON.parse(JSON.stringify(rows.value))
 
   if (selectedGem.value) {
     if (selectedGem.value.id === item.id) {
@@ -88,10 +89,18 @@ const handleClick = (item: GemType) => {
         selected: false
       }
       rows.value = newRows
-      selectedGem.value = null
+
+      const hasMatches = findAllMatches(newRows)
 
       setTimeout(() => {
-        markMatches()
+        if (hasMatches.length) {
+          markMatches()
+        } else {
+          copyOriginalRows[selectedGem.value.row][selectedGem.value.col].selected = false
+          rows.value = copyOriginalRows
+        }
+
+        selectedGem.value = null
       }, 300)
     }
   } else {
@@ -133,14 +142,14 @@ const setBoard = () => {
   markMatches()
 }
 
-const findAllMatches = () => {
-  const matches: GemType[] = findMatches(rows.value)
+const findAllMatches = (items: GemType[][]) => {
+  const matches: GemType[] = findMatches(items)
   const uniqueMatches = [...new Set(matches)]
 
   return uniqueMatches
 }
 const markMatches = () => {
-  const uniqueMatches = findAllMatches()
+  const uniqueMatches = findAllMatches(rows.value)
 
   if (uniqueMatches.length) {
     new Promise((resolve) => {
