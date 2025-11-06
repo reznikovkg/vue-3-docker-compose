@@ -125,16 +125,25 @@ const setBoard = () => {
 
   markMatches()
 }
-const markMatches = () => {
+
+const findAllMatches = () => {
   const matches: GemType[] = findMatches(rows.value)
   const uniqueMatches = [...new Set(matches)]
 
-  const newRows: GemType[][] = JSON.parse(JSON.stringify(rows.value))
-  uniqueMatches.forEach((match: GemType) => {
-    newRows[match.row][match.col].flag = true
-  })
+  return uniqueMatches
+}
+const markMatches = () => {
+  const uniqueMatches = findAllMatches()
 
-  rows.value = changePosition(newRows)
+  if (uniqueMatches.length) {
+    const newRows: GemType[][] = JSON.parse(JSON.stringify(rows.value))
+    uniqueMatches.forEach((match: GemType) => {
+      newRows[match.row][match.col].flag = true
+    })
+
+    rows.value = changePosition(newRows)
+    markMatches()
+  }
 }
 const findMatches = (items: GemType[][]) => {
   const matches: GemType[] = []
