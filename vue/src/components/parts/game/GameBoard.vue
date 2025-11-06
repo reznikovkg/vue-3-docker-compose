@@ -37,7 +37,11 @@
         >
           <div
             class="game-board__col-item"
-            :class="{ mark: rows[col.row][col.col].flag, selected: rows[col.row][col.col].selected }"
+            :class="{
+              selected: rows[col.row][col.col].selected,
+              removing: rows[col.row][col.col].removing,
+              'is-new': rows[col.row][col.col].isNew
+            }"
             :style="{ background: rows[col.row][col.col].color }"
             @click="() => handleClick(rows[col.row][col.col])"
           >
@@ -88,7 +92,10 @@ const handleClick = (item: GemType) => {
       }
       rows.value = newRows
       selectedGem.value = null
-      markMatches()
+
+      setTimeout(() => {
+        markMatches()
+      }, 300)
     }
   } else {
     selectedGem.value = item
@@ -98,7 +105,7 @@ const handleClick = (item: GemType) => {
 }
 const generateGemId = () => nextGemId.value++
 const getRandomGemType = () => Math.floor(Math.random() * GEM_COLORS.length) + 1
-const createGem = (row: number, col: number) => {
+const createGem = (row: number, col: number, isNew: boolean = false) => {
   const type = getRandomGemType()
   return {
     id: generateGemId(),
@@ -106,6 +113,9 @@ const createGem = (row: number, col: number) => {
     row,
     color: GEM_COLORS[type - 1],
     col,
+    selected: false,
+    removing: false,
+    isNew,
   }
 }
 const setBoard = () => {
@@ -136,14 +146,52 @@ const markMatches = () => {
   const uniqueMatches = findAllMatches()
 
   if (uniqueMatches.length) {
-    const newRows: GemType[][] = JSON.parse(JSON.stringify(rows.value))
-    uniqueMatches.forEach((match: GemType) => {
-      newRows[match.row][match.col].flag = true
-    })
+    new Promise((resolve) => {
+      const rowsWithRemoving: GemType[][] = JSON.parse(JSON.stringify(rows.value))
+      uniqueMatches.forEach((match: GemType) => {
+        rowsWithRemoving[match.row][match.col].removing = true
+      })
+      rows.value = rowsWithRemoving
 
-    rows.value = changePosition(newRows)
-    markMatches()
+      resolve(rowsWithRemoving)
+    })
+      .then((rowsWithRemoving: any) => changePosition(rowsWithRemoving))
+      .then((rowsAfterRemoving) => {
+        const rowsWithNew = markNewGems(rowsAfterRemoving, uniqueMatches.length)
+        rows.value = rowsWithNew
+
+        return rowsWithNew
+      })
+      .then(() => {
+        setTimeout(() => {
+          const finalRows = JSON.parse(JSON.stringify(rows.value))
+          finalRows.forEach((row: GemType[]) => {
+            row.forEach((gem: GemType) => {
+              gem.isNew = false
+            })
+          })
+          rows.value = finalRows
+
+          console.log('row: ', rows.value)
+          // проверяем новые совпадения
+          markMatches()
+        }, 500)
+      })
   }
+}
+const markNewGems = (items: GemType[][], removedCount: number): GemType[][] => {
+  const newItems = JSON.parse(JSON.stringify(items))
+  const maxOldId = (nextGemId.value - (removedCount - 1))
+
+  newItems.forEach((row: GemType[]) => {
+    row.forEach((gem: GemType) => {
+      if (gem.id > maxOldId) {
+        gem.isNew = true
+      }
+    })
+  })
+
+  return newItems
 }
 const findMatches = (items: GemType[][]) => {
   const matches: GemType[] = []
@@ -168,11 +216,16 @@ const changePosition = (items: GemType[][]) => {
       collectColumns.push(items[rIndex][cIndex])
     }
 
-    const filterCollectedColumns = collectColumns.filter((col) => !col.flag)
+    const filterCollectedColumns = collectColumns.filter((col) => !col.removing)
     const emptyCount = size - filterCollectedColumns.length
     const newColumns = [
-      ...Array.from({ length: emptyCount }, (_, index) => createGem(index, cIndex)),
-      ...filterCollectedColumns.map((item, index) => ({ ...item, row: index, col: cIndex }))
+      ...Array.from({ length: emptyCount }, (_, index) => createGem(index, cIndex, true)),
+      ...filterCollectedColumns.map((item, index) => ({
+        ...item,
+        row: index,
+        col: cIndex,
+        removing: false,
+      }))
     ]
 
     for (let rIndex = 0; rIndex < size; rIndex++) {
@@ -193,6 +246,47 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+@keyframes removeAnimation {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes newAnimation {
+  0% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fallAnimation {
+  0% {
+    transform: translateY(-20px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .game-board {
   &__row {
     display: flex;
@@ -204,16 +298,24 @@ onMounted(() => {
     font-size: 16px;
     padding: 8px;
     border: 1px solid;
-  }
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 
-  .mark {
-    color: white;
-    font-weight: 800;
-  }
+    &.removing {
+      animation: removeAnimation 1s ease-out forwards;
+      transform: scale(1.1);
+    }
 
-  .selected {
-    font-weight: 800;
-    border: 2px solid green;
+    &.is-new {
+      animation: newAnimation 1s ease-out;
+    }
+
+    &.selected {
+      font-weight: 800;
+      border: 2px solid green;
+      transform: scale(1.05);
+    }
   }
 }
 </style>

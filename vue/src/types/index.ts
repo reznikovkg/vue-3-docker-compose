@@ -4,6 +4,7 @@ export interface GemType {
   row: number
   color: string
   col: number
-  flag?: boolean,
   selected?: boolean
+  removing: boolean
+  isNew: boolean
 }
