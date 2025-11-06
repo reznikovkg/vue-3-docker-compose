@@ -88,22 +88,21 @@ const handleClick = (item: GemType) => {
       }
       rows.value = newRows
       selectedGem.value = null
+      markMatches()
     }
   } else {
     selectedGem.value = item
     newRows[item.row][item.col].selected = true
     rows.value = newRows
   }
-
-  markMatches()
 }
 const generateGemId = () => nextGemId.value++
 const getRandomGemType = () => Math.floor(Math.random() * GEM_COLORS.length) + 1
-const createGem = (row: number, col: number, defaultType?: string) => {
+const createGem = (row: number, col: number) => {
   const type = getRandomGemType()
   return {
     id: generateGemId(),
-    type: defaultType || type,
+    type: type,
     row,
     color: GEM_COLORS[type - 1],
     col,
