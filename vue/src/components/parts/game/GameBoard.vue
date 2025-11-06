@@ -76,11 +76,16 @@ const handleClick = (item: GemType) => {
     const nextOrPrevCol = Math.abs(selectedGem.value.col - item.col)
     const nextOrPrevRow = Math.abs(selectedGem.value.row - item.row)
     if ((nextOrPrevCol === 0 && nextOrPrevRow === 1) || (nextOrPrevCol === 1 && nextOrPrevRow === 0)) {
+      const temp = newRows[selectedGem.value.row][selectedGem.value.col]
       newRows[selectedGem.value.row][selectedGem.value.col] = {
-        ...item
+        ...item,
+        row: selectedGem.value.row,
+        col: selectedGem.value.col,
       }
       newRows[item.row][item.col] = {
-        ...selectedGem.value,
+        ...temp,
+        row: item.row,
+        col: item.col,
         selected: false
       }
       rows.value = newRows
