@@ -5,7 +5,7 @@ import { copyBoard, findMatches } from "@/services/utils"
 
 const ANIMATION_DELAY = {
   REMOVING: 300,
-  NEW_GEMS: 500,
+  NEW: 500,
   SWAP: 300,
 }
 
@@ -74,7 +74,7 @@ export const useGameBoard = () => {
 
       // проверяем новые совпадения
       removeMatchesAndAnimate()
-    }, ANIMATION_DELAY.NEW_GEMS)
+    }, ANIMATION_DELAY.NEW)
   }
   const markNewGems = (items: GameBoard, removedCount: number): GameBoard => {
     const newItems = copyBoard(items)
