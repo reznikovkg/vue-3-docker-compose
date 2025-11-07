@@ -1,18 +1,19 @@
-import { GemType } from "@/types"
+import { Gem, GameBoard } from "@/types"
 
-export const findHorizontalMatches = (items: GemType[][], size: number) => {
-  const matches = []
+export const findHorizontalMatches = (board: GameBoard) => {
+  const matches: Gem[] = []
+  const size = board.length
 
-  for (let rowIndex = 0; rowIndex < size; rowIndex++) {
+  for (let row = 0; row < size; row++) {
     let count = 1
 
-    for (let colIndex = 1; colIndex < size; colIndex++) {
-      if (items[rowIndex][colIndex].type === items[rowIndex][colIndex - 1].type) {
+    for (let col = 1; col < size; col++) {
+      if (board[row][col].type === board[row][col - 1].type) {
         count++
       } else {
         if (count >= 3) {
-          for(let countedIndex = colIndex - count; countedIndex < colIndex; countedIndex++) {
-            matches.push(items[rowIndex][countedIndex])
+          for(let countedIndex = col - count; countedIndex < col; countedIndex++) {
+            matches.push(board[row][countedIndex])
           }
         }
         count = 1
@@ -21,7 +22,7 @@ export const findHorizontalMatches = (items: GemType[][], size: number) => {
 
     if (count >= 3) {
       for (let countedIndex = size - count; countedIndex < size; countedIndex++) {
-        matches.push(items[rowIndex][countedIndex])
+        matches.push(board[row][countedIndex])
       }
     }
   }
@@ -29,19 +30,20 @@ export const findHorizontalMatches = (items: GemType[][], size: number) => {
   return matches
 }
 
-export const findVerticalMatches = (items: GemType[][], size: number) => {
-  const matches = []
+export const findVerticalMatches = (board: GameBoard) => {
+  const matches: Gem[] = []
+  const size = board.length
 
-  for (let cIndex = 0; cIndex < size; cIndex++) {
+  for (let col = 0; col < size; col++) {
     let count = 1
 
-    for (let rIndex = 1; rIndex < size; rIndex++) {
-      if (items[rIndex][cIndex].type === items[rIndex - 1][cIndex].type) {
+    for (let row = 1; row < size; row++) {
+      if (board[row][col].type === board[row - 1][col].type) {
         count++
       } else {
         if (count >= 3) {
-          for(let countedIndex = rIndex - count; countedIndex < rIndex; countedIndex++) {
-            matches.push(items[countedIndex][cIndex])
+          for(let countedIndex = row - count; countedIndex < row; countedIndex++) {
+            matches.push(board[countedIndex][col])
           }
         }
         count = 1
@@ -50,10 +52,20 @@ export const findVerticalMatches = (items: GemType[][], size: number) => {
 
     if (count >= 3) {
       for (let countedIndex = size - count; countedIndex < size; countedIndex++) {
-        matches.push(items[countedIndex][cIndex])
+        matches.push(board[countedIndex][col])
       }
     }
   }
 
   return matches
 }
+
+export const findMatches = (board: GameBoard) => {
+  const horizontalMatches = findHorizontalMatches(board)
+  const verticalMatches = findVerticalMatches(board)
+  const allMatches = [...horizontalMatches, ...verticalMatches]
+
+  return [...new Set(allMatches)]
+}
+
+export const copyBoard = (board: GameBoard): GameBoard => JSON.parse(JSON.stringify(board))
