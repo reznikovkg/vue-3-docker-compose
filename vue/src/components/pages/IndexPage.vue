@@ -6,10 +6,15 @@
      To Example
     </RouterLink>
   </div>
+  <div>
+    <RouterLink :to="{ name: ROUTES.GAME }">
+      игра 'Три в ряд'
+    </RouterLink>
+  </div>
 </template>
 
 <script setup lang="ts">
-
+import { ROUTES } from "@/router"
 </script>
 
 <style scoped>
