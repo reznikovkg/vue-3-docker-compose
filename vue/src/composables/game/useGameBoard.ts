@@ -1,13 +1,20 @@
 import { ref } from "vue"
 import { GameBoard, Gem } from "@/types"
-import { useGemGenerator } from "@/composables"
+import { useGemGenerator, useTimer } from "@/composables"
 import { copyBoard, findMatches } from "@/services/utils"
+
+const ANIMATION_DELAY = {
+  REMOVING: 300,
+  NEW_GEMS: 500,
+  SWAP: 300,
+}
 
 export const useGameBoard = () => {
   const gridSize = ref(8)
   const selectedGem = ref<Gem | null>(null)
   const gameBoard = ref<GameBoard>([])
 
+  const { setSafeTimeout } = useTimer()
   const { nextGemId, createGem, resetGemIds } = useGemGenerator()
 
   const createGemsBoard = () => {
@@ -39,9 +46,9 @@ export const useGameBoard = () => {
         })
         gameBoard.value = boardWithRemovingGems
 
-        setTimeout(() => {
+        setSafeTimeout(() => {
           resolve(boardWithRemovingGems)
-        }, 300)
+        }, ANIMATION_DELAY.REMOVING)
       })
         .then((boardWithRemovingGems: any) => refillEmptyBoardPositions(boardWithRemovingGems))
         .then((boardAfterRemovedGems) => {
@@ -57,7 +64,7 @@ export const useGameBoard = () => {
   }
   const checkMatchesGems = () => {
     const finalRows = copyBoard(gameBoard.value)
-    setTimeout(() => {
+    setSafeTimeout(() => {
       finalRows.forEach((row: Gem[]) => {
         row.forEach((gem: Gem) => {
           gem.isNew = false
@@ -67,7 +74,7 @@ export const useGameBoard = () => {
 
       // проверяем новые совпадения
       removeMatchesAndAnimate()
-    }, 500)
+    }, ANIMATION_DELAY.NEW_GEMS)
   }
   const markNewGems = (items: GameBoard, removedCount: number): GameBoard => {
     const newItems = copyBoard(items)
@@ -159,7 +166,7 @@ export const useGameBoard = () => {
 
     const matches = findMatches(boardAfterSwap)
 
-    setTimeout(() => {
+    setSafeTimeout(() => {
       if (matches.length > 0) {
         checkMatchesGems()
       } else {
@@ -168,7 +175,7 @@ export const useGameBoard = () => {
         gameBoard.value = boardAfterRevert
       }
       selectedGem.value = null
-    }, 300)
+    }, ANIMATION_DELAY.SWAP)
   }
   const deselectGem = (gem: Gem): void => {
     const updatedBoard = markNewGems(gameBoard.value, 0)
