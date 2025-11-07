@@ -6,7 +6,7 @@
       </label>
       <select
         id="grid-size"
-        :value="gridSize"
+        :value="props.gridSize"
         @change="(event) => handleSizeChange(event)"
         class="size-selector__select"
       >
@@ -21,7 +21,7 @@
       </select>
     </div>
 
-    <button @click="() => $emit('reset')" class="reset-button">
+    <button class="reset-button" @click="() => $emit('reset')">
       Новая игра
     </button>
   </div>
@@ -39,7 +39,7 @@ interface Emits {
   (e: 'reset'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const handleSizeChange = (event: Event) => {
@@ -77,8 +77,8 @@ const handleSizeChange = (event: Event) => {
       cursor: pointer;
 
       &:focus {
-        outline: none;
         border-color: #3b82f6;
+        outline: none;
       }
     }
   }
@@ -89,8 +89,8 @@ const handleSizeChange = (event: Event) => {
     color: white;
     border: none;
     border-radius: 6px;
-    cursor: pointer;
     font-weight: 500;
+    cursor: pointer;
 
     &:hover {
       background: #2563eb;

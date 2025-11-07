@@ -3,7 +3,7 @@
     <GameBoardControls
       :grid-size="gridSize"
       @size-change="(size) => handleSizeChange(size)"
-      @reset="initializeBoard"
+      @reset="() => resetGame()"
     />
 
     <div class="game-board__grid">
@@ -36,6 +36,10 @@ const {
   handleGemSelect,
   handleSizeChange,
 } = useGameBoard()
+
+const resetGame = () => {
+  initializeBoard()
+}
 
 initializeBoard()
 </script>

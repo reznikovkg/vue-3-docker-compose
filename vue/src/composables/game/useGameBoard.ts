@@ -152,7 +152,7 @@ export const useGameBoard = () => {
     const rowDiff = Math.abs(firstGem.row - secondGem.row)
     const colDiff = Math.abs(firstGem.col - secondGem.col)
 
-    return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)
+    return ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1))
   }
   const selectSingleGem = (gem: Gem) => {
     const updatedBoard = markNewGems(gameBoard.value, 0)
@@ -207,6 +207,7 @@ export const useGameBoard = () => {
 
     initializeBoard()
   }
+
   return {
     gridSize,
     gameBoard,
