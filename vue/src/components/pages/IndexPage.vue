@@ -8,7 +8,7 @@
   </div>
   <div>
     <RouterLink :to="{ name: ROUTES.GAME }">
-      To GAME
+      игра 'Три в ряд'
     </RouterLink>
   </div>
 </template>
