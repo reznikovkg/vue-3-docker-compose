@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import { GameBoard, Gem } from "@/types"
+import { GameBoard, Gem, DragDirections } from "@/types"
 import { useGemGenerator, useTimer } from "@/composables"
 import { copyBoard, findMatches } from "@/services/utils"
 
@@ -12,6 +12,7 @@ const ANIMATION_DELAY = {
 export const useGameBoard = () => {
   const gridSize = ref(8)
   const selectedGem = ref<Gem | null>(null)
+  const draggedGem = ref<Gem | null>(null)
   const gameBoard = ref<GameBoard>([])
 
   const { setSafeTimeout } = useTimer()
@@ -208,6 +209,90 @@ export const useGameBoard = () => {
     initializeBoard()
   }
 
+  const handleGemDragStart = (gem: Gem) => {
+    draggedGem.value = gem
+  }
+
+  const getDragDirection = (firstDragGem: Gem, secondDragGem: Gem): DragDirections => {
+    const rowDiff = firstDragGem.row - secondDragGem.row
+    const colDiff = firstDragGem.col - secondDragGem.col
+
+    if (rowDiff === 0 && colDiff === 1) {
+      return 'left'
+    }
+    if (rowDiff === 0 && colDiff === -1) {
+      return 'right'
+    }
+    if (rowDiff === 1 && colDiff === 0) {
+      return 'up'
+    }
+    if (rowDiff === -1 && colDiff === 0) {
+      return 'down'
+    }
+
+    return 'none'
+  }
+
+  const resetDragDirections = (board: GameBoard, exceptGem: Gem): GameBoard => {
+    if (draggedGem.value) {
+      const neighboringGems = [
+        board[draggedGem.value.row - 1][draggedGem.value.col],
+        board[draggedGem.value.row + 1][draggedGem.value.col],
+        board[draggedGem.value.row][draggedGem.value.col - 1],
+        board[draggedGem.value.row][draggedGem.value.col + 1],
+      ]
+      neighboringGems.forEach((item) => {
+        if (item.id !== exceptGem.id) {
+          board[item.row][item.col].dragDirection = 'none'
+        }
+      })
+    }
+
+    return board
+  }
+
+  const handleGemDrag = (dropGem: Gem) => {
+    if (!draggedGem.value) {
+      return
+    }
+
+    const newBoard = copyBoard(gameBoard.value)
+
+    if (areNeighboringGems(draggedGem.value, dropGem)) {
+      newBoard[dropGem.row][dropGem.col] = {
+        ...newBoard[dropGem.row][dropGem.col],
+        dragDirection: getDragDirection(draggedGem.value, dropGem)
+      }
+    }
+    gameBoard.value = resetDragDirections(newBoard, dropGem)
+  }
+
+  const handleGemDrop = (targetGem: Gem) => {
+    if (!draggedGem.value) {
+      return
+    }
+
+    handleDragAndDrop(draggedGem.value, targetGem)
+    draggedGem.value = null
+  }
+
+  const handleDragAndDrop = (draggedGem: Gem, targetGem: Gem) => {
+    if (areNeighboringGems(draggedGem, targetGem)) {
+      attemptGemSwap(draggedGem, targetGem)
+    }
+  }
+
+  const handleGemDragleave = (dragLeft: Gem) => {
+    // if (draggedGem.value && areNeighboringGems(draggedGem.value, dragLeft)) {
+    //   const newBoard = copyBoard(gameBoard.value)
+    //   newBoard[dragLeft.row][dragLeft.col] = {
+    //     ...newBoard[dragLeft.row][dragLeft.col],
+    //     dragDirection: 'none'
+    //   }
+    //   gameBoard.value = newBoard
+    // }
+  }
+
   return {
     gridSize,
     gameBoard,
@@ -215,5 +300,9 @@ export const useGameBoard = () => {
     handleGemSelect,
     initializeBoard,
     handleSizeChange,
+    handleGemDragStart,
+    handleGemDrag,
+    handleGemDrop,
+    handleGemDragleave,
   }
 }
