@@ -1,0 +1,23 @@
+import { Mutations, TowerType } from '@/store/types';
+
+export const MUTATIONS: { [K in keyof Mutations]: K } = {
+  ADD_MONEY: 'ADD_MONEY',
+  REDUCE_MONEY: 'REDUCE_MONEY',
+  REDUCE_LIVES: 'REDUCE_LIVES',
+  SET_TOWER: 'SET_TOWER',
+  REMOVE_TOWER: 'REMOVE_TOWER',
+  SET_SELECTED_TOWER_TYPE: 'SET_SELECTED_TOWER_TYPE',
+  SET_NEXT_WAVE: 'SET_NEXT_WAVE',
+  SET_PLAYING_STATE: 'SET_PLAYING_STATE',
+  RESET_GAME: 'RESET_GAME',
+  SET_ENEMY: 'SET_ENEMY',
+  REMOVE_ENEMY: 'REMOVE_ENEMY',
+  DAMAGE_ENEMY: 'DAMAGE_ENEMY',
+  UPDATE_ENEMY_POSITION: 'UPDATE_ENEMY_POSITION',
+};
+
+export const TOWER_COSTS: Record<TowerType, number> = {
+  basic: 50,
+  sniper: 75,
+  heavy: 100,
+};

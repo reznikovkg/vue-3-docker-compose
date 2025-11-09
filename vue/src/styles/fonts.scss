@@ -1,0 +1,43 @@
+@font-face {
+  font-family: 'IBM Plex mono';
+  src:
+    url('../../public/fonts/IBMPlexMono-Regular.woff2') format('woff2'),
+    url('../../public/fonts/IBMPlexMono-Regular.woff') format('woff'),
+    url('../../public/fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex mono';
+  src:
+    url('../../public/fonts/IBMPlexMono-Medium.woff2') format('woff2'),
+    url('../../public/fonts/IBMPlexMono-Medium.woff') format('woff'),
+    url('../../public/fonts/IBMPlexMono-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex mono';
+  src:
+    url('../../public/fonts/IBMPlexMono-Bold.woff2') format('woff2'),
+    url('../../public/fonts/IBMPlexMono-Bold.woff') format('woff'),
+    url('../../public/fonts/IBMPlexMono-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PressStar2P';
+  src:
+    url('../../public/fonts/PressStart2P-Regular.woff2') format('woff2'),
+    url('../../public/fonts/PressStart2P-Regular.woff') format('woff'),
+    url('../../public/fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
