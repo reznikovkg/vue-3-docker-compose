@@ -1,9 +1,9 @@
 <template>
   <div class="index-page">
     <h1 class="index-page__title">Game Park</h1>
-    <router-link :to="{ name: 'GAME' }" class="index-page__button">
+    <RouterLink :to="{ name: 'GAME' }" class="index-page__button">
       Start Game
-    </router-link>
+    </RouterLink>
   </div>
 </template>
 

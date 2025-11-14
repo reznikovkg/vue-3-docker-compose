@@ -8,6 +8,7 @@
         class="shape-picker__option"
         :class="{
           'shape-picker__option--selected': selectedShape?.id === shape.id,
+          'shape-picker__option--disabled': parkBalance < shape.cost
         }"
         @click="() => selectShape(shape)"
       >
@@ -24,7 +25,13 @@
             ></div>
           </div>
         </div>
-        <span class="shape-picker__name">{{ shape.name }}</span>
+        <div class="shape-picker__info">
+          <span class="shape-picker__name">{{ shape.name }}</span>
+          <div class="shape-picker__details">
+            <span class="shape-picker__cost">Цена: {{ shape.cost }}</span>
+            <span v-if="shape.capacity > 0" class="shape-picker__capacity">Вместимость: {{ shape.capacity }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -45,15 +52,24 @@ interface Shape {
   type: string
   color: string
   layout: ShapePart[]
+  cost: number
+  capacity: number
+  visitTime: number
+  entry: ShapePart
 }
 
 const store = useStore()
 
 const availableShapes = computed(() => store.getters.getAvailableShapes)
 const selectedShape = computed(() => store.getters.getSelectedShape)
+const parkBalance = computed(() => store.getters.getParkBalance)
 
 const selectShape = (shape: Shape): void => {
-  store.dispatch('setSelectedShape', shape)
+  if (parkBalance.value >= shape.cost) {
+    store.dispatch('setSelectedShape', shape)
+  } else {
+    alert('Недостаточно средств для покупки этой фигуры')
+  }
 }
 </script>
 
@@ -95,6 +111,16 @@ const selectShape = (shape: Shape): void => {
       background: #f0fff0;
       box-shadow: 0 2px 6px rgba(50, 205, 50, 0.3);
     }
+
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+        border-color: #b0c4de;
+      }
+    }
   }
 
   &__preview {
@@ -124,11 +150,38 @@ const selectShape = (shape: Shape): void => {
     border-radius: 2px;
   }
 
+  &__info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
   &__name {
     font-size: 11px;
     color: #2f4f4f;
     font-weight: 500;
     text-align: center;
+    margin-bottom: 4px;
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    font-size: 9px;
+    gap: 2px;
+  }
+
+  &__cost {
+    color: #ff6b6b;
+    font-weight: bold;
+  }
+
+  &__capacity {
+    color: #4CAF50;
+    font-weight: bold;
   }
 }
 </style>
