@@ -1,6 +1,6 @@
 <template>
   Example STORE {{ count }}
-  <RouterLink :to="{ name: $routes.INDEX }" >To Index</RouterLink>
+  <RouterLink :to="{ name: $route.name }" >To Index</RouterLink>
   <input v-model="value" type="number">
   <input v-model="timeout" type="number">
   <button @click="() => inc()">+</button>

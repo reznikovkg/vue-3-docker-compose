@@ -1,9 +1,8 @@
 <template>
   Index
-
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
+      <RouterLink :to="{ name: $routes.DICTOPHONE }">
+     To Dictophone
     </RouterLink>
   </div>
 </template>
