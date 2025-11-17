@@ -4,7 +4,13 @@ services:
     vue:
         build: ./vue
         ports:
-            - "9999:5173"
+            - "5173:5173"
         volumes:
             - ./vue/src:/vue/src
             - ./vue/package.json:/vue/package.json
+            - ./vue/vite.config.js:/vue/vite.config.js
+        environment:
+          - CHOKIDAR_USEPOLLING=true
+          - WATCHPACK_POLLING=true
+          - VITE_PORT=5173
+        command: npm run dev
