@@ -2,13 +2,13 @@
   <div class="outer-board">
     <div class="game-board" :style="boardStyle">
       <div
-        v-for="cell in grid.flat()"
+        v-for="cell in gridFlat"
         :key="cell.id"
         class="game-cell"
         :class="{
-          selected: selectedCell && selectedCell.id === cell.id,
-          matched: matchedSet.has(cell.id),
-          invalid: animatingRevert && revertIds && revertIds.includes(cell.id)
+          'game-cell--selected': selectedCell && selectedCell.id === cell.id,
+          'game-cell--matched': matchedSet.has(cell.id),
+          'game-cell--invalid': animatingRevert && revertIds && revertIds.includes(cell.id)
         }"
         @click="onCellClick(cell)"
       >
@@ -29,6 +29,7 @@ import { useStore } from 'vuex'
 const store = useStore()
 
 const grid = computed(() => store.state.game.grid)
+const gridFlat = computed(() => grid.value.flat())
 const gridSize = computed(() => store.state.game.gridSize)
 const selectedCell = computed(() => store.state.game.selectedCell)
 const matchedSet = computed(() => store.state.game.matchedSet)
@@ -96,18 +97,18 @@ const onCellClick = (cell: any) => {
     background: rgba(255,255,255,0.12);
   }
 
-  &.selected {
+  &--selected {
     outline: 2px solid rgba(255,255,255,0.4);
     background: rgba(255,255,255,0.15);
   }
 
-  &.matched {
+  &--matched {
     .gem {
       animation: pop 0.5s ease-in-out forwards;
     }
   }
 
-  &.invalid {
+  &--invalid {
     background: rgba(255,100,100,0.2);
     outline: 2px solid rgba(255,100,100,0.5);
   }

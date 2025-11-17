@@ -1,10 +1,7 @@
 <template>
   <div
     class="game-cell"
-    :class="{
-      selected: isSelected,
-      matched: isMatched
-    }"
+    :class="cellClasses"
     @click="handleClick"
   >
     <div
@@ -24,9 +21,12 @@ const props = defineProps({
 })
 
 const store = useStore()
-const selectedCell = computed(() => store.state.game.selectedCell)
-const matchedSet = computed(() => store.state.game.matchedSet)
-
+const selectedCell = computed(() => store.getters['game/selectedCell'])
+const matchedSet = computed(() => store.getters['game/matchedSet'])
+const cellClasses = computed(() => ({
+  'game-cell--selected': isSelected.value,
+  'game-cell--matched': isMatched.value
+}))
 const isSelected = computed(() => selectedCell.value?.id === props.cell.id)
 const isMatched = computed(() => matchedSet.value.has(props.cell.id))
 
