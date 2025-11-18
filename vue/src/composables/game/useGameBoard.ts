@@ -9,6 +9,13 @@ const ANIMATION_DELAY = {
   SWAP: 300,
 }
 
+const OPPOSITE_DIRECTIONS = {
+  left: 'right',
+  right: 'left',
+  up: 'down',
+  down: 'up',
+}
+
 export const useGameBoard = () => {
   const gridSize = ref(8)
   const selectedGem = ref<Gem | null>(null)
@@ -209,10 +216,6 @@ export const useGameBoard = () => {
     initializeBoard()
   }
 
-  const handleGemDragStart = (gem: Gem) => {
-    draggedGem.value = gem
-  }
-
   const getDragDirection = (firstDragGem: Gem, secondDragGem: Gem): DragDirections => {
     const rowDiff = firstDragGem.row - secondDragGem.row
     const colDiff = firstDragGem.col - secondDragGem.col
@@ -293,6 +296,41 @@ export const useGameBoard = () => {
     // }
   }
 
+  const handleMousedownGem = (gem: Gem) => {
+    draggedGem.value = gem
+    console.log('handleMousedownGem: ', gem)
+  }
+  const handleMousemoveGem = (gem: Gem) => {
+
+    if (draggedGem.value === null) {
+      return
+    }
+
+    if (gem.id === draggedGem.value.id || !areNeighboringGems(draggedGem.value, gem)) {
+      return
+    }
+
+    const newBoard = copyBoard(gameBoard.value)
+    console.log('handleMousemoveGem: ', gem)
+
+    if (areNeighboringGems(draggedGem.value, gem)) {
+      newBoard[gem.row][gem.col] = {
+        ...newBoard[gem.row][gem.col],
+        dragDirection: getDragDirection(draggedGem.value, gem)
+      }
+      newBoard[draggedGem.value.row][draggedGem.value.col] = {
+        ...newBoard[draggedGem.value.row][draggedGem.value.col],
+        dragDirection: OPPOSITE_DIRECTIONS[getDragDirection(draggedGem.value, gem)]
+      }
+    }
+    gameBoard.value = resetDragDirections(newBoard, gem)
+    // gameBoard.value = resetDragDirections(newBoard, gem)
+  }
+  const handleMouseupGem = (gem: Gem) => {
+    console.log('handleMouseupGem: ', gem)
+    draggedGem.value = null
+  }
+
   return {
     gridSize,
     gameBoard,
@@ -300,9 +338,8 @@ export const useGameBoard = () => {
     handleGemSelect,
     initializeBoard,
     handleSizeChange,
-    handleGemDragStart,
-    handleGemDrag,
-    handleGemDrop,
-    handleGemDragleave,
+    handleMousedownGem,
+    handleMousemoveGem,
+    handleMouseupGem,
   }
 }

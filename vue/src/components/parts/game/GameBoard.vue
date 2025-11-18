@@ -17,10 +17,9 @@
           :key="gem.id"
           :gem="gem"
           @click="() => handleGemSelect(gem)"
-          @drag-start="(value) => handleGemDragStart(value)"
-          @drag="(value) => handleGemDrag(value)"
-          @drop="(value) => handleGemDrop(value)"
-          @drag-leave="(value) => handleGemDragleave(value)"
+          @mousedown="(value) => handleMousedownGem(value)"
+          @mousemove="(value) => handleMousemoveGem(value)"
+          @mouseup="(value) => handleMouseupGem(value)"
         />
       </div>
     </div>
@@ -39,10 +38,9 @@ const {
   initializeBoard,
   handleGemSelect,
   handleSizeChange,
-  handleGemDragStart,
-  handleGemDrag,
-  handleGemDrop,
-  handleGemDragleave,
+  handleMousedownGem,
+  handleMousemoveGem,
+  handleMouseupGem,
 } = useGameBoard()
 
 const resetGame = () => {

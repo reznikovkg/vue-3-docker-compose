@@ -1,7 +1,6 @@
 <template>
   <div
     class="gem"
-    draggable="true"
     :class="[
       {
       'gem--selected': gem.selected,
@@ -11,10 +10,9 @@
       `gem-drag--${gem.dragDirection}`
     ]"
     :style="{ backgroundColor: gem.color }"
-    @dragstart="(e) => handleDragstart(e)"
-    @dragover="(e) => handleDrag(e)"
-    @dragleave="(e) => handleDragleave(e)"
-    @drop.prevent="(e) => handleDrop(e)"
+    @mousedown="() => handleMousedown()"
+    @mousemove="() => handleMousemove()"
+    @mouseup="() => handleMouseup()"
   >
     <span class="gem__type">
       {{ gem.type }}
@@ -30,10 +28,9 @@ interface Props {
   gem: Gem
 }
 interface Emits {
-  (e: 'drag-start', gem: Gem): void
-  (e: 'drop', gem: Gem): void
-  (e: 'drag', gem: Gem): void
-  (e: 'drag-leave', gem: Gem): void
+  (e: 'mousedown', gem: Gem): void
+  (e: 'mousemove', gem: Gem): void
+  (e: 'mouseup', gem: Gem): void
 }
 
 const props = defineProps<Props>()
@@ -41,22 +38,16 @@ const emit = defineEmits<Emits>()
 
 const gem = computed(() => props.gem)
 
-const handleDragstart = (e: DragEvent) => {
-  e.dataTransfer?.setData('text/plain', gem.value.id.toString())
-  e.dataTransfer!.effectAllowed = 'move'
-  emit('drag-start', gem.value)
+const handleMousedown = () => {
+  emit('mousedown', gem.value)
 }
 
-const handleDrag = (e: DragEvent) => {
-  e.dataTransfer!.dropEffect = 'move'
-  emit('drag', gem.value)
+const handleMousemove = () => {
+  emit('mousemove', gem.value)
 }
 
-const handleDrop = (e: DragEvent) => {
-  emit('drop', gem.value)
-}
-const handleDragleave = (e: DragEvent) => {
-  emit('drag-leave', gem.value)
+const handleMouseup = () => {
+  emit('mouseup', gem.value)
 }
 </script>
 
@@ -74,6 +65,7 @@ const handleDragleave = (e: DragEvent) => {
   cursor: grab;
   transition: all 0.3s ease;
   user-select: none;
+  position: relative;
 
   &:hover {
     transform: scale(1.05);
