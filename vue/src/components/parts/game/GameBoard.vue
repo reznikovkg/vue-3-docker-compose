@@ -19,7 +19,7 @@
           @click="() => handleGemSelect(gem)"
           @mousedown="(value) => handleMousedownGem(value)"
           @mousemove="(value) => handleMousemoveGem(value)"
-          @mouseup="(value) => handleMouseupGem(value)"
+          @mouseup="() => handleMouseupGem()"
         />
       </div>
     </div>

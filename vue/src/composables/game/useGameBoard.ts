@@ -7,6 +7,7 @@ const ANIMATION_DELAY = {
   REMOVING: 300,
   NEW: 500,
   SWAP: 300,
+  DRAG: 300,
 }
 
 const OPPOSITE_DIRECTIONS = {
@@ -235,99 +236,68 @@ export const useGameBoard = () => {
 
     return 'none'
   }
-
-  const resetDragDirections = (board: GameBoard, exceptGem: Gem): GameBoard => {
-    if (draggedGem.value) {
-      const neighboringGems = [
-        board[draggedGem.value.row - 1][draggedGem.value.col],
-        board[draggedGem.value.row + 1][draggedGem.value.col],
-        board[draggedGem.value.row][draggedGem.value.col - 1],
-        board[draggedGem.value.row][draggedGem.value.col + 1],
-      ]
-      neighboringGems.forEach((item) => {
-        if (item.id !== exceptGem.id) {
-          board[item.row][item.col].dragDirection = 'none'
-        }
-      })
-    }
-
-    return board
-  }
-
-  const handleGemDrag = (dropGem: Gem) => {
-    if (!draggedGem.value) {
-      return
-    }
-
-    const newBoard = copyBoard(gameBoard.value)
-
-    if (areNeighboringGems(draggedGem.value, dropGem)) {
-      newBoard[dropGem.row][dropGem.col] = {
-        ...newBoard[dropGem.row][dropGem.col],
-        dragDirection: getDragDirection(draggedGem.value, dropGem)
-      }
-    }
-    gameBoard.value = resetDragDirections(newBoard, dropGem)
-  }
-
-  const handleGemDrop = (targetGem: Gem) => {
-    if (!draggedGem.value) {
-      return
-    }
-
-    handleDragAndDrop(draggedGem.value, targetGem)
-    draggedGem.value = null
-  }
-
-  const handleDragAndDrop = (draggedGem: Gem, targetGem: Gem) => {
-    if (areNeighboringGems(draggedGem, targetGem)) {
-      attemptGemSwap(draggedGem, targetGem)
-    }
-  }
-
-  const handleGemDragleave = (dragLeft: Gem) => {
-    // if (draggedGem.value && areNeighboringGems(draggedGem.value, dragLeft)) {
-    //   const newBoard = copyBoard(gameBoard.value)
-    //   newBoard[dragLeft.row][dragLeft.col] = {
-    //     ...newBoard[dragLeft.row][dragLeft.col],
-    //     dragDirection: 'none'
-    //   }
-    //   gameBoard.value = newBoard
-    // }
-  }
-
   const handleMousedownGem = (gem: Gem) => {
     draggedGem.value = gem
-    console.log('handleMousedownGem: ', gem)
   }
   const handleMousemoveGem = (gem: Gem) => {
-
-    if (draggedGem.value === null) {
+    if (!draggedGem.value || (gem.id === draggedGem.value.id || !areNeighboringGems(draggedGem.value, gem))) {
       return
     }
 
-    if (gem.id === draggedGem.value.id || !areNeighboringGems(draggedGem.value, gem)) {
-      return
-    }
+    const visualChangedBoard = visualSwapGems(draggedGem.value, gem)
+    gameBoard.value = visualChangedBoard
 
-    const newBoard = copyBoard(gameBoard.value)
-    console.log('handleMousemoveGem: ', gem)
+    setSafeTimeout(() => {
+      let boardAfterSwap = swapGems(visualChangedBoard, draggedGem.value, gem)
+      const matches = findMatches(boardAfterSwap)
 
-    if (areNeighboringGems(draggedGem.value, gem)) {
-      newBoard[gem.row][gem.col] = {
-        ...newBoard[gem.row][gem.col],
-        dragDirection: getDragDirection(draggedGem.value, gem)
+      if (matches.length > 0) {
+        gameBoard.value = clearNeighboringDragDirections(boardAfterSwap)
+        setSafeTimeout(() => {
+          checkMatchesGems()
+        }, ANIMATION_DELAY.SWAP)
+      } else {
+        const finalBoard = copyBoard(visualChangedBoard)
+        finalBoard[draggedGem.value.row][draggedGem.value.col].dragDirection = 'none'
+        finalBoard[gem.row][gem.col].dragDirection = 'none'
+        gameBoard.value = finalBoard
       }
-      newBoard[draggedGem.value.row][draggedGem.value.col] = {
-        ...newBoard[draggedGem.value.row][draggedGem.value.col],
-        dragDirection: OPPOSITE_DIRECTIONS[getDragDirection(draggedGem.value, gem)]
-      }
-    }
-    gameBoard.value = resetDragDirections(newBoard, gem)
-    // gameBoard.value = resetDragDirections(newBoard, gem)
+
+      draggedGem.value = null
+    }, ANIMATION_DELAY.DRAG)
   }
-  const handleMouseupGem = (gem: Gem) => {
-    console.log('handleMouseupGem: ', gem)
+  const visualSwapGems = (sourceGem: Gem, targetGem: Gem) => {
+    const dragDirection = getDragDirection(sourceGem, targetGem)
+    const oppositeDirection = OPPOSITE_DIRECTIONS[dragDirection]
+
+    const boardWithDrag = copyBoard(gameBoard.value)
+    boardWithDrag[sourceGem.row][sourceGem.col].dragDirection = oppositeDirection
+    boardWithDrag[targetGem.row][targetGem.col].dragDirection = dragDirection
+
+    return boardWithDrag
+  }
+  const clearNeighboringDragDirections = (board: GameBoard): GameBoard => {
+    const cleanedBoard = copyBoard(board)
+
+    if (!draggedGem.value) {
+      return cleanedBoard
+    }
+
+    const neighboringPositions = [
+      { row: draggedGem.value.row, col: draggedGem.value.col },     // Выбранный элемент
+      { row: draggedGem.value.row - 1, col: draggedGem.value.col }, // Верхний
+      { row: draggedGem.value.row + 1, col: draggedGem.value.col }, // Нижний
+      { row: draggedGem.value.row, col: draggedGem.value.col - 1 }, // Левый
+      { row: draggedGem.value.row, col: draggedGem.value.col + 1 }, // Правый
+    ]
+
+    neighboringPositions.forEach(({ row, col }) => {
+      cleanedBoard[row][col].dragDirection = 'none'
+    })
+
+    return cleanedBoard
+  }
+  const handleMouseupGem = () => {
     draggedGem.value = null
   }
 
