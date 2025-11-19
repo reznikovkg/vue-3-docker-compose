@@ -22,6 +22,7 @@ export const useGameBoard = () => {
   const selectedGem = ref<Gem | null>(null)
   const draggedGem = ref<Gem | null>(null)
   const gameBoard = ref<GameBoard>([])
+  const dragDirectionsColumns = ref<Gem[]>([])
 
   const { setSafeTimeout } = useTimer()
   const { nextGemId, createGem, resetGemIds } = useGemGenerator()
@@ -53,7 +54,8 @@ export const useGameBoard = () => {
         uniqueMatches.forEach((match: Gem) => {
           boardWithRemovingGems[match.row][match.col].removing = true
         })
-        gameBoard.value = boardWithRemovingGems
+
+        gameBoard.value = clearAllDragDirections(boardWithRemovingGems)
 
         setSafeTimeout(() => {
           resolve(boardWithRemovingGems)
@@ -253,7 +255,7 @@ export const useGameBoard = () => {
       const matches = findMatches(boardAfterSwap)
 
       if (matches.length > 0) {
-        gameBoard.value = clearNeighboringDragDirections(boardAfterSwap, currentDraggedGem)
+        gameBoard.value = clearAllDragDirections(boardAfterSwap)
         setSafeTimeout(() => {
           checkMatchesGems()
         }, ANIMATION_DELAY.SWAP)
@@ -275,28 +277,19 @@ export const useGameBoard = () => {
     boardWithDrag[sourceGem.row][sourceGem.col].dragDirection = oppositeDirection
     boardWithDrag[targetGem.row][targetGem.col].dragDirection = dragDirection
 
+    dragDirectionsColumns.value.push(boardWithDrag[sourceGem.row][sourceGem.col])
+    dragDirectionsColumns.value.push(boardWithDrag[targetGem.row][targetGem.col])
+
     return boardWithDrag
   }
-  const clearNeighboringDragDirections = (board: GameBoard, currentDraggedGem: Gem): GameBoard => {
-    const cleanedBoard = copyBoard(board)
+  const clearAllDragDirections = (board: GameBoard) => {
+    const newBoard = board || copyBoard(gameBoard.value)
 
-    if (!currentDraggedGem) {
-      return cleanedBoard
-    }
-
-    const neighboringPositions = [
-      { row: currentDraggedGem.row, col: currentDraggedGem.col },     // Выбранный элемент
-      { row: currentDraggedGem.row - 1, col: currentDraggedGem.col }, // Верхний
-      { row: currentDraggedGem.row + 1, col: currentDraggedGem.col }, // Нижний
-      { row: currentDraggedGem.row, col: currentDraggedGem.col - 1 }, // Левый
-      { row: currentDraggedGem.row, col: currentDraggedGem.col + 1 }, // Правый
-    ]
-
-    neighboringPositions.forEach(({ row, col }) => {
-      cleanedBoard[row][col].dragDirection = 'none'
+    dragDirectionsColumns.value.forEach((i) => {
+      newBoard[i.row][i.col].dragDirection = 'none'
     })
 
-    return cleanedBoard
+    return newBoard
   }
   const handleMouseupGem = () => {
     draggedGem.value = null
