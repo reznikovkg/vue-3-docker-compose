@@ -240,25 +240,26 @@ export const useGameBoard = () => {
     draggedGem.value = gem
   }
   const handleMousemoveGem = (gem: Gem) => {
-    if (!draggedGem.value || (gem.id === draggedGem.value.id || !areNeighboringGems(draggedGem.value, gem))) {
+    const currentDraggedGem = draggedGem.value
+    if (!currentDraggedGem || (gem.id === currentDraggedGem.id || !areNeighboringGems(currentDraggedGem, gem))) {
       return
     }
 
-    const visualChangedBoard = visualSwapGems(draggedGem.value, gem)
+    const visualChangedBoard = visualSwapGems(currentDraggedGem, gem)
     gameBoard.value = visualChangedBoard
 
     setSafeTimeout(() => {
-      let boardAfterSwap = swapGems(visualChangedBoard, draggedGem.value, gem)
+      let boardAfterSwap = swapGems(visualChangedBoard, currentDraggedGem, gem)
       const matches = findMatches(boardAfterSwap)
 
       if (matches.length > 0) {
-        gameBoard.value = clearNeighboringDragDirections(boardAfterSwap)
+        gameBoard.value = clearNeighboringDragDirections(boardAfterSwap, currentDraggedGem)
         setSafeTimeout(() => {
           checkMatchesGems()
         }, ANIMATION_DELAY.SWAP)
       } else {
         const finalBoard = copyBoard(visualChangedBoard)
-        finalBoard[draggedGem.value.row][draggedGem.value.col].dragDirection = 'none'
+        finalBoard[currentDraggedGem.row][currentDraggedGem.col].dragDirection = 'none'
         finalBoard[gem.row][gem.col].dragDirection = 'none'
         gameBoard.value = finalBoard
       }
@@ -276,19 +277,19 @@ export const useGameBoard = () => {
 
     return boardWithDrag
   }
-  const clearNeighboringDragDirections = (board: GameBoard): GameBoard => {
+  const clearNeighboringDragDirections = (board: GameBoard, currentDraggedGem: Gem): GameBoard => {
     const cleanedBoard = copyBoard(board)
 
-    if (!draggedGem.value) {
+    if (!currentDraggedGem) {
       return cleanedBoard
     }
 
     const neighboringPositions = [
-      { row: draggedGem.value.row, col: draggedGem.value.col },     // Выбранный элемент
-      { row: draggedGem.value.row - 1, col: draggedGem.value.col }, // Верхний
-      { row: draggedGem.value.row + 1, col: draggedGem.value.col }, // Нижний
-      { row: draggedGem.value.row, col: draggedGem.value.col - 1 }, // Левый
-      { row: draggedGem.value.row, col: draggedGem.value.col + 1 }, // Правый
+      { row: currentDraggedGem.row, col: currentDraggedGem.col },     // Выбранный элемент
+      { row: currentDraggedGem.row - 1, col: currentDraggedGem.col }, // Верхний
+      { row: currentDraggedGem.row + 1, col: currentDraggedGem.col }, // Нижний
+      { row: currentDraggedGem.row, col: currentDraggedGem.col - 1 }, // Левый
+      { row: currentDraggedGem.row, col: currentDraggedGem.col + 1 }, // Правый
     ]
 
     neighboringPositions.forEach(({ row, col }) => {
