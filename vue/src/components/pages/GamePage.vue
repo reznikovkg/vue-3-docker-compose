@@ -43,7 +43,7 @@
           <button 
             class="game-page__road-btn"
             :class="{ 'game-page__road-btn--active': isRoadMode }"
-            @click="toggleRoadMode"
+            @click="() => toggleRoadMode()"
           >
             {{ isRoadMode ? 'Отменить дороги' : 'Добавить дорогу' }}
           </button>

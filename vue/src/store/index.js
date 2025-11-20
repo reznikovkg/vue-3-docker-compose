@@ -15,7 +15,9 @@ const MUTATIONS = {
   SET_MAX_VISITORS: 'SET_MAX_VISITORS',
   ADD_ROAD: 'ADD_ROAD',
   REMOVE_ROAD: 'REMOVE_ROAD',
-  SET_ROAD_MODE: 'SET_ROAD_MODE'
+  SET_ROAD_MODE: 'SET_ROAD_MODE',
+  ADD_BUILDING_ENTRY: 'ADD_BUILDING_ENTRY',
+  REMOVE_BUILDING_ENTRY: 'REMOVE_BUILDING_ENTRY'
 }
 
 export default createStore({
@@ -34,6 +36,7 @@ export default createStore({
       nextPersonId: 1,
       roads: [],
       isRoadMode: false,
+      buildingEntries: [], 
       availableShapes: [
         {
           id: 1,
@@ -47,7 +50,7 @@ export default createStore({
           cost: 200,
           capacity: 5,
           visitTime: 10,
-          entry: { x: 1, y: 1 }
+          entry: { x: 1, y: 1 } 
         },
         {
           id: 2,
@@ -60,7 +63,7 @@ export default createStore({
           cost: 100,
           capacity: 2,
           visitTime: 5,
-          entry: { x: 2, y: 0 }
+          entry: { x: 2, y: 0 } 
         },
         {
           id: 3,
@@ -68,13 +71,12 @@ export default createStore({
           type: 'lshape',
           color: '#fc7a10ff',
           layout: [
-            { x: 0, y: 0 }, { x: 1, y: 0 },
-            { x: 0, y: 1 }
+            { x: 0, y: 0 }, { x: 1, y: 0 }
           ],
           cost: 100,
           capacity: 3,
           visitTime: 18,
-          entry: { x: 1, y: 0 }
+          entry: { x: 1, y: 0 } 
         },
         {
           id: 4,
@@ -103,7 +105,8 @@ export default createStore({
     getMaxVisitors: (state) => state.maxVisitors,
     getRoads: (state) => state.roads,
     getIsRoadMode: (state) => state.isRoadMode,
-    getVisitorsCount: (state) => state.people.length
+    getVisitorsCount: (state) => state.people.length,
+    getBuildingEntries: (state) => state.buildingEntries
   },
   mutations: {
     [MUTATIONS.SET_GRID]: (state, grid) => {
@@ -156,7 +159,9 @@ export default createStore({
     },
     [MUTATIONS.UPDATE_PERSON]: (state, { personId, updates }) => {
       const person = state.people.find(p => p.id === personId)
-      if (person) Object.assign(person, updates)
+      if (person) {
+        Object.assign(person, updates)
+      }
     },
     [MUTATIONS.SET_MAX_VISITORS]: (state, count) => {
       state.maxVisitors = count
@@ -169,6 +174,12 @@ export default createStore({
     },
     [MUTATIONS.SET_ROAD_MODE]: (state, isRoadMode) => {
       state.isRoadMode = isRoadMode
+    },
+    [MUTATIONS.ADD_BUILDING_ENTRY]: (state, entry) => {
+      state.buildingEntries.push(entry)
+    },
+    [MUTATIONS.REMOVE_BUILDING_ENTRY]: (state, shapeId) => {
+      state.buildingEntries = state.buildingEntries.filter(entry => entry.shapeId !== shapeId)
     }
   },
   actions: {
@@ -214,6 +225,9 @@ export default createStore({
         const targetCol = payload.startCol + part.x
         cellsToFill.push({ row: targetRow, col: targetCol })
       }
+
+      const entryRow = payload.startRow + payload.shape.entry.y
+      const entryCol = payload.startCol + payload.shape.entry.x
       
       store.commit(MUTATIONS.ADD_SHAPE, {
         cells: cellsToFill,
@@ -223,6 +237,13 @@ export default createStore({
         capacity: payload.shape.capacity,
         visitTime: payload.shape.visitTime,
         entry: payload.shape.entry
+      })
+
+      store.commit(MUTATIONS.ADD_BUILDING_ENTRY, {
+        shapeId: store.state.nextShapeId,
+        row: entryRow,
+        col: entryCol,
+        building: payload.shape
       })
     
       store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance - payload.shape.cost)
@@ -240,6 +261,8 @@ export default createStore({
       if (building) {
         store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + Math.floor(building.cost * 0.5))
       }
+
+      store.commit(MUTATIONS.REMOVE_BUILDING_ENTRY, payload.shapeId)
       
       store.commit(MUTATIONS.REMOVE_SHAPE, {
         shapeId: payload.shapeId,
@@ -302,7 +325,10 @@ export default createStore({
           balance: Math.floor(Math.random() * 91) + 10,
           targetBuilding: null,
           buildingTimer: 0,
-          spawnTimer: 2
+          spawnTimer: 2,
+          path: [],
+          lastPosition: null,
+          direction: 'right'
         }
         store.commit(MUTATIONS.ADD_PERSON, person)
         store.state.nextPersonId++
@@ -329,14 +355,14 @@ export default createStore({
         if (person.state === 'waiting') {
           person.spawnTimer--
           if (person.spawnTimer <= 0) {
-            store.dispatch('movePersonToRandomRoad', person.id)
+            store.dispatch('movePersonFromEntrance', person.id)
           }
         } else if (person.state === 'walking') {
           store.dispatch('movePersonRandomly', person.id)
         } else if (person.state === 'inBuilding') {
           person.buildingTimer--
           if (person.buildingTimer <= 0) {
-            store.dispatch('movePersonToEntrance', person.id)
+            store.dispatch('leaveBuilding', person.id)
           }
         }
       })
@@ -346,21 +372,26 @@ export default createStore({
       }
     },
     
-    movePersonToRandomRoad: (store, personId) => {
+    movePersonFromEntrance: (store, personId) => {
       const person = store.state.people.find(p => p.id === personId)
       if (!person) return
       
-      const validRoads = store.state.roads.filter(road => 
-        road.row >= 0 && road.row < store.state.gridSizeY && 
-        road.col >= 0 && road.col < store.state.gridSizeX
-      )
+      const entranceRow = Math.floor(store.state.gridSizeY / 2)
       
-      if (validRoads.length > 0) {
-        const randomRoad = validRoads[Math.floor(Math.random() * validRoads.length)]
-        person.x = randomRoad.col
-        person.y = randomRoad.row
-        person.state = 'walking'
-      }
+      const firstStepX = 0
+      const firstStepY = entranceRow
+      
+      store.commit(MUTATIONS.UPDATE_PERSON, {
+        personId,
+        updates: {
+          x: firstStepX,
+          y: firstStepY,
+          state: 'walking',
+          path: [{x: firstStepX, y: firstStepY}],
+          lastPosition: {x: -1, y: entranceRow},
+          direction: 'right'
+        }
+      })
     },
     
     movePersonRandomly: (store, personId) => {
@@ -368,84 +399,170 @@ export default createStore({
       if (!person || person.state !== 'walking') return
       
       const directions = [
-        { dx: -1, dy: 0 },
-        { dx: 1, dy: 0 },
-        { dx: 0, dy: -1 },
-        { dx: 0, dy: 1 }
+        { dx: 1, dy: 0, dir: 'right', weight: 40 },   
+        { dx: 0, dy: -1, dir: 'up', weight: 25 },     
+        { dx: 0, dy: 1, dir: 'down', weight: 25 },    
+        { dx: -1, dy: 0, dir: 'left', weight: 10 }   
       ]
       
       const validDirections = directions.filter(({ dx, dy }) => {
         const newX = person.x + dx
         const newY = person.y + dy
         
-        const isRoad = store.state.roads.some(road => road.row === newY && road.col === newX
-        &&road.col >= 0)
+        const isRoad = store.state.roads.some(road => road.row === newY && road.col === newX)
         
         return isRoad
       })
       
       if (validDirections.length > 0) {
-        const randomDir = validDirections[Math.floor(Math.random() * validDirections.length)]
-        person.x += randomDir.dx
-        person.y += randomDir.dy
+        const forwardDirections = validDirections.filter(({ dx, dy }) => {
+          const newX = person.x + dx
+          const newY = person.y + dy
+          
+          if (person.lastPosition && 
+              newX === person.lastPosition.x && 
+              newY === person.lastPosition.y) {
+            return false
+          }
+          
+          return true
+        })
+       
+        const availableDirections = forwardDirections.length > 0 ? forwardDirections : validDirections
+       
+        const totalWeight = availableDirections.reduce((sum, dir) => sum + dir.weight, 0)
+        let randomValue = Math.random() * totalWeight
         
-        if (Math.random() < 0.3) {
-          store.dispatch('checkBuildingEntry', person.id)
+        let selectedDir = availableDirections[0]
+        for (const dir of availableDirections) {
+          randomValue -= dir.weight
+          if (randomValue <= 0) {
+            selectedDir = dir
+            break
+          }
+        }
+        
+        const newX = person.x + selectedDir.dx
+        const newY = person.y + selectedDir.dy
+        
+        store.commit(MUTATIONS.UPDATE_PERSON, {
+          personId,
+          updates: {
+            lastPosition: { x: person.x, y: person.y },
+            x: newX,
+            y: newY,
+            direction: selectedDir.dir,
+            path: [...person.path, {x: newX, y: newY}]
+          }
+        })
+
+        if (Math.random() < 0.2) {
+          store.dispatch('checkBuildingEntry', personId)
+        }
+      
+        const entranceRow = Math.floor(store.state.gridSizeY / 2)
+        if (newX === -1 && newY === entranceRow) {
+          store.dispatch('removePersonFromEntrance', personId)
+          return
         }
       }
     },
 
-    movePersonToEntrance: (store, personId) => {
+    removePersonFromEntrance: (store, personId) => {
       const person = store.state.people.find(p => p.id === personId)
       if (!person) return
       
-      const entranceRow = Math.floor(store.state.gridSizeY / 2)
+      store.commit(MUTATIONS.UPDATE_PERSON, {
+        personId,
+        updates: { state: 'leaving' }
+      })
       
-      if (person.balance > 5) { 
-        store.dispatch('movePersonToRandomRoad', personId)
-      } else {
-        person.x = -1
-        person.y = entranceRow  
-        person.state = 'waiting'
-        person.spawnTimer = 2
-        
-        setTimeout(() => {
-          store.commit(MUTATIONS.REMOVE_PERSON, personId)
-        }, 2000)
-      }
+      setTimeout(() => {
+        store.commit(MUTATIONS.REMOVE_PERSON, personId)
+      }, 2000)
     },
     
     checkBuildingEntry: (store, personId) => {
       const person = store.state.people.find(p => p.id === personId)
       if (!person || person.state !== 'walking') return
-  
-      for (let row = 0; row < store.state.gridSizeY; row++) {
-        for (let col = 0; col < store.state.gridSizeX; col++) {
-          const building = store.state.grid[row]?.[col]
-          if (building && building.capacity > 0) {
 
-            const entryRow = row + building.entry.y
-            const entryCol = col + building.entry.x
-            
-            if (person.y === entryRow && person.x === entryCol) {
-              const visitorsInBuilding = store.state.people.filter(p => 
-                p.targetBuilding?.id === building.id && p.state === 'inBuilding'
-              ).length
-              
-              if (visitorsInBuilding < building.capacity) {
-                person.state = 'inBuilding'
-                person.targetBuilding = building
-                person.buildingTimer = building.visitTime
-               
-                const spendAmount = Math.min(person.balance, Math.floor(Math.random() * 20) + 5)
-                person.balance -= spendAmount
-                store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
-                return
+      for (const entry of store.state.buildingEntries) {
+
+        const isAdjacentToEntry = 
+          (Math.abs(person.y - entry.row) === 1 && person.x === entry.col) || 
+          (Math.abs(person.x - entry.col) === 1 && person.y === entry.row)    
+        
+        if (isAdjacentToEntry) {
+          const visitorsInBuilding = store.state.people.filter(p => 
+            p.targetBuilding?.id === entry.shapeId && p.state === 'inBuilding'
+          ).length
+          
+          if (visitorsInBuilding < entry.building.capacity) {
+            const spendAmount = Math.min(person.balance, Math.floor(Math.random() * 20) + 5)
+
+            store.commit(MUTATIONS.UPDATE_PERSON, {
+              personId,
+              updates: {
+                x: entry.col, 
+                y: entry.row, 
+                state: 'inBuilding',
+                targetBuilding: { ...entry.building, id: entry.shapeId },
+                buildingTimer: entry.building.visitTime,
+                balance: person.balance - spendAmount,
+                lastPosition: { x: person.x, y: person.y } 
               }
-            }
+            })
+            
+            store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
+            return
           }
         }
       }
+    },
+
+    leaveBuilding: (store, personId) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.targetBuilding) return
+
+      const entry = store.state.buildingEntries.find(e => e.shapeId === person.targetBuilding.id)
+      
+      if (entry) {
+        store.commit(MUTATIONS.UPDATE_PERSON, {
+          personId,
+          updates: {
+            x: entry.col,
+            y: entry.row,
+            state: 'walking',
+            targetBuilding: null,
+            path: [{x: entry.col, y: entry.row}],
+            lastPosition: {x: person.x, y: person.y}
+          }
+        })
+        
+        if (person.balance <= 5) {
+          store.dispatch('moveToExit', personId)
+        }
+      }
+    },
+    
+    moveToExit: (store, personId) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person) return
+      
+      const entranceRow = Math.floor(store.state.gridSizeY / 2)
+      
+      store.commit(MUTATIONS.UPDATE_PERSON, {
+        personId,
+        updates: {
+          x: -1,
+          y: entranceRow,
+          state: 'leaving'
+        }
+      })
+      
+      setTimeout(() => {
+        store.commit(MUTATIONS.REMOVE_PERSON, personId)
+      }, 2000)
     }
   }
 })
