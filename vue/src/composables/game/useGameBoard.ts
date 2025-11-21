@@ -272,8 +272,8 @@ export const useGameBoard = () => {
   const visualSwapGems = (sourceGem: Gem, targetGem: Gem) => {
     const dragDirection = getDragDirection(sourceGem, targetGem)
     const oppositeDirection = OPPOSITE_DIRECTIONS[dragDirection]
-
     const boardWithDrag = copyBoard(gameBoard.value)
+
     boardWithDrag[sourceGem.row][sourceGem.col].dragDirection = oppositeDirection
     boardWithDrag[targetGem.row][targetGem.col].dragDirection = dragDirection
 
@@ -288,6 +288,8 @@ export const useGameBoard = () => {
     dragDirectionsColumns.value.forEach((i) => {
       newBoard[i.row][i.col].dragDirection = 'none'
     })
+
+    dragDirectionsColumns.value = []
 
     return newBoard
   }
