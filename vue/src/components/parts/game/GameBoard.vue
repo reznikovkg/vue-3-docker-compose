@@ -16,10 +16,10 @@
           v-for="gem in rowGems"
           :key="gem.id"
           :gem="gem"
-          @click="() => handleGemSelect(gem)"
+          @click="(value) => handleGemSelect(value)"
           @mousedown="(value) => handleMousedownGem(value)"
           @mousemove="(value) => handleMousemoveGem(value)"
-          @mouseup="() => handleMouseupGem()"
+          @mouseup="(value) => handleMouseupGem(value)"
         />
       </div>
     </div>

@@ -10,6 +10,7 @@
       `gem-drag--${gem.dragDirection}`
     ]"
     :style="{ backgroundColor: gem.color }"
+    @click="() => handleClick()"
     @mousedown="() => handleMousedown()"
     @mousemove="() => handleMousemove()"
     @mouseup="() => handleMouseup()"
@@ -28,6 +29,7 @@ interface Props {
   gem: Gem
 }
 interface Emits {
+  (e: 'click', gem: Gem): void
   (e: 'mousedown', gem: Gem): void
   (e: 'mousemove', gem: Gem): void
   (e: 'mouseup', gem: Gem): void
@@ -37,6 +39,10 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const gem = computed(() => props.gem)
+
+const handleClick = () => {
+  emit('click', gem.value)
+}
 
 const handleMousedown = () => {
   emit('mousedown', gem.value)
@@ -74,7 +80,7 @@ const handleMouseup = () => {
   &--selected {
     border-color: #10b981;
     box-shadow: 0 0 0 2px #10b981;
-    transform: scale(1.1);
+    //transform: scale(1.1);
   }
 
   &--removing {

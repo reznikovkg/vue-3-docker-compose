@@ -171,21 +171,45 @@ export const useGameBoard = () => {
     selectedGem.value = gem
   }
   const attemptGemSwap = (firstGem: Gem, secondGem: Gem) => {
-    const boardAfterSwap = swapGems(gameBoard.value, firstGem, secondGem)
-    gameBoard.value = boardAfterSwap
-
-    const matches = findMatches(boardAfterSwap)
+    const visualChangedBoard = visualSwapGems(firstGem, secondGem)
+    gameBoard.value = visualChangedBoard
 
     setSafeTimeout(() => {
+      let boardAfterSwap = swapGems(visualChangedBoard, firstGem, secondGem)
+      gameBoard.value = boardAfterSwap
+      const matches = findMatches(boardAfterSwap)
+
       if (matches.length > 0) {
+        gameBoard.value = clearAllDragDirections(boardAfterSwap)
         checkMatchesGems()
       } else {
-        // Откатываем swap если нет совпадений
-        const boardAfterRevert = swapGems(boardAfterSwap, secondGem, firstGem)
-        gameBoard.value = boardAfterRevert
+        const finalBoard = copyBoard(visualChangedBoard)
+        finalBoard[firstGem.row][firstGem.col].dragDirection = 'none'
+        finalBoard[firstGem.row][firstGem.col].selected = false
+        finalBoard[secondGem.row][secondGem.col].dragDirection = 'none'
+        finalBoard[secondGem.row][secondGem.col].selected = false
+        gameBoard.value = finalBoard
       }
+
+      draggedGem.value = null
       selectedGem.value = null
-    }, ANIMATION_DELAY.SWAP)
+    }, ANIMATION_DELAY.DRAG)
+
+    // const boardAfterSwap = swapGems(gameBoard.value, firstGem, secondGem)
+    // gameBoard.value = boardAfterSwap
+    //
+    // const matches = findMatches(boardAfterSwap)
+    //
+    // setSafeTimeout(() => {
+    //   if (matches.length > 0) {
+    //     checkMatchesGems()
+    //   } else {
+    //     // Откатываем swap если нет совпадений
+    //     const boardAfterRevert = swapGems(boardAfterSwap, secondGem, firstGem)
+    //     gameBoard.value = boardAfterRevert
+    //   }
+    //   selectedGem.value = null
+    // }, ANIMATION_DELAY.SWAP)
   }
   const deselectGem = (gem: Gem): void => {
     const updatedBoard = markNewGems(gameBoard.value, 0)
@@ -246,25 +270,26 @@ export const useGameBoard = () => {
       return
     }
 
-    const visualChangedBoard = visualSwapGems(currentDraggedGem, gem)
-    gameBoard.value = visualChangedBoard
-
-    setSafeTimeout(() => {
-      let boardAfterSwap = swapGems(visualChangedBoard, currentDraggedGem, gem)
-      const matches = findMatches(boardAfterSwap)
-
-      if (matches.length > 0) {
-        gameBoard.value = clearAllDragDirections(boardAfterSwap)
-        removeMatchesAndAnimate()
-      } else {
-        const finalBoard = copyBoard(visualChangedBoard)
-        finalBoard[currentDraggedGem.row][currentDraggedGem.col].dragDirection = 'none'
-        finalBoard[gem.row][gem.col].dragDirection = 'none'
-        gameBoard.value = finalBoard
-      }
-
-      draggedGem.value = null
-    }, ANIMATION_DELAY.DRAG)
+    attemptGemSwap(currentDraggedGem, gem)
+    // const visualChangedBoard = visualSwapGems(currentDraggedGem, gem)
+    // gameBoard.value = visualChangedBoard
+    //
+    // setSafeTimeout(() => {
+    //   let boardAfterSwap = swapGems(visualChangedBoard, currentDraggedGem, gem)
+    //   const matches = findMatches(boardAfterSwap)
+    //
+    //   if (matches.length > 0) {
+    //     gameBoard.value = clearAllDragDirections(boardAfterSwap)
+    //     removeMatchesAndAnimate()
+    //   } else {
+    //     const finalBoard = copyBoard(visualChangedBoard)
+    //     finalBoard[currentDraggedGem.row][currentDraggedGem.col].dragDirection = 'none'
+    //     finalBoard[gem.row][gem.col].dragDirection = 'none'
+    //     gameBoard.value = finalBoard
+    //   }
+    //
+    //   draggedGem.value = null
+    // }, ANIMATION_DELAY.DRAG)
   }
   const visualSwapGems = (sourceGem: Gem, targetGem: Gem) => {
     const dragDirection = getDragDirection(sourceGem, targetGem)
