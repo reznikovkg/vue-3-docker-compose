@@ -1,5 +1,5 @@
 <template>
-  <div class="scene" ref="sceneRef" :style="cursorStyle">
+  <div class="scene" ref="sceneRef" :style="cursorStyle" @click="onSceneClick">
     <div
       v-for="item in scene"
       class="area"
@@ -84,6 +84,17 @@ const onMouseMove = (event) => {
   tooltipX.value = event.clientX - rect.left + 5
   tooltipY.value = event.clientY - rect.top - 25
 }
+
+const onSceneClick = (event) => {
+ if (!sceneRef.value) return;
+
+ const rect = sceneRef.value.getBoundingClientRect();
+ const x = event.clientX - rect.left;
+ const y = event.clientY - rect.top;
+
+ hideTooltip();
+ store.dispatch("movePlayerToPoint", { x, y });
+};
 
 const select = (item) => {
   hideTooltip()

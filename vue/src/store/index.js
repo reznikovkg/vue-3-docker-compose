@@ -13,6 +13,9 @@ const MUTATIONS = {
   MOVE_PLAYER: 'MOVE_PLAYER',
   STOP_PLAYER: 'STOP_PLAYER',
   START_LOADING: 'START_LOADING',
+  UPDATE_PLAYER_STATE: 'UPDATE_PLAYER_STATE',
+  UPDATE_PLAYER_POSITION: 'UPDATE_PLAYER_POSITION'
+
 }
 
 export default createStore({
@@ -80,7 +83,15 @@ export default createStore({
     [MUTATIONS.STOP_PLAYER]: (state) => {
       state.playerTransform.isRun = false
       clearInterval(state.intervalId)
-    }
+    },
+    [MUTATIONS.UPDATE_PLAYER_POSITION]: (state, { x, y }) => {
+     if (x !== undefined) state.playerTransform.x = x
+     if (y !== undefined) state.playerTransform.y = y
+   },
+   [MUTATIONS.UPDATE_PLAYER_STATE]: (state, { isRun, toLeft }) => {
+     if (isRun !== undefined) state.playerTransform.isRun = isRun
+     if (toLeft !== undefined) state.playerTransform.toLeft = toLeft
+   }
   },
   actions: {
     loadScenes: (store) => {
@@ -139,7 +150,49 @@ export default createStore({
         }
         store.commit(MUTATIONS.MOVE_PLAYER, {x: dx, y: dy, intervalId: intervalId})
       }, 0.02)
-    }
+    },
+    
+    movePlayer({ commit, state }, { x, y }) {
+     const newX = state.playerTransform.x + x
+     if (newX < 0 || newX > 600) return
+     commit(MUTATIONS.UPDATE_PLAYER_POSITION, { x: newX })
+     commit(MUTATIONS.UPDATE_PLAYER_STATE, {
+       isRun: true,
+       toLeft: x < 0
+     })
+    },
+    movePlayerToPoint(store, { x, y }) {
+     store.commit(MUTATIONS.STOP_PLAYER);
+     const speed = 2;
+     const intervalId = setInterval(() => {
+       const pos = store.getters.getPlayerTransform;
+       const dx = x - pos.x;
+       const dy = y - pos.y;
+       const dist = Math.sqrt(dx * dx + dy * dy);
+
+       if (dist < 5) {
+         clearInterval(intervalId);
+         store.commit(MUTATIONS.UPDATE_PLAYER_STATE, { isRun: false });
+         return;
+       }
+
+       const stepX = (dx / dist) * speed;
+       const stepY = (dy / dist) * speed;
+
+       store.commit(MUTATIONS.UPDATE_PLAYER_POSITION, {
+         x: pos.x + stepX,
+         y: pos.y + stepY,
+       });
+
+       store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {
+         isRun: true,
+         toLeft: stepX < 0,
+       });
+     }, 16);
+   },
+   updatePlayerState({ commit }, state) {
+     commit(MUTATIONS.UPDATE_PLAYER_STATE, state)
+   }
   },
   modules: {
     inventory,
