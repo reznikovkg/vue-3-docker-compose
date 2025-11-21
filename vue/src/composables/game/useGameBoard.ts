@@ -54,8 +54,7 @@ export const useGameBoard = () => {
         uniqueMatches.forEach((match: Gem) => {
           boardWithRemovingGems[match.row][match.col].removing = true
         })
-
-        gameBoard.value = clearAllDragDirections(boardWithRemovingGems)
+        gameBoard.value = boardWithRemovingGems
 
         setSafeTimeout(() => {
           resolve(boardWithRemovingGems)
@@ -224,16 +223,16 @@ export const useGameBoard = () => {
     const colDiff = firstDragGem.col - secondDragGem.col
 
     if (rowDiff === 0 && colDiff === 1) {
-      return 'left'
-    }
-    if (rowDiff === 0 && colDiff === -1) {
       return 'right'
     }
+    if (rowDiff === 0 && colDiff === -1) {
+      return 'left'
+    }
     if (rowDiff === 1 && colDiff === 0) {
-      return 'up'
+      return 'down'
     }
     if (rowDiff === -1 && colDiff === 0) {
-      return 'down'
+      return 'up'
     }
 
     return 'none'
@@ -256,9 +255,7 @@ export const useGameBoard = () => {
 
       if (matches.length > 0) {
         gameBoard.value = clearAllDragDirections(boardAfterSwap)
-        setSafeTimeout(() => {
-          checkMatchesGems()
-        }, ANIMATION_DELAY.SWAP)
+        removeMatchesAndAnimate()
       } else {
         const finalBoard = copyBoard(visualChangedBoard)
         finalBoard[currentDraggedGem.row][currentDraggedGem.col].dragDirection = 'none'

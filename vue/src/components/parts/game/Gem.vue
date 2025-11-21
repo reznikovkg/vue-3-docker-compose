@@ -96,7 +96,7 @@ const handleMouseup = () => {
       z-index: 2;
 
       &:not(&:hover) {
-        transform: translateX(-58px);
+        transform: translateX(58px);
       }
     }
 
@@ -105,7 +105,7 @@ const handleMouseup = () => {
       z-index: 2;
 
       &:not(&:hover) {
-        transform: translateX(58px);
+        transform: translateX(-58px);
       }
     }
 
@@ -114,7 +114,7 @@ const handleMouseup = () => {
       z-index: 2;
 
       &:not(&:hover) {
-        transform: translateY(58px);
+        transform: translateY(-58px);
       }
     }
 
@@ -123,7 +123,7 @@ const handleMouseup = () => {
       z-index: 2;
 
       &:not(&:hover) {
-        transform: translateY(-58px);
+        transform: translateY(58px);
       }
     }
   }
