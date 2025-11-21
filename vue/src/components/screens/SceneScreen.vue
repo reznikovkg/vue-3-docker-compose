@@ -1,11 +1,11 @@
 <template>
-  <div class="scene" ref="sceneRef">
+  <div class="scene" ref="sceneRef" :style="cursorStyle">
     <div
       v-for="item in scene"
       class="area"
       :style="{ left: item.x + 'px', top: item.y + 'px'}"
       @mousemove="(event) => onMouseMove(event)"
-      @mouseenter="() => showTooltip(item.tooltip)"
+      @mouseenter="() => onObjectHover(item)"
       @mouseleave="() => hideTooltip()"
     >
       <component
@@ -47,6 +47,8 @@ const gameObjects = {
   "chest" : Chest,
 }
 
+const cursorStyle = ref({})
+
 const props = defineProps({
   scene: Object,
   playerTransform: Object,
@@ -63,8 +65,16 @@ const showTooltip = (text) => {
   tooltipVisible.value = true
 }
 
+const onObjectHover = (item) => {
+ showTooltip(item.tooltip)
+ //cursorStyle.value.cursor = `url(${pointerCursor}), pointer`
+ //cursorStyle.value.cursor = "url('/cursors/pointer-cursor.png'), pointer"
+ document.body.style.cursor = "url('/cursors/pointer-cursor.png'), pointer"
+}
+
 const hideTooltip = () => {
   tooltipVisible.value = false
+  document.body.style.cursor = "url('/cursors/default-cursor.png'), auto"
 }
 
 const onMouseMove = (event) => {
@@ -87,6 +97,13 @@ const select = (item) => {
   width: 600px;
   height: 400px;
   margin-bottom: 20px;
+  cursor: inherit
+}
+.scene * {
+ cursor: inherit !important;
+}
+:global(.inventory) {
+ cursor: url('/cursors/pointer-cursor.png'), pointer;
 }
 .area {
   position: absolute;
