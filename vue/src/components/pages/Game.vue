@@ -11,6 +11,13 @@
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
+        @start-minigame="openMinigame"
+      />
+      <MiniGameScreen
+        v-if="isMinigameActive && minigame.onSuccess && minigame.onClose"
+        :difficulty="minigame.difficulty"
+        :onComplete="minigame.onSuccess"
+        :onClose="minigame.onClose"
       />
       <Inventory/>
       <WinScreen v-if="gameState.state === 1"/>
@@ -25,6 +32,7 @@ import SceneScreen from "../screens/SceneScreen.vue"
 import Inventory from "../Inventory.vue"
 import LoadScreen from "@/components/screens/LoadScreen.vue"
 import WinScreen from "@/components/screens/WinScreen.vue"
+import MiniGameScreen from "@/components/screens/MiniGameScreen.vue"
 import { useStore } from "vuex"
 
 const store = useStore()
@@ -32,7 +40,13 @@ const bg = computed(() => new URL(`/src/assets/backgrounds/${store.getters.getBa
 const list = computed(() => store.getters.getSceneObjects)
 const playerTransform = computed(() => store.getters.getPlayerTransform)
 const gameState = computed(() => store.getters.getGameState)
-
+const isMinigameActive = computed(() => store.getters.isMinigameActive)
+const minigame = computed(() => store.getters.getMinigameData)
+const openMinigame = ({ difficulty, onSuccess, onClose }) => {
+  console.log('openMinigame called with:', { difficulty, onSuccess, onClose });
+  store.commit("START_MINIGAME", { difficulty, onSuccess, onClose })
+  console.log('After commit, isMinigameActive:', store.getters.isMinigameActive);
+}
 
 onMounted(() => {
   store.dispatch("loadScenes")

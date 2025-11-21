@@ -14,8 +14,9 @@ const MUTATIONS = {
   STOP_PLAYER: 'STOP_PLAYER',
   START_LOADING: 'START_LOADING',
   UPDATE_PLAYER_STATE: 'UPDATE_PLAYER_STATE',
-  UPDATE_PLAYER_POSITION: 'UPDATE_PLAYER_POSITION'
-
+  UPDATE_PLAYER_POSITION: 'UPDATE_PLAYER_POSITION',
+  START_MINIGAME: 'START_MINIGAME',
+  CLOSE_MINIGAME: 'CLOSE_MINIGAME'
 }
 
 export default createStore({
@@ -29,27 +30,58 @@ export default createStore({
       backgroundName: null,
       nextLevel: 0,
       levelList: ["1", "2"],
+      minigame: {
+       isActive: false,
+       difficulty: 1,
+       onSuccess: null,
+       onClose: null
+     }
     }
   },
   getters: {
-    getSceneObjects: (state) => state.objects,
+    //getSceneObjects: (state) => state.objects,
+    getSceneObjects: (state) => {
+      console.log('getSceneObjects called, returning:', state.objects);
+      if (state.objects && state.objects.length > 0) {
+        console.log('First object in getter:', state.objects[0]);
+        console.log('First object collectible in getter:', state.objects[0]?.collectible);
+      }
+      return state.objects;
+    },
     getPlayerTransform: (state) => state.playerTransform,
     getGameState: (state) => state.gameState,
     getNextLevel: (state) => state.levelList[state.nextLevel % state.levelList.length],
     getBackgroundName: (state) => state.backgroundName,
+    isMinigameActive: (state) => state.minigame.isActive,
+    getMinigameData: (state) => state.minigame
   },
   mutations: {
     [MUTATIONS.START_LOADING](state) {
+      state.minigame.isActive = false;
       state.gameState.isLoading = true
       state.gameState.state = GAME_STATE.GAME
     },
     [MUTATIONS.SET_SCENES]: (state, payload) => {
+      console.log('SET_SCENES called with payload:', payload);
+      console.log('payload.objects:', payload.objects);
+      if (payload.objects && payload.objects.length > 0) {
+        payload.objects.forEach((obj, index) => {
+        console.log(`Object ${index}:`, obj);
+        console.log(`Object ${index} collectible:`, obj.collectible);
+        });
+      }
       state.objects = payload.objects;
       state.playerTransform = payload.playerTransform
       state.completeCondition = payload.completeCondition
       state.backgroundName = payload.background
       state.gameState.isLoading = false
       state.nextLevel += 1
+
+      console.log('After SET_SCENES, state.objects:', state.objects);
+      if (state.objects && state.objects.length > 0) {
+        console.log('First object in state:', state.objects[0]);
+        console.log('First object collectible in state:', state.objects[0].collectible);
+      }
     },
     [MUTATIONS.TRY_TAKE]: (state, item) => {
       const key = item.id
@@ -91,7 +123,22 @@ export default createStore({
    [MUTATIONS.UPDATE_PLAYER_STATE]: (state, { isRun, toLeft }) => {
      if (isRun !== undefined) state.playerTransform.isRun = isRun
      if (toLeft !== undefined) state.playerTransform.toLeft = toLeft
+   },
+   [MUTATIONS.START_MINIGAME]: (state, { difficulty, onSuccess, onClose }) => {
+     state.minigame = {
+       isActive: true,
+       difficulty: difficulty || 1,
+       onSuccess,
+       onClose: () => {
+         state.minigame.isActive = false
+         if (onClose) onClose()
+       }
+     };
+   },
+   [MUTATIONS.CLOSE_MINIGAME]: (state) => {
+     state.minigame.isActive = false
    }
+
   },
   actions: {
     loadScenes: (store) => {
@@ -151,7 +198,7 @@ export default createStore({
         store.commit(MUTATIONS.MOVE_PLAYER, {x: dx, y: dy, intervalId: intervalId})
       }, 0.02)
     },
-    
+
     movePlayer({ commit, state }, { x, y }) {
      const newX = state.playerTransform.x + x
      if (newX < 0 || newX > 600) return

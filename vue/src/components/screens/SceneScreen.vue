@@ -7,13 +7,13 @@
       @mousemove="(event) => onMouseMove(event)"
       @mouseenter="() => onObjectHover(item)"
       @mouseleave="() => hideTooltip()"
+      @click.stop="() => select(item)"
     >
       <component
         :id="item.id"
         :is="gameObjects[item.id.split('.')[0]]"
         :item="item"
-        class="game-object"
-        @click="() => select(item)"/>
+        class="game-object"/>
     </div>
     <Character
       class="area"
@@ -39,6 +39,7 @@ import Key from "@/components/items/Key.vue"
 import Bonfire from "@/components/objects/Bonfire.vue"
 import Chest from "@/components/objects/Chest.vue"
 import { useStore } from "vuex"
+import { useRouter } from 'vue-router'
 
 const gameObjects = {
   "door" : Door,
@@ -50,9 +51,17 @@ const gameObjects = {
 const cursorStyle = ref({})
 
 const props = defineProps({
-  scene: Object,
+  scene: Array,
   playerTransform: Object,
 });
+
+console.log('SceneScreen props.scene:', props.scene);
+if (props.scene && props.scene.length > 0) {
+  console.log('First item in scene prop:', props.scene[0]);
+  console.log('First item collectible in prop:', props.scene[0]?.collectible);
+  console.log('All keys in first item:', Object.keys(props.scene[0]));
+}
+
 const tooltipText = ref('')
 const tooltipVisible = ref(false)
 const tooltipX = ref(0)
@@ -94,12 +103,40 @@ const onSceneClick = (event) => {
 
  hideTooltip();
  store.dispatch("movePlayerToPoint", { x, y });
-};
-
-const select = (item) => {
-  hideTooltip()
-  store.dispatch('selectObject', item)
 }
+
+const emit = defineEmits(['start-minigame'])
+const router = useRouter();
+const select = async (item) => {
+  console.log('select called with item:', item);
+  console.log('item.collectible:', item.collectible);
+  hideTooltip()
+  if (item.collectible) {
+   try {
+      console.log('Starting minigame for collectible item');
+     const success = await new Promise((resolve) => {
+       emit('start-minigame', {
+         difficulty: item.difficulty || 1,
+         onSuccess: () => resolve(true),
+         onClose: () => resolve(false)
+       });
+     });
+    
+     if (success) {
+       // Only dispatch selectObject if mini-game was won
+       store.dispatch('selectObject', item);
+     } else {
+       console.log('Mini-game failed, item not collected');
+     }
+   } catch (error) {
+     console.error('Error in mini-game:', error);
+   }
+ } else {
+   // For non-collectible items, proceed normally
+   store.dispatch('selectObject', item);
+ }
+}
+
 </script>
 
 <style scoped lang="less">
