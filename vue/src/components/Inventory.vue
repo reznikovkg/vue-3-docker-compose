@@ -5,7 +5,7 @@
       :key="item.id"
       class="inventory__item"
       :class="{ 'inventory__item--selected': index === selectedId }"
-      @click="() => select(index)"
+      @click="() => select(index, item)"
     >
       <img v-if="item.id.length > 0"
            class="inventory__item__icon"
@@ -19,12 +19,22 @@
 <script setup>
 import { computed } from "vue"
 import { useStore } from "vuex"
+const props = defineProps({
+  onItemClick: {
+    type: Function,
+    default: null
+  }
+})
 const store = useStore()
 const inventory = computed(() => store.getters["inventory/getInventory"])
 const selectedId = computed(() => store.getters["inventory/getInventorySelectedIndex"])
 
-const select = (index) => {
-  store.dispatch("inventory/selectInventoryItem", index)
+const select = (index,item) => {
+  if (props.onItemClick) {
+    props.onItemClick(item, index)
+  } else {
+      store.dispatch("inventory/selectInventoryItem", index)
+  }
 }
 </script>
 
@@ -32,6 +42,7 @@ const select = (index) => {
 .inventory {
   display: flex;
   padding-top: 20px;
+  cursor: url('/cursors/pointer-cursor.png'), pointer;
   z-index: 100;
   &__item {
     position: relative;
@@ -41,6 +52,7 @@ const select = (index) => {
     background-size: cover;
     width: 50px;
     height: 50px;
+    cursor: url('/cursors/pointer-cursor.png'), pointer;
     &--selected {
       border: yellow 1px solid;
     }

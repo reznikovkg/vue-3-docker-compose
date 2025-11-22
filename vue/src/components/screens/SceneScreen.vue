@@ -39,11 +39,15 @@ import Key from "@/components/items/Key.vue"
 import Bonfire from "@/components/objects/Bonfire.vue"
 import Chest from "@/components/objects/Chest.vue"
 import { useStore } from "vuex"
+import Gold from "@/components/items/Gold.vue"
+import Stick from "@/components/items/Stick.vue"
 import { useRouter } from 'vue-router'
 
 const gameObjects = {
   "door" : Door,
   "key" : Key,
+  "gold" : Gold,
+  "stick" : Stick,
   "bonfire" : Bonfire,
   "chest" : Chest,
 }
@@ -54,13 +58,6 @@ const props = defineProps({
   scene: Array,
   playerTransform: Object,
 });
-
-console.log('SceneScreen props.scene:', props.scene);
-if (props.scene && props.scene.length > 0) {
-  console.log('First item in scene prop:', props.scene[0]);
-  console.log('First item collectible in prop:', props.scene[0]?.collectible);
-  console.log('All keys in first item:', Object.keys(props.scene[0]));
-}
 
 const tooltipText = ref('')
 const tooltipVisible = ref(false)
@@ -77,13 +74,14 @@ const showTooltip = (text) => {
 const onObjectHover = (item) => {
  showTooltip(item.tooltip)
  //cursorStyle.value.cursor = `url(${pointerCursor}), pointer`
- //cursorStyle.value.cursor = "url('/cursors/pointer-cursor.png'), pointer"
- document.body.style.cursor = "url('/cursors/pointer-cursor.png'), pointer"
+ cursorStyle.value.cursor = "url('/cursors/pointer-cursor.png'), pointer"
+ //document.body.style.cursor = "url('/cursors/pointer-cursor.png'), pointer"
 }
 
 const hideTooltip = () => {
   tooltipVisible.value = false
-  document.body.style.cursor = "url('/cursors/default-cursor.png'), auto"
+  //document.body.style.cursor = "url('/cursors/default-cursor.png'), auto"
+  cursorStyle.value.cursor = "url('/cursors/default-cursor.png'), auto"
 }
 
 const onMouseMove = (event) => {
@@ -106,7 +104,7 @@ const onSceneClick = (event) => {
 }
 
 const emit = defineEmits(['start-minigame'])
-const router = useRouter();
+//const router = useRouter();
 const select = async (item) => {
   console.log('select called with item:', item);
   console.log('item.collectible:', item.collectible);
@@ -165,6 +163,7 @@ const select = async (item) => {
   background-position: center;
   background-repeat: no-repeat;
 }
+
 .tooltip {
   position: absolute;
   padding: 4px 8px;
