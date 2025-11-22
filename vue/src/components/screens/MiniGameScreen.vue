@@ -2,14 +2,13 @@
  <div class="minigame-overlay" @click.self="closeMinigame">
    <div class="minigame-container">
      <h3>Quick Time Event</h3>
-     <div class="progress-bar">
-       <div
-         class="progress-indicator"
-         :style="{ left: indicatorPosition + 'px' }"
-         @click="handleClick"
-       ></div>
-       <div class="target-zone" :style="{ left: targetZonePosition + 'px' }"></div>
-     </div>
+    <div class="progress-bar" @click="handleClick">
+      <div
+        class="progress-indicator"
+        :style="{ left: indicatorPosition + 'px' }"
+      ></div>
+      <div class="target-zone" :style="{ left: targetZonePosition + 'px', width: targetZoneWidth + 'px' }"></div>
+    </div>
      <div class="hint">Click when the arrow is in the green zone!</div>
      <div v-if="showResult" :class="['result', isSuccess ? 'success' : 'fail']">
        {{ isSuccess ? 'Success!' : 'Try again!' }}
@@ -58,7 +57,7 @@ export default {
    },
    zoneWidth() {
      // Adjust zone width based on difficulty
-     return 40 - (this.difficulty * 8);
+     return 100 - (this.difficulty * 8);
    }
  },
  mounted() {
@@ -88,26 +87,26 @@ export default {
    getRandomPosition() {
      return Math.random() * (this.barWidth - this.zoneWidth);
    },
-   handleClick() {
-     if (!this.isRunning) return;
+  handleClick(event) {
+    if (!this.isRunning) return;
     
-     this.isRunning = false;
-     cancelAnimationFrame(this.animationFrame);
+    this.isRunning = false;
+    cancelAnimationFrame(this.animationFrame);
     
-     // Check if click was in target zone
-     const indicatorCenter = this.indicatorPosition + (this.indicatorWidth / 2);
-     this.isSuccess = indicatorCenter >= this.targetZonePosition &&
-                     indicatorCenter <= (this.targetZonePosition + this.zoneWidth);
+    // Check if indicator is in target zone when clicked
+    const indicatorCenter = this.indicatorPosition + (this.indicatorWidth / 2);
+    this.isSuccess = indicatorCenter >= this.targetZonePosition &&
+                    indicatorCenter <= (this.targetZonePosition + this.targetZoneWidth);
     
-     this.showResult = true;
+    this.showResult = true;
     
-     if (this.isSuccess) {
-       setTimeout(() => {
-         this.onComplete();
-         this.onClose();
-       }, 1000);
-     }
-   },
+    if (this.isSuccess) {
+      setTimeout(() => {
+        this.onComplete();
+        this.onClose();
+      }, 1000);
+    }
+  },
    resetMinigame() {
      this.indicatorPosition = 0;
      this.direction = 1;
@@ -156,6 +155,7 @@ export default {
  margin: 2rem 0;
  border-radius: 4px;
  overflow: hidden;
+ cursor: url('/cursors/pointer-cursor.png'), pointer;
 }
 
 .progress-indicator {
