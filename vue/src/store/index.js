@@ -94,29 +94,36 @@ export default createStore({
       state.playerTransform.isRun = false
       clearInterval(state.intervalId)
     },
-    [MUTATIONS.UPDATE_PLAYER_POSITION]: (state, { x, y }) => {
-     if (x !== undefined) state.playerTransform.x = x
-     if (y !== undefined) state.playerTransform.y = y
+    [MUTATIONS.UPDATE_PLAYER_POSITION]: (state, position) => {
+     if (position.x !== undefined) {
+      state.playerTransform.x = position.x
+     }
+     if (position.y !== undefined) {
+      state.playerTransform.y = position.y
+     }
    },
-   [MUTATIONS.UPDATE_PLAYER_STATE]: (state, { isRun, toLeft }) => {
-     if (isRun !== undefined) state.playerTransform.isRun = isRun
-     if (toLeft !== undefined) state.playerTransform.toLeft = toLeft
+   [MUTATIONS.UPDATE_PLAYER_STATE]: (state, character) => {
+     if (character.isRun !== undefined) {
+      state.playerTransform.isRun = character.isRun
+     }
+     if (character.toLeft !== undefined) {
+      state.playerTransform.toLeft = character.toLeft
+     }
    },
-   [MUTATIONS.START_MINIGAME]: (state, { difficulty, onSuccess, onClose }) => {
+   [MUTATIONS.START_MINIGAME]: (state, game) => {
       state.minigame.isActive = true
-      state.minigame.difficulty = difficulty || 1
-      state.minigame.onSuccess = onSuccess
+      state.minigame.difficulty = game.difficulty || 1
+      state.minigame.onSuccess = game.onSuccess
       state.minigame.onClose = () => {
         state.minigame.isActive = false
-        if (onClose){
-          onClose()
+        if (game.onClose){
+          game.onClose()
         }
       }
    },
    [MUTATIONS.CLOSE_MINIGAME]: (state) => {
      state.minigame.isActive = false
    }
-
   },
   actions: {
     loadScenes: (store) => {
@@ -177,7 +184,9 @@ export default createStore({
         toLeft: x < 0
       })
     },
-    movePlayerToPoint(store, { x, y }) {
+    movePlayerToPoint(store, point) {
+      const x = point.x
+      const y = point.y
       store.commit(MUTATIONS.STOP_PLAYER);
       const speed = 5;
       const intervalId = setInterval(() => {
@@ -188,6 +197,7 @@ export default createStore({
         if (dist < 5) {
           clearInterval(intervalId)
           store.commit(MUTATIONS.UPDATE_PLAYER_STATE, { isRun: false })
+          store.state.intervalId = null 
           return
         }
         const stepX = (dx / dist) * speed
@@ -201,6 +211,7 @@ export default createStore({
           toLeft: stepX < 0,
         });
       }, 16);
+      store.state.intervalId = intervalId 
     },
     updatePlayerState({ commit }, state) {
       commit(MUTATIONS.UPDATE_PLAYER_STATE, state)

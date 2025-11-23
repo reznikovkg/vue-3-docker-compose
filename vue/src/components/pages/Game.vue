@@ -8,7 +8,7 @@
         backgroundSize: 'cover'
       }"
     >
-      <button v-if="!isCraftingOpen" class="crafting-button" @click="openCrafting"> ⚒️ </button>
+      <button v-if="!isCraftingOpen" class="crafting-button" @click="() => openCrafting()"> ⚒️ </button>
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
@@ -20,7 +20,7 @@
         :onComplete="minigame.onSuccess"
         :onClose="minigame.onClose"
       />
-      <CraftingScreen v-if="isCraftingOpen" :onClose="closeCrafting" @close="closeCrafting"/>
+      <CraftingScreen v-if="isCraftingOpen" :onClose="closeCrafting" @close="() => closeCrafting()"/>
       <Inventory/>
       <WinScreen v-if="gameState.state === 1"/>
     </div>

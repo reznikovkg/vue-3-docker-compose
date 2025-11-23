@@ -1,5 +1,5 @@
 <template>
-  <div class="scene" ref="sceneRef" :style="cursorStyle" @click="onSceneClick">
+  <div class="scene" ref="sceneRef" :style="cursorStyle" @click="(event) => onSceneClick(event)">
     <div
       v-for="item in scene"
       class="area"
@@ -71,7 +71,6 @@ const showTooltip = (text) => {
 
 const onObjectHover = (item) => {
   showTooltip(item.tooltip)
-  //cursorStyle.value.cursor = `url(${pointerCursor}), pointer`
   cursorStyle.value.cursor = "url('/cursors/pointer-cursor.png'), pointer"
 }
 
@@ -111,9 +110,10 @@ const select = async (item) => {
       if (success) {
         store.dispatch('selectObject', item)
       }
-    } catch (error) {
-        console.error('Error in minigame:', error)
-      }
+    }
+    catch (error) {
+      console.error('Error in minigame:', error)
+    }
   } else {
     store.dispatch('selectObject', item)
   }
@@ -150,7 +150,7 @@ const select = async (item) => {
   color: white;
   font-size: 12px;
   border-radius: 4px;
-  pointer-events: none; /* чтобы мышь не блокировала события */
+  pointer-events: none;
   white-space: nowrap;
   z-index: 1000;
 }

@@ -1,18 +1,18 @@
 <template>
- <div class="minigame-overlay" @click.self="closeMinigame">
+ <div class="minigame" @click.self="() => closeMinigame()">
    <div class="minigame-container">
-    <div class="progressbar" @click="handleClick">
+    <div class="minigame-progressbar" @click="() => handleClick()">
       <div
-        class="indicator"
+        class="minigame-indicator"
         :style="{ left: indicatorPosition + 'px' }"
       ></div>
-      <div class="target-zone" :style="{ left: targetZonePosition + 'px', width: targetZoneWidth + 'px' }"></div>
+      <div class="minigame-targetZone" :style="{ left: targetZonePosition + 'px', width: targetZoneWidth + 'px' }"></div>
     </div>
-     <div class="hint">Чтобы взять предмет нажмите, когда стрелка будет в зелёной зоне</div>
-     <div v-if="showResult" :class="['result', isSuccess ? 'success' : 'fail']">
+     <div class="minigame-hint">Чтобы взять предмет нажмите, когда стрелка будет в зелёной зоне</div>
+     <div v-if="showResult" :class="['minigame-result', isSuccess ? 'minigame-result--success' : 'minigame-result--fail']">
        {{ isSuccess ? 'Success!' : 'Try again!' }}
      </div>
-     <button v-if="showResult" @click="resetMinigame">Try Again</button>
+     <button v-if="showResult" class="minigame-button" @click="() => resetMinigame()">Try Again</button>
    </div>
  </div>
 </template>
@@ -57,7 +57,9 @@ const getRandomPosition = () => {
 }
 
 const animate = () => {
-  if (!isRunning.value) return
+  if (!isRunning.value) {
+    return
+  }
   indicatorPosition.value += speed.value * direction.value
   if (indicatorPosition.value >= barWidth.value || indicatorPosition.value <= 0) {
     direction.value *= -1
@@ -67,7 +69,9 @@ const animate = () => {
 }
 
 const handleClick = () => {
-  if (!isRunning.value) return
+  if (!isRunning.value) {
+    return
+  }
   isRunning.value = false
   cancelAnimationFrame(animationFrame.value)
   const indicatorCenter = indicatorPosition.value + (indicatorWidth.value / 2)
@@ -81,7 +85,8 @@ const handleClick = () => {
   }
 }
 
-const resetMinigame = () => {indicatorPosition.value = 0
+const resetMinigame = () => {
+  indicatorPosition.value = 0
   direction.value = 1
   targetZonePosition.value = getRandomPosition()
   showResult.value = false
@@ -94,7 +99,7 @@ const closeMinigame = () => {
 }
 
 onMounted(() => {
-  const progressBar = document.querySelector('.progressbar')
+  const progressBar = document.querySelector('.minigame-progressbar')
   if (progressBar) {
     barWidth.value = progressBar.offsetWidth - indicatorWidth.value
     targetZoneWidth.value = zoneWidth.value
@@ -109,7 +114,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped lang="less">
-.minigame-overlay {
+.minigame {
   position: fixed;
   top: 0;
   left: 0;
@@ -120,77 +125,69 @@ onBeforeUnmount(() => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-}
+  &-container {
+    background: #2c3e50;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    color: white;
+    width: 300px;
+  }
+  &-progressbar {
+    width: 100%;
+    height: 30px;
+    background-color: #34495e;
+    position: relative;
+    margin: 2rem 0;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: url('/cursors/pointer-cursor.png'), pointer;
+  }
+  &-indicator {
+    position: absolute;
+    width: 10px;
+    height: 100%;
+    background-color: #3498db;
+    cursor: pointer;
+    transition: left 0.1s linear;
+  }
+  &-targetZone {
+    position: absolute;
+    height: 100%;
+    background-color: rgba(46, 204, 113, 0.3);
+    border: 1px solid #2ecc71;
+    top: 0;
+  }
+  &-hint {
+    margin: 1rem 0;
+    color: #bdc3c7;
+    font-size: 0.9rem;
+  }
+  &-button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
 
-.minigame-container {
-  background: #2c3e50;
-  padding: 2rem;
-  border-radius: 8px;
-  text-align: center;
-  color: white;
-  width: 300px;
-}
-
-.progressbar {
-  width: 100%;
-  height: 30px;
-  background-color: #34495e;
-  position: relative;
-  margin: 2rem 0;
-  border-radius: 4px;
-  overflow: hidden;
-  cursor: url('/cursors/pointer-cursor.png'), pointer;
-}
-
-.indicator {
-  position: absolute;
-  width: 10px;
-  height: 100%;
-  background-color: #3498db;
-  cursor: pointer;
-  transition: left 0.1s linear;
-}
-
-.target-zone {
-  position: absolute;
-  height: 100%;
-  background-color: rgba(46, 204, 113, 0.3);
-  border: 1px solid #2ecc71;
-  top: 0;
-}
-
-.hint {
-  margin: 1rem 0;
-  color: #bdc3c7;
-  font-size: 0.9rem;
-}
-
-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-button:hover {
-  background-color: #2980b9;
-}
-
-.result {
+    &:hover {
+      background-color: #2980b9;
+      cursor: url('/cursors/pointer-cursor.png'), pointer;
+    }
+  }
+  &-result {
   margin: 1rem 0;
   font-weight: bold;
   font-size: 1.2rem;
-}
-
-.success {
-  color: #2ecc71;
-}
-
-.fail {
-  color: #e74c3c;
+    &--success {
+      color: #2ecc71;
+    }
+    &--fail {
+      color: #e74c3c;
+    }
+  }
 }
 </style>
