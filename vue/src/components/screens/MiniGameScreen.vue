@@ -1,9 +1,9 @@
 <template>
  <div class="minigame-overlay" @click.self="closeMinigame">
    <div class="minigame-container">
-    <div class="progress-bar" @click="handleClick">
+    <div class="progressbar" @click="handleClick">
       <div
-        class="progress-indicator"
+        class="indicator"
         :style="{ left: indicatorPosition + 'px' }"
       ></div>
       <div class="target-zone" :style="{ left: targetZonePosition + 'px', width: targetZoneWidth + 'px' }"></div>
@@ -94,7 +94,7 @@ const closeMinigame = () => {
 }
 
 onMounted(() => {
-  const progressBar = document.querySelector('.progress-bar')
+  const progressBar = document.querySelector('.progressbar')
   if (progressBar) {
     barWidth.value = progressBar.offsetWidth - indicatorWidth.value
     targetZoneWidth.value = zoneWidth.value
