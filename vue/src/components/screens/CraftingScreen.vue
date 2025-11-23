@@ -5,17 +5,11 @@
         <h2>Crafting</h2>
         <button class="close-button" @click="closeCrafting">×</button>
       </div>
-      
       <div class="crafting-content">
-        <!-- Инвентарь -->
         <div class="crafting-section">
-          <h3>Inventory</h3>
           <Inventory :onItemClick="handleInventoryItemClick" />
         </div>
-        
-        <!-- Зона крафтинга -->
         <div class="crafting-section">
-          <h3>Recipe</h3>
           <div class="recipe-slots">
             <div
               v-for="(slot, index) in recipeSlots"
@@ -34,8 +28,6 @@
             </div>
           </div>
         </div>
-        
-        <!-- Зона результата -->
         <div class="crafting-section">
           <h3>Result</h3>
           <div
@@ -52,17 +44,9 @@
             <span v-if="craftResult && craftResult.count > 1" class="result-slot__count">
               {{ craftResult.count }}
             </span>
-            <div v-if="!craftResult" class="result-slot__placeholder">
-              ?
-            </div>
+            <div v-if="!craftResult" class="result-slot__placeholder"> ?</div>
           </div>
-          <button
-            v-if="canCraft"
-            class="craft-button"
-            @click="craftItem"
-          >
-            Craft
-          </button>
+          <button v-if="canCraft" class="craft-button" @click="craftItem">Add</button>
         </div>
       </div>
     </div>
@@ -83,14 +67,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 const store = useStore()
-
-// Слоты для рецепта (например, 3x3 сетка = 9 слотов)
-const recipeSlots = ref(Array.from({ length: 9 }, () => ({ id: '', count: 0 })))
-
-// Результат крафтинга
+const recipeSlots = ref(Array.from({ length: 6 }, () => ({ id: '', count: 0 })))
 const craftResult = ref(null)
-
-// Рецепты крафтинга (пока простой пример)
 const recipes = [
   {
     ingredients: [
@@ -99,33 +77,23 @@ const recipes = [
     ],
     result: { id: 'key', count: 1 }
   }
-  // Здесь можно добавить больше рецептов
 ]
 
 const handleInventoryItemClick = (item, index) => {
-  // Проверяем, что предмет существует
   if (!item || !item.id || item.id.length === 0) return
-  
-  // Находим первый свободный слот в рецепте
   const emptySlotIndex = recipeSlots.value.findIndex(slot => slot.id === '')
-  
   if (emptySlotIndex !== -1) {
-    // Добавляем предмет в свободный слот
     const slot = recipeSlots.value[emptySlotIndex]
     slot.id = item.id
     slot.count = 1
-    
-    // Удаляем один предмет из инвентаря
     store.dispatch('inventory/selectInventoryItem', index)
     store.dispatch('inventory/useSelectedItem')
-    
     checkRecipe()
   }
 }
 
 const canCraft = computed(() => { return !!craftResult.value})
 
-// Получение необходимых предметов из рецепта
 const getRequiredItems = () => {
   const items = []
   recipeSlots.value.forEach(slot => {
@@ -140,15 +108,13 @@ const getRequiredItems = () => {
   })
   return items
 }
+
 const findMatchingRecipe = () => {
   const requiredItems = getRequiredItems()
-  
   for (const recipe of recipes) {
     if (recipe.ingredients.length !== requiredItems.length) continue
-    
     const recipeItems = [...recipe.ingredients].sort((a, b) => a.id.localeCompare(b.id))
     const requiredItemsSorted = [...requiredItems].sort((a, b) => a.id.localeCompare(b.id))
-    
     let match = true
     for (let i = 0; i < recipeItems.length; i++) {
       if (recipeItems[i].id !== requiredItemsSorted[i].id ||
@@ -157,19 +123,17 @@ const findMatchingRecipe = () => {
         break
       }
     }
-    
     if (match) {
       return recipe
     }
   }
-  
   return null
 }
+
 watch(recipeSlots, () => {
   checkRecipe()
 }, { deep: true })
 
-// Проверка рецепта и установка результата
 const checkRecipe = () => {
   const recipe = findMatchingRecipe()
   if (recipe) {
@@ -195,11 +159,7 @@ const removeFromRecipe = (slotIndex) => {
 
 const craftItem = () => {
   if (!canCraft.value || !craftResult.value) return
-  
-  // Добавляем результат в инвентарь
   store.dispatch('inventory/addToInventory', craftResult.value)
-  
-  // Очищаем рецепт
   recipeSlots.value = Array.from({ length: 9 }, () => ({ id: '', count: 0 }))
   craftResult.value = null
 }
@@ -224,7 +184,6 @@ const closeCrafting = () => {
   z-index: 1000;
   margin-bottom: 20px;
 }
-
 .crafting-container {
   background: #2c3e50;
   border-radius: 12px;
@@ -235,7 +194,6 @@ const closeCrafting = () => {
   max-height: 90vh;
   overflow-y: auto;
 }
-
 .crafting-header {
   display: flex;
   justify-content: space-between;
@@ -269,7 +227,6 @@ const closeCrafting = () => {
     }
   }
 }
-
 .crafting-content {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -279,22 +236,12 @@ const closeCrafting = () => {
     grid-template-columns: 1fr;
   }
 }
-
-.crafting-section {
-  h3 {
-    margin: 0 0 1rem 0;
-    font-size: 1.2rem;
-    color: #bdc3c7;
-  }
-}
-
 .recipe-slots {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 1rem;
 }
-
 .recipe-slot {
   position: relative;
   width: 60px;
@@ -337,7 +284,6 @@ const closeCrafting = () => {
     font-weight: bold;
   }
 }
-
 .result-slot {
   position: relative;
   width: 80px;
@@ -386,7 +332,6 @@ const closeCrafting = () => {
     color: #7f8c8d;
   }
 }
-
 .craft-button {
   width: 100%;
   padding: 0.75rem 1.5rem;

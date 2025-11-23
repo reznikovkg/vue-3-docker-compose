@@ -19,7 +19,6 @@
       class="area"
       :style="{ left: playerTransform.x + 'px', top: playerTransform.y + 'px'}"
     >
-
     </Character>
     <div
       v-if="tooltipVisible"
@@ -41,7 +40,6 @@ import Chest from "@/components/objects/Chest.vue"
 import { useStore } from "vuex"
 import Gold from "@/components/items/Gold.vue"
 import Stick from "@/components/items/Stick.vue"
-import { useRouter } from 'vue-router'
 
 const gameObjects = {
   "door" : Door,
@@ -57,7 +55,7 @@ const cursorStyle = ref({})
 const props = defineProps({
   scene: Array,
   playerTransform: Object,
-});
+})
 
 const tooltipText = ref('')
 const tooltipVisible = ref(false)
@@ -72,69 +70,54 @@ const showTooltip = (text) => {
 }
 
 const onObjectHover = (item) => {
- showTooltip(item.tooltip)
- //cursorStyle.value.cursor = `url(${pointerCursor}), pointer`
- cursorStyle.value.cursor = "url('/cursors/pointer-cursor.png'), pointer"
- //document.body.style.cursor = "url('/cursors/pointer-cursor.png'), pointer"
+  showTooltip(item.tooltip)
+  //cursorStyle.value.cursor = `url(${pointerCursor}), pointer`
+  cursorStyle.value.cursor = "url('/cursors/pointer-cursor.png'), pointer"
 }
 
 const hideTooltip = () => {
   tooltipVisible.value = false
-  //document.body.style.cursor = "url('/cursors/default-cursor.png'), auto"
   cursorStyle.value.cursor = "url('/cursors/default-cursor.png'), auto"
 }
 
 const onMouseMove = (event) => {
   if (!sceneRef.value) return
-
   const rect = sceneRef.value.getBoundingClientRect()
   tooltipX.value = event.clientX - rect.left + 5
   tooltipY.value = event.clientY - rect.top - 25
 }
 
 const onSceneClick = (event) => {
- if (!sceneRef.value) return;
-
- const rect = sceneRef.value.getBoundingClientRect();
- const x = event.clientX - rect.left;
- const y = event.clientY - rect.top;
-
- hideTooltip();
- store.dispatch("movePlayerToPoint", { x, y });
+  if (!sceneRef.value) return
+  const rect = sceneRef.value.getBoundingClientRect()
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  hideTooltip()
+  store.dispatch("movePlayerToPoint", { x, y })
 }
 
-const emit = defineEmits(['start-minigame'])
-//const router = useRouter();
+const emit = defineEmits(['startMinigame'])
 const select = async (item) => {
-  console.log('select called with item:', item);
-  console.log('item.collectible:', item.collectible);
   hideTooltip()
   if (item.collectible) {
-   try {
-      console.log('Starting minigame for collectible item');
-     const success = await new Promise((resolve) => {
-       emit('start-minigame', {
-         difficulty: item.difficulty || 1,
-         onSuccess: () => resolve(true),
-         onClose: () => resolve(false)
-       });
-     });
-    
-     if (success) {
-       // Only dispatch selectObject if mini-game was won
-       store.dispatch('selectObject', item);
-     } else {
-       console.log('Mini-game failed, item not collected');
-     }
-   } catch (error) {
-     console.error('Error in mini-game:', error);
-   }
- } else {
-   // For non-collectible items, proceed normally
-   store.dispatch('selectObject', item);
- }
+    try {
+      const success = await new Promise((resolve) => {
+        emit('startMinigame', {
+          difficulty: item.difficulty || 1,
+          onSuccess: () => resolve(true),
+          onClose: () => resolve(false)
+        })
+      })
+      if (success) {
+        store.dispatch('selectObject', item)
+      }
+    } catch (error) {
+        console.error('Error in minigame:', error)
+      }
+  } else {
+    store.dispatch('selectObject', item)
+  }
 }
-
 </script>
 
 <style scoped lang="less">
@@ -146,10 +129,7 @@ const select = async (item) => {
   cursor: inherit
 }
 .scene * {
- cursor: inherit !important;
-}
-:global(.inventory) {
- cursor: url('/cursors/pointer-cursor.png'), pointer;
+  cursor: inherit !important;
 }
 .area {
   position: absolute;
@@ -163,7 +143,6 @@ const select = async (item) => {
   background-position: center;
   background-repeat: no-repeat;
 }
-
 .tooltip {
   position: absolute;
   padding: 4px 8px;

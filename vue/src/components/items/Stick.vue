@@ -1,5 +1,7 @@
 <template>
-  <div class="stick">
+  <div
+    class="stick"
+  >
   </div>
 </template>
 

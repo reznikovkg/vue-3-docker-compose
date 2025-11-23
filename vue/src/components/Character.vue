@@ -41,7 +41,6 @@ const onKeyUp = (e: KeyboardEvent) => {
  }
 }
 
-// Movement logic
 const startMovement = () => {
  if (!moveInterval.value) {
    updateDirection()
@@ -80,7 +79,6 @@ const updateStore = () => {
  })
 }
 
-// Lifecycle hooks
 onMounted(() => {
  window.addEventListener('keydown', onKeyDown)
  window.addEventListener('keyup', onKeyUp)
@@ -91,7 +89,6 @@ onUnmounted(() => {
  window.removeEventListener('keyup', onKeyUp)
  stopMovement()
 })
-
 </script>
 
 <style scoped lang="less">

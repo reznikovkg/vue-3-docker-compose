@@ -39,15 +39,7 @@ export default createStore({
     }
   },
   getters: {
-    //getSceneObjects: (state) => state.objects,
-    getSceneObjects: (state) => {
-      console.log('getSceneObjects called, returning:', state.objects);
-      if (state.objects && state.objects.length > 0) {
-        console.log('First object in getter:', state.objects[0]);
-        console.log('First object collectible in getter:', state.objects[0]?.collectible);
-      }
-      return state.objects;
-    },
+    getSceneObjects: (state) => state.objects,
     getPlayerTransform: (state) => state.playerTransform,
     getGameState: (state) => state.gameState,
     getNextLevel: (state) => state.levelList[state.nextLevel % state.levelList.length],
@@ -62,26 +54,12 @@ export default createStore({
       state.gameState.state = GAME_STATE.GAME
     },
     [MUTATIONS.SET_SCENES]: (state, payload) => {
-      console.log('SET_SCENES called with payload:', payload);
-      console.log('payload.objects:', payload.objects);
-      if (payload.objects && payload.objects.length > 0) {
-        payload.objects.forEach((obj, index) => {
-        console.log(`Object ${index}:`, obj);
-        console.log(`Object ${index} collectible:`, obj.collectible);
-        });
-      }
       state.objects = payload.objects;
       state.playerTransform = payload.playerTransform
       state.completeCondition = payload.completeCondition
       state.backgroundName = payload.background
       state.gameState.isLoading = false
       state.nextLevel += 1
-
-      console.log('After SET_SCENES, state.objects:', state.objects);
-      if (state.objects && state.objects.length > 0) {
-        console.log('First object in state:', state.objects[0]);
-        console.log('First object collectible in state:', state.objects[0].collectible);
-      }
     },
     [MUTATIONS.TRY_TAKE]: (state, item) => {
       const key = item.id
@@ -125,15 +103,15 @@ export default createStore({
      if (toLeft !== undefined) state.playerTransform.toLeft = toLeft
    },
    [MUTATIONS.START_MINIGAME]: (state, { difficulty, onSuccess, onClose }) => {
-     state.minigame = {
-       isActive: true,
-       difficulty: difficulty || 1,
-       onSuccess,
-       onClose: () => {
-         state.minigame.isActive = false
-         if (onClose) onClose()
-       }
-     };
+      state.minigame.isActive = true
+      state.minigame.difficulty = difficulty || 1
+      state.minigame.onSuccess = onSuccess
+      state.minigame.onClose = () => {
+        state.minigame.isActive = false
+        if (onClose){
+          onClose()
+        }
+      }
    },
    [MUTATIONS.CLOSE_MINIGAME]: (state) => {
      state.minigame.isActive = false
@@ -153,21 +131,15 @@ export default createStore({
     interactWithItem: (store, item) => {
       store.commit(MUTATIONS.STOP_PLAYER)
       if(item.type === 'item') {
-        if(store.getters['inventory/getEmptySlotsCount'] <= 0) {
-          return
-        }
+        if(store.getters['inventory/getEmptySlotsCount'] <= 0) return
         store.commit(MUTATIONS.TRY_TAKE, item)
         const itemKey = item.id.split('.')[0]
         store.dispatch('inventory/addToInventory', {id: itemKey, count: 1})
         return
       }
-      if(item.isActive) {
-        return
-      }
+      if(item.isActive) return
       const selected = store.getters['inventory/getSelectedItem']
-      if(item.condition && selected.id !== item.condition) {
-        return
-      }
+      if(item.condition && selected.id !== item.condition) return
       if(item.condition) {
         store.dispatch('inventory/useSelectedItem')
       }
@@ -180,9 +152,7 @@ export default createStore({
     selectObject: (store, item) => {
       const speed = 1
       store.commit(MUTATIONS.STOP_PLAYER)
-      if (!item) {
-        return
-      }
+      if (!item) return
       const intervalId = setInterval(() => {
         const pos = store.getters.getPlayerTransform
         const x = item.x - pos.x
@@ -198,48 +168,43 @@ export default createStore({
         store.commit(MUTATIONS.MOVE_PLAYER, {x: dx, y: dy, intervalId: intervalId})
       }, 0.02)
     },
-
     movePlayer({ commit, state }, { x, y }) {
-     const newX = state.playerTransform.x + x
-     if (newX < 0 || newX > 600) return
-     commit(MUTATIONS.UPDATE_PLAYER_POSITION, { x: newX })
-     commit(MUTATIONS.UPDATE_PLAYER_STATE, {
-       isRun: true,
-       toLeft: x < 0
-     })
+      const newX = state.playerTransform.x + x
+      if (newX < 0 || newX > 600) return
+      commit(MUTATIONS.UPDATE_PLAYER_POSITION, { x: newX })
+      commit(MUTATIONS.UPDATE_PLAYER_STATE, {
+        isRun: true,
+        toLeft: x < 0
+      })
     },
     movePlayerToPoint(store, { x, y }) {
-     store.commit(MUTATIONS.STOP_PLAYER);
-     const speed = 2;
-     const intervalId = setInterval(() => {
-       const pos = store.getters.getPlayerTransform;
-       const dx = x - pos.x;
-       const dy = y - pos.y;
-       const dist = Math.sqrt(dx * dx + dy * dy);
-
-       if (dist < 5) {
-         clearInterval(intervalId);
-         store.commit(MUTATIONS.UPDATE_PLAYER_STATE, { isRun: false });
-         return;
-       }
-
-       const stepX = (dx / dist) * speed;
-       const stepY = (dy / dist) * speed;
-
-       store.commit(MUTATIONS.UPDATE_PLAYER_POSITION, {
-         x: pos.x + stepX,
-         y: pos.y + stepY,
-       });
-
-       store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {
-         isRun: true,
-         toLeft: stepX < 0,
-       });
-     }, 16);
-   },
-   updatePlayerState({ commit }, state) {
-     commit(MUTATIONS.UPDATE_PLAYER_STATE, state)
-   }
+      store.commit(MUTATIONS.STOP_PLAYER);
+      const speed = 5;
+      const intervalId = setInterval(() => {
+        const pos = store.getters.getPlayerTransform
+        const dx = x - pos.x
+        const dy = y - pos.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist < 5) {
+          clearInterval(intervalId)
+          store.commit(MUTATIONS.UPDATE_PLAYER_STATE, { isRun: false })
+          return
+        }
+        const stepX = (dx / dist) * speed
+        const stepY = (dy / dist) * speed
+        store.commit(MUTATIONS.UPDATE_PLAYER_POSITION, {
+          x: pos.x + stepX,
+          y: pos.y + stepY,
+        });
+        store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {
+          isRun: true,
+          toLeft: stepX < 0,
+        });
+      }, 16);
+    },
+    updatePlayerState({ commit }, state) {
+      commit(MUTATIONS.UPDATE_PLAYER_STATE, state)
+    }
   },
   modules: {
     inventory,

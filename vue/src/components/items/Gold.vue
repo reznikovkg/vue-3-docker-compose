@@ -1,5 +1,7 @@
 <template>
-  <div class="gold">
+  <div
+    class="gold"
+  >
   </div>
 </template>
 

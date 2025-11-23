@@ -8,25 +8,19 @@
         backgroundSize: 'cover'
       }"
     >
-      <button v-if="!isCraftingOpen" class="crafting-button" @click="openCrafting">
-        ⚒️
-      </button>
+      <button v-if="!isCraftingOpen" class="crafting-button" @click="openCrafting"> ⚒️ </button>
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
-        @start-minigame="openMinigame"
+        @startMinigame="openMinigame"
       />
       <MiniGameScreen
-        v-if="isMinigameActive && minigame.onSuccess && minigame.onClose"
+        v-if="isMinigameActive" 
         :difficulty="minigame.difficulty"
         :onComplete="minigame.onSuccess"
         :onClose="minigame.onClose"
       />
-      <CraftingScreen
-        v-if="isCraftingOpen"
-        :onClose="closeCrafting"
-        @close="closeCrafting"
-      />
+      <CraftingScreen v-if="isCraftingOpen" :onClose="closeCrafting" @close="closeCrafting"/>
       <Inventory/>
       <WinScreen v-if="gameState.state === 1"/>
     </div>
@@ -51,27 +45,14 @@ const playerTransform = computed(() => store.getters.getPlayerTransform)
 const gameState = computed(() => store.getters.getGameState)
 const isMinigameActive = computed(() => store.getters.isMinigameActive)
 const minigame = computed(() => store.getters.getMinigameData)
-const openMinigame = ({ difficulty, onSuccess, onClose }) => {
-  console.log('openMinigame called with:', { difficulty, onSuccess, onClose });
-  store.commit("START_MINIGAME", { difficulty, onSuccess, onClose })
-  console.log('After commit, isMinigameActive:', store.getters.isMinigameActive);
-}
+const openMinigame = ({ difficulty, onSuccess, onClose }) => { store.commit("START_MINIGAME", { difficulty, onSuccess, onClose })}
 const isCraftingOpen = ref(false)
-
-
-const closeCrafting = () => {
-  isCraftingOpen.value = false
-}
+const closeCrafting = () => {isCraftingOpen.value = false}
 
 onMounted(() => {
   store.dispatch("loadScenes")
 })
-
-const openCrafting = () => {
-  isCraftingOpen.value = true
-  console.log('Crafting button clicked')
-}
-
+const openCrafting = () => { isCraftingOpen.value = true}
 </script>
 
 <style scoped lang="less">
