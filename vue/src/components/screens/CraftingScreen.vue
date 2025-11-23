@@ -186,7 +186,7 @@ const closeCrafting = () => {
     color: white;
     width: 90%;
     max-width: 800px;
-    max-height: 90vh;
+    max-height: 350px;
     overflow-y: auto;
   }
   &-content {
