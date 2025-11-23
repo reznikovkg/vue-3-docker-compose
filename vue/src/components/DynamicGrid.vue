@@ -215,9 +215,13 @@ const onDragStart = (e, _, index) => {
     isOverCenter.value = false
     targetFolderId.value = null
     
-    const dt = e.dataTransfer
+    try {
+        const dt = e.dataTransfer
         dt.effectAllowed = 'move'
         dt.setData('text/plain', '')
+    } catch (_) {
+        console.error('Error setting dataTransfer effectAllowed', _)
+    }
 }
 
 /**
