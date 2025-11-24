@@ -12,7 +12,7 @@
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
-        @startMinigame="openMinigame"
+        @startMinigame="(data) => openMinigame(data)"
       />
       <MiniGameScreen
         v-if="isMinigameActive" 
@@ -20,7 +20,7 @@
         :onComplete="minigame.onSuccess"
         :onClose="minigame.onClose"
       />
-      <CraftingScreen v-if="isCraftingOpen" :onClose="closeCrafting" @close="() => closeCrafting()"/>
+      <CraftingScreen v-if="isCraftingOpen" :onClose="() => closeCrafting()" @close="() => closeCrafting()"/>
       <Inventory/>
       <WinScreen v-if="gameState.state === 1"/>
     </div>
@@ -45,7 +45,7 @@ const playerTransform = computed(() => store.getters.getPlayerTransform)
 const gameState = computed(() => store.getters.getGameState)
 const isMinigameActive = computed(() => store.getters.isMinigameActive)
 const minigame = computed(() => store.getters.getMinigameData)
-const openMinigame = ({ difficulty, onSuccess, onClose }) => { store.commit("START_MINIGAME", { difficulty, onSuccess, onClose })}
+const openMinigame = (game) => { store.commit("START_MINIGAME", game)}
 const isCraftingOpen = ref(false)
 const closeCrafting = () => {isCraftingOpen.value = false}
 

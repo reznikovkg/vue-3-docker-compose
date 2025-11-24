@@ -80,14 +80,18 @@ const hideTooltip = () => {
 }
 
 const onMouseMove = (event) => {
-  if (!sceneRef.value) return
+  if (!sceneRef.value) { 
+    return
+  }
   const rect = sceneRef.value.getBoundingClientRect()
   tooltipX.value = event.clientX - rect.left + 5
   tooltipY.value = event.clientY - rect.top - 25
 }
 
 const onSceneClick = (event) => {
-  if (!sceneRef.value) return
+  if (!sceneRef.value) {
+    return
+  }
   const rect = sceneRef.value.getBoundingClientRect()
   const x = event.clientX - rect.left
   const y = event.clientY - rect.top
@@ -99,21 +103,21 @@ const emit = defineEmits(['startMinigame'])
 const select = async (item) => {
   hideTooltip()
   if (item.collectible) {
-    try {
-      const success = await new Promise((resolve) => {
-        emit('startMinigame', {
-          difficulty: item.difficulty || 1,
-          onSuccess: () => resolve(true),
-          onClose: () => resolve(false)
-        })
+    new Promise((resolve) => {
+      emit('startMinigame', {
+        difficulty: item.difficulty || 1,
+        onSuccess: () => resolve(true),
+        onClose: () => resolve(false)
       })
+    })
+    .then((success) => {
       if (success) {
         store.dispatch('selectObject', item)
       }
-    }
-    catch (error) {
+    })
+    .catch ((error) => {
       console.error('Error in minigame:', error)
-    }
+    })
   } else {
     store.dispatch('selectObject', item)
   }

@@ -1,37 +1,37 @@
 <template>
   <div class="crafting">
-    <div class="crafting-container">
-      <div class="crafting-header">
+    <div class="crafting__container">
+      <div class="crafting__header">
         <h2>Crafting</h2>
-        <button class="crafting-header--closeButton" @click="() => closeCrafting()"> × </button>
+        <button class="crafting__header--closeButton" @click="() => closeCrafting()"> × </button>
       </div>
-      <div class="crafting-content">
-        <div class="crafting-section">
-          <Inventory :onItemClick="handleInventoryItemClick" />
+      <div class="crafting__content">
+        <div class="crafting__section">
+          <Inventory :onItemClick="(item, index) => handleInventoryItemClick(item, index)" />
         </div>
-        <div class="crafting-section">
+        <div class="crafting__section">
           <div class="slots">
             <div
               v-for="(slot, index) in recipeSlots"
               :key="index"
-              class="slots-recipe"
+              class="slots__recipe"
               :class="{ 'recipe-slot--filled': slot.id }"
               @click="() => removeFromRecipe(index)"
             >
               <img
                 v-if="slot.id"
-                class="slots-recipe--icon"
+                class="slots__recipe--icon"
                 :src="`/src/assets/items/${slot.id}.png`"
                 :alt="slot.id"
               />
-              <span v-if="slot.count > 1" class="slots-recipe--count">{{ slot.count }}</span>
+              <span v-if="slot.count > 1" class="slots__recipe--count">{{ slot.count }}</span>
             </div>
           </div>
         </div>
-        <div class="crafting-section">
+        <div class="crafting__section">
           <h3>Result</h3>
           <div
-            class="slots-result"
+            class="slots__result"
             :class="{ 'result-slot--ready': canCraft }"
             @click="() => craftItem()"
           >
@@ -41,12 +41,12 @@
               :src="`/src/assets/items/${craftResult.id}.png`"
               :alt="craftResult.id"
             />
-            <span v-if="craftResult && craftResult.count > 1" class="slots-result--count">
+            <span v-if="craftResult && craftResult.count > 1" class="slots__result--count">
               {{ craftResult.count }}
             </span>
-            <div v-if="!craftResult" class="slots-result--placeholder"> ? </div>
+            <div v-if="!craftResult" class="slots__result--placeholder"> ? </div>
           </div>
-          <button v-if="canCraft" class="crafting-button" @click="() => craftItem()">Add</button>
+          <button v-if="canCraft" class="crafting__button" @click="() => craftItem()">Add</button>
         </div>
       </div>
     </div>
@@ -80,7 +80,9 @@ const recipes = [
 ]
 
 const handleInventoryItemClick = (item, index) => {
-  if (!item || !item.id || item.id.length === 0) return
+  if (!item || !item.id || item.id.length === 0) {
+    return
+  }
   const emptySlotIndex = recipeSlots.value.findIndex(slot => slot.id === '')
   if (emptySlotIndex !== -1) {
     const slot = recipeSlots.value[emptySlotIndex]
@@ -112,7 +114,9 @@ const getRequiredItems = () => {
 const findMatchingRecipe = () => {
   const requiredItems = getRequiredItems()
   for (const recipe of recipes) {
-    if (recipe.ingredients.length !== requiredItems.length) continue
+    if (recipe.ingredients.length !== requiredItems.length) {
+      continue
+    }
     const recipeItems = [...recipe.ingredients].sort((a, b) => a.id.localeCompare(b.id))
     const requiredItemsSorted = [...requiredItems].sort((a, b) => a.id.localeCompare(b.id))
     let match = true
@@ -140,7 +144,9 @@ const checkRecipe = () => {
 }
 
 const removeFromRecipe = (slotIndex) => {
-  if (slotIndex < 0 || slotIndex >= recipeSlots.value.length) return
+  if (slotIndex < 0 || slotIndex >= recipeSlots.value.length) {
+     return
+  }
   const slot = recipeSlots.value[slotIndex]
   if (slot.id && slot.count > 0) {
     store.dispatch('inventory/addToInventory', { 
@@ -154,7 +160,9 @@ const removeFromRecipe = (slotIndex) => {
 }
 
 const craftItem = () => {
-  if (!canCraft.value || !craftResult.value) return
+  if (!canCraft.value || !craftResult.value) {
+    return
+  }
   store.dispatch('inventory/addToInventory', craftResult.value)
   recipeSlots.value = Array.from({ length: 9 }, () => ({ id: '', count: 0 }))
   craftResult.value = null
@@ -179,7 +187,7 @@ const closeCrafting = () => {
   background: rgba(0, 0, 0, 0.7);
   z-index: 1000;
   margin-bottom: 20px;
-  &-container {
+  &__container {
     background: #2c3e50;
     border-radius: 12px;
     padding: 2rem;
@@ -189,7 +197,7 @@ const closeCrafting = () => {
     max-height: 350px;
     overflow-y: auto;
   }
-  &-content {
+  &__content {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 2rem;
@@ -198,7 +206,7 @@ const closeCrafting = () => {
       grid-template-columns: 1fr;
     }
   }
-  &-button {
+  &__button {
     width: 100%;
     padding: 0.75rem 1.5rem;
     background-color: #2ecc71;
@@ -227,7 +235,7 @@ const closeCrafting = () => {
       transform: none;
     }
   }
-  &-header {
+  &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -262,7 +270,7 @@ const closeCrafting = () => {
   gap: 10px;
   margin-bottom: 1rem;
   cursor: url('/cursors/pointer-cursor.png'), pointer;
-  &-recipe {
+  &__recipe {
     position: relative;
     width: 60px;
     height: 60px;
@@ -302,7 +310,7 @@ const closeCrafting = () => {
       font-weight: bold;
     }
   }
-  &-result {
+  &__result {
     position: relative;
     width: 80px;
     height: 80px;

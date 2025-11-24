@@ -72,12 +72,12 @@ export default createStore({
     [MUTATIONS.TRY_ACTIVATE]: (state, item) => {
       const id = item.id
       const object = state.objects.find(item => item.id === id)
-      if(object && object.isActive === false) {
+      if (object && object.isActive === false) {
         object.isActive = true
         if (state.completeCondition.id !== item.id) {
           return
         }
-        if(object[state.completeCondition.property] !== state.completeCondition.value) {
+        if (object[state.completeCondition.property] !== state.completeCondition.value) {
             return
         }
         state.gameState.state = GAME_STATE.WIN
@@ -116,7 +116,7 @@ export default createStore({
       state.minigame.onSuccess = game.onSuccess
       state.minigame.onClose = () => {
         state.minigame.isActive = false
-        if (game.onClose){
+        if (game.onClose) {
           game.onClose()
         }
       }
@@ -138,15 +138,21 @@ export default createStore({
     interactWithItem: (store, item) => {
       store.commit(MUTATIONS.STOP_PLAYER)
       if(item.type === 'item') {
-        if(store.getters['inventory/getEmptySlotsCount'] <= 0) return
+        if (store.getters['inventory/getEmptySlotsCount'] <= 0) {
+          return
+        }
         store.commit(MUTATIONS.TRY_TAKE, item)
         const itemKey = item.id.split('.')[0]
         store.dispatch('inventory/addToInventory', {id: itemKey, count: 1})
         return
       }
-      if(item.isActive) return
+      if(item.isActive) {
+        return
+      }
       const selected = store.getters['inventory/getSelectedItem']
-      if(item.condition && selected.id !== item.condition) return
+      if(item.condition && selected.id !== item.condition) {
+        return
+      }
       if(item.condition) {
         store.dispatch('inventory/useSelectedItem')
       }
@@ -159,7 +165,9 @@ export default createStore({
     selectObject: (store, item) => {
       const speed = 1
       store.commit(MUTATIONS.STOP_PLAYER)
-      if (!item) return
+      if (!item) {
+        return
+      }
       const intervalId = setInterval(() => {
         const pos = store.getters.getPlayerTransform
         const x = item.x - pos.x
@@ -175,11 +183,15 @@ export default createStore({
         store.commit(MUTATIONS.MOVE_PLAYER, {x: dx, y: dy, intervalId: intervalId})
       }, 0.02)
     },
-    movePlayer({ commit, state }, { x, y }) {
-      const newX = state.playerTransform.x + x
-      if (newX < 0 || newX > 600) return
-      commit(MUTATIONS.UPDATE_PLAYER_POSITION, { x: newX })
-      commit(MUTATIONS.UPDATE_PLAYER_STATE, {
+    movePlayer(store, point) {
+      const x = point.x
+      const pos = store.getters.getPlayerTransform
+      const newX = pos.x + point.x
+      if (newX < 0 || newX > 600) {
+        return
+      }
+      store.commit(MUTATIONS.UPDATE_PLAYER_POSITION, { x: newX })
+      store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {
         isRun: true,
         toLeft: x < 0
       })
@@ -213,8 +225,8 @@ export default createStore({
       }, 16);
       store.state.intervalId = intervalId 
     },
-    updatePlayerState({ commit }, state) {
-      commit(MUTATIONS.UPDATE_PLAYER_STATE, state)
+    updatePlayerState(store, state) {
+      store.commit(MUTATIONS.UPDATE_PLAYER_STATE, state)
     }
   },
   modules: {

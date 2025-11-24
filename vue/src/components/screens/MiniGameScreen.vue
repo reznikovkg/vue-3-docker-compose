@@ -1,18 +1,18 @@
 <template>
  <div class="minigame" @click.self="() => closeMinigame()">
-   <div class="minigame-container">
-    <div class="minigame-progressbar" @click="() => handleClick()">
+   <div class="minigame__container">
+    <div class="minigame__progressbar" @click="() => handleClick()">
       <div
-        class="minigame-indicator"
+        class="minigame__indicator"
         :style="{ left: indicatorPosition + 'px' }"
       ></div>
-      <div class="minigame-targetZone" :style="{ left: targetZonePosition + 'px', width: targetZoneWidth + 'px' }"></div>
+      <div class="minigame__targetZone" :style="{ left: targetZonePosition + 'px', width: targetZoneWidth + 'px' }"></div>
     </div>
-     <div class="minigame-hint">Чтобы взять предмет нажмите, когда стрелка будет в зелёной зоне</div>
-     <div v-if="showResult" :class="['minigame-result', isSuccess ? 'minigame-result--success' : 'minigame-result--fail']">
+     <div class="minigame__hint">Чтобы взять предмет нажмите, когда стрелка будет в зелёной зоне</div>
+     <div v-if="showResult" :class="['minigame__result', isSuccess ? 'minigame__result--success' : 'minigame__result--fail']">
        {{ isSuccess ? 'Success!' : 'Try again!' }}
      </div>
-     <button v-if="showResult" class="minigame-button" @click="() => resetMinigame()">Try Again</button>
+     <button v-if="showResult" class="minigame__button" @click="() => resetMinigame()">Try Again</button>
    </div>
  </div>
 </template>
@@ -99,7 +99,7 @@ const closeMinigame = () => {
 }
 
 onMounted(() => {
-  const progressBar = document.querySelector('.minigame-progressbar')
+  const progressBar = document.querySelector('.minigame__progressbar')
   if (progressBar) {
     barWidth.value = progressBar.offsetWidth - indicatorWidth.value
     targetZoneWidth.value = zoneWidth.value
@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  &-container {
+  &__container {
     background: #2c3e50;
     padding: 2rem;
     border-radius: 8px;
@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
     color: white;
     width: 300px;
   }
-  &-progressbar {
+  &__progressbar {
     width: 100%;
     height: 30px;
     background-color: #34495e;
@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
     overflow: hidden;
     cursor: url('/cursors/pointer-cursor.png'), pointer;
   }
-  &-indicator {
+  &__indicator {
     position: absolute;
     width: 10px;
     height: 100%;
@@ -151,19 +151,19 @@ onBeforeUnmount(() => {
     cursor: pointer;
     transition: left 0.1s linear;
   }
-  &-targetZone {
+  &__targetZone {
     position: absolute;
     height: 100%;
     background-color: rgba(46, 204, 113, 0.3);
     border: 1px solid #2ecc71;
     top: 0;
   }
-  &-hint {
+  &__hint {
     margin: 1rem 0;
     color: #bdc3c7;
     font-size: 0.9rem;
   }
-  &-button {
+  &__button {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
     background-color: #3498db;
@@ -178,7 +178,7 @@ onBeforeUnmount(() => {
       cursor: url('/cursors/pointer-cursor.png'), pointer;
     }
   }
-  &-result {
+  &__result {
   margin: 1rem 0;
   font-weight: bold;
   font-size: 1.2rem;
