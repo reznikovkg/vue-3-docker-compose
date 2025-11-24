@@ -54,7 +54,7 @@ export const useGameBoard = () => {
         uniqueMatches.forEach((match: Gem) => {
           boardWithRemovingGems[match.row][match.col].removing = true
         })
-        gameBoard.value = boardWithRemovingGems
+        gameBoard.value = clearAllDragDirections(boardWithRemovingGems)
 
         setSafeTimeout(() => {
           resolve(boardWithRemovingGems)
@@ -142,11 +142,7 @@ export const useGameBoard = () => {
     }
   }
   const handleSecondSelection = (secondGem: Gem) => {
-    if (!selectedGem.value) {
-      return
-    }
-
-    if (selectedGem.value.id === secondGem?.id) {
+    if (!selectedGem.value || (selectedGem.value.id === secondGem?.id)) {
       deselectGem(secondGem)
       return
     }
@@ -176,7 +172,7 @@ export const useGameBoard = () => {
 
     setSafeTimeout(() => {
       let boardAfterSwap = swapGems(visualChangedBoard, firstGem, secondGem)
-      gameBoard.value = boardAfterSwap
+      // gameBoard.value = boardAfterSwap
       const matches = findMatches(boardAfterSwap)
 
       if (matches.length > 0) {
@@ -194,22 +190,6 @@ export const useGameBoard = () => {
       draggedGem.value = null
       selectedGem.value = null
     }, ANIMATION_DELAY.DRAG)
-
-    // const boardAfterSwap = swapGems(gameBoard.value, firstGem, secondGem)
-    // gameBoard.value = boardAfterSwap
-    //
-    // const matches = findMatches(boardAfterSwap)
-    //
-    // setSafeTimeout(() => {
-    //   if (matches.length > 0) {
-    //     checkMatchesGems()
-    //   } else {
-    //     // Откатываем swap если нет совпадений
-    //     const boardAfterRevert = swapGems(boardAfterSwap, secondGem, firstGem)
-    //     gameBoard.value = boardAfterRevert
-    //   }
-    //   selectedGem.value = null
-    // }, ANIMATION_DELAY.SWAP)
   }
   const deselectGem = (gem: Gem): void => {
     const updatedBoard = markNewGems(gameBoard.value, 0)
@@ -219,7 +199,7 @@ export const useGameBoard = () => {
   }
   const swapGems = (board: GameBoard, firstGem: Gem, secondGem: Gem): GameBoard => {
     const newBoard = copyBoard(board)
-    const temp = newBoard[firstGem.row][firstGem.col]
+    const temp = { ...newBoard[firstGem.row][firstGem.col] }
 
     newBoard[firstGem.row][firstGem.col] = {
       ...newBoard[secondGem.row][secondGem.col],
@@ -271,36 +251,17 @@ export const useGameBoard = () => {
     }
 
     attemptGemSwap(currentDraggedGem, gem)
-    // const visualChangedBoard = visualSwapGems(currentDraggedGem, gem)
-    // gameBoard.value = visualChangedBoard
-    //
-    // setSafeTimeout(() => {
-    //   let boardAfterSwap = swapGems(visualChangedBoard, currentDraggedGem, gem)
-    //   const matches = findMatches(boardAfterSwap)
-    //
-    //   if (matches.length > 0) {
-    //     gameBoard.value = clearAllDragDirections(boardAfterSwap)
-    //     removeMatchesAndAnimate()
-    //   } else {
-    //     const finalBoard = copyBoard(visualChangedBoard)
-    //     finalBoard[currentDraggedGem.row][currentDraggedGem.col].dragDirection = 'none'
-    //     finalBoard[gem.row][gem.col].dragDirection = 'none'
-    //     gameBoard.value = finalBoard
-    //   }
-    //
-    //   draggedGem.value = null
-    // }, ANIMATION_DELAY.DRAG)
   }
-  const visualSwapGems = (sourceGem: Gem, targetGem: Gem) => {
-    const dragDirection = getDragDirection(sourceGem, targetGem)
+  const visualSwapGems = (firstGem: Gem, secondGem: Gem) => {
+    const dragDirection = getDragDirection(firstGem, secondGem)
     const oppositeDirection = OPPOSITE_DIRECTIONS[dragDirection]
     const boardWithDrag = copyBoard(gameBoard.value)
 
-    boardWithDrag[sourceGem.row][sourceGem.col].dragDirection = oppositeDirection
-    boardWithDrag[targetGem.row][targetGem.col].dragDirection = dragDirection
+    boardWithDrag[firstGem.row][firstGem.col].dragDirection = oppositeDirection
+    boardWithDrag[secondGem.row][secondGem.col].dragDirection = dragDirection
 
-    dragDirectionsColumns.value.push(boardWithDrag[sourceGem.row][sourceGem.col])
-    dragDirectionsColumns.value.push(boardWithDrag[targetGem.row][targetGem.col])
+    dragDirectionsColumns.value.push(boardWithDrag[firstGem.row][firstGem.col])
+    dragDirectionsColumns.value.push(boardWithDrag[secondGem.row][secondGem.col])
 
     return boardWithDrag
   }

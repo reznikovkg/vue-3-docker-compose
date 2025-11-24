@@ -80,7 +80,7 @@ const handleMouseup = () => {
   &--selected {
     border-color: #10b981;
     box-shadow: 0 0 0 2px #10b981;
-    //transform: scale(1.1);
+    transform: scale(1.1);
   }
 
   &--removing {
@@ -95,42 +95,31 @@ const handleMouseup = () => {
     position: relative;
     z-index: 1;
     transition: all .35s ease-in-out;
+    transform: scale(1) translate(0);
     pointer-events: auto;
 
     &--right {
       pointer-events: none;
       z-index: 2;
-
-      &:not(&:hover) {
-        transform: translateX(58px);
-      }
+      transform: scale(1) translateX(58px);
     }
 
     &--left {
       pointer-events: none;
       z-index: 2;
-
-      &:not(&:hover) {
-        transform: translateX(-58px);
-      }
+      transform: scale(1) translateX(-58px);
     }
 
     &--up {
       pointer-events: none;
       z-index: 2;
-
-      &:not(&:hover) {
-        transform: translateY(-58px);
-      }
+      transform: scale(1) translateY(-58px);
     }
 
     &--down {
       pointer-events: none;
       z-index: 2;
-
-      &:not(&:hover) {
-        transform: translateY(58px);
-      }
+      transform: scale(1) translateY(58px);
     }
   }
 }
