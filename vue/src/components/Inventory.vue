@@ -9,6 +9,12 @@
       >
         <span class="fish-emoji">{{ fish.emoji }}</span>
         <span class="fish-name">{{ fish.name }}</span>
+
+        <span class="fish-size-badge" v-if="fish.caughtSize" :class="getSizeClass(fish.caughtSize.name)">
+          {{ fish.caughtSize.name }}
+          <span v-if="fish.weight">({{ fish.weight }}г)</span>
+        </span>
+
         <span class="fish-location">{{ fish.location }}</span>
         <span class="fish-timestamp">{{ fish.timestamp }}</span>
       </div>
@@ -26,6 +32,16 @@ import type { CaughtFish } from '../types'
 defineProps<{
   caughtFish: CaughtFish[]
 }>()
+
+const getSizeClass = (sizeName: string) => {
+  const sizeClasses = {
+    'Мелкий': 'size-small',
+    'Средний': 'size-medium',
+    'Крупный': 'size-large',
+    'Трофейный': 'size-trophy'
+  }
+  return sizeClasses[sizeName] || 'size-small'
+}
 </script>
 
 <style scoped lang="less">
@@ -76,6 +92,39 @@ defineProps<{
   flex: 1;
 }
 
+.fish-size-badge {
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: bold;
+  white-space: nowrap;
+
+  &.size-small {
+    background: #E8F5E8;
+    color: #2E7D32;
+    border: 1px solid #4CAF50;
+  }
+
+  &.size-medium {
+    background: #E3F2FD;
+    color: #1565C0;
+    border: 1px solid #2196F3;
+  }
+
+  &.size-large {
+    background: #FFF3E0;
+    color: #EF6C00;
+    border: 1px solid #FF9800;
+  }
+
+  &.size-trophy {
+    background: linear-gradient(135deg, #FFD700, #FFA000);
+    color: #7B1FA2;
+    border: 1px solid #FFD700;
+    animation: glow 2s infinite alternate;
+  }
+}
+
 .fish-location {
   font-size: 0.8em;
   color: @muted-color;
@@ -103,9 +152,21 @@ defineProps<{
   }
 }
 
+@keyframes glow {
+  0% { box-shadow: 0 0 5px #FFD700; }
+  100% { box-shadow: 0 0 15px #FFA000; }
+}
+
 @media (max-width: 768px) {
   .fish-item {
     flex-wrap: wrap;
+
+    .fish-size-badge {
+      order: 3;
+      width: 100%;
+      text-align: center;
+      margin-top: 5px;
+    }
   }
 }
 </style>
