@@ -83,27 +83,11 @@ const fishForSale = computed(() => store.getters['fishing/availableFishForSale']
 const totalFishValue = computed(() => store.getters['fishing/totalFishValue'])
 
 const buyItem = async (itemId: string) => {
-  console.log('🛒 Покупка товара:', itemId)
   const result = await store.dispatch('shop/buyItem', { itemId, quantity: 1 })
-  if (result.success) {
-    console.log('✅ Товар куплен!', result.message)
-  } else {
-    console.log('❌ Ошибка покупки:', result.message)
-  }
 }
 
 const sellAllFish = async () => {
-  console.log('🔄 Начинаем продажу всей рыбы...')
-  console.log('Рыба для продажи:', fishForSale.value)
-
   const result = await store.dispatch('fishing/sellAllFish')
-  console.log('Результат продажи:', result)
-
-  if (result) {
-    console.log('✅ Рыба продана!')
-  } else {
-    console.log('❌ Ошибка продажи')
-  }
 }
 </script>
 

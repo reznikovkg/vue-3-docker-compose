@@ -312,20 +312,16 @@ export const fishingModule = {
 
     addCaughtFish({ commit, dispatch }: any, fish: CaughtFish) {
       return new Promise((resolve) => {
-        try {
-          const fishForSale: FishForSale = {
-            ...fish,
-            price: calculateFishPrice(fish),
-            inventoryId: `fish_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-          }
-
-          commit('ADD_FISH_FOR_SALE', fishForSale)
-          commit('ADD_FISH_TO_HISTORY', fish)
-          dispatch('saveGameState')
-          resolve({ success: true, message: 'Рыба добавлена в инвентарь' })
-        } catch (error) {
-          resolve({ success: false, message: 'Ошибка добавления рыбы' })
+        const fishForSale: FishForSale = {
+          ...fish,
+          price: calculateFishPrice(fish),
+          inventoryId: `fish_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         }
+
+        commit('ADD_FISH_FOR_SALE', fishForSale)
+        commit('ADD_FISH_TO_HISTORY', fish)
+        dispatch('saveGameState')
+        resolve({ success: true, message: 'Рыба добавлена в инвентарь' })
       })
     },
 
@@ -370,45 +366,34 @@ export const fishingModule = {
 
     equipTackle({ commit, state, dispatch }: any, { type, itemId }: { type: string; itemId: string }) {
       return new Promise((resolve) => {
-        try {
-          const itemInInventory = state.inventory.find(item =>
-            item.id === itemId && (item.type === 'tackle' || item.type === 'bait')
-          )
+        const itemInInventory = state.inventory.find(item =>
+          item.id === itemId && (item.type === 'tackle' || item.type === 'bait')
+        )
 
-          if (!itemInInventory) {
-            resolve({ success: false, message: 'Предмет не найден в инвентаре' })
-            return
-          }
-          const tackleItem: TackleItem = {
-            id: itemInInventory.id,
-            name: itemInInventory.name,
-            type: type as 'rod' | 'reel' | 'line' | 'bait',
-            level: itemInInventory.properties?.level || 1,
-            price: itemInInventory.price,
-            strengthBonus: itemInInventory.properties?.strengthBonus || 0,
-            description: itemInInventory.properties?.description || 'Снасть для рыбалки'
-          }
-          commit('EQUIP_TACKLE', { type, item: tackleItem })
-          dispatch('saveGameState')
-          resolve({ success: true, message: `${tackleItem.name} экипирована!` })
-
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
-          resolve({ success: false, message: `Ошибка: ${errorMessage}` })
+        if (!itemInInventory) {
+          resolve({ success: false, message: 'Предмет не найден в инвентаре' })
+          return
         }
+        const tackleItem: TackleItem = {
+          id: itemInInventory.id,
+          name: itemInInventory.name,
+          type: type as 'rod' | 'reel' | 'line' | 'bait',
+          level: itemInInventory.properties?.level || 1,
+          price: itemInInventory.price,
+          strengthBonus: itemInInventory.properties?.strengthBonus || 0,
+          description: itemInInventory.properties?.description || 'Снасть для рыбалки'
+        }
+        commit('EQUIP_TACKLE', { type, item: tackleItem })
+        dispatch('saveGameState')
+        resolve({ success: true, message: `${tackleItem.name} экипирована!` })
       })
     },
 
     unequipTackle({ commit, dispatch }: any, type: string) {
       return new Promise((resolve) => {
-        try {
-          commit('UNEQUIP_TACKLE', type)
-          dispatch('saveGameState')
-          resolve({ success: false, message: 'Снасть снята' })
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка'
-          resolve({ success: false, message: `Ошибка: ${errorMessage}` })
-        }
+        commit('UNEQUIP_TACKLE', type)
+        dispatch('saveGameState')
+        resolve({ success: true, message: 'Снасть снята' })
       })
     },
 

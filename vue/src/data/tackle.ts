@@ -71,6 +71,7 @@ export const tackleItems: TackleItem[] = [
     level: 1,
     price: 5,
     strengthBonus: 1,
+    description: 'Обычная наживка'
   },
   {
     id: 'bait_bread',

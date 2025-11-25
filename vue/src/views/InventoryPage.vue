@@ -222,13 +222,10 @@ const isBaitEquipped = (itemId: string) => {
 }
 
 const equipTackle = async (itemId: string) => {
-  const itemType = getItemType(itemId)
-  if (!itemType) return
-
   await store.dispatch('fishing/equipTackle', {
-    type: itemType,
-    itemId
-  })
+      type: itemType,
+      itemId
+    })
 }
 
 const equipBait = async (itemId: string) => {

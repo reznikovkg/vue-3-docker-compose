@@ -326,6 +326,7 @@ export const gameModule = {
       let randomFish = { ...location.fish[Math.floor(Math.random() * location.fish.length)] }
       const { size, weight } = selectFishSize(randomFish)
       const multipliers = calculateSizeMultipliers(randomFish, size, weight)
+      const originalStrength = randomFish.strength
       randomFish.strength = Math.floor(randomFish.strength * multipliers.strength)
 
       randomFish.caughtSize = size

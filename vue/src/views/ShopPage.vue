@@ -129,7 +129,13 @@ const tackleUpgrades = computed(() => store.getters['shop/tackleUpgrades'])
 const money = computed(() => store.getters['fishing/money'])
 
 const buyItem = async (itemId: string) => {
-  await store.dispatch('shop/buyItem', { itemId, quantity: 1 })
+  const result = await store.dispatch('shop/buyItem', { itemId, quantity: 1 })
+
+  if (result.success) {
+    console.log('✅ Товар куплен:', result.message)
+  } else {
+    console.log('❌ Ошибка покупки:', result.message)
+  }
 }
 </script>
 
