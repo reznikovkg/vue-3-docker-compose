@@ -100,7 +100,7 @@ const onSceneClick = (event) => {
 }
 
 const emit = defineEmits(['startMinigame'])
-const select = async (item) => {
+const select = (item) => {
   hideTooltip()
   if (item.collectible) {
     new Promise((resolve) => {

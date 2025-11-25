@@ -37,7 +37,7 @@
           >
             <img
               v-if="craftResult"
-              class="slots-result--icon"
+              class="slots__result--icon"
               :src="`/src/assets/items/${craftResult.id}.png`"
               :alt="craftResult.id"
             />
@@ -269,7 +269,6 @@ const closeCrafting = () => {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 1rem;
-  cursor: url('/cursors/pointer-cursor.png'), pointer;
   &__recipe {
     position: relative;
     width: 60px;
@@ -321,7 +320,6 @@ const closeCrafting = () => {
     align-items: center;
     justify-content: center;
     margin: 0 auto 1rem;
-    cursor: pointer;
     transition: all 0.2s;
     
     &:hover {
