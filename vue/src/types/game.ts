@@ -1,4 +1,4 @@
-export type DragDirections = 'left' | 'right' | 'up' | 'down' | 'none'
+export type SwapDirections = 'left' | 'right' | 'up' | 'down' | 'none'
 export interface Gem {
   id: number
   type: number
@@ -8,7 +8,7 @@ export interface Gem {
   selected: boolean
   removing: boolean
   isNew: boolean
-  dragDirection: DragDirections
+  swapDirection: SwapDirections
 }
 
 export interface Position {

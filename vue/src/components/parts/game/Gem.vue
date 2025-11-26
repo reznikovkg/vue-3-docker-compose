@@ -7,7 +7,7 @@
       'gem--removing': gem.removing,
       'gem--new': gem.isNew,
       },
-      `gem-drag--${gem.dragDirection}`
+      `gem-swapped--${gem.swapDirection}`
     ]"
     :style="{ backgroundColor: gem.color }"
     @click="() => handleClick()"
@@ -91,7 +91,7 @@ const handleMouseup = () => {
     animation: newAnimation 0.5s ease-out;
   }
 
-  &.gem-drag {
+  &.gem-swapped {
     position: relative;
     z-index: 1;
     transition: all .35s ease-in-out;

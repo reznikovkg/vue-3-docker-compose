@@ -21,6 +21,7 @@ export const useGemGenerator = () => {
       selected: false,
       removing: false,
       isNew,
+      swapDirection: 'none'
     }
   }
 

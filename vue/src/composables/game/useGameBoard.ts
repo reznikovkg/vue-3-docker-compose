@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import { GameBoard, Gem, DragDirections } from "@/types"
+import { GameBoard, Gem, SwapDirections } from "@/types"
 import { useGemGenerator, useTimer } from "@/composables"
 import { copyBoard, findMatches } from "@/services/utils"
 
@@ -7,10 +7,9 @@ const ANIMATION_DELAY = {
   REMOVING: 300,
   NEW: 500,
   SWAP: 300,
-  DRAG: 300,
 }
 
-const OPPOSITE_DIRECTIONS = {
+const OPPOSITE_SWAP_DIRECTIONS = {
   left: 'right',
   right: 'left',
   up: 'down',
@@ -20,9 +19,9 @@ const OPPOSITE_DIRECTIONS = {
 export const useGameBoard = () => {
   const gridSize = ref(8)
   const selectedGem = ref<Gem | null>(null)
-  const draggedGem = ref<Gem | null>(null)
+  const swappedGem = ref<Gem | null>(null)
   const gameBoard = ref<GameBoard>([])
-  const dragDirectionsColumns = ref<Gem[]>([])
+  const swappedGems = ref<Gem[]>([])
 
   const { setSafeTimeout } = useTimer()
   const { nextGemId, createGem, resetGemIds } = useGemGenerator()
@@ -54,7 +53,7 @@ export const useGameBoard = () => {
         uniqueMatches.forEach((match: Gem) => {
           boardWithRemovingGems[match.row][match.col].removing = true
         })
-        gameBoard.value = clearAllDragDirections(boardWithRemovingGems)
+        gameBoard.value = clearSwappedDirectionsGems(boardWithRemovingGems)
 
         setSafeTimeout(() => {
           resolve(boardWithRemovingGems)
@@ -171,25 +170,21 @@ export const useGameBoard = () => {
     gameBoard.value = visualChangedBoard
 
     setSafeTimeout(() => {
-      let boardAfterSwap = swapGems(visualChangedBoard, firstGem, secondGem)
+      const boardAfterSwap = swapGems(visualChangedBoard, firstGem, secondGem)
       // gameBoard.value = boardAfterSwap
       const matches = findMatches(boardAfterSwap)
 
       if (matches.length > 0) {
-        gameBoard.value = clearAllDragDirections(boardAfterSwap)
+        gameBoard.value = clearSwappedDirectionsGems(boardAfterSwap)
         checkMatchesGems()
       } else {
-        const finalBoard = copyBoard(visualChangedBoard)
-        finalBoard[firstGem.row][firstGem.col].dragDirection = 'none'
-        finalBoard[firstGem.row][firstGem.col].selected = false
-        finalBoard[secondGem.row][secondGem.col].dragDirection = 'none'
-        finalBoard[secondGem.row][secondGem.col].selected = false
-        gameBoard.value = finalBoard
+        const finalRows = swapGems(boardAfterSwap, secondGem, firstGem)
+        gameBoard.value = clearSwappedDirectionsGems(finalRows)
       }
 
-      draggedGem.value = null
+      swappedGem.value = null
       selectedGem.value = null
-    }, ANIMATION_DELAY.DRAG)
+    }, ANIMATION_DELAY.SWAP)
   }
   const deselectGem = (gem: Gem): void => {
     const updatedBoard = markNewGems(gameBoard.value, 0)
@@ -222,9 +217,9 @@ export const useGameBoard = () => {
     initializeBoard()
   }
 
-  const getDragDirection = (firstDragGem: Gem, secondDragGem: Gem): DragDirections => {
-    const rowDiff = firstDragGem.row - secondDragGem.row
-    const colDiff = firstDragGem.col - secondDragGem.col
+  const getSwapDirection = (firstGem: Gem, secondGem: Gem): SwapDirections => {
+    const rowDiff = firstGem.row - secondGem.row
+    const colDiff = firstGem.col - secondGem.col
 
     if (rowDiff === 0 && colDiff === 1) {
       return 'right'
@@ -242,42 +237,42 @@ export const useGameBoard = () => {
     return 'none'
   }
   const handleMousedownGem = (gem: Gem) => {
-    draggedGem.value = gem
+    swappedGem.value = gem
   }
   const handleMousemoveGem = (gem: Gem) => {
-    const currentDraggedGem = draggedGem.value
-    if (!currentDraggedGem || (gem.id === currentDraggedGem.id || !areNeighboringGems(currentDraggedGem, gem))) {
+    const currentSwappedGem = swappedGem.value
+    if (!currentSwappedGem || (gem.id === currentSwappedGem.id || !areNeighboringGems(currentSwappedGem, gem))) {
       return
     }
 
-    attemptGemSwap(currentDraggedGem, gem)
+    attemptGemSwap(currentSwappedGem, gem)
   }
   const visualSwapGems = (firstGem: Gem, secondGem: Gem) => {
-    const dragDirection = getDragDirection(firstGem, secondGem)
-    const oppositeDirection = OPPOSITE_DIRECTIONS[dragDirection]
-    const boardWithDrag = copyBoard(gameBoard.value)
+    const swapDirection = getSwapDirection(firstGem, secondGem)
+    const oppositeDirection = OPPOSITE_SWAP_DIRECTIONS[swapDirection]
+    const swappedBoard = copyBoard(gameBoard.value)
 
-    boardWithDrag[firstGem.row][firstGem.col].dragDirection = oppositeDirection
-    boardWithDrag[secondGem.row][secondGem.col].dragDirection = dragDirection
+    swappedBoard[firstGem.row][firstGem.col].swapDirection = oppositeDirection
+    swappedBoard[secondGem.row][secondGem.col].swapDirection = swapDirection
 
-    dragDirectionsColumns.value.push(boardWithDrag[firstGem.row][firstGem.col])
-    dragDirectionsColumns.value.push(boardWithDrag[secondGem.row][secondGem.col])
+    swappedGems.value.push(swappedBoard[firstGem.row][firstGem.col])
+    swappedGems.value.push(swappedBoard[secondGem.row][secondGem.col])
 
-    return boardWithDrag
+    return swappedBoard
   }
-  const clearAllDragDirections = (board: GameBoard) => {
+  const clearSwappedDirectionsGems = (board?: GameBoard) => {
     const newBoard = board || copyBoard(gameBoard.value)
 
-    dragDirectionsColumns.value.forEach((i) => {
-      newBoard[i.row][i.col].dragDirection = 'none'
+    swappedGems.value.forEach((i) => {
+      newBoard[i.row][i.col].swapDirection = 'none'
     })
 
-    dragDirectionsColumns.value = []
+    swappedGems.value = []
 
     return newBoard
   }
   const handleMouseupGem = () => {
-    draggedGem.value = null
+    swappedGem.value = null
   }
 
   return {
