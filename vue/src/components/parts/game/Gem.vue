@@ -25,18 +25,18 @@
 import { computed } from "vue"
 import { Gem } from '@/types/game'
 
-interface Props {
-  gem: Gem
-}
 interface Emits {
   (e: 'click', gem: Gem): void
   (e: 'mousedown', gem: Gem): void
   (e: 'mousemove', gem: Gem): void
   (e: 'mouseup', gem: Gem): void
 }
+interface Props {
+  gem: Gem
+}
 
-const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+const props = defineProps<Props>()
 
 const gem = computed(() => props.gem)
 
@@ -58,6 +58,11 @@ const handleMouseup = () => {
 </script>
 
 <style lang="scss" scoped>
+@mixin swapped-pointer {
+  pointer-events: none;
+  z-index: 2;
+}
+
 .gem {
   display: flex;
   align-items: center;
@@ -71,7 +76,6 @@ const handleMouseup = () => {
   cursor: grab;
   transition: all 0.3s ease;
   user-select: none;
-  position: relative;
 
   &:hover {
     transform: scale(1.05);
@@ -94,31 +98,31 @@ const handleMouseup = () => {
   &.gem-swapped {
     position: relative;
     z-index: 1;
-    transition: all .35s ease-in-out;
     transform: scale(1) translate(0);
+    transition: all .35s ease-in-out;
     pointer-events: auto;
 
     &--right {
-      pointer-events: none;
-      z-index: 2;
+      @include swapped-pointer;
+
       transform: scale(1) translateX(58px);
     }
 
     &--left {
-      pointer-events: none;
-      z-index: 2;
+      @include swapped-pointer;
+
       transform: scale(1) translateX(-58px);
     }
 
     &--up {
-      pointer-events: none;
-      z-index: 2;
+      @include swapped-pointer;
+
       transform: scale(1) translateY(-58px);
     }
 
     &--down {
-      pointer-events: none;
-      z-index: 2;
+      @include swapped-pointer;
+
       transform: scale(1) translateY(58px);
     }
   }

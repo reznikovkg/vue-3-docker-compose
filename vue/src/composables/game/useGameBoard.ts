@@ -2,18 +2,12 @@ import { ref } from "vue"
 import { GameBoard, Gem, SwapDirections } from "@/types"
 import { useGemGenerator, useTimer } from "@/composables"
 import { copyBoard, findMatches } from "@/services/utils"
+import { SWAP_DIRECTIONS, OPPOSITE_SWAP_DIRECTIONS } from "@/services/constants"
 
 const ANIMATION_DELAY = {
   REMOVING: 300,
   NEW: 500,
   SWAP: 300,
-}
-
-const OPPOSITE_SWAP_DIRECTIONS = {
-  left: 'right',
-  right: 'left',
-  up: 'down',
-  down: 'up',
 }
 
 export const useGameBoard = () => {
@@ -72,8 +66,8 @@ export const useGameBoard = () => {
     }
   }
   const checkMatchesGems = () => {
-    const finalRows = copyBoard(gameBoard.value)
     setSafeTimeout(() => {
+      const finalRows = copyBoard(gameBoard.value)
       finalRows.forEach((row: Gem[]) => {
         row.forEach((gem: Gem) => {
           gem.isNew = false
@@ -171,15 +165,14 @@ export const useGameBoard = () => {
 
     setSafeTimeout(() => {
       const boardAfterSwap = swapGems(visualChangedBoard, firstGem, secondGem)
-      // gameBoard.value = boardAfterSwap
       const matches = findMatches(boardAfterSwap)
 
       if (matches.length > 0) {
         gameBoard.value = clearSwappedDirectionsGems(boardAfterSwap)
         checkMatchesGems()
       } else {
-        const finalRows = swapGems(boardAfterSwap, secondGem, firstGem)
-        gameBoard.value = clearSwappedDirectionsGems(finalRows)
+        const boardAfterRevert = swapGems(boardAfterSwap, secondGem, firstGem)
+        gameBoard.value = clearSwappedDirectionsGems(boardAfterRevert)
       }
 
       swappedGem.value = null
@@ -222,19 +215,19 @@ export const useGameBoard = () => {
     const colDiff = firstGem.col - secondGem.col
 
     if (rowDiff === 0 && colDiff === 1) {
-      return 'right'
+      return SWAP_DIRECTIONS.RIGHT
     }
     if (rowDiff === 0 && colDiff === -1) {
-      return 'left'
+      return SWAP_DIRECTIONS.LEFT
     }
     if (rowDiff === 1 && colDiff === 0) {
-      return 'down'
+      return SWAP_DIRECTIONS.DOWN
     }
     if (rowDiff === -1 && colDiff === 0) {
-      return 'up'
+      return SWAP_DIRECTIONS.UP
     }
 
-    return 'none'
+    return SWAP_DIRECTIONS.NONE
   }
   const handleMousedownGem = (gem: Gem) => {
     swappedGem.value = gem
@@ -264,7 +257,7 @@ export const useGameBoard = () => {
     const newBoard = board || copyBoard(gameBoard.value)
 
     swappedGems.value.forEach((i) => {
-      newBoard[i.row][i.col].swapDirection = 'none'
+      newBoard[i.row][i.col].swapDirection = SWAP_DIRECTIONS.NONE
     })
 
     swappedGems.value = []
