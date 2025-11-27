@@ -24,22 +24,18 @@ const previewTetrominoes = computed(() =>
 )
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .previews {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
 
-@media (max-width: 768px) {
-  .previews {
+  @media (max-width: 768px) {
     flex-direction: row;
     gap: 15px;
   }
-}
 
-@media (max-width: 480px) {
-  .previews {
+  @media (max-width: 480px) {
     flex-direction: column;
     gap: 10px;
   }

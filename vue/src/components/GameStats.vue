@@ -21,40 +21,41 @@ const linesToLevel = computed(() =>
 )
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$text-color: rgba(255, 255, 255, 0.9);
+$shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+
 .game-stats {
   list-style-type: none;
-  color: rgba(255, 255, 255, 0.9);
+  color: $text-color;
   padding: 0;
   margin: 0;
-}
 
-.game-stats .value {
-  font-size: min(2.8rem, 5vh);
-  margin-bottom: 0.5em;
-  color: rgba(255, 255, 255, 1);
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.game-stats li {
-  margin-bottom: 0.8em;
-  font-size: min(1.2rem, 2.2vh);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-@media (max-width: 768px) {
-  .game-stats {
-    text-align: center;
-  }
-
-  .game-stats .value {
-    font-size: min(2.2rem, 4vh);
-  }
-
-  .game-stats li {
-    font-size: min(1rem, 1.8vh);
+  .value {
+    font-size: min(2.8rem, 5vh);
     margin-bottom: 0.5em;
+    color: rgba(255, 255, 255, 1);
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  li {
+    margin-bottom: 0.8em;
+    font-size: min(1.2rem, 2.2vh);
+    text-shadow: $shadow;
+  }
+
+  @media (max-width: 768px) {
+    text-align: center;
+
+    .value {
+      font-size: min(2.2rem, 4vh);
+    }
+
+    li {
+      font-size: min(1rem, 1.8vh);
+      margin-bottom: 0.5em;
+    }
   }
 }
 </style>

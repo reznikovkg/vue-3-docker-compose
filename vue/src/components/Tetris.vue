@@ -43,7 +43,7 @@ const { board } = useBoard({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .tetris {
   position: relative;
   display: grid;
@@ -69,6 +69,14 @@ const { board } = useBoard({
   border-radius: 15px;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+
+  @media (max-width: 768px) {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding: 20px;
+    gap: 20px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -78,14 +86,6 @@ const { board } = useBoard({
       "sidebar";
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
-    gap: 20px;
-  }
-
-  .sidebar {
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: flex-start;
-    padding: 20px;
     gap: 20px;
   }
 }

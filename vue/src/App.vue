@@ -8,7 +8,7 @@
 import Game from './components/Game.vue'
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .app {
   font-family: sans-serif;
   text-align: center;

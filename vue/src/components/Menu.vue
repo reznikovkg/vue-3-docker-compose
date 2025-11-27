@@ -12,7 +12,9 @@
 defineEmits(['start'])
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
+
 .menu {
   display: flex;
   flex-direction: column;
@@ -22,13 +24,13 @@ defineEmits(['start'])
   z-index: 100;
   padding: 20px;
   box-sizing: border-box;
-}
 
-.menu h1 {
-  font-size: 4em;
-  margin-bottom: 0.5em;
-  text-align: center;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  h1 {
+    font-size: 4em;
+    margin-bottom: 0.5em;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .button {
@@ -38,20 +40,20 @@ defineEmits(['start'])
   border: none;
   box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 60px;
   cursor: pointer;
-  background: linear-gradient(145deg, #ffff6b, #ee5a24);
+  background: $button-gradient;
   color: white;
   font-weight: bold;
   transition: all 0.3s ease;
   min-width: 280px;
-}
 
-.button:hover {
-  transform: translateY(-2px);
-  box-shadow: rgba(0, 0, 0, 0.6) 0px 0px 80px;
-}
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: rgba(0, 0, 0, 0.6) 0px 0px 80px;
+  }
 
-.button:active {
-  transform: translateY(0);
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {

@@ -44,48 +44,48 @@ const board = computed(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$preview-size: min(90px, 10vw);
+
 .preview {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-}
 
-.preview-board {
-  display: grid;
-  grid-gap: 2px;
-  grid-template-rows: repeat(4, 1fr);
-  grid-template-columns: repeat(4, 1fr);
-  width: min(90px, 10vw);
-  height: min(90px, 10vw);
-  min-width: 70px;
-  min-height: 70px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 5px;
-}
+  &-board {
+    display: grid;
+    grid-gap: 2px;
+    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+    width: $preview-size;
+    height: $preview-size;
+    min-width: 70px;
+    min-height: 70px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 5px;
+  }
 
-.preview-title {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: min(1rem, 2vh);
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
+  &-title {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: min(1rem, 2vh);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
 
-@media (max-width: 768px) {
-  .preview {
+  @media (max-width: 768px) {
     gap: 5px;
-  }
 
-  .preview-board {
-    width: min(70px, 8vw);
-    height: min(70px, 8vw);
-    min-width: 50px;
-    min-height: 50px;
-  }
+     &-board {
+      width: min(70px, 8vw);
+      height: min(70px, 8vw);
+      min-width: 50px;
+      min-height: 50px;
+    }
 
-  .preview-title {
-    font-size: min(0.9rem, 1.8vh);
+    &-title {
+      font-size: min(0.9rem, 1.8vh);
+    }
   }
 }
 </style>

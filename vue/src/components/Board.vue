@@ -24,7 +24,7 @@ const boardStyles = computed(() => ({
 }))
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .board {
   grid-area: board;
   display: grid;
@@ -38,10 +38,8 @@ const boardStyles = computed(() => ({
   border: 4px solid rgb(255, 255, 255);
   border-radius: 10px;
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-}
 
-@media (max-width: 768px) {
-  .board {
+  @media (max-width: 768px) {
     width: min(40vh, 85vw);
     height: min(80vh, 170vw);
   }
