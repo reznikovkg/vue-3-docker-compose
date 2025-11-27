@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
 import { Action, actionForKey, actionIsDrop } from '../business/Input.js'
 import { playerController } from '../business/PlayerController.js'
@@ -23,32 +23,27 @@ const player = computed(() => store.getters['player/player'])
 const dropTime = computed(() => store.getters['game/dropTime'])
 const isPaused = computed(() => store.getters['game/isPaused'])
 
-let intervalId = null
-
-// Устанавливаем интервал для автоматического падения
-const setupInterval = () => {
-  if (intervalId) {
-    clearInterval(intervalId)
-    intervalId = null
-  }
-  
-  if (dropTime.value !== null && dropTime.value !== undefined) {
-    intervalId = setInterval(() => {
-      if (!isPaused.value) {
-        handleInput({ action: Action.SlowDrop })
-      }
-    }, dropTime.value)
-    console.log('Interval set with delay:', dropTime.value)
-  } else {
-    console.log('Interval cleared - dropTime is null')
-  }
+const handleInput = ({ action }) => {
+  console.log('Handling input:', action)
+  playerController({
+    action,
+    board: board.value,
+    player: player.value,
+    setPlayer: (newPlayer) => {
+      console.log('Updating player via store')
+      store.dispatch('player/setPlayer', newPlayer)
+    },
+    setGameOver: (gameOver) => {
+      console.log('Setting game over:', gameOver)
+      store.dispatch('game/setGameOver', gameOver)
+    }
+  })
 }
 
-// Следим за изменениями dropTime
-watch(dropTime, (newDelay, oldDelay) => {
-  console.log('DropTime changed from', oldDelay, 'to', newDelay)
-  setupInterval()
-}, { immediate: true })
+// Функция игрового тика
+const gameTick = () => {
+  handleInput({ action: Action.SlowDrop })
+}
 
 const onKeyUp = (event) => {
   const action = actionForKey(event.code)
@@ -72,17 +67,14 @@ const onKeyDown = (event) => {
     store.dispatch('game/setGameOver', true)
   } else if (action === Action.FastDrop) {
     console.log('Fast drop - always works')
-    // Для FastDrop временно паузим автоматическое падение
     if (dropTime.value !== null) {
       store.dispatch('game/pauseDropTime')
     }
     handleInput({ action })
   } else {
-    // Для остальных действий проверяем, не на паузе ли игра
     if (dropTime.value !== null) {
       console.log('Processing action:', action)
       if (actionIsDrop(action)) {
-        // Для SlowDrop паузим автоматическое падение
         store.dispatch('game/pauseDropTime')
       }
       handleInput({ action })
@@ -92,35 +84,19 @@ const onKeyDown = (event) => {
   }
 }
 
-const handleInput = ({ action }) => {
-  console.log('Handling input:', action)
-  playerController({
-    action,
-    board: board.value,
-    player: player.value,
-    setPlayer: (newPlayer) => {
-      console.log('Updating player via store')
-      store.dispatch('player/setPlayer', newPlayer)
-    },
-    setGameOver: (gameOver) => {
-      console.log('Setting game over:', gameOver)
-      store.dispatch('game/setGameOver', gameOver)
-    }
-  })
-}
-
 onMounted(() => {
   if (inputRef.value) {
     inputRef.value.focus()
   }
-  setupInterval()
+  
+  // Регистрируем callback и запускаем игровой цикл
+  store.dispatch('game/registerGameTick', gameTick)
+  store.dispatch('game/startGameLoop')
 })
 
 onUnmounted(() => {
-  if (intervalId) {
-    clearInterval(intervalId)
-    console.log('Interval cleared on unmount')
-  }
+  // Останавливаем игровой цикл при размонтировании
+  store.dispatch('game/stopGameLoop')
 })
 </script>
 

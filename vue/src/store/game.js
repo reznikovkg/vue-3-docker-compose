@@ -9,7 +9,8 @@ const MUTATIONS = {
   SET_DROP_TIME: 'SET_DROP_TIME',
   PAUSE_DROP_TIME: 'PAUSE_DROP_TIME',
   RESUME_DROP_TIME: 'RESUME_DROP_TIME',
-  SET_IS_PAUSED: 'SET_IS_PAUSED'
+  SET_IS_PAUSED: 'SET_IS_PAUSED',
+  SET_INTERVAL_ID: 'SET_INTERVAL_ID'
 }
 
 const getScoreForLines = (lines) => {
@@ -38,7 +39,9 @@ export default {
       points: 0,
       dropTime: defaultDropTime,
       previousDropTime: null,
-      isPaused: false
+      isPaused: false,
+      intervalId: null,
+      gameTickCallback: null // Храним callback для игрового тика
     }
   },
 
@@ -66,9 +69,6 @@ export default {
 
     [MUTATIONS.SET_LEVEL](state, level) {
       state.level = level
-      // Обновляем dropTime при смене уровня
-      const speed = speedIncrement * (level - 1)
-      state.dropTime = Math.max(defaultDropTime - speed, minimumDropTime)
     },
 
     [MUTATIONS.SET_LINES_COMPLETED](state, lines) {
@@ -125,12 +125,19 @@ export default {
 
     [MUTATIONS.SET_IS_PAUSED](state, value) {
       state.isPaused = value
+    },
+
+    [MUTATIONS.SET_INTERVAL_ID](state, id) {
+      state.intervalId = id
     }
   },
 
   actions: {
-    setGameOver({ commit }, value) {
+    setGameOver({ commit, dispatch }, value) {
       commit(MUTATIONS.SET_GAME_OVER, value)
+      if (value) {
+        dispatch('stopGameLoop')
+      }
     },
 
     startGame({ commit, dispatch }) {
@@ -140,23 +147,27 @@ export default {
       dispatch('board/resetBoard', null, { root: true })
     },
 
-    addLinesCleared({ commit }, lines) {
+    addLinesCleared({ commit, dispatch }, lines) {
       if (lines > 0) {
         commit(MUTATIONS.ADD_LINES_CLEARED, lines)
+        // После изменения уровня перезапускаем игровой цикл с новой скоростью
+        dispatch('restartGameLoop')
       }
     },
 
-    pauseDropTime({ commit, state }) {
+    pauseDropTime({ commit, state, dispatch }) {
       if (state.dropTime !== null) {
         commit(MUTATIONS.PAUSE_DROP_TIME)
         commit(MUTATIONS.SET_IS_PAUSED, true)
+        dispatch('stopGameLoop')
       }
     },
 
-    resumeDropTime({ commit, state }) {
+    resumeDropTime({ commit, state, dispatch }) {
       if (state.dropTime === null && state.previousDropTime) {
         commit(MUTATIONS.RESUME_DROP_TIME)
         commit(MUTATIONS.SET_IS_PAUSED, false)
+        dispatch('startGameLoop')
       }
     },
 
@@ -166,6 +177,42 @@ export default {
       } else {
         dispatch('resumeDropTime')
       }
+    },
+
+    // Новые actions для управления игровым циклом
+    startGameLoop({ state, commit, dispatch }) {
+      // Очищаем старый интервал, если есть
+      if (state.intervalId) {
+        clearInterval(state.intervalId)
+      }
+
+      if (state.dropTime !== null && state.gameTickCallback) {
+        const id = setInterval(() => {
+          if (!state.isPaused) {
+            state.gameTickCallback()
+          }
+        }, state.dropTime)
+        
+        commit(MUTATIONS.SET_INTERVAL_ID, id)
+        console.log('Game loop started with interval:', state.dropTime)
+      }
+    },
+
+    stopGameLoop({ state, commit }) {
+      if (state.intervalId) {
+        clearInterval(state.intervalId)
+        commit(MUTATIONS.SET_INTERVAL_ID, null)
+        console.log('Game loop stopped')
+      }
+    },
+
+    restartGameLoop({ dispatch }) {
+      dispatch('stopGameLoop')
+      dispatch('startGameLoop')
+    },
+
+    registerGameTick({ state }, callback) {
+      state.gameTickCallback = callback
     }
   }
 }
