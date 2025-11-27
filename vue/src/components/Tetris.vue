@@ -10,8 +10,6 @@
 </template>
 
 <script setup>
-import { watch, onMounted } from 'vue'
-import { useStore } from 'vuex'
 import Board from './Board.vue'
 import GameStats from './GameStats.vue'
 import Previews from './Previews.vue'
@@ -22,20 +20,6 @@ const props = defineProps({
   columns: { type: Number, default: 10 }
 })
 
-const store = useStore()
-
-// Следим за изменениями игрока и обновляем доску
-watch(
-  () => store.getters['player/player'],
-  () => {
-    store.dispatch('board/updateBoard')
-  },
-  { deep: true }
-)
-
-onMounted(() => {
-  console.log('Tetris component mounted')
-})
 </script>
 
 <style lang="scss" scoped>

@@ -1,7 +1,7 @@
 import { createStore } from 'vuex'
-import game from './modules/game'
-import board from './modules/board'
-import player from './modules/player'
+import game from './game'
+import board from './board'
+import player from './player'
 
 export default createStore({
   modules: {

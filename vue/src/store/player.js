@@ -1,4 +1,4 @@
-import { randomTetromino } from '../../business/Tetrominoes.js'
+import { randomTetromino } from '../business/Tetrominoes.js'
 
 const MUTATIONS = {
   SET_PLAYER: 'SET_PLAYER',
@@ -77,16 +77,22 @@ export default {
   },
 
   actions: {
-    setPlayer({ commit }, player) {
+    setPlayer({ commit, dispatch }, player) {
       commit(MUTATIONS.SET_PLAYER, player)
+      // После обновления игрока автоматически обновляем доску
+      dispatch('board/updateBoard', null, { root: true })
     },
 
-    resetPlayer({ commit }) {
+    resetPlayer({ commit, dispatch }) {
       commit(MUTATIONS.RESET_PLAYER)
+      // После сброса игрока обновляем доску
+      dispatch('board/updateBoard', null, { root: true })
     },
 
-    updatePlayer({ commit }, updates) {
+    updatePlayer({ commit, dispatch }, updates) {
       commit(MUTATIONS.SET_PLAYER, updates)
+      // После обновления игрока обновляем доску
+      dispatch('board/updateBoard', null, { root: true })
     }
   }
 }

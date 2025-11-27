@@ -1,4 +1,4 @@
-import { buildBoard, nextBoard } from '../../business/Board.js'
+import { buildBoard, nextBoard } from '../business/Board.js'
 
 const MUTATIONS = {
   SET_BOARD: 'SET_BOARD',
