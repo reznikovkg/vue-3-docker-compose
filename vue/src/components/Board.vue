@@ -1,5 +1,5 @@
 <template>
-  <div class="Board" :style="boardStyles">
+  <div class="board" :style="boardStyles">
     <template v-for="(row, y) in board.rows" :key="y">
       <BoardCell 
         v-for="(cell, x) in row" 
@@ -25,7 +25,7 @@ const boardStyles = computed(() => ({
 </script>
 
 <style scoped>
-.Board {
+.board {
   grid-area: board;
   display: grid;
   grid-gap: 2px;
@@ -41,7 +41,7 @@ const boardStyles = computed(() => ({
 }
 
 @media (max-width: 768px) {
-  .Board {
+  .board {
     width: min(40vh, 85vw);
     height: min(80vh, 170vw);
   }

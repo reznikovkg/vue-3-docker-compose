@@ -1,9 +1,9 @@
 <template>
-  <div class="Preview">
-    <div class="Preview-title">
+  <div class="preview">
+    <div class="preview-title">
       {{ previewTitles[index] || `Через ${index}` }}
     </div>
-    <div class="Preview-board">
+    <div class="preview-board">
       <template v-for="(row, y) in board.rows" :key="y">
         <BoardCell 
           v-for="(cell, x) in row" 
@@ -45,14 +45,14 @@ const board = computed(() => {
 </script>
 
 <style scoped>
-.Preview {
+.preview {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.Preview-board {
+.preview-board {
   display: grid;
   grid-gap: 2px;
   grid-template-rows: repeat(4, 1fr);
@@ -66,25 +66,25 @@ const board = computed(() => {
   padding: 5px;
 }
 
-.Preview-title {
+.preview-title {
   color: rgba(255, 255, 255, 0.8);
   font-size: min(1rem, 2vh);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 768px) {
-  .Preview {
+  .preview {
     gap: 5px;
   }
 
-  .Preview-board {
+  .preview-board {
     width: min(70px, 8vw);
     height: min(70px, 8vw);
     min-width: 50px;
     min-height: 50px;
   }
 
-  .Preview-title {
+  .preview-title {
     font-size: min(0.9rem, 1.8vh);
   }
 }

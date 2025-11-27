@@ -1,5 +1,5 @@
 <template>
-  <div class="Previews">
+  <div class="previews">
     <Preview 
       v-for="(tetromino, index) in previewTetrominoes" 
       :key="index"
@@ -25,21 +25,21 @@ const previewTetrominoes = computed(() =>
 </script>
 
 <style scoped>
-.Previews {
+.previews {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
 @media (max-width: 768px) {
-  .Previews {
+  .previews {
     flex-direction: row;
     gap: 15px;
   }
 }
 
 @media (max-width: 480px) {
-  .Previews {
+  .previews {
     flex-direction: column;
     gap: 10px;
   }

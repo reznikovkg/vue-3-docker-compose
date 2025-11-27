@@ -1,6 +1,6 @@
 <template>
-  <div :class="['BoardCell', cell.className]">
-    <div class="Sparkle"></div>
+  <div :class="['boardCell', cell.className]">
+    <div class="sparkle"></div>
   </div>
 </template>
 
@@ -11,7 +11,7 @@ defineProps({
 </script>
 
 <style scoped>
-.BoardCell {
+.boardCell {
   width: auto;
   border-radius: 6px;
   position: relative;
@@ -24,7 +24,7 @@ defineProps({
   border-right: 3px solid rgba(0, 0, 0, 0.1);
 }
 
-.tetromino .Sparkle {
+.tetromino .sparkle {
   position: absolute;
   z-index: 10;
   width: 6px;
@@ -40,7 +40,7 @@ defineProps({
   border: 2px solid rgba(93, 52, 0, 0.2);
 }
 
-.tetromino.ghost .Sparkle {
+.tetromino.ghost .sparkle {
   opacity: 0;
 }
 

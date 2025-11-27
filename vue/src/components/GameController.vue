@@ -1,6 +1,6 @@
 <template>
   <input
-    class="GameController"
+    class="game-controller"
     type="text"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
@@ -116,7 +116,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.GameController {
+.game-controller {
   position: absolute;
   top: -100em;
 }

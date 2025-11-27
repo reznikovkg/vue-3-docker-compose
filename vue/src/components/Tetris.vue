@@ -1,7 +1,7 @@
 <template>
-  <div class="Tetris">
+  <div class="tetris">
     <Board :board="board" />
-    <div class="Sidebar">
+    <div class="sidebar">
       <GameStats :game-stats="gameStats" />
       <Previews :tetrominoes="player.tetrominoes" />
     </div>
@@ -44,7 +44,7 @@ const { board } = useBoard({
 </script>
 
 <style scoped>
-.Tetris {
+.tetris {
   position: relative;
   display: grid;
   grid-template-areas: "board sidebar";
@@ -59,7 +59,7 @@ const { board } = useBoard({
   min-height: 100vh;
 }
 
-.Sidebar {
+.sidebar {
   grid-area: sidebar;
   display: flex;
   flex-direction: column;
@@ -72,7 +72,7 @@ const { board } = useBoard({
 }
 
 @media (max-width: 768px) {
-  .Tetris {
+  .tetris {
     grid-template-areas:
       "board"
       "sidebar";
@@ -81,7 +81,7 @@ const { board } = useBoard({
     gap: 20px;
   }
 
-  .Sidebar {
+  .sidebar {
     flex-direction: row;
     justify-content: space-around;
     align-items: flex-start;

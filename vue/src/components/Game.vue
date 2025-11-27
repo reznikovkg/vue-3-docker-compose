@@ -1,5 +1,5 @@
 <template>
-  <div class="Game">
+  <div class="game">
     <Menu v-if="gameOver" @start="startGame" />
     <Tetris 
       v-else 
