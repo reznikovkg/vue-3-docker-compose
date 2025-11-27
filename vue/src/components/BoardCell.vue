@@ -37,7 +37,7 @@ defineProps({
 
 .tetromino.ghost {
   background-color: transparent;
-  border: 2px solid #5d340033;
+  border: 2px solid rgba(93, 52, 0, 0.2);
 }
 
 .tetromino.ghost .Sparkle {
@@ -51,7 +51,7 @@ defineProps({
   background-color: rgba(36, 95, 223, 1);
 }
 .tetromino__l {
-  background-color: rgb(255, 174, 174);
+  background-color: rgba(255, 174, 174, 1);
 }
 .tetromino__o {
   background-color: rgba(223, 217, 36, 1);
