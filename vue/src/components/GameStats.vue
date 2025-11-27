@@ -11,14 +11,12 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useStore } from 'vuex'
 
-const props = defineProps({
-  gameStats: { type: Object, required: true }
-})
+const store = useStore()
 
-const linesToLevel = computed(() => 
-  props.gameStats.linesPerLevel - props.gameStats.linesCompleted
-)
+const gameStats = computed(() => store.getters['game/gameStats'])
+const linesToLevel = computed(() => store.getters['game/linesToLevel'])
 </script>
 
 <style lang="scss" scoped>

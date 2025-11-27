@@ -12,15 +12,16 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useStore } from 'vuex'
 import BoardCell from './BoardCell.vue'
 
-const props = defineProps({
-  board: { type: Object, required: true }
-})
+const store = useStore()
+
+const board = computed(() => store.getters['board/board'])
 
 const boardStyles = computed(() => ({
-  gridTemplateRows: `repeat(${props.board.size.rows}, 1fr)`,
-  gridTemplateColumns: `repeat(${props.board.size.columns}, 1fr)`
+  gridTemplateRows: `repeat(${board.value.size.rows}, 1fr)`,
+  gridTemplateColumns: `repeat(${board.value.size.columns}, 1fr)`
 }))
 </script>
 

@@ -1,45 +1,40 @@
 <template>
   <div class="tetris">
-    <Board :board="board" />
+    <Board />
     <div class="sidebar">
-      <GameStats :game-stats="gameStats" />
-      <Previews :tetrominoes="player.tetrominoes" />
+      <GameStats />
+      <Previews />
     </div>
-    <GameController
-      :board="board"
-      :game-stats="gameStats"
-      :player="player"
-      @game-over="$emit('game-over', $event)"
-      @player-update="setPlayer"
-    />
+    <GameController />
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { watch, onMounted } from 'vue'
+import { useStore } from 'vuex'
 import Board from './Board.vue'
 import GameStats from './GameStats.vue'
 import Previews from './Previews.vue'
 import GameController from './GameController.vue'
-import { useBoard } from '../composables/useBoard.js'
-import { useGameStats } from '../composables/useGameStats.js'
-import { usePlayer } from '../composables/usePlayer.js'
 
 const props = defineProps({
   rows: { type: Number, default: 20 },
   columns: { type: Number, default: 10 }
 })
 
-defineEmits(['game-over'])
+const store = useStore()
 
-const { gameStats, addLinesCleared } = useGameStats()
-const { player, setPlayer, resetPlayer } = usePlayer()
-const { board } = useBoard({
-  rows: props.rows,
-  columns: props.columns,
-  player,
-  resetPlayer,
-  addLinesCleared
+// Следим за изменениями игрока и обновляем доску
+watch(
+  () => store.getters['player/player'],
+  () => {
+    store.dispatch('board/updateBoard')
+  },
+  { deep: true }
+)
+
+onMounted(() => {
+  console.log('Tetris component mounted')
 })
 </script>
 

@@ -11,15 +11,16 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useStore } from 'vuex'
 import Preview from './Preview.vue'
 
-const props = defineProps({
-  tetrominoes: { type: Array, required: true }
-})
+const store = useStore()
+
+const tetrominoes = computed(() => store.getters['player/tetrominoes'])
 
 const previewTetrominoes = computed(() => 
-  props.tetrominoes
-    .slice(1 - props.tetrominoes.length)
+  tetrominoes.value
+    .slice(1 - tetrominoes.value.length)
     .reverse()
 )
 </script>

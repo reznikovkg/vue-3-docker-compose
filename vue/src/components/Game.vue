@@ -5,13 +5,13 @@
       v-else 
       :rows="rows" 
       :columns="columns" 
-      @game-over="setGameOver" 
     />
   </div>
 </template>
 
 <script setup>
-import { useGameOver } from '../composables/useGameOver.js'
+import { computed } from 'vue'
+import { useStore } from 'vuex'
 import Menu from './Menu.vue'
 import Tetris from './Tetris.vue'
 
@@ -20,10 +20,12 @@ const props = defineProps({
   columns: { type: Number, default: 10 }
 })
 
-const [gameOver, setGameOver, resetGameOver] = useGameOver()
+const store = useStore()
+
+const gameOver = computed(() => store.getters['game/gameOver'])
 
 const startGame = () => {
-  resetGameOver()
-  console.log(`Start gameOver is ${gameOver.value}`)
+  store.dispatch('game/startGame')
+  console.log('Game started')
 }
 </script>
