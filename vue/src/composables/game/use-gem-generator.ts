@@ -1,6 +1,6 @@
 import { ref } from "vue"
 import { Gem } from "@/types"
-import { GEM_COLORS } from "@/services/constants"
+import { GEM_COLORS, SWAP_DIRECTIONS } from "@/services/constants"
 
 export const useGemGenerator = () => {
   const nextGemId = ref(1)
@@ -21,6 +21,7 @@ export const useGemGenerator = () => {
       selected: false,
       removing: false,
       isNew,
+      swapDirection: SWAP_DIRECTIONS.NONE
     }
   }
 

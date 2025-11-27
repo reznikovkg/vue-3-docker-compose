@@ -1,12 +1,19 @@
 <template>
   <div
     class="gem"
-    :class="{
+    :class="[
+      {
       'gem--selected': gem.selected,
       'gem--removing': gem.removing,
-      'gem--new': gem.isNew
-    }"
+      'gem--new': gem.isNew,
+      },
+      `gem-swapped--${gem.swapDirection}`
+    ]"
     :style="{ backgroundColor: gem.color }"
+    @click="() => handleClick()"
+    @mousedown="() => handleMousedown()"
+    @mousemove="() => handleMousemove()"
+    @mouseup="() => handleMouseup()"
   >
     <span class="gem__type">
       {{ gem.type }}
@@ -18,16 +25,44 @@
 import { computed } from "vue"
 import { Gem } from '@/types/game'
 
+interface Emits {
+  (e: 'click', gem: Gem): void
+  (e: 'mousedown', gem: Gem): void
+  (e: 'mousemove', gem: Gem): void
+  (e: 'mouseup', gem: Gem): void
+}
 interface Props {
   gem: Gem
 }
 
+const emit = defineEmits<Emits>()
 const props = defineProps<Props>()
 
 const gem = computed(() => props.gem)
+
+const handleClick = () => {
+  emit('click', gem.value)
+}
+
+const handleMousedown = () => {
+  emit('mousedown', gem.value)
+}
+
+const handleMousemove = () => {
+  emit('mousemove', gem.value)
+}
+
+const handleMouseup = () => {
+  emit('mouseup', gem.value)
+}
 </script>
 
 <style lang="scss" scoped>
+@mixin swapped-pointer {
+  pointer-events: none;
+  z-index: 2;
+}
+
 .gem {
   display: flex;
   align-items: center;
@@ -38,7 +73,7 @@ const gem = computed(() => props.gem)
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.3s ease;
   user-select: none;
 
@@ -58,6 +93,38 @@ const gem = computed(() => props.gem)
 
   &--new {
     animation: newAnimation 0.5s ease-out;
+  }
+
+  &.gem-swapped {
+    position: relative;
+    z-index: 1;
+    transform: scale(1) translate(0);
+    transition: all .35s ease-in-out;
+    pointer-events: auto;
+
+    &--right {
+      @include swapped-pointer;
+
+      transform: scale(1) translateX(58px);
+    }
+
+    &--left {
+      @include swapped-pointer;
+
+      transform: scale(1) translateX(-58px);
+    }
+
+    &--up {
+      @include swapped-pointer;
+
+      transform: scale(1) translateY(-58px);
+    }
+
+    &--down {
+      @include swapped-pointer;
+
+      transform: scale(1) translateY(58px);
+    }
   }
 }
 

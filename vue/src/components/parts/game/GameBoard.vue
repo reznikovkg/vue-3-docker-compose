@@ -16,7 +16,10 @@
           v-for="gem in rowGems"
           :key="gem.id"
           :gem="gem"
-          @click="() => handleGemSelect(gem)"
+          @click="(value) => handleGemSelect(value)"
+          @mousedown="(value) => handleMousedownGem(value)"
+          @mousemove="(value) => handleMousemoveGem(value)"
+          @mouseup="(value) => handleMouseupGem(value)"
         />
       </div>
     </div>
@@ -35,6 +38,9 @@ const {
   initializeBoard,
   handleGemSelect,
   handleSizeChange,
+  handleMousedownGem,
+  handleMousemoveGem,
+  handleMouseupGem,
 } = useGameBoard()
 
 const resetGame = () => {
