@@ -7,10 +7,88 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { ref, onMounted, onUnmounted, computed } from "vue"
 import { useStore } from "vuex"
 const store = useStore()
 const playerTransform = computed(() => store.getters.getPlayerTransform)
+const MOVE_SPEED = 5
+const MOVE_INTERVAL = 16 // ~60fps
+
+const isRunning = ref(false)
+const isFacingLeft = ref(false)
+const moveInterval = ref<number | null>(null)
+
+const keys = {
+ ArrowLeft: false,
+ ArrowRight: false
+}
+
+const onKeyDown = (e: KeyboardEvent) => {
+ if (e.key in keys) {
+   keys[e.key as keyof typeof keys] = true
+   startMovement()
+ }
+}
+
+const onKeyUp = (e: KeyboardEvent) => {
+ if (e.key in keys) {
+   keys[e.key as keyof typeof keys] = false
+   if (!keys.ArrowLeft && !keys.ArrowRight) {
+     stopMovement()
+   } else {
+     updateDirection()
+   }
+ }
+}
+
+const startMovement = () => {
+ if (!moveInterval.value) {
+   updateDirection()
+   moveInterval.value = window.setInterval(moveCharacter, MOVE_INTERVAL)
+ } else {
+   updateDirection()
+ }
+}
+
+const stopMovement = () => {
+ if (moveInterval.value) {
+   clearInterval(moveInterval.value)
+   moveInterval.value = null
+ }
+ isRunning.value = false
+ updateStore()
+}
+
+const updateDirection = () => {
+ isRunning.value = keys.ArrowLeft || keys.ArrowRight
+ isFacingLeft.value = keys.ArrowLeft
+}
+
+const moveCharacter = () => {
+ if (keys.ArrowLeft) {
+   store.dispatch('movePlayer', { x: -MOVE_SPEED, y: 0 })
+ } else if (keys.ArrowRight) {
+   store.dispatch('movePlayer', { x: MOVE_SPEED, y: 0 })
+ }
+}
+
+const updateStore = () => {
+ store.dispatch('updatePlayerState', {
+   isRun: isRunning.value,
+   toLeft: isFacingLeft.value
+ })
+}
+
+onMounted(() => {
+ window.addEventListener('keydown', onKeyDown)
+ window.addEventListener('keyup', onKeyUp)
+})
+
+onUnmounted(() => {
+ window.removeEventListener('keydown', onKeyDown)
+ window.removeEventListener('keyup', onKeyUp)
+ stopMovement()
+})
 </script>
 
 <style scoped lang="less">

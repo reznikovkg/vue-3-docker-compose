@@ -1,9 +1,19 @@
+Задача 1
 Добавлено:
  инвентарь
  передвижение
  анимации
  взаимодействие с предметами
  загрузка уровней
+
+Задача 2
+Добавлено:
+1. Передвижение по нажатию на стрелок
+2. Передвижение по клику мышкой
+3. Кастомные курсоры (обычный и указатель)
+4. Миниигра при попытке взятия предмета
+5. Крафтинг предметов из ингридиентов
  
 видео-презентация
- https://drive.google.com/drive/folders/18kSGdo1VKIT5QkCyyj4NO39OdLdlPaMQ?dmr=1&ec=wgc-drive-hero-goto
+Задача 1 - https://drive.google.com/drive/folders/18kSGdo1VKIT5QkCyyj4NO39OdLdlPaMQ?dmr=1&ec=wgc-drive-hero-goto
+Задача 2 - https://drive.google.com/file/d/1dUrfN63Lkv0OysDJrYAjNox3t5xXXj5N/view?usp=sharing 

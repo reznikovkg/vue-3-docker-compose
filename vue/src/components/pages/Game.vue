@@ -8,10 +8,19 @@
         backgroundSize: 'cover'
       }"
     >
+      <button v-if="!isCraftingOpen" class="crafting-button" @click="() => openCrafting()"> ⚒️ </button>
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
+        @startMinigame="(data) => openMinigame(data)"
       />
+      <MiniGameScreen
+        v-if="isMinigameActive" 
+        :difficulty="minigame.difficulty"
+        :onComplete="minigame.onSuccess"
+        :onClose="minigame.onClose"
+      />
+      <CraftingScreen v-if="isCraftingOpen" :onClose="() => closeCrafting()" @close="() => closeCrafting()"/>
       <Inventory/>
       <WinScreen v-if="gameState.state === 1"/>
     </div>
@@ -20,11 +29,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from "vue"
+import { computed, onMounted, ref } from "vue"
 import SceneScreen from "../screens/SceneScreen.vue"
 import Inventory from "../Inventory.vue"
 import LoadScreen from "@/components/screens/LoadScreen.vue"
 import WinScreen from "@/components/screens/WinScreen.vue"
+import MiniGameScreen from "@/components/screens/MiniGameScreen.vue"
+import CraftingScreen from "@/components/screens/CraftingScreen.vue"
 import { useStore } from "vuex"
 
 const store = useStore()
@@ -32,11 +43,16 @@ const bg = computed(() => new URL(`/src/assets/backgrounds/${store.getters.getBa
 const list = computed(() => store.getters.getSceneObjects)
 const playerTransform = computed(() => store.getters.getPlayerTransform)
 const gameState = computed(() => store.getters.getGameState)
-
+const isMinigameActive = computed(() => store.getters.isMinigameActive)
+const minigame = computed(() => store.getters.getMinigameData)
+const openMinigame = (game) => { store.commit("START_MINIGAME", game)}
+const isCraftingOpen = ref(false)
+const closeCrafting = () => {isCraftingOpen.value = false}
 
 onMounted(() => {
   store.dispatch("loadScenes")
 })
+const openCrafting = () => { isCraftingOpen.value = true}
 </script>
 
 <style scoped lang="less">
@@ -44,6 +60,7 @@ onMounted(() => {
   position: relative;
   width: 900px;
   height: 540px;
+  cursor: url('/cursors/default-cursor.png'), auto;
 }
 .game {
   width: 100%;
@@ -51,5 +68,30 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+.crafting-button {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 2px solid #f1c40f;
+  color: #f1c40f;
+  font-size: 24px;
+  cursor: url('/cursors/pointer-cursor.png'), pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: all 0.3s ease;
+  &:hover {
+    background-color: rgba(241, 196, 15, 0.2);
+    transform: scale(1.1);
+  }
+  &:active {
+    transform: scale(0.95);
+  }
 }
 </style>
