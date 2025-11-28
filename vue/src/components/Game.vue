@@ -26,6 +26,6 @@ const gameOver = computed(() => store.getters['game/gameOver'])
 
 const startGame = () => {
   store.dispatch('game/startGame')
-  console.log('Game started')
+  // console.log('Game started')
 }
 </script>

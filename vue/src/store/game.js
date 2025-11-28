@@ -10,7 +10,9 @@ const MUTATIONS = {
   PAUSE_DROP_TIME: 'PAUSE_DROP_TIME',
   RESUME_DROP_TIME: 'RESUME_DROP_TIME',
   SET_IS_PAUSED: 'SET_IS_PAUSED',
-  SET_INTERVAL_ID: 'SET_INTERVAL_ID'
+  SET_INTERVAL_ID: 'SET_INTERVAL_ID',
+  SET_GAME_TICK_CALLBACK: 'SET_GAME_TICK_CALLBACK',
+  CLEAR_PREVIOUS_DROP_TIME: 'CLEAR_PREVIOUS_DROP_TIME'
 }
 
 const getScoreForLines = (lines) => {
@@ -41,7 +43,7 @@ export default {
       previousDropTime: null,
       isPaused: false,
       intervalId: null,
-      gameTickCallback: null // Храним callback для игрового тика
+      gameTickCallback: null
     }
   },
 
@@ -89,9 +91,11 @@ export default {
         state.level += 1
         state.linesCompleted = newLinesCompleted % state.linesPerLevel
         
-        // Обновляем скорость падения
         const speed = speedIncrement * (state.level - 1)
-        state.dropTime = Math.max(defaultDropTime - speed, minimumDropTime)
+        const newDropTime = Math.max(defaultDropTime - speed, minimumDropTime)
+        
+        state.dropTime = newDropTime
+        state.previousDropTime = null
       } else {
         state.linesCompleted = newLinesCompleted
       }
@@ -103,6 +107,7 @@ export default {
       state.points = 0
       state.dropTime = defaultDropTime
       state.isPaused = false
+      state.previousDropTime = null
     },
 
     [MUTATIONS.SET_DROP_TIME](state, time) {
@@ -110,14 +115,14 @@ export default {
     },
 
     [MUTATIONS.PAUSE_DROP_TIME](state) {
-      if (state.dropTime) {
+      if (state.dropTime !== null) {
         state.previousDropTime = state.dropTime
         state.dropTime = null
       }
     },
 
     [MUTATIONS.RESUME_DROP_TIME](state) {
-      if (state.previousDropTime) {
+      if (state.previousDropTime !== null) {
         state.dropTime = state.previousDropTime
         state.previousDropTime = null
       }
@@ -128,7 +133,18 @@ export default {
     },
 
     [MUTATIONS.SET_INTERVAL_ID](state, id) {
+      if (state.intervalId && state.intervalId !== id) {
+        clearInterval(state.intervalId)
+      }
       state.intervalId = id
+    },
+
+    [MUTATIONS.SET_GAME_TICK_CALLBACK](state, callback) {
+      state.gameTickCallback = callback
+    },
+
+    [MUTATIONS.CLEAR_PREVIOUS_DROP_TIME](state) {
+      state.previousDropTime = null
     }
   },
 
@@ -147,11 +163,17 @@ export default {
       dispatch('board/resetBoard', null, { root: true })
     },
 
-    addLinesCleared({ commit, dispatch }, lines) {
+    addLinesCleared({ commit, state, dispatch }, lines) {
       if (lines > 0) {
+        const oldLevel = state.level
+        
         commit(MUTATIONS.ADD_LINES_CLEARED, lines)
-        // После изменения уровня перезапускаем игровой цикл с новой скоростью
-        dispatch('restartGameLoop')
+        
+        if (state.level !== oldLevel) {
+          commit(MUTATIONS.CLEAR_PREVIOUS_DROP_TIME)
+          commit(MUTATIONS.SET_IS_PAUSED, false)
+          dispatch('restartGameLoop')
+        }
       }
     },
 
@@ -164,7 +186,7 @@ export default {
     },
 
     resumeDropTime({ commit, state, dispatch }) {
-      if (state.dropTime === null && state.previousDropTime) {
+      if (state.previousDropTime !== null) {
         commit(MUTATIONS.RESUME_DROP_TIME)
         commit(MUTATIONS.SET_IS_PAUSED, false)
         dispatch('startGameLoop')
@@ -179,40 +201,44 @@ export default {
       }
     },
 
-    // Новые actions для управления игровым циклом
-    startGameLoop({ state, commit, dispatch }) {
-      // Очищаем старый интервал, если есть
+    startGameLoop({ state, commit }) {
       if (state.intervalId) {
         clearInterval(state.intervalId)
+        commit(MUTATIONS.SET_INTERVAL_ID, null)
       }
 
-      if (state.dropTime !== null && state.gameTickCallback) {
-        const id = setInterval(() => {
-          if (!state.isPaused) {
-            state.gameTickCallback()
-          }
-        }, state.dropTime)
-        
-        commit(MUTATIONS.SET_INTERVAL_ID, id)
-        console.log('Game loop started with interval:', state.dropTime)
+      if (!state.gameTickCallback || state.dropTime === null || state.gameOver) {
+        return
       }
+
+      const callback = state.gameTickCallback
+      const currentDropTime = state.dropTime
+      
+      const id = setInterval(() => {
+        if (!state.isPaused && !state.gameOver && callback) {
+          callback()
+        }
+      }, currentDropTime)
+      
+      commit(MUTATIONS.SET_INTERVAL_ID, id)
     },
 
     stopGameLoop({ state, commit }) {
       if (state.intervalId) {
         clearInterval(state.intervalId)
         commit(MUTATIONS.SET_INTERVAL_ID, null)
-        console.log('Game loop stopped')
       }
     },
 
     restartGameLoop({ dispatch }) {
       dispatch('stopGameLoop')
-      dispatch('startGameLoop')
+      setTimeout(() => {
+        dispatch('startGameLoop')
+      }, 10)
     },
 
-    registerGameTick({ state }, callback) {
-      state.gameTickCallback = callback
+    registerGameTick({ commit }, callback) {
+      commit(MUTATIONS.SET_GAME_TICK_CALLBACK, callback)
     }
   }
 }
