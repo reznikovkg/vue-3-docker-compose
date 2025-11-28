@@ -1,12 +1,8 @@
 <template>
   <div class="app">
-    <Game :rows="20" :columns="10" />
+    <router-view />
   </div>
 </template>
-
-<script setup>
-import Game from './components/Game.vue'
-</script>
 
 <style lang="scss" scoped>
 .app {
