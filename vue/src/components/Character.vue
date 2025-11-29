@@ -96,6 +96,7 @@ onUnmounted(() => {
   pointer-events: none;
   width: 100px;
   height: 150px;
+  transform: translate(-50%, -90%);
   background-repeat: no-repeat;
   background-image: url("@/assets/character/idle.png");
   background-size: contain;
@@ -107,7 +108,7 @@ onUnmounted(() => {
     background-size: contain;
   }
   &--left {
-    transform: scaleX(-1);
+    transform: scaleX(-1) translate(50%, -90%);
   }
 }
 @keyframes run {

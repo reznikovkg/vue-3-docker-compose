@@ -1,4 +1,5 @@
 import { createStore } from 'vuex'
+import areaPathFounder from '@/utils/areaPathFounder.js';
 import inventory from "@/store/inventory.js";
 
 const GAME_STATE = {
@@ -130,6 +131,7 @@ export default createStore({
       store.commit(MUTATIONS.START_LOADING)
       fetch(`/levels/${store.getters.getNextLevel}.json`).then(res => {
         res.json().then(data => {
+          areaPathFounder.setArea(data.moveArea)
           store.commit(MUTATIONS.SET_SCENES, data)
           store.dispatch('inventory/reset')
         })
@@ -168,17 +170,25 @@ export default createStore({
       if (!item) {
         return
       }
+      let pointIndex = 0;
+      const path = areaPathFounder.findShortestTrianglePath(
+          store.getters.getPlayerTransform,
+          {x: item.x, y: item.y}
+      )
       const intervalId = setInterval(() => {
         const pos = store.getters.getPlayerTransform
-        const x = item.x - pos.x
-        const y = item.y - pos.y
+        const x = path[pointIndex].x - pos.x
+        const y = path[pointIndex].y - pos.y
         const magnitude = Math.sqrt(x * x + y * y)
         const dx = x * speed / magnitude
         const dy = y * speed / magnitude
         if (magnitude < 10) {
-          clearInterval(intervalId)
-          store.dispatch('interactWithItem', item)
-          return
+          pointIndex += 1;
+          if (pointIndex >= path.length) {
+            clearInterval(intervalId)
+            store.dispatch('interactWithItem', item)
+            return
+          }
         }
         store.commit(MUTATIONS.MOVE_PLAYER, {x: dx, y: dy, intervalId: intervalId})
       }, 0.02)
@@ -197,20 +207,28 @@ export default createStore({
       })
     },
     movePlayerToPoint(store, point) {
-      const x = point.x
-      const y = point.y
       store.commit(MUTATIONS.STOP_PLAYER);
       const speed = 5;
+      let pointIndex = 0;
+      const path = areaPathFounder.findShortestTrianglePath(
+          store.getters.getPlayerTransform,
+          point
+      )
       const intervalId = setInterval(() => {
         const pos = store.getters.getPlayerTransform
+        const x = path[pointIndex].x;
+        const y = path[pointIndex].y;
         const dx = x - pos.x
         const dy = y - pos.y
         const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist < 5) {
-          clearInterval(intervalId)
-          store.commit(MUTATIONS.UPDATE_PLAYER_STATE, { isRun: false })
-          store.state.intervalId = null 
-          return
+          pointIndex += 1;
+          if (pointIndex >= path.length) {
+            clearInterval(intervalId)
+            store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {isRun: false})
+            store.state.intervalId = null
+            return
+          }
         }
         const stepX = (dx / dist) * speed
         const stepY = (dy / dist) * speed

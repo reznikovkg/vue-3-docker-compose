@@ -1,0 +1,339 @@
+let triangles = []
+
+const cross = (ax, ay, bx, by) => ax * by - ay * bx
+
+const dist = (a, b) => {
+  const dx = a.x - b.x
+  const dy = a.y - b.y
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+const sub = (point1, point2) => ({ x: point1.x - point2.x, y: point1.y - point2.y })
+
+const dot = (point1, point2) => point1.x * point2.x + point1.y * point2.y
+
+const signedArea = (poly) => {
+  let area = 0
+  const n = poly.length
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n
+    area += poly[i].x * poly[j].y - poly[j].x * poly[i].y
+  }
+  return area * 0.5
+}
+
+const isConvex = (triangle) => {
+  const crossVal = cross(
+      triangle.b.x - triangle.a.x, triangle.b.y - triangle.a.y,
+      triangle.c.x - triangle.b.x, triangle.c.y - triangle.b.y
+  )
+  return crossVal > 0.0001
+}
+
+const pointInTriangle = (p, triangle) => {
+  const a = triangle.a
+  const b = triangle.b
+  const c = triangle.c
+
+  const c1 = cross(b.x - a.x, b.y - a.y, p.x - a.x, p.y - a.y)
+  const c2 = cross(c.x - b.x, c.y - b.y, p.x - b.x, p.y - b.y)
+  const c3 = cross(a.x - c.x, a.y - c.y, p.x - c.x, p.y - c.y)
+
+  const hasNeg = (c1 < 0) || (c2 < 0) || (c3 < 0)
+  const hasPos = (c1 > 0) || (c2 > 0) || (c3 > 0)
+
+  return !(hasNeg && hasPos)
+}
+
+const equalPoints = (point1, point2) =>
+    Math.abs(point1.x - point2.x) < 0.001 && Math.abs(point1.y - point2.y) < 0.001
+
+const sameEdge = (triangle1, triangle2) => {
+  const edges1 = [[triangle1.a, triangle1.b], [triangle1.b, triangle1.c], [triangle1.c, triangle1.a]]
+  const edges2 = [[triangle2.a, triangle2.b], [triangle2.b, triangle2.c], [triangle2.c, triangle2.a]]
+
+  let found = false
+  let i = 0
+
+  while (i < edges1.length && !found) {
+    const e1 = edges1[i]
+    let j = 0
+
+    while (j < edges2.length && !found) {
+      const e2 = edges2[j]
+      const same =
+          (equalPoints(e1[0], e2[0]) && equalPoints(e1[1], e2[1])) ||
+          (equalPoints(e1[0], e2[1]) && equalPoints(e1[1], e2[0]))
+
+      if (same) {
+        found = true
+      } else {
+        j += 1
+      }
+    }
+
+    if (!found) {
+      i += 1
+    }
+  }
+  return found
+}
+
+const buildTriangleGraph = (triangles) => {
+  const neighbors = triangles.map(() => [])
+
+  for (let i = 0; i < triangles.length; i++) {
+    for (let j = i + 1; j < triangles.length; j++) {
+      if (sameEdge(triangles[i], triangles[j])) {
+        neighbors[i].push(j)
+        neighbors[j].push(i)
+      }
+    }
+  }
+
+  return neighbors
+}
+
+const closestPointInTriangle = (point, triangle) => {
+  const ab = sub(triangle.b, triangle.a)
+  const ac = sub(triangle.c, triangle.a)
+  const ap = sub(point, triangle.a)
+
+  const d1 = dot(ab, ap)
+  const d2 = dot(ac, ap)
+
+  if (d1 <= 0 && d2 <= 0) return triangle.a
+
+  const bp = sub(point, triangle.b)
+  const d3 = dot(ab, bp)
+  const d4 = dot(ac, bp)
+
+  if (d3 >= 0 && d4 <= d3) return triangle.b
+
+  const vc = d1 * d4 - d3 * d2
+  if (vc <= 0 && d1 >= 0 && d3 <= 0) {
+    const v = d1 / (d1 - d3)
+    return {
+      x: triangle.a.x + v * (triangle.b.x - triangle.a.x),
+      y: triangle.a.y + v * (triangle.b.y - triangle.a.y),
+    }
+  }
+
+  const cp = sub(point, triangle.c)
+  const d5 = dot(ab, cp)
+  const d6 = dot(ac, cp)
+
+  if (d6 >= 0 && d5 <= d6) return triangle.c
+
+  const vb = d5 * d2 - d1 * d6
+  if (vb <= 0 && d2 >= 0 && d6 <= 0) {
+    const w = d2 / (d2 - d6)
+    return {
+      x: triangle.a.x + w * (triangle.c.x - triangle.a.x),
+      y: triangle.a.y + w * (triangle.c.y - triangle.a.y),
+    }
+  }
+
+  const va = d3 * d6 - d5 * d4
+  if (va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0) {
+    const w = (d4 - d3) / ((d4 - d3) + (d5 - d6))
+    return {
+      x: triangle.b.x + w * (triangle.c.x - triangle.b.x),
+      y: triangle.b.y + w * (triangle.c.y - triangle.b.y),
+    }
+  }
+
+  const denominator = 1 / (va + vb + vc)
+  const v = vb * denominator
+  const w = vc * denominator
+
+  return {
+    x: triangle.a.x + ab.x * v + ac.x * w,
+    y: triangle.a.y + ab.y * v + ac.y * w,
+  }
+}
+
+const findEarIndex = (poly, indices) => {
+  let earIndex = -1
+  let i = 0
+
+  while (i < indices.length && earIndex === -1) {
+    const i0 = indices[(i - 1 + indices.length) % indices.length]
+    const i1 = indices[i]
+    const i2 = indices[(i + 1) % indices.length]
+
+    const a = poly[i0]
+    const b = poly[i1]
+    const c = poly[i2]
+
+    let isEar = false
+
+    if (isConvex({a, b, c})) {
+      let hasPointInside = false
+      let j = 0
+
+      while (j < indices.length && !hasPointInside) {
+        const idx = indices[j]
+        const isVertex = (idx === i0 || idx === i1 || idx === i2)
+
+        if (!isVertex) {
+          if (pointInTriangle(poly[idx], {a, b, c})) {
+            hasPointInside = true
+          }
+        }
+
+        j += 1
+      }
+
+      isEar = !hasPointInside
+    }
+
+    if (isEar) {
+      earIndex = i
+    } else {
+      i += 1
+    }
+  }
+
+  return earIndex
+}
+
+const setArea = (poly) => {
+  const result = []
+  if (!poly || poly.length < 3) {
+    triangles = result
+    return result
+  }
+
+  if (signedArea(poly) < 0) {
+    poly = poly.slice().reverse()
+  }
+
+  let indices = Array.from({ length: poly.length }, (_, i) => i)
+
+  let guard = 0
+  const maxGuard = 10000
+  let stop = false
+
+
+  while (indices.length > 3 && guard < maxGuard && !stop) {
+    const earIndex = findEarIndex(poly, indices)
+
+    if (earIndex === -1) {
+      stop = true
+    } else {
+      const i0 = indices[(earIndex - 1 + indices.length) % indices.length]
+      const i1 = indices[earIndex]
+      const i2 = indices[(earIndex + 1) % indices.length]
+
+      const a = poly[i0]
+      const b = poly[i1]
+      const c = poly[i2]
+
+      result.push({ a, b, c })
+      indices.splice(earIndex, 1)
+      guard += 1
+    }
+  }
+
+  if (indices.length === 3) {
+    const a = poly[indices[0]]
+    const b = poly[indices[1]]
+    const c = poly[indices[2]]
+    result.push({ a, b, c })
+  }
+
+  triangles = result
+  return result
+}
+
+const findShortestTrianglePath = (startPoint, endPoint) => {
+  if (!triangles || triangles.length === 0) return []
+
+  const graph = buildTriangleGraph(triangles)
+
+  let startIndex = 0
+  let minDist = dist(closestPointInTriangle(startPoint, triangles[0]), startPoint)
+
+  for (let i = 1; i < triangles.length; i++) {
+    const point = closestPointInTriangle(startPoint, triangles[i])
+    const distance = dist(startPoint, point)
+    if (distance < minDist) {
+      minDist = distance
+      startIndex = i
+    }
+  }
+
+  let endIndex = 0
+  minDist = dist(closestPointInTriangle(endPoint, triangles[0]), endPoint)
+
+  for (let i = 1; i < triangles.length; i++) {
+    const pointB = closestPointInTriangle(endPoint, triangles[i])
+    const distance = dist(pointB, endPoint)
+    const minX = Math.min(triangles[i].a.x, triangles[i].b.x, triangles[i].c.x)
+    const maxX = Math.max(triangles[i].a.x, triangles[i].b.x, triangles[i].c.x)
+    const inXRange = (minX < endPoint.x && endPoint.x < maxX)
+
+    if (distance < minDist && inXRange) {
+      minDist = distance
+      endIndex = i
+    }
+  }
+
+  const queue = [startIndex]
+  const cameFrom = {}
+  cameFrom[startIndex] = null
+
+  let qIndex = 0
+  let reached = false
+
+  while (qIndex < queue.length && !reached) {
+    const current = queue[qIndex]
+    const isTarget = (current === endIndex)
+
+    if (isTarget) {
+      reached = true
+    } else {
+      const neighbors = graph[current]
+      let i = 0
+      while (i < neighbors.length) {
+        const next = neighbors[i]
+        const seen = (next in cameFrom)
+        if (!seen) {
+          cameFrom[next] = current
+          queue.push(next)
+        }
+        i += 1
+      }
+      qIndex += 1
+    }
+  }
+
+  const pathTriangles = []
+  let current = endIndex
+  let valid = (current in cameFrom)
+
+  while (valid) {
+    pathTriangles.unshift(triangles[current])
+    current = cameFrom[current]
+    valid = (current !== null && current in cameFrom)
+  }
+
+  let path = []
+  let lastPoint = endPoint
+
+  let i = pathTriangles.length - 1
+  while (i >= 0) {
+    lastPoint = closestPointInTriangle(lastPoint, pathTriangles[i])
+    path.push(lastPoint)
+    i -= 1
+  }
+
+  path.reverse()
+  return path
+}
+
+export default {
+  setArea,
+  findShortestTrianglePath
+}

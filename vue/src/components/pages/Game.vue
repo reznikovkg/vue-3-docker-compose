@@ -21,7 +21,7 @@
         :onClose="minigame.onClose"
       />
       <CraftingScreen v-if="isCraftingOpen" :onClose="() => closeCrafting()" @close="() => closeCrafting()"/>
-      <Inventory/>
+      <Inventory class="inventory"/>
       <WinScreen v-if="gameState.state === 1"/>
     </div>
     <LoadScreen  v-if="gameState.isLoading"/>
@@ -61,6 +61,13 @@ const openCrafting = () => { isCraftingOpen.value = true}
   width: 900px;
   height: 540px;
   cursor: url('/cursors/default-cursor.png'), auto;
+}
+.inventory {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 20px;
+  margin-inline: auto;
+  width: fit-content;
 }
 .game {
   width: 100%;

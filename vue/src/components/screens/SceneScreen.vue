@@ -13,7 +13,8 @@
         :id="item.id"
         :is="gameObjects[item.id.split('.')[0]]"
         :item="item"
-        class="game-object"/>
+        class="game-object"
+      />
     </div>
     <Character
       class="area"
@@ -127,9 +128,8 @@ const select = (item) => {
 <style scoped lang="less">
 .scene {
   position: relative;
-  width: 600px;
-  height: 400px;
-  margin-bottom: 20px;
+  width: 100%;
+  height: 100%;
   cursor: inherit
 }
 .scene * {
