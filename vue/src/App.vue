@@ -1,10 +1,8 @@
 <template>
   <RouterView />
-<<<<<<< Updated upstream
-=======
 
   <div class="app">
-    <h1 class="app__title">Bubble game - Мультиразмер</h1>
+    <h1 class="app__title">Bubble game - Multi-size</h1>
 
     <div class="app__controls">
       <span>Target color:</span>
@@ -22,15 +20,15 @@
     <div class="app__legend">
       <div class="app__legend-item">
         <div class="app__legend-bubble large"></div>
-        <span>Большая (-5 при ошибке, -10 при потере)</span>
+        <span>Large (-5 if error, -10 if lost)</span>
       </div>
       <div class="app__legend-item">
         <div class="app__legend-bubble medium"></div>
-        <span>Среднее (-3 при ошибке, -6 при потере)</span>
+        <span>Average (-3 if error, -6 if lost)</span>
       </div>
       <div class="app__legend-item">
         <div class="app__legend-bubble small"></div>
-        <span> Небольшая (-1 при ошибке, -3 при потере) </span>
+        <span>Small (-1 if error, -3 if lost)</span>
       </div>
     </div>
 
@@ -56,16 +54,45 @@
       </div>
     </div>
   </div>
->>>>>>> Stashed changes
 </template>
 
 <script setup>
+import { ref, computed } from "vue";
+import { useStore } from "vuex";
+import BubbleGame from "./components/BubbleGame.vue";
+
+
+const store = useStore();
+
+const score = computed(() => store.getters.score);
+const running = ref(false);
+
+const colorsCount = 5;
+const targetColor = "red";
+store.commit("SET_TARGET_COLOR", targetColor);
+
+const spawnRate = 1;
+const scoreGood = 1;
+const scoreBad = -5;
+
+// Toutes fonctions fléchées comme demandé
+const toggleGame = () => {
+  if (!running.value) {
+    store.commit("RESET_SCORE");
+  }
+  running.value = !running.value;
+};
+
+const restart = () => {
+  store.commit("RESET_SCORE");
+  running.value = true;
+};
+
+const endGame = () => {
+  running.value = false;
+};
 </script>
 
-<<<<<<< Updated upstream
-<style scoped lang="scss">
-</style>
-=======
 <style scoped lang="less">
 .app {
   text-align: center;
@@ -161,4 +188,3 @@
   }
 }
 </style>
->>>>>>> Stashed changes
