@@ -1,9 +1,16 @@
 <template>
-  <RouterView />
+  <div class="app">
+    <RouterView />
+  </div>
 </template>
 
-<script setup>
-</script>
-
-<style scoped lang="scss">
+<style lang="scss" scoped>
+.app {
+  font-family: sans-serif;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(145deg, #ffff6b, #ee5a24);
+  min-height: 100vh;
+  padding: 20px;
+}
 </style>

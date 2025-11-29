@@ -1,27 +1,20 @@
 import { createWebHistory, createRouter } from 'vue-router'
-
-import IndexPage from './../components/pages/IndexPage.vue'
-import ExamplePage from './../components/pages/ExamplePage.vue'
+import Game from '@/components/Game.vue'
 
 export const ROUTES = {
-  EXAMPLE: 'EXAMPLE',
-  INDEX: 'INDEX',
+  GAME: 'game',
 }
 
 const routes = [
   {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
-  },
-  {
-    name: ROUTES.INDEX,
     path: '/',
-    component: IndexPage
+    name: ROUTES.GAME,
+    component: Game,
+    props: { rows: 20, columns: 10 }  // Передаем props через роутер
   },
 ]
 
 export const router = createRouter({
-  history: createWebHistory('/'),
+  history: createWebHistory(),
   routes,
 })
