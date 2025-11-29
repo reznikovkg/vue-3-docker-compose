@@ -669,10 +669,10 @@ defineExpose({
             align-items: center;
             justify-content: center;
         }
-    }
 
-    &__cell:hover {
-        transform: translateY(-2px);
+        &:hover {
+            transform: translateY(-2px);
+        }
     }
 
     &__cell--dragging {

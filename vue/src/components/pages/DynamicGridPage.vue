@@ -48,7 +48,7 @@
             <h3>Удаление папки</h3>
             <p>Папка не пустая. Вы уверены, что хотите удалить эту папку?</p>
             <div class="modal-actions">
-                <button @click="() => confirmDelete()" class="btn-danger">Удалить</button>
+                <button @click="() => confirmDelete()" class="btn-alert">Удалить</button>
                 <button @click="() => cancelDelete()">Отмена</button>
             </div>
         </div>
@@ -380,7 +380,7 @@ const onEnterFolder = (folder: GridItem): void => {
 
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .sample-cell {
     min-height: 48px;
     min-width: 48px;
@@ -409,10 +409,10 @@ button {
     background: white;
     cursor: pointer;
     font-size: 14px;
-}
 
-button:hover {
-    background: #f0f0f0;
+    &:hover {
+        background: #f0f0f0;
+    }
 }
 
 .modal-overlay {
@@ -434,18 +434,18 @@ button:hover {
     border-radius: 8px;
     max-width: 400px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
 
-.modal-content h3 {
-    margin-top: 0;
-    margin-bottom: 16px;
-    color: #333;
-}
+    h3 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        color: #333;
+    }
 
-.modal-content p {
-    margin-bottom: 16px;
-    color: #666;
-    line-height: 1.5;
+    p {
+        margin-bottom: 16px;
+        color: #666;
+        line-height: 1.5;
+    }
 }
 
 .modal-actions {
@@ -454,13 +454,13 @@ button:hover {
     justify-content: flex-end;
 }
 
-.btn-danger {
+.btn-alert {
     background: #dc3545;
     color: white;
     border: none;
-}
 
-.btn-danger:hover {
-    background: #c82333;
+    &:hover {
+        background: #c82333;
+    }
 }
 </style>
