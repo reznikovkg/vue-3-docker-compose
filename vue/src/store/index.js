@@ -196,11 +196,11 @@ export default createStore({
     movePlayer(store, point) {
       const x = point.x
       const pos = store.getters.getPlayerTransform
-      const newX = pos.x + point.x
-      if (newX < 0 || newX > 600) {
+      const newPoint = { x: pos.x + point.x, y: pos.y + point.y }
+      if (!areaPathFounder.pointInPolygon(newPoint)) {
         return
       }
-      store.commit(MUTATIONS.UPDATE_PLAYER_POSITION, { x: newX })
+      store.commit(MUTATIONS.UPDATE_PLAYER_POSITION, newPoint)
       store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {
         isRun: true,
         toLeft: x < 0

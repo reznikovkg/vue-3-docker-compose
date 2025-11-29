@@ -30,14 +30,14 @@ const isConvex = (triangle) => {
   return crossVal > 0.0001
 }
 
-const pointInTriangle = (p, triangle) => {
+const pointInTriangle = (point, triangle) => {
   const a = triangle.a
   const b = triangle.b
   const c = triangle.c
 
-  const c1 = cross(b.x - a.x, b.y - a.y, p.x - a.x, p.y - a.y)
-  const c2 = cross(c.x - b.x, c.y - b.y, p.x - b.x, p.y - b.y)
-  const c3 = cross(a.x - c.x, a.y - c.y, p.x - c.x, p.y - c.y)
+  const c1 = cross(b.x - a.x, b.y - a.y, point.x - a.x, point.y - a.y)
+  const c2 = cross(c.x - b.x, c.y - b.y, point.x - b.x, point.y - b.y)
+  const c3 = cross(a.x - c.x, a.y - c.y, point.x - c.x, point.y - c.y)
 
   const hasNeg = (c1 < 0) || (c2 < 0) || (c3 < 0)
   const hasPos = (c1 > 0) || (c2 > 0) || (c3 > 0)
@@ -333,7 +333,12 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
   return path
 }
 
+const pointInPolygon = (point) => {
+  return triangles.reduce((result, triangle) => pointInTriangle(point, triangle) || result, false)
+}
+
 export default {
   setArea,
+  pointInPolygon,
   findShortestTrianglePath
 }
