@@ -58,6 +58,9 @@ export default {
   getters: {
     getEntries: (state) => state.entries,
     getDraft: (state) => state.draft,
+    getEntryById: (state) => (id) => {
+      return state.entries.find((entry) => entry.id === id) || null
+    },
   },
   mutations: {
     SET_ENTRIES: (state, payload) => {
@@ -105,6 +108,21 @@ export default {
     },
     removeEntry: ({ state, commit }, id) => {
       const entries = state.entries.filter((entry) => entry.id !== id)
+
+      commit('SET_ENTRIES', entries)
+      writeStorage(STORAGE_KEYS.ENTRIES, entries)
+    },
+    updateEntry: ({ state, commit }, payload) => {
+      const entries = state.entries.map((entry) => {
+        if (entry.id !== payload.id) {
+          return entry
+        }
+
+        return {
+          ...entry,
+          ...payload
+        }
+      })
 
       commit('SET_ENTRIES', entries)
       writeStorage(STORAGE_KEYS.ENTRIES, entries)
