@@ -71,16 +71,16 @@ const cols = ref(5)
 const capacity = computed(() => rows.value * cols.value)
 
 const items = ref<GridItem[]>([
-    { id: '1', name: '1', type: 'item' as const },
-    { id: '2', name: '2', type: 'item' as const },
-    { id: '3', name: '3', type: 'item' as const },
-    { id: '4', name: '4', type: 'item' as const },
-    { id: '5', name: '5', type: 'item' as const },
-    { id: '6', name: '6', type: 'item' as const },
-    { id: '7', name: '7', type: 'item' as const },
-    { id: '8', name: '8', type: 'item' as const },
-    { id: '9', name: '9', type: 'item' as const },
-    { id: '10', name: '10', type: 'item' as const },
+    { id: '1', name: '1', type: 'item' },
+    { id: '2', name: '2', type: 'item' },
+    { id: '3', name: '3', type: 'item' },
+    { id: '4', name: '4', type: 'item' },
+    { id: '5', name: '5', type: 'item' },
+    { id: '6', name: '6', type: 'item' },
+    { id: '7', name: '7', type: 'item' },
+    { id: '8', name: '8', type: 'item' },
+    { id: '9', name: '9', type: 'item' },
+    { id: '10', name: '10', type: 'item' },
 ])
 
 const gridRef = ref<{ getCurrentItems?: () => GridItem[], updateCurrentItems?: (items: GridItem[]) => void, createFolder?: () => GridItem } | null>(null)
@@ -219,7 +219,7 @@ const generateItems = (): void => {
         itemsToCreate.push({
             id: generateId(),
             name: name,
-            type: 'item' as const
+            type: 'item'
         })
     }
     
