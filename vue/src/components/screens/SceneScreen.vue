@@ -1,7 +1,7 @@
 <template>
   <div class="scene" ref="sceneRef" :style="cursorStyle" @click="(event) => onSceneClick(event)">
-    <svg class="move-area">
-      <polygon :points="areaTriangles" class="move-triangle"/>
+    <svg class="zone">
+      <polygon :points="areaPolygon" class="zone__polygon"/>
     </svg>
     <div
       v-for="item in scene"
@@ -67,7 +67,7 @@ const tooltipX = ref(0)
 const tooltipY = ref(0)
 const sceneRef = ref(null)
 const store = useStore()
-const areaTriangles = computed(() => store.getters.getArea.map(p => `${p.x},${p.y}`).join(' '))
+const areaPolygon = computed(() => store.getters.getArea.map(p => `${p.x},${p.y}`).join(' '))
 
 const showTooltip = (text) => {
   tooltipText.value = text
@@ -130,19 +130,18 @@ const select = (item) => {
 </script>
 
 <style scoped lang="less">
-.move-area {
+.zone {
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-.move-triangle {
-  fill: rgba(0, 255, 0, 0.15);
-  stroke: rgba(0, 255, 0, 0.6);
-  stroke-width: 1;
+  &__polygon {
+    fill: rgba(0, 255, 0, 0.15);
+    stroke: rgba(0, 255, 0, 0.6);
+    stroke-width: 1;
+  }
 }
 .scene {
   position: relative;
