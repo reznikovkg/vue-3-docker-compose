@@ -24,6 +24,7 @@ export default createStore({
   state () {
     return {
       objects: [],
+      moveArea: [],
       playerTransform: { x: 0, y: 0, isRun: false, toLeft: false },
       intervalId: null,
       gameState: { state: GAME_STATE.GAME, isLoading: true},
@@ -46,7 +47,8 @@ export default createStore({
     getNextLevel: (state) => state.levelList[state.nextLevel % state.levelList.length],
     getBackgroundName: (state) => state.backgroundName,
     isMinigameActive: (state) => state.minigame.isActive,
-    getMinigameData: (state) => state.minigame
+    getMinigameData: (state) => state.minigame,
+    getArea: (state) => state.moveArea
   },
   mutations: {
     [MUTATIONS.START_LOADING](state) {
@@ -59,6 +61,7 @@ export default createStore({
       state.playerTransform = payload.playerTransform
       state.completeCondition = payload.completeCondition
       state.backgroundName = payload.background
+      state.moveArea = payload.moveArea
       state.gameState.isLoading = false
       state.nextLevel += 1
     },
