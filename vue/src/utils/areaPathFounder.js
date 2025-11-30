@@ -102,13 +102,17 @@ const closestPointInTriangle = (point, triangle) => {
   const d1 = dot(ab, ap)
   const d2 = dot(ac, ap)
 
-  if (d1 <= 0 && d2 <= 0) return triangle.a
+  if (d1 <= 0 && d2 <= 0) {
+    return triangle.a
+  }
 
   const bp = sub(point, triangle.b)
   const d3 = dot(ab, bp)
   const d4 = dot(ac, bp)
 
-  if (d3 >= 0 && d4 <= d3) return triangle.b
+  if (d3 >= 0 && d4 <= d3) {
+    return triangle.b
+  }
 
   const vc = d1 * d4 - d3 * d2
   if (vc <= 0 && d1 >= 0 && d3 <= 0) {
@@ -123,7 +127,9 @@ const closestPointInTriangle = (point, triangle) => {
   const d5 = dot(ab, cp)
   const d6 = dot(ac, cp)
 
-  if (d6 >= 0 && d5 <= d6) return triangle.c
+  if (d6 >= 0 && d5 <= d6) {
+    return triangle.c
+  }
 
   const vb = d5 * d2 - d1 * d6
   if (vb <= 0 && d2 >= 0 && d6 <= 0) {
@@ -248,7 +254,9 @@ const setArea = (poly) => {
 }
 
 const findShortestTrianglePath = (startPoint, endPoint) => {
-  if (!triangles || triangles.length === 0) return []
+  if (!triangles || triangles.length === 0) {
+    return []
+  }
 
   const graph = buildTriangleGraph(triangles)
 
