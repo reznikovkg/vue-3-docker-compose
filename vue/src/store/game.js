@@ -233,19 +233,24 @@ const actions = {
 
     // Подсвечиваем совпадения
     commit("SET_MATCHED_SET", new Set(matches.map((m) => m.id)));
-    let basePoints = 10;
-    let totalPoints = 0;
+    
+    let totalCells = matches.length;
+    let totalScore = 0;
+    let crystalCount = 0;
 
     matches.forEach((m) => {
       const cell = state.grid[m.y][m.x];
-      if (cell.crystal) {
-        totalPoints += basePoints * 3;
-      } else {
-        totalPoints += basePoints;
-      }
+      if (cell.crystal) crystalCount++;
     });
 
-    commit("INCREMENT_SCORE", totalPoints);
+    const basePointsPerCell = 10;
+    totalScore = basePointsPerCell * totalCells;
+
+    if (crystalCount > 0) {
+      totalScore *= (crystalCount * 3);
+    }
+
+    commit("INCREMENT_SCORE", totalScore);
 
     await delay(500);
 
