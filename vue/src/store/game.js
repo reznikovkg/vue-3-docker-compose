@@ -1,12 +1,12 @@
 const MIN_GRID = 6;
 const MAX_GRID = 10;
 const COLORS = [
-  '#FF4444',
-  '#44FF44',
-  '#4444FF',
-  '#FFFF44',
-  '#FF44FF',
-  '#44FFFF',
+  "#FF4444",
+  "#44FF44",
+  "#4444FF",
+  "#FFFF44",
+  "#FF44FF",
+  "#44FFFF",
 ];
 
 const state = {
@@ -18,6 +18,7 @@ const state = {
   revertIds: null,
   score: 0,
   isProcessing: false,
+  crystalCount: 0,
 };
 
 const mutations = {
@@ -47,10 +48,18 @@ const mutations = {
       state.grid[y][x].color = color;
     }
   },
+  UPDATE_CELL_CRYSTAL(state, { x, y, value }) {
+    if (state.grid[y] && state.grid[y][x]) {
+      state.grid[y][x].crystal = value;
+    }
+  },
   SWAP_CELLS(state, { cell1, cell2 }) {
     const tempColor = state.grid[cell1.y][cell1.x].color;
+    const tempCrystal = state.grid[cell1.y][cell1.x].crystal;
     state.grid[cell1.y][cell1.x].color = state.grid[cell2.y][cell2.x].color;
+    state.grid[cell1.y][cell1.x].crystal = state.grid[cell2.y][cell2.x].crystal;
     state.grid[cell2.y][cell2.x].color = tempColor;
+    state.grid[cell2.y][cell2.x].crystal = tempCrystal;
   },
   INCREMENT_SCORE(state, points) {
     state.score += points;
@@ -58,41 +67,55 @@ const mutations = {
   RESET_SCORE(state) {
     state.score = 0;
   },
+  SET_CRYSTAL_COUNT(state, value) {
+    state.crystalCount = value;
+  },
+  INCREMENT_CRYSTAL(state) {
+    state.crystalCount++;
+  },
+  DECREMENT_CRYSTAL(state) {
+    state.crystalCount--;
+  },
 };
 
 const actions = {
   initializeGame({ commit, state }) {
-    commit('SET_IS_PROCESSING', true);
+    commit("SET_IS_PROCESSING", true);
 
     return new Promise((resolve, reject) => {
       try {
         // Простая и надежная инициализация сетки
         let idCounter = 0;
+        let crystalCounter = 0;
         const newGrid = [];
 
         for (let y = 0; y < state.gridSize; y++) {
           const row = [];
           for (let x = 0; x < state.gridSize; x++) {
+            const spawnCrystal = crystalCounter < 8 && Math.random() < 0.15;
+            if (spawnCrystal) crystalCounter++;
             row.push({
               id: idCounter++,
               x,
               y,
               color: getRandomColor(),
+              crystal: spawnCrystal,
             });
           }
           newGrid.push(row);
         }
 
-        commit('SET_GRID', newGrid);
-        commit('SET_SELECTED_CELL', null);
-        commit('SET_MATCHED_SET', new Set());
-        commit('RESET_SCORE');
+        commit("SET_GRID", newGrid);
+        commit("SET_CRYSTAL_COUNT", crystalCounter);
+        commit("SET_SELECTED_CELL", null);
+        commit("SET_MATCHED_SET", new Set());
+        commit("RESET_SCORE");
 
         // Автоматически обрабатываем начальные совпадения
         const processInitialMatches = () => {
           const matches = findMatchesSimple(newGrid);
           if (matches.length === 0) {
-            commit('SET_IS_PROCESSING', false);
+            commit("SET_IS_PROCESSING", false);
             resolve();
             return;
           }
@@ -107,7 +130,7 @@ const actions = {
             newGrid[match.y][match.x].color = newColor;
           }
 
-          commit('SET_GRID', newGrid);
+          commit("SET_GRID", newGrid);
 
           // Рекурсивно проверяем снова
           setTimeout(processInitialMatches, 10);
@@ -115,7 +138,7 @@ const actions = {
 
         processInitialMatches();
       } catch (error) {
-        commit('SET_IS_PROCESSING', false);
+        commit("SET_IS_PROCESSING", false);
         reject(error);
       }
     });
@@ -125,35 +148,37 @@ const actions = {
     if (state.isProcessing || state.animatingRevert) return;
 
     if (!state.selectedCell) {
-      commit('SET_SELECTED_CELL', cell);
+      commit("SET_SELECTED_CELL", cell);
       return;
     }
 
     if (state.selectedCell.id === cell.id) {
-      commit('SET_SELECTED_CELL', null);
+      commit("SET_SELECTED_CELL", null);
       return;
     }
 
     if (isAdjacent(state.selectedCell, cell)) {
       const sourceCell = state.selectedCell;
-      commit('SET_SELECTED_CELL', null);
-      dispatch('attemptSwap', { sourceCell, targetCell: cell });
+      commit("SET_SELECTED_CELL", null);
+      dispatch("attemptSwap", { sourceCell, targetCell: cell });
     } else {
-      commit('SET_SELECTED_CELL', cell);
+      commit("SET_SELECTED_CELL", cell);
     }
   },
 
   async attemptSwap({ commit, state, dispatch }, { sourceCell, targetCell }) {
     if (!sourceCell || !targetCell || state.isProcessing) return;
 
-    commit('SET_IS_PROCESSING', true);
+    commit("SET_IS_PROCESSING", true);
 
     // Сохраняем оригинальные цвета для возможного отката
     const originalColor1 = state.grid[sourceCell.y][sourceCell.x].color;
     const originalColor2 = state.grid[targetCell.y][targetCell.x].color;
+    const originalCrystal1 = state.grid[sourceCell.y][sourceCell.x].crystal;
+    const originalCrystal2 = state.grid[targetCell.y][targetCell.x].crystal;
 
     // Меняем ячейки местами
-    commit('SWAP_CELLS', { cell1: sourceCell, cell2: targetCell });
+    commit("SWAP_CELLS", { cell1: sourceCell, cell2: targetCell });
 
     await delay(200);
 
@@ -162,63 +187,89 @@ const actions = {
 
     if (matches.length === 0) {
       // Нет совпадений - откатываем
-      commit('SET_ANIMATING_REVERT', true);
-      commit('SET_REVERT_IDS', [sourceCell.id, targetCell.id]);
+      commit("SET_ANIMATING_REVERT", true);
+      commit("SET_REVERT_IDS", [sourceCell.id, targetCell.id]);
 
       await delay(300);
 
       // Восстанавливаем оригинальные цвета
-      commit('UPDATE_CELL_COLOR', {
+      commit("UPDATE_CELL_COLOR", {
         x: sourceCell.x,
         y: sourceCell.y,
         color: originalColor1,
       });
-      commit('UPDATE_CELL_COLOR', {
+      commit("UPDATE_CELL_COLOR", {
         x: targetCell.x,
         y: targetCell.y,
         color: originalColor2,
       });
+      commit("UPDATE_CELL_CRYSTAL", {
+        x: sourceCell.x,
+        y: sourceCell.y,
+        value: originalCrystal1,
+      });
+      commit("UPDATE_CELL_CRYSTAL", {
+        x: targetCell.x,
+        y: targetCell.y,
+        value: originalCrystal2,
+      });
 
       await delay(200);
 
-      commit('SET_ANIMATING_REVERT', false);
-      commit('SET_REVERT_IDS', null);
-      commit('SET_IS_PROCESSING', false);
+      commit("SET_ANIMATING_REVERT", false);
+      commit("SET_REVERT_IDS", null);
+      commit("SET_IS_PROCESSING", false);
     } else {
       // Есть совпадения - обрабатываем цепочку
-      await dispatch('processMatches', matches);
+      await dispatch("processMatches", matches);
     }
   },
 
   async processMatches({ commit, state, dispatch }, matches) {
     if (matches.length === 0) {
-      commit('SET_IS_PROCESSING', false);
+      commit("SET_IS_PROCESSING", false);
       return;
     }
 
     // Подсвечиваем совпадения
-    commit('SET_MATCHED_SET', new Set(matches.map((m) => m.id)));
-    commit('INCREMENT_SCORE', matches.length * 10);
+    commit("SET_MATCHED_SET", new Set(matches.map((m) => m.id)));
+    let basePoints = 10;
+    let totalPoints = 0;
+
+    matches.forEach((m) => {
+      const cell = state.grid[m.y][m.x];
+      if (cell.crystal) {
+        totalPoints += basePoints * 3;
+      } else {
+        totalPoints += basePoints;
+      }
+    });
+
+    commit("INCREMENT_SCORE", totalPoints);
 
     await delay(500);
 
     // Удаляем совпавшие ячейки
     matches.forEach((match) => {
-      commit('UPDATE_CELL_COLOR', {
+      const cell = state.grid[match.y][match.x];
+      if (cell.crystal) {
+        cell.crystal = false;
+      }
+      commit("UPDATE_CELL_COLOR", {
         x: match.x,
         y: match.y,
         color: null,
       });
     });
 
-    commit('SET_MATCHED_SET', new Set());
+    commit("SET_MATCHED_SET", new Set());
     await delay(200);
 
     // Применяем гравитацию
-    await dispatch('applyGravity');
+    await dispatch("applyGravity");
 
     // Заполняем пустоты
-    await dispatch('refillEmptyCells');
+    await dispatch("refillEmptyCells");
 
     // Автоматически проверяем новые совпадения после заполнения
     await delay(200);
@@ -226,9 +277,9 @@ const actions = {
 
     if (newMatches.length > 0) {
       // Рекурсивно обрабатываем новые совпадения
-      await dispatch('processMatches', newMatches);
+      await dispatch("processMatches", newMatches);
     } else {
-      commit('SET_IS_PROCESSING', false);
+      commit("SET_IS_PROCESSING", false);
     }
   },
 
@@ -242,15 +293,25 @@ const actions = {
       for (let x = 0; x < gridSize; x++) {
         for (let y = gridSize - 1; y > 0; y--) {
           if (!state.grid[y][x].color && state.grid[y - 1][x].color) {
-            commit('UPDATE_CELL_COLOR', {
+            commit("UPDATE_CELL_COLOR", {
               x,
               y,
               color: state.grid[y - 1][x].color,
             });
-            commit('UPDATE_CELL_COLOR', {
+            commit("UPDATE_CELL_CRYSTAL", {
+              x,
+              y,
+              value: state.grid[y - 1][x].crystal,
+            });
+            commit("UPDATE_CELL_COLOR", {
               x,
               y: y - 1,
               color: null,
+            });
+            commit("UPDATE_CELL_CRYSTAL", {
+              x,
+              y: y - 1,
+              value: false,
             });
             moved = true;
           }
@@ -269,11 +330,17 @@ const actions = {
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         if (!state.grid[y][x].color) {
-          commit('UPDATE_CELL_COLOR', {
+          const spawnCrystal = state.crystalCount < 8 && Math.random() < 0.15;
+          commit("UPDATE_CELL_COLOR", {
             x,
             y,
             color: getRandomColor(),
           });
+
+          if (spawnCrystal) {
+            commit("UPDATE_CELL_CRYSTAL", { x, y, value: true });
+            commit("INCREMENT_CRYSTAL");
+          }
         }
       }
     }
