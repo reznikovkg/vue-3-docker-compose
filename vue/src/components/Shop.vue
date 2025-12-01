@@ -45,7 +45,7 @@
           class="sale-info__sell-all-button"
           :disabled="fishForSale.length === 0"
         >
-          Продать всю рыбу за {{ totalFishValue }} ₽
+          {{ fishForSale.length === 0 ? 'Нет рыбы для продажи' : `Продать всю рыбу за ${totalFishValue} ₽` }}
         </button>
 
         <div v-if="fishForSale.length === 0" class="sale-info__no-fish-message">
