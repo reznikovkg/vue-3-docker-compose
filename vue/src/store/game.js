@@ -92,7 +92,7 @@ const actions = {
         for (let y = 0; y < state.gridSize; y++) {
           const row = [];
           for (let x = 0; x < state.gridSize; x++) {
-            const spawnCrystal = crystalCounter < 8 && Math.random() < 0.15;
+            const spawnCrystal = crystalCounter < 8 && Math.random() < 0.03;
             if (spawnCrystal) crystalCounter++;
             row.push({
               id: idCounter++,
@@ -335,7 +335,7 @@ const actions = {
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         if (!state.grid[y][x].color) {
-          const spawnCrystal = state.crystalCount < 8 && Math.random() < 0.15;
+          const spawnCrystal = state.crystalCount < 8 && Math.random() < 0.1;
           commit("UPDATE_CELL_COLOR", {
             x,
             y,
