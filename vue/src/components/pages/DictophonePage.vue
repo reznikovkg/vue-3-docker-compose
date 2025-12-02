@@ -4,7 +4,7 @@
 
     <div class="voice-recorder__controls">
       <button
-        @click="handleStartRecording"
+        @click="() => handleStartRecording()"
         :disabled="isRecording"
         class="voice-recorder__button voice-recorder__button--primary"
       >
@@ -12,7 +12,7 @@
       </button>
 
       <button
-        @click="handleStopRecording"
+        @click="() => handleStopRecording()"
         :disabled="!isRecording"
         class="voice-recorder__button voice-recorder__button--secondary"
       >
@@ -20,7 +20,7 @@
       </button>
 
       <button
-        @click="handleClearAllRecordings"
+        @click="() => handleClearAllRecordings()"
         :disabled="!hasRecordings"
         class="voice-recorder__button voice-recorder__button--secondary"
       >
@@ -28,7 +28,7 @@
       </button>
 
       <button
-        @click="handleSaveRecord"
+        @click="() => handleSaveRecord()"
         :disabled="isRecording"
         class="voice-recorder__button voice-recorder__button--secondary"
       >
@@ -36,7 +36,7 @@
       </button>
 
       <button
-        @click="handleDiscardRecording"
+        @click="() => handleDiscardRecording()"
         :disabled="isRecording"
         class="voice-recorder__button voice-recorder__button--secondary"
       >
@@ -71,6 +71,7 @@
       v-if="recordings"
       class="voice-recorder__recordings"
     >
+    >
       <h3 class="voice-recorder__subtitle">
         Recordings ({{ recordingsCount }})
       </h3>
@@ -92,6 +93,12 @@
               controls
               class="voice-recorder__item-audio"
             ></audio>
+              <button
+              @click="() => handleEditRecording(recording.id)"
+              class="voice-recorder__button voice-recorder__button--small voice-recorder__button--secondary"
+              >
+              Edit
+            </button>
             <button
               @click="() => handleDeleteRecording(recording.id)"
               class="voice-recorder__button voice-recorder__button--small voice-recorder__button--danger"
@@ -121,9 +128,7 @@ import { computed, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
 import { router } from "@/router"
 
-
 const store = useStore()
-
 
 const isRecording = computed(() => store.getters['dictophone/getIsRecording'])
 const recordings = computed(() => store.getters['dictophone/getRecordings'])
@@ -131,14 +136,15 @@ const currentAudioUrl = computed(() => store.getters['dictophone/getCurrentAudio
 const hasRecordings = computed(() => store.getters['dictophone/getHasRecordings'])
 const recordingsCount = computed(() => store.getters['dictophone/getRecordingsCount'])
 
-
 const startRecording = () => store.dispatch('dictophone/startRecording')
 const stopRecording = () => store.dispatch('dictophone/stopRecording')
 const deleteRecording = (id: string) => store.dispatch('dictophone/deleteRecording', id)
 const clearAllRecordings = () => store.dispatch('dictophone/clearAllRecordings')
 const saveRecord = () => store.dispatch('dictophone/saveRecording')
 const discardRecording = () => store.dispatch('dictophone/discardRecording')
-
+const handleEditRecording = (id: string) => {
+  router.push(`/dictophone-editor/${id}`)
+}
 
 const handleStartRecording = () => startRecording()
 const handleStopRecording = () => stopRecording()
