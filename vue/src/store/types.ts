@@ -11,16 +11,52 @@ export interface Zones {
   high: Zone[]
 }
 
+export interface FishCounts {
+  carp: number
+  perch: number
+  pike: number
+}
+
+export interface BaitCounts {
+  worm: number
+  small_fish: number
+}
+
 export interface Inventory {
-  common: number
-  good: number
-  rare: number
+  fish: FishCounts
+  baits: BaitCounts
+  groundbait: number
+}
+
+export interface FeedingSpot {
+  x: number
+  y: number
+  level: number
+}
+
+export interface Island {
+  x: number
+  y: number
+  islandRadius: number
+  shallowRadius: number
 }
 
 export interface GameState {
   pos: { x: number; y: number }
   inventory: Inventory
   zones: Zones
+  balance: number
+  feedingSpots: FeedingSpot[]
+  islands: Island[]
+  marketNearby: boolean
+  currentBaitId: string
+  ownedTackleIds: string[]
+  equippedTackle: {
+    rod?: string
+    reel?: string
+    line?: string
+    hook?: string
+  }
 }
 
 export interface RootState {

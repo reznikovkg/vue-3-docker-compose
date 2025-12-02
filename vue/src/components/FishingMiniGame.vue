@@ -10,6 +10,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 
+const props = defineProps<{
+  difficulty?: number
+}>()
+
 const emit = defineEmits<{ (e: 'result', ok: boolean): void }>()
 
 const pos = ref<number>(50)
@@ -20,7 +24,8 @@ let last: number = 0
 const loop = (t: number): void => {
   const dt: number = last ? (t - last) / 1000 : 0
   last = t
-  const speed: number = 80
+  const baseSpeed: number = 80
+  const speed: number = baseSpeed * (props.difficulty || 1)
   pos.value += dir.value * speed * dt
   if (pos.value > 100) {
     pos.value = 100
