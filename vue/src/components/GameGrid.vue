@@ -2,12 +2,12 @@
   <div class="game-grid">
     <div class="game-grid__container" :style="gridStyle">
       <div
-        v-for="row in gridSizeY"
+        v-for="row in storeGridSizeY"
         :key="row"
         class="game-grid__row"
       >
         <div
-          v-for="col in gridSizeX"
+          v-for="col in storeGridSizeX"
           :key="col"
           class="game-grid__cell"
           :class="getCellClasses(row - 1, col - 1)"
@@ -19,7 +19,19 @@
             v-if="hasShape(row - 1, col - 1)" 
             class="game-grid__shape"
             :style="{ backgroundColor: getShapeColor(row - 1, col - 1) }"
-          ></div>
+          >
+            <div class="game-grid__shape-info">
+              <div v-if="getShapeLevel(row - 1, col - 1) > 1" class="game-grid__shape-level">
+                Ур.{{ getShapeLevel(row - 1, col - 1) }}
+              </div>
+              <div v-if="getShapeCapacity(row - 1, col - 1) > 0" class="game-grid__shape-capacity">
+                {{ getCurrentVisitors(row - 1, col - 1) }}/{{ getShapeCapacity(row - 1, col - 1) }}
+              </div>
+              <div v-if="getShapeIncome(row - 1, col - 1) > 0" class="game-grid__shape-income">
+                +{{ getShapeIncome(row - 1, col - 1) }}
+              </div>
+            </div>
+          </div>
           <div 
             v-if="isPreviewCell(row - 1, col - 1) && !hasShape(row - 1, col - 1)"
             class="game-grid__preview"
@@ -42,8 +54,8 @@
         :class="getPersonClass(person)"
       >
         <span class="game-grid__person-balance">
-            {{ person.balance }}
-          </span>
+          {{ person.balance }}
+        </span>
       </div>
     </div>
   </div>
@@ -54,13 +66,6 @@ import { computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 
 const CELL_SIZE = 50
-
-interface GameGridProps {
-  gridSizeX: number,
-  gridSizeY: number
-}
-
-const props = defineProps<GameGridProps>()
 
 const store = useStore()
 
@@ -76,12 +81,12 @@ const people = computed(() => store.getters.getPeople)
 
 const gridStyle = computed(() => ({
   '--cell-size': `${CELL_SIZE}px`,
-  '--grid-size-x': props.gridSizeX,
-  '--grid-size-y': props.gridSizeY
+  '--grid-size-x': storeGridSizeX.value,
+  '--grid-size-y': storeGridSizeY.value
 }))
 
 const entranceStyle = computed(() => {
-  const entranceRow = Math.floor(props.gridSizeY / 2)
+  const entranceRow = Math.floor(storeGridSizeY.value / 2)
   return {
     left: `${-1 * CELL_SIZE}px`,
     top: `${entranceRow * CELL_SIZE}px`,
@@ -93,6 +98,31 @@ const entranceStyle = computed(() => {
 const getShapeColor = (row: number, col: number): string => {
   const cellData = grid.value[row]?.[col]
   return cellData?.color || '#8B4513'
+}
+
+const getShapeLevel = (row: number, col: number): number => {
+  const cellData = grid.value[row]?.[col]
+  return cellData?.level || 1
+}
+
+const getShapeCapacity = (row: number, col: number): number => {
+  const cellData = grid.value[row]?.[col]
+  return cellData?.capacity || 0
+}
+
+const getShapeIncome = (row: number, col: number): number => {
+  const cellData = grid.value[row]?.[col]
+  return cellData?.income || 0
+}
+
+const getCurrentVisitors = (row: number, col: number): number => {
+  const cellData = grid.value[row]?.[col]
+  if (!cellData) return 0
+  
+  const shapeId = cellData.id
+  return people.value.filter((person: any) => 
+    person.targetBuilding?.id === shapeId && person.state === 'inBuilding'
+  ).length
 }
 
 const getPersonStyle = (person: any) => {
@@ -136,7 +166,7 @@ const isPreviewCell = (row: number, col: number): boolean => {
 
 const handleCellHover = (row: number, col: number): void => {
   if (selectedShape.value && gameMode.value === 'add' && !isRoadMode.value) {
-    store.dispatch('updatePreview', { row, col, gridSizeX: props.gridSizeX, gridSizeY: props.gridSizeY })
+    store.dispatch('updatePreview', { row, col, gridSizeX: storeGridSizeX.value, gridSizeY: storeGridSizeY.value })
   } else {
     store.dispatch('clearPreview')
   }
@@ -187,8 +217,8 @@ const handleAddShape = (row: number, col: number): void => {
       startRow: row, 
       startCol: col, 
       shape,
-      gridSizeX: props.gridSizeX,
-      gridSizeY: props.gridSizeY
+      gridSizeX: storeGridSizeX.value,
+      gridSizeY: storeGridSizeY.value
     })
     store.dispatch('clearPreview')
   }
@@ -202,21 +232,18 @@ const handleRemoveShape = (row: number, col: number): void => {
 
   store.dispatch('removeShape', {
     shapeId: cellData.id,
-    gridSizeX: props.gridSizeX,
-    gridSizeY: props.gridSizeY
+    gridSizeX: storeGridSizeX.value,
+    gridSizeY: storeGridSizeY.value
   })
 }
 
 onMounted(() => {
-  store.dispatch('initializeGrid', {
-    gridSizeX: props.gridSizeX,
-    gridSizeY: props.gridSizeY
-  })
-
-  setInterval(() => {
-    store.dispatch('updatePeople')
-  }, 500)
+  store.dispatch('initializeGrid')
 })
+
+setInterval(() => {
+  store.dispatch('updatePeople')
+}, 500)
 </script>
 
 <style scoped lang="less">
@@ -285,6 +312,47 @@ onMounted(() => {
     height: 100%;
     border: 2px solid #654321;
     z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    box-sizing: border-box;
+  }
+
+  &__shape-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    width: 100%;
+  }
+
+  &__shape-level {
+    background: gold;
+    color: black;
+    font-size: 8px;
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 3px;
+  }
+
+  &__shape-capacity {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: bold;
+    color: #2E7D32;
+  }
+
+  &__shape-income {
+    background: rgba(255, 215, 0, 0.9);
+    padding: 1px 3px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: bold;
+    color: #8B4513;
   }
 
   &__preview {
@@ -336,9 +404,12 @@ onMounted(() => {
       background: linear-gradient(45deg, #2196F3, #03A9F4);
     }
   }
+
   &__person-balance {
-    font-size: 10px;
+    font-size: 8px;
     font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
     pointer-events: none;
   }
 }

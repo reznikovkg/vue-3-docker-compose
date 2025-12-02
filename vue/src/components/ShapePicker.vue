@@ -21,6 +21,7 @@
               :style="{
                 left: `${part.x * 25 + 25}%`,
                 top: `${part.y * 25 + 25}%`,
+                backgroundColor: shape.color
               }"
             ></div>
           </div>
@@ -30,6 +31,10 @@
           <div class="shape-picker__details">
             <span class="shape-picker__cost">Цена: {{ shape.cost }}</span>
             <span v-if="shape.capacity > 0" class="shape-picker__capacity">Вместимость: {{ shape.capacity }}</span>
+            <span v-if="shape.income > 0" class="shape-picker__income">Доход: {{ shape.income }}</span>
+            <span v-if="shape.effect" class="shape-picker__effect">
+              {{ getEffectText(shape) }}
+            </span>
           </div>
         </div>
       </div>
@@ -56,6 +61,9 @@ interface Shape {
   capacity: number
   visitTime: number
   entry: ShapePart
+  income: number
+  level: number
+  effect?: any
 }
 
 const store = useStore()
@@ -63,6 +71,13 @@ const store = useStore()
 const availableShapes = computed(() => store.getters.getAvailableShapes)
 const selectedShape = computed(() => store.getters.getSelectedShape)
 const parkBalance = computed(() => store.getters.getParkBalance)
+
+const getEffectText = (shape: Shape): string => {
+  if (!shape.effect) return ''
+  if (shape.effect.naturalNeed) return `+${shape.effect.naturalNeed} к нужде`
+  if (shape.effect.fatigue) return `+${shape.effect.fatigue} к отдыху`
+  return ''
+}
 
 const selectShape = (shape: Shape): void => {
   if (parkBalance.value >= shape.cost) {
@@ -182,6 +197,18 @@ const selectShape = (shape: Shape): void => {
   &__capacity {
     color: #4CAF50;
     font-weight: bold;
+  }
+
+  &__income {
+    color: #FFA500;
+    font-weight: bold;
+  }
+
+  &__effect {
+    color: #6A5ACD;
+    font-weight: bold;
+    font-size: 8px;
+    text-align: center;
   }
 }
 </style>
