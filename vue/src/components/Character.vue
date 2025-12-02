@@ -72,15 +72,19 @@ const updateDirection = () => {
 }
 
 const moveCharacter = () => {
+  let payload = { x: 0, y: 0 }
   if (keys.ArrowLeft) {
-    store.dispatch('movePlayer', { x: -MOVE_SPEED, y: 0 })
+    payload = { x: -MOVE_SPEED, y: 0 }
   } else if (keys.ArrowRight) {
-    store.dispatch('movePlayer', { x: MOVE_SPEED, y: 0 })
+    payload = { x: MOVE_SPEED, y: 0 }
   } else if (keys.ArrowUp) {
-    store.dispatch('movePlayer', { x: 0, y: -MOVE_SPEED })
+    payload = { x: 0, y: -MOVE_SPEED }
   } else if (keys.ArrowDown) {
-    store.dispatch('movePlayer', { x: 0, y: MOVE_SPEED })
+    payload = { x: 0, y: MOVE_SPEED }
+  } else {
+    return
   }
+  store.dispatch('movePlayer', payload)
 }
 
 const updateStore = () => {

@@ -272,10 +272,10 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
     }
   }
 
-  let endIndex = 0
-  minDist = dist(closestPointInTriangle(endPoint, triangles[0]), endPoint)
+  let endIndex = -1
+  minDist = Number.POSITIVE_INFINITY
 
-  for (let i = 1; i < triangles.length; i++) {
+  for (let i = 0; i < triangles.length; i++) {
     const pointB = closestPointInTriangle(endPoint, triangles[i])
     const distance = dist(pointB, endPoint)
     const minX = Math.min(triangles[i].a.x, triangles[i].b.x, triangles[i].c.x)
@@ -285,6 +285,17 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
     if (distance < minDist && inXRange) {
       minDist = distance
       endIndex = i
+    }
+  }
+
+  if(endIndex === -1) {
+    for (let i = 0; i < triangles.length; i++) {
+      const pointB = closestPointInTriangle(endPoint, triangles[i])
+      const distance = dist(pointB, endPoint)
+      if (distance < minDist) {
+        minDist = distance
+        endIndex = i
+      }
     }
   }
 
@@ -331,6 +342,27 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
   let lastPoint = endPoint
 
   let i = pathTriangles.length - 1
+
+  const { a, b, c } = pathTriangles[i]
+  const minX = Math.min(a.x, b.x, c.x)
+  const maxX = Math.max(a.x, b.x, c.x)
+  if (lastPoint.x > minX && lastPoint.x < maxX) {
+    const intersect = intersectTriangleWithLine(
+        pathTriangles[i],
+        {
+          p1: { x: lastPoint.x, y: 0 },
+          p2: { x: lastPoint.x, y: 550 }
+        })
+    const minY = intersect.reduce((min, point) => point.y < min ? point.y : min, Number.POSITIVE_INFINITY )
+    const maxY = intersect.reduce((max, point) => point.y > max ? point.y : max, 0 )
+    if (lastPoint.y > maxY) {
+      lastPoint.y = maxY
+    } else if (lastPoint.y < minY) {
+      lastPoint.y = minY
+    }
+    path.push(lastPoint)
+    i -= 1
+  }
   while (i >= 0) {
     lastPoint = closestPointInTriangle(lastPoint, pathTriangles[i])
     path.push(lastPoint)
@@ -343,6 +375,42 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
 
 const pointInPolygon = (point) => {
   return triangles.reduce((result, triangle) => pointInTriangle(point, triangle) || result, false)
+}
+
+const segmentIntersection = (line1, line2) => {
+  const a = line1.p1
+  const b = line1.p2
+  const c = line2.p1
+  const d = line2.p2
+
+  const den = (a.x - b.x) * (c.y - d.y) - (a.y - b.y) * (c.x - d.x)
+  if (Math.abs(den) < 1e-9) {
+    return null
+  }
+
+  const t = ((a.x - c.x) * (c.y - d.y) - (a.y - c.y) * (c.x - d.x)) / den
+  const u = -((a.x - b.x) * (a.y - c.y) - (a.y - b.y) * (a.x - c.x)) / den
+
+  if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+    return {
+      x: a.x + t * (b.x - a.x),
+      y: a.y + t * (b.y - a.y)
+    };
+  }
+  return null;
+}
+
+const intersectTriangleWithLine = (triangle, line) => {
+  const { a, b, c } = triangle
+  const edges = [[a, b], [b, c], [c, a]];
+  const intersections = [];
+
+  for (const [e1, e2] of edges) {
+    const inter = segmentIntersection({ p1: e1, p2: e2 }, line);
+    if (inter) intersections.push(inter);
+  }
+
+  return intersections;
 }
 
 export default {
