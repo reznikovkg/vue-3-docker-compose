@@ -1,6 +1,9 @@
 <template>
   <RouterView />
   <div id="app">
+    <div class="balance-indicator">
+      Баланс парка: <strong>{{ parkBalance }} ₽</strong>
+    </div>
     <div class="container">
       <div class="grid">
         <GameBoard
@@ -8,6 +11,7 @@
           :grid-height="gridHeight"
           :selected-object="selectedObject"
           :game-mode="gameMode"
+          :entrance="entrance"
           ref="gameBoard"
         />
       </div>
@@ -32,6 +36,8 @@ const gridWidth = computed(() => store.getters.getGridWidth);
 const gridHeight = computed(() => store.getters.getGridHeight);
 const selectedObject = computed(() => store.getters.getSelectedObject);
 const gameMode = computed(() => store.getters.getGameMode);
+const entrance = computed(() => store.getters.getEntrance);
+const parkBalance = computed(() => store.getters.getParkBalance);
 
 const setGameModeHandler = (mode) => {
   store.dispatch('setGameMode', mode);

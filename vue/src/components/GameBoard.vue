@@ -26,11 +26,28 @@
       >
       </div>
     </div>
+    <div v-if="entrance.row !== -1 && entrance.col !== -1"
+         class="game-board__entrance"
+         :style="{
+           '--row': entrance.row,
+           '--col': entrance.col,
+           backgroundColor: getCellBackgroundColor(entrance.row, entrance.col, grid, gridWidth, gridHeight, null),
+           borderColor: getCellBorderColor(entrance.row, entrance.col, grid, gridWidth, gridHeight, null),
+           left: `calc(${entrance.col} * var(--cell-size))`,
+           top: `calc(${entrance.row} * var(--cell-size))`,
+           width: 'var(--cell-size)',
+           height: 'var(--cell-size)',
+         }">
+    </div>
+    <div v-for="visitor in visitors" :key="visitor.id"
+     :style="{ '--visitor-x': visitor.x, '--visitor-y': visitor.y }"
+     class="game-board__visitor-ball">
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, onUnmounted} from 'vue';
 import { useStore } from 'vuex';
 import { getCellLogic, CELL_SIZE } from '../modules/cellLogicModule.js';
 
@@ -42,6 +59,8 @@ const gridHeight = computed(() => store.getters.getGridHeight);
 const grid = computed(() => store.getters.getGrid);
 const selectedObject = computed(() => store.getters.getSelectedObject);
 const gameMode = computed(() => store.getters.getGameMode);
+const entrance = computed(() => store.getters.getEntrance);
+const visitors = computed(() => store.getters.activeVisitors);
 
 const highlightedCells = ref([]);
 const hoveredCell = ref({ row: -1, col: -1 });
@@ -139,6 +158,18 @@ const hoverCell = (row, col) => {
 };
 onMounted(() => {
   store.dispatch('initializeGrid');
+  store.dispatch('startVisitorSpawning');
+
+  movementInterval = setInterval(() => {
+    store.dispatch('stepAllVisitors');
+  }, 700);
+});
+
+onUnmounted(() => {
+  store.dispatch('stopVisitorSpawning');
+  if (movementInterval) {
+    clearInterval(movementInterval);
+  }
 });
 </script>
 
@@ -166,6 +197,26 @@ onMounted(() => {
     box-sizing: border-box;
     position: relative;
     margin: 0;
+  }
+  &__entrance {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    box-sizing: border-box;
+    position: absolute; 
+    z-index: 2; 
+    border-width: 2px; 
+  }
+  &__visitor-ball {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: blue;
+    position: absolute;
+    z-index: 3;
+    left: calc(var(--cell-size) * var(--visitor-x));
+    top: calc(var(--cell-size) * var(--visitor-y));
+    transform: translate(50%, 50%);
+    transition: left 0.5s, top 0.5s;
   }
 }
 </style>
