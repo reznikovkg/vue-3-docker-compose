@@ -183,11 +183,16 @@ export default {
       }
     },
 
-    startGame({ commit, dispatch }) {
+    async startGame({ commit, dispatch }) {
       commit(MUTATIONS.RESET_GAME_OVER)
       commit(MUTATIONS.RESET_GAME_STATS)
-      dispatch('player/resetPlayer', null, { root: true })
-      dispatch('board/resetBoard', null, { root: true })
+      
+      // ✨ Сначала инициализируем игрока с загруженными фигурами
+      await dispatch('player/initPlayer', null, { root: true })
+      
+      // Теперь сбрасываем игрока
+      await dispatch('player/resetPlayer', null, { root: true })
+      await dispatch('board/resetBoard', null, { root: true })
     },
 
     addLinesCleared({ commit, state, dispatch }, lines) {

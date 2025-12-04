@@ -5,19 +5,20 @@ const MUTATIONS = {
   RESET_PLAYER: 'RESET_PLAYER',
   UPDATE_POSITION: 'UPDATE_POSITION',
   SET_COLLIDED: 'SET_COLLIDED',
-  SET_FAST_DROPPING: 'SET_FAST_DROPPING'
+  SET_FAST_DROPPING: 'SET_FAST_DROPPING',
+  INIT_PLAYER: 'INIT_PLAYER'
 }
 
-const buildPlayer = (previous) => {
+const buildPlayer = (previous, store = null) => {
   let tetrominoes
 
   if (previous) {
     tetrominoes = [...previous.tetrominoes]
-    tetrominoes.unshift(randomTetromino())
+    tetrominoes.unshift(randomTetromino(store))
   } else {
     tetrominoes = Array(5)
       .fill(0)
-      .map(() => randomTetromino())
+      .map(() => randomTetromino(store))
   }
 
   return {
@@ -34,24 +35,33 @@ export default {
 
   state() {
     return {
-      player: buildPlayer()
+      player: null,  // ⚠️ Изменено: теперь null вместо buildPlayer()
+      initialized: false
     }
   },
 
   getters: {
     player: (state) => state.player,
-    currentTetromino: (state) => state.player.tetromino,
-    position: (state) => state.player.position,
-    tetrominoes: (state) => state.player.tetrominoes
+    currentTetromino: (state) => state.player?.tetromino,
+    position: (state) => state.player?.position,
+    tetrominoes: (state) => state.player?.tetrominoes || []
   },
 
   mutations: {
+    // ✨ НОВОЕ: Инициализация с доступом к store
+    [MUTATIONS.INIT_PLAYER](state, store) {
+      if (!state.initialized) {
+        state.player = buildPlayer(null, store)
+        state.initialized = true
+      }
+    },
+
     [MUTATIONS.SET_PLAYER](state, player) {
       state.player = player
     },
 
-    [MUTATIONS.RESET_PLAYER](state) {
-      state.player = buildPlayer(state.player)
+    [MUTATIONS.RESET_PLAYER](state, store = null) {
+      state.player = buildPlayer(state.player, store)
     },
 
     [MUTATIONS.UPDATE_POSITION](state, position) {
@@ -77,21 +87,26 @@ export default {
   },
 
   actions: {
+    // ✨ НОВОЕ: Инициализация игрока
+    initPlayer({ commit, state }) {
+      if (!state.initialized) {
+        commit(MUTATIONS.INIT_PLAYER, this)
+      }
+    },
+
     setPlayer({ commit, dispatch }, player) {
       commit(MUTATIONS.SET_PLAYER, player)
-      // После обновления игрока автоматически обновляем доску
       dispatch('board/updateBoard', null, { root: true })
     },
 
+    // 🔧 ИСПРАВЛЕНО: передаем this вместо rootState
     resetPlayer({ commit, dispatch }) {
-      commit(MUTATIONS.RESET_PLAYER)
-      // После сброса игрока обновляем доску
+      commit(MUTATIONS.RESET_PLAYER, this)
       dispatch('board/updateBoard', null, { root: true })
     },
 
     updatePlayer({ commit, dispatch }, updates) {
       commit(MUTATIONS.SET_PLAYER, updates)
-      // После обновления игрока обновляем доску
       dispatch('board/updateBoard', null, { root: true })
     }
   }

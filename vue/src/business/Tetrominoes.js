@@ -59,11 +59,41 @@ export const TETROMINOES = {
   },
 };
 
-export const randomTetromino = () => {
-  const keys = Object.keys(TETROMINOES);
+// Флаг для включения/выключения отладочных логов
+const DEBUG_LOGS = false; // Поставьте true, если нужны логи
+
+// Функция для получения случайной фигуры
+export const randomTetromino = (store = null) => {
+  let tetrominoes = TETROMINOES;
+  
+  // Если передан store, используем фигуры из него
+  if (store) {
+    try {
+      const gameTetrominoes = store.getters['tetrominoes/getGameTetrominoes'];
+      
+      if (DEBUG_LOGS) {
+        console.log('🎲 Доступные фигуры:', Object.keys(gameTetrominoes));
+      }
+      
+      if (gameTetrominoes && Object.keys(gameTetrominoes).length > 0) {
+        tetrominoes = gameTetrominoes;
+      }
+    } catch (e) {
+      if (DEBUG_LOGS) {
+        console.warn('⚠️ Store недоступен, используем базовые фигуры');
+      }
+    }
+  }
+  
+  const keys = Object.keys(tetrominoes);
   const index = Math.floor(Math.random() * keys.length);
   const key = keys[index];
-  return TETROMINOES[key];
+  
+  if (DEBUG_LOGS) {
+    console.log('✅ Выбрана фигура:', key, tetrominoes[key]);
+  }
+  
+  return tetrominoes[key];
 };
 
 export const rotate = ({ piece, direction }) => {
