@@ -360,11 +360,13 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
     } else if (lastPoint.y < minY) {
       lastPoint.y = minY
     }
-    path.push(lastPoint)
-    i -= 1
-  }
-  while (i >= 0) {
+  } else {
     lastPoint = closestPointInTriangle(lastPoint, pathTriangles[i])
+  }
+  path.push(lastPoint)
+  i -= 1
+  while (i >= 0) {
+    lastPoint = getPathPoint(pathTriangles[i + 1], pathTriangles[i], lastPoint)
     path.push(lastPoint)
     i -= 1
   }
@@ -372,6 +374,44 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
   path.reverse()
   return path
 }
+
+const getPathPoint = (tri1, tri2, point) => {
+  const eq = (p1, p2) =>
+      Math.abs(p1.x - p2.x) < 0.01 &&
+      Math.abs(p1.y - p2.y) < 0.01;
+
+  const t1 = [tri1.a, tri1.b, tri1.c];
+  const t2 = [tri2.a, tri2.b, tri2.c];
+
+  let common = [];
+  for (let p1 of t1) {
+    for (let p2 of t2) {
+      if (eq(p1, p2)) common.push(p1);
+    }
+  }
+
+  if (common.length !== 2) {
+    throw new Error("Треугольники не имеют ровно одного общего ребра.");
+  }
+
+  const a = common[0];
+  const b = common[1];
+  const p = point;
+
+  const ab = { x: b.x - a.x, y: b.y - a.y };
+  const ap = { x: p.x - a.x, y: p.y - a.y };
+
+  const ab2 = ab.x * ab.x + ab.y * ab.y;
+  const t = (ab.x * ap.x + ab.y * ap.y) / ab2;
+
+  const tClamped = Math.max(0, Math.min(1, t));
+
+  return {
+    x: a.x + ab.x * tClamped,
+    y: a.y + ab.y * tClamped
+  };
+}
+
 
 const pointInPolygon = (point) => {
   return triangles.reduce((result, triangle) => pointInTriangle(point, triangle) || result, false)
