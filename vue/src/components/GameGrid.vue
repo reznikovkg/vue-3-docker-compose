@@ -46,26 +46,40 @@
         class="game-grid__entrance"
         :style="entranceStyle"
       ></div>
+      <div 
+        v-if="hoveredPerson && hoveredPerson.tooltipText"
+        class="game-grid__tooltip"
+        :style="getTooltipStyle()"
+      >
+        {{ hoveredPerson.tooltipText }}
+      </div>
       <div
         v-for="person in people"
         :key="person.id"
         class="game-grid__person"
         :style="getPersonStyle(person)"
         :class="getPersonClass(person)"
+        @mouseenter="hoveredPerson = person"
+        @mouseleave="hoveredPerson = null"
       >
         <span class="game-grid__person-balance">
           {{ person.balance }}
         </span>
+        <div v-if="person.criticalIndicators && person.criticalIndicators.length > 0" 
+             class="game-grid__person-warning">
+          !
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 
 const CELL_SIZE = 50
+const hoveredPerson = ref<any>(null)
 
 const store = useStore()
 
@@ -94,6 +108,19 @@ const entranceStyle = computed(() => {
     height: `${CELL_SIZE}px`
   }
 })
+
+const getTooltipStyle = () => {
+  if (!hoveredPerson.value) return {}
+
+  const x = hoveredPerson.value.x * CELL_SIZE + CELL_SIZE / 2
+  const y = hoveredPerson.value.y * CELL_SIZE - 10
+  
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+    transform: 'translateX(-50%) translateY(-100%)'
+  }
+}
 
 const getShapeColor = (row: number, col: number): string => {
   const cellData = grid.value[row]?.[col]
@@ -130,8 +157,16 @@ const getPersonStyle = (person: any) => {
     left: `${person.x * CELL_SIZE + CELL_SIZE / 4}px`,
     top: `${person.y * CELL_SIZE + CELL_SIZE / 4}px`,
     width: `${CELL_SIZE / 2}px`,
-    height: `${CELL_SIZE / 2}px`
+    height: `${CELL_SIZE / 2}px`,
+    backgroundColor: person.moodColor || '#4CAF50',
+    border: `2px solid ${getBorderColor(person.mood)}`
   }
+}
+
+const getBorderColor = (mood: number) => {
+  if (mood >= 7) return '#2E7D32' 
+  if (mood >= 4) return '#FF8F00' 
+  return '#C62828' 
 }
 
 const getPersonClass = (person: any) => ({
@@ -139,7 +174,6 @@ const getPersonClass = (person: any) => ({
   'game-grid__person--walking': person.state === 'walking',
   'game-grid__person--inBuilding': person.state === 'inBuilding'
 })
-
 
 const hasShape = (row: number, col: number): boolean => {
   if (row < 0 || row >= storeGridSizeY.value || col < 0 || col >= storeGridSizeX.value) {
@@ -388,9 +422,10 @@ setInterval(() => {
     position: absolute;
     background: linear-gradient(45deg, #ff6b6b, #ffa500);
     border-radius: 50%;
-    border: 2px solid #fff;
     z-index: 20;
     transition: all 0.5s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
 
     &--waiting {
       background: linear-gradient(45deg, #ff6b6b, #ffa500);
@@ -403,14 +438,79 @@ setInterval(() => {
     &--inBuilding {
       background: linear-gradient(45deg, #2196F3, #03A9F4);
     }
+
+    &:hover {
+      transform: scale(1.2);
+      z-index: 30;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    }
   }
 
   &__person-balance {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 8px;
     font-weight: bold;
     color: white;
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
     pointer-events: none;
+    white-space: nowrap;
+  }
+
+  &__person-warning {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #9b9a9a;
+    color: white;
+    font-size: 10px;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 21;
+    animation: pulse 1s infinite;
+    border: 1px solid white;
+  }
+
+  &__tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-line;
+    min-width: 200px;
+    max-width: 280px;
+    z-index: 1000;
+    pointer-events: none;
+    border: 1px solid #666;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    word-wrap: break-word;
+    font-family: Arial, sans-serif;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px;
+      border-style: solid;
+      border-color: rgba(0, 0, 0, 0.95) transparent transparent transparent;
+    }
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
   }
 }
 </style>

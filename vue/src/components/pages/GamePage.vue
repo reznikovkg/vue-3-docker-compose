@@ -31,7 +31,6 @@
             <span class="game-page__stat-value">{{ storeGridSizeX }}x{{ storeGridSizeY }}</span>
           </div>
         </div>
-        
         <div class="game-page__upgrades">
           <h3 class="game-page__upgrade-title">Улучшения</h3>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">

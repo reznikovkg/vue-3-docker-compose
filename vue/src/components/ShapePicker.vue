@@ -32,9 +32,19 @@
             <span class="shape-picker__cost">Цена: {{ shape.cost }}</span>
             <span v-if="shape.capacity > 0" class="shape-picker__capacity">Вместимость: {{ shape.capacity }}</span>
             <span v-if="shape.income > 0" class="shape-picker__income">Доход: {{ shape.income }}</span>
-            <span v-if="shape.effect" class="shape-picker__effect">
-              {{ getEffectText(shape) }}
-            </span>
+            <div 
+              v-if="hasBuildingEffects(shape.type)"
+              class="shape-picker__effects"
+            >
+              <span 
+                v-for="(value, indicatorName) in getBuildingEffects(shape.type)" 
+                :key="indicatorName"
+                class="shape-picker__effect"
+                :class="`shape-picker__effect--${indicatorName}`"
+              >
+                {{ getEffectText(indicatorName, value) }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -63,20 +73,32 @@ interface Shape {
   entry: ShapePart
   income: number
   level: number
-  effect?: any
 }
+
+type BuildingEffects = Record<string, Record<string, number>>
 
 const store = useStore()
 
 const availableShapes = computed(() => store.getters.getAvailableShapes)
 const selectedShape = computed(() => store.getters.getSelectedShape)
 const parkBalance = computed(() => store.getters.getParkBalance)
+const buildingEffects = computed<BuildingEffects>(() => store.getters.getBuildingEffects)
+const indicatorDisplayNames = computed(() => store.getters.getIndicatorDisplayNames)
 
-const getEffectText = (shape: Shape): string => {
-  if (!shape.effect) return ''
-  if (shape.effect.naturalNeed) return `+${shape.effect.naturalNeed} к нужде`
-  if (shape.effect.fatigue) return `+${shape.effect.fatigue} к отдыху`
-  return ''
+const hasBuildingEffects = (buildingType: string): boolean => {
+  const effects = buildingEffects.value[buildingType]
+  if (!effects || typeof effects !== 'object') return false
+  
+  return Object.keys(effects).length > 0
+}
+
+const getBuildingEffects = (buildingType: string): Record<string, number> => {
+  return buildingEffects.value[buildingType] || {}
+}
+
+const getEffectText = (indicatorName: string, value: number): string => {
+  const displayName = indicatorDisplayNames.value?.[indicatorName] || indicatorName
+  return `+${value} ${displayName}`
 }
 
 const selectShape = (shape: Shape): void => {
@@ -204,11 +226,43 @@ const selectShape = (shape: Shape): void => {
     font-weight: bold;
   }
 
+  &__effects {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 2px;
+  }
+
   &__effect {
-    color: #6A5ACD;
-    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 3px;
     font-size: 8px;
-    text-align: center;
+    font-weight: bold;
+    cursor: help;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    color: white;
+    
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    &--fatigue {
+      background-color: #4A90E2; 
+    }
+
+    &--hunger {
+      background-color: #FF6B6B; 
+    }
+
+    &--boredom {
+      background-color: #FFA500;
+    }
+
+    &--naturalNeed {
+      background-color: #9B59B6; 
+    }
   }
 }
 </style>

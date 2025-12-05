@@ -25,6 +25,74 @@ const MUTATIONS = {
   UPGRADE_MAP: 'UPGRADE_MAP'
 }
 
+const INDICATOR_TYPES = {
+  FATIGUE: 'fatigue',
+  HUNGER: 'hunger',
+  BOREDOM: 'boredom',
+  NATURAL_NEED: 'naturalNeed'
+} 
+
+const MOOD_COLORS = {
+  GOOD: '#4CAF50',    
+  MEDIUM: '#FFC107',  
+  BAD: '#F44336'     
+} 
+
+const MOOD_THRESHOLDS = {
+  GOOD: 7,
+  MEDIUM: 4
+} 
+
+const moodUtils = {
+
+  getMoodColor(moodValue) {
+    if (moodValue >= MOOD_THRESHOLDS.GOOD) {
+      return MOOD_COLORS.GOOD
+    } else if (moodValue >= MOOD_THRESHOLDS.MEDIUM) {
+      return MOOD_COLORS.MEDIUM
+    } else {
+      return MOOD_COLORS.BAD
+    }
+  },
+  
+  calculateMoodValue(indicators) {
+    const { FATIGUE, HUNGER, BOREDOM, NATURAL_NEED } = INDICATOR_TYPES
+    
+    const values = [
+      indicators[FATIGUE] || 0,
+      indicators[HUNGER] || 0,
+      indicators[BOREDOM] || 0,
+      indicators[NATURAL_NEED] || 0
+    ]
+    
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length
+    return parseFloat(average.toFixed(1))
+  },
+  
+  getCriticalIndicators(indicators, threshold = 3) {
+    const criticalIndicators = []
+    
+    Object.values(INDICATOR_TYPES).forEach(indicatorType => {
+      if (indicators[indicatorType] < threshold) {
+        criticalIndicators.push(indicatorType)
+      }
+    })
+    
+    return criticalIndicators
+  },
+  
+  generateInitialIndicators() {
+    const getRandomValue = () => Math.floor(Math.random() * 4) + 5
+    
+    return {
+      [INDICATOR_TYPES.FATIGUE]: getRandomValue(),
+      [INDICATOR_TYPES.HUNGER]: getRandomValue(),
+      [INDICATOR_TYPES.BOREDOM]: getRandomValue(),
+      [INDICATOR_TYPES.NATURAL_NEED]: getRandomValue()
+    }
+  }
+}
+
 export default createStore({
   state () {
     return {
@@ -89,7 +157,7 @@ export default createStore({
           ],
           cost: 100,
           capacity: 3,
-          visitTime: 18,
+          visitTime: 8,
           entry: { x: 1, y: 0 },
           income: 5,
           level: 1
@@ -111,15 +179,14 @@ export default createStore({
           id: 5,
           name: 'Туалет',
           type: 'toilet',
-          color: '#8B7355',
+          color: '#907a5fff',
           layout: [{ x: 0, y: 0 }],
           cost: 80,
           capacity: 3,
           visitTime: 3,
           entry: { x: 0, y: 0 },
           income: 0,
-          level: 1,
-          effect: { naturalNeed: 5 }
+          level: 1
         },
         {
           id: 6,
@@ -132,10 +199,29 @@ export default createStore({
           visitTime: 4,
           entry: { x: 0, y: 0 },
           income: 0,
-          level: 1,
-          effect: { fatigue: 3 }
+          level: 1
         }
-      ]
+      ],
+      buildingEffects: {
+        square: { 
+          [INDICATOR_TYPES.BOREDOM]: 6, 
+          [INDICATOR_TYPES.FATIGUE]: 5, 
+          [INDICATOR_TYPES.NATURAL_NEED]:3
+        },        
+        line: { 
+          [INDICATOR_TYPES.HUNGER]: 5 
+        },               
+        lshape: { 
+          [INDICATOR_TYPES.BOREDOM]: 4,
+          [INDICATOR_TYPES.HUNGER]: 4 
+        },                     
+        toilet: { 
+          [INDICATOR_TYPES.NATURAL_NEED]: 5 
+        },             
+        bench: { 
+          [INDICATOR_TYPES.FATIGUE]: 3 
+        }                    
+      }
     }
   },
   getters: {
@@ -160,6 +246,15 @@ export default createStore({
         case 2: return state.roads.length;
         case 3: return state.roads.length * 2;
         default: return 0;
+      }
+    },
+    getBuildingEffects: (state) => state.buildingEffects,
+    getIndicatorDisplayNames: () => {
+      return {
+        [INDICATOR_TYPES.FATIGUE]: 'усталость',
+        [INDICATOR_TYPES.HUNGER]: 'голод',
+        [INDICATOR_TYPES.BOREDOM]: 'скука',
+        [INDICATOR_TYPES.NATURAL_NEED]: 'нужда'
       }
     }
   },
@@ -246,7 +341,6 @@ export default createStore({
     },
     [MUTATIONS.UPGRADE_BUILDINGS]: (state) => {
       state.upgrades.buildings += 1
-      // Улучшаем все существующие здания
       for (let row = 0; row < state.gridSizeY; row++) {
         for (let col = 0; col < state.gridSizeX; col++) {
           const cell = state.grid[row]?.[col]
@@ -328,7 +422,7 @@ export default createStore({
       store.commit(MUTATIONS.SET_GRID, grid)
      
       const entranceRow = Math.floor(gridSizeY / 2)
-        store.commit(MUTATIONS.ADD_ROAD, { row: entranceRow, col: -1 })
+      store.commit(MUTATIONS.ADD_ROAD, { row: entranceRow, col: -1 })
       
       for (let i = 0; i < 3; i++) {
         setTimeout(() => store.dispatch('addVisitor'), i * 1000)
@@ -344,7 +438,7 @@ export default createStore({
     },
     
     addShape: (store, payload) => {
- 
+      
       if (store.state.parkBalance < payload.shape.cost) {
         alert('Недостаточно средств')
         return
@@ -454,6 +548,13 @@ export default createStore({
       const maxWithBonus = store.state.maxVisitors + store.getters.getRoadCapacityBonus
       if (store.state.people.length < maxWithBonus) {
         const entranceRow = Math.floor(store.state.gridSizeY / 2)
+
+        const initialIndicators = moodUtils.generateInitialIndicators()
+
+        const initialMood = moodUtils.calculateMoodValue(initialIndicators)
+        const initialMoodColor = moodUtils.getMoodColor(initialMood)
+        const initialCriticalIndicators = moodUtils.getCriticalIndicators(initialIndicators)
+        
         const person = {
           id: store.state.nextPersonId,
           x: -1,
@@ -465,10 +566,17 @@ export default createStore({
           spawnTimer: 2,
           path: [],
           lastPosition: null,
-          direction: 'right'
+          direction: 'right',
+          indicators: initialIndicators,
+          mood: initialMood,
+          moodColor: initialMoodColor,
+          criticalIndicators: initialCriticalIndicators
         }
+        
         store.commit(MUTATIONS.ADD_PERSON, person)
         store.commit(MUTATIONS.INCREMENT_NEXT_PERSON_ID)
+
+        store.dispatch('updatePersonTooltip', person.id)
       }
     },
     
@@ -495,6 +603,9 @@ export default createStore({
             store.dispatch('movePersonFromEntrance', person.id)
           }
         } else if (person.state === 'walking') {
+          if (Math.random() < 0.3) {
+            store.dispatch('decreaseRandomIndicator', person.id)
+          }
           store.dispatch('movePersonRandomly', person.id)
         } else if (person.state === 'inBuilding') {
           person.buildingTimer--
@@ -593,7 +704,7 @@ export default createStore({
           }
         })
 
-        if (person.balance > 5 && Math.random() < 0.2) {
+        if (person.balance > 5 && Math.random() < 0.4) {
           store.dispatch('checkBuildingEntry', personId)
         }
       
@@ -623,40 +734,101 @@ export default createStore({
       
       if (!person || person.state !== 'walking' || person.balance <= 5) return
 
+      const hasCritical = person.criticalIndicators && person.criticalIndicators.length > 0
+      const baseChance = hasCritical ? 0.8 : 0.4
+      
+      if (Math.random() > baseChance) return
+
+      const availableBuildings = []
+      
       for (const entry of store.state.buildingEntries) {
         const isAdjacentToEntry = 
           (Math.abs(person.y - entry.row) === 1 && person.x === entry.col) || 
-          (Math.abs(person.x - entry.col) === 1 && person.y === entry.row)    
+          (Math.abs(person.x - entry.col) === 1 && person.y === entry.row)
         
-        if (isAdjacentToEntry) {
-          const visitorsInBuilding = store.state.people.filter(p => 
-            p.targetBuilding?.id === entry.shapeId && p.state === 'inBuilding'
-          ).length
-          
-          if (visitorsInBuilding < entry.building.capacity) {
-            const spendAmount = entry.building.income > 0 ? 
-              Math.min(person.balance, entry.building.income) : 0
+        if (!isAdjacentToEntry) continue
+ 
+        const visitorsInBuilding = store.state.people.filter(p => 
+          p.targetBuilding?.id === entry.shapeId && p.state === 'inBuilding'
+        ).length
+        
+        if (visitorsInBuilding >= entry.building.capacity) continue
+        
+        const buildingEffects = store.state.buildingEffects
+        const effect = buildingEffects[entry.building.type] || {}
 
-            store.commit(MUTATIONS.UPDATE_PERSON, {
-              personId,
-              updates: {
-                x: entry.col, 
-                y: entry.row, 
-                state: 'inBuilding',
-                targetBuilding: { ...entry.building, id: entry.shapeId },
-                buildingTimer: entry.building.visitTime,
-                balance: person.balance - spendAmount,
-                lastPosition: { x: person.x, y: person.y } 
-              }
-            })
-            
-            if (spendAmount > 0) {
-              store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
-            }
-            return
+        if (hasCritical) {
+          const solvesCritical = person.criticalIndicators.some(indicator => 
+            Object.keys(effect).includes(indicator)
+          )
+
+          if (!solvesCritical) {
+            continue
           }
         }
+        
+        const desire = store.dispatch('calculateBuildingDesire', {
+          personId,
+          buildingType: entry.building.type
+        })
+        
+        availableBuildings.push({
+          entry,
+          desire
+        })
       }
+
+      if (availableBuildings.length > 0) {
+        availableBuildings.sort((a, b) => b.desire - a.desire)
+
+        const selected = availableBuildings[0]
+        
+        const spendAmount = selected.entry.building.income > 0 ? 
+          Math.min(person.balance, selected.entry.building.income) : 0
+
+        store.commit(MUTATIONS.UPDATE_PERSON, {
+          personId,
+          updates: {
+            x: selected.entry.col, 
+            y: selected.entry.row, 
+            state: 'inBuilding',
+            targetBuilding: { ...selected.entry.building, id: selected.entry.shapeId },
+            buildingTimer: selected.entry.building.visitTime,
+            balance: person.balance - spendAmount,
+            lastPosition: { x: person.x, y: person.y } 
+          }
+        })
+
+        store.dispatch('applyBuildingEffect', {
+          personId,
+          buildingType: selected.entry.building.type
+        })
+        
+        if (spendAmount > 0) {
+          store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
+        }
+      }
+    },
+
+    updatePersonTooltip: (store, personId) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person) return
+      
+      const indicators = person.indicators || {}
+      const critical = person.criticalIndicators || []
+      
+      let tooltip = `Настроение: ${person.mood?.toFixed(1) || '?'}/10\n`
+      tooltip += `Усталость: ${indicators[INDICATOR_TYPES.FATIGUE] || 0}${critical.includes(INDICATOR_TYPES.FATIGUE) ? ' !' : ''}\n`
+      tooltip += `Голод: ${indicators[INDICATOR_TYPES.HUNGER] || 0}${critical.includes(INDICATOR_TYPES.HUNGER) ? ' !' : ''}\n`
+      tooltip += `Скука: ${indicators[INDICATOR_TYPES.BOREDOM] || 0}${critical.includes(INDICATOR_TYPES.BOREDOM) ? ' !' : ''}\n`
+      tooltip += `Нужда: ${indicators[INDICATOR_TYPES.NATURAL_NEED] || 0}${critical.includes(INDICATOR_TYPES.NATURAL_NEED) ? ' !' : ''}\n`
+      tooltip += `Баланс: ${person.balance}`
+      
+      if (critical.length > 0) {
+        tooltip += `\n\n!Критические показатели!`
+      }
+
+      person.tooltipText = tooltip
     },
 
     leaveBuilding: (store, personId) => {
@@ -709,6 +881,103 @@ export default createStore({
       } else {
         alert('Недостаточно средств для улучшения карты')
       }
+    },
+   
+    updateMood: (store, personId) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return
+
+      const moodValue = moodUtils.calculateMoodValue(person.indicators)
+      const moodColor = moodUtils.getMoodColor(moodValue)
+      const criticalIndicators = moodUtils.getCriticalIndicators(person.indicators)
+      
+      store.commit(MUTATIONS.UPDATE_PERSON, {
+        personId,
+        updates: {
+          mood: moodValue,
+          moodColor,
+          criticalIndicators
+        }
+      })
+   
+      store.dispatch('updatePersonTooltip', personId)
+    },
+ 
+    decreaseRandomIndicator: (store, personId) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return
+      
+      const indicators = person.indicators
+
+      const weights = {}
+      Object.values(INDICATOR_TYPES).forEach(indicatorType => {
+        weights[indicatorType] = Math.max(1, 10 - (indicators[indicatorType] || 0))
+      })
+      
+      const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0)
+      let random = Math.random() * totalWeight
+      
+      let selectedIndicator = null
+      for (const [indicator, weight] of Object.entries(weights)) {
+        random -= weight
+        if (random <= 0) {
+          selectedIndicator = indicator
+          break
+        }
+      }
+      
+      if (selectedIndicator && person.indicators[selectedIndicator] > 0) {
+        const updatedIndicators = { ...person.indicators }
+        updatedIndicators[selectedIndicator] = Math.max(0, updatedIndicators[selectedIndicator] - 1)
+        
+        store.commit(MUTATIONS.UPDATE_PERSON, {
+          personId,
+          updates: { indicators: updatedIndicators }
+        })
+  
+        store.dispatch('updateMood', personId)
+      }
+    },
+    
+    applyBuildingEffect: (store, { personId, buildingType }) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return
+      
+      const buildingEffects = store.state.buildingEffects
+      const effect = buildingEffects[buildingType] || {}
+      
+      const updatedIndicators = { ...person.indicators }
+
+      Object.entries(effect).forEach(([indicator, value]) => {
+        if (updatedIndicators[indicator] !== undefined) {
+          updatedIndicators[indicator] = Math.min(10, updatedIndicators[indicator] + value)
+        }
+      })
+      
+      store.commit(MUTATIONS.UPDATE_PERSON, {
+        personId,
+        updates: { indicators: updatedIndicators }
+      })
+ 
+      store.dispatch('updateMood', personId)
+    },
+
+    calculateBuildingDesire: (store, { personId, buildingType }) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return 0
+      
+      const buildingEffects = store.state.buildingEffects
+      const effect = buildingEffects[buildingType] || {}
+      
+      let desire = 0
+      Object.entries(effect).forEach(([indicator, value]) => {
+        if (person.indicators[indicator] !== undefined) {
+          const needLevel = 10 - person.indicators[indicator] 
+          desire += needLevel * (value / 10) * 2
+        }
+      })
+      
+      return Math.min(10, Math.max(0, desire))
     }
   }
 })
