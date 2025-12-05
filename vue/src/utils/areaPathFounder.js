@@ -382,19 +382,17 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
 }
 
 const getPathPoint = (tri1, tri2, point) => {
-  const eq = (p1, p2) =>
-      Math.abs(p1.x - p2.x) < 0.01 &&
-      Math.abs(p1.y - p2.y) < 0.01;
-
   const t1 = [tri1.a, tri1.b, tri1.c];
   const t2 = [tri2.a, tri2.b, tri2.c];
 
   let common = [];
-  for (let p1 of t1) {
-    for (let p2 of t2) {
-      if (eq(p1, p2)) common.push(p1);
-    }
-  }
+  t1.forEach(p1 => {
+    t2.forEach(p2 => {
+      if (equalPoints(p1, p2)) {
+        common.push(p1);
+      }
+    })
+  })
 
   if (common.length !== 2) {
     throw new Error("Triangles doesn't have contiguous edge");
@@ -430,7 +428,7 @@ const segmentIntersection = (line1, line2) => {
   const d = line2.p2
 
   const den = (a.x - b.x) * (c.y - d.y) - (a.y - b.y) * (c.x - d.x)
-  if (Math.abs(den) < 1e-9) {
+  if (Math.abs(den) < 0.0001) {
     return null
   }
 
@@ -451,10 +449,12 @@ const intersectTriangleWithLine = (triangle, line) => {
   const edges = [[a, b], [b, c], [c, a]];
   const intersections = [];
 
-  for (const [e1, e2] of edges) {
+  edges.forEach(([e1, e2]) => {
     const inter = segmentIntersection({ p1: e1, p2: e2 }, line);
-    if (inter) intersections.push(inter);
-  }
+    if (inter) {
+      intersections.push(inter);
+    }
+  })
 
   return intersections;
 }
