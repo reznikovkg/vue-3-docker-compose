@@ -1,11 +1,7 @@
 <template>
   <div class="scene" ref="sceneRef" :style="cursorStyle" @click="(event) => onSceneClick(event)">
     <svg class="zone">
-      <polygon
-        v-for="poly in areaPolygons"
-        :points="poly"
-        class="zone__polygon"
-      />
+      <polygon :points="areaPolygon" class="zone__polygon" />
     </svg>
     <div
       v-for="item in scene"
@@ -71,11 +67,8 @@ const tooltipX = ref(0)
 const tooltipY = ref(0)
 const sceneRef = ref(null)
 const store = useStore()
-const areaPolygons = computed(() =>
-  store.getters.getArea
-    .map(poly =>
-      poly.map(p => `${p.x},${p.y}`).join(' ')
-    )
+const areaPolygon = computed(() =>
+  store.getters.getArea.map(p => `${p.x},${p.y}`).join(' ')
 )
 
 const showTooltip = (text) => {

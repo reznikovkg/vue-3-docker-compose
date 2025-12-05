@@ -174,15 +174,16 @@ export default createStore({
         return
       }
       let pointIndex = 0;
-      const path = areaPathFounder.findShortestTrianglePath(
+      const path = areaPathFounder.findShortestPath(
           store.getters.getPlayerTransform,
           {x: item.x, y: item.y}
       )
+      console.log(path)
       const intervalId = setInterval(() => {
         const pos = store.getters.getPlayerTransform
         const x = path[pointIndex].x - pos.x
         const y = path[pointIndex].y - pos.y
-        const magnitude = Math.sqrt(x * x + y * y)
+        const magnitude = Math.sqrt(x * x + y * y) + 0.0001
         const dx = x * speed / magnitude
         const dy = y * speed / magnitude
         if (magnitude < 10) {
@@ -213,7 +214,7 @@ export default createStore({
       store.commit(MUTATIONS.STOP_PLAYER);
       const speed = 5;
       let pointIndex = 0;
-      const path = areaPathFounder.findShortestTrianglePath(
+      const path = areaPathFounder.findShortestPath(
           store.getters.getPlayerTransform,
           point
       )
@@ -223,7 +224,7 @@ export default createStore({
         const y = path[pointIndex].y;
         const dx = x - pos.x
         const dy = y - pos.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+        const dist = Math.sqrt(dx * dx + dy * dy) + 0.0001
         if (dist < 5) {
           pointIndex += 1;
           if (pointIndex >= path.length) {
