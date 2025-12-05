@@ -29,6 +29,7 @@
       :entries="entries"
       :format-date="formatDate"
       :format-duration="formatDuration"
+      @edit="(id) => editEntry(id)"
       @remove="(id) => removeEntry(id)"
     />
   </main>
@@ -36,13 +37,16 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import RecorderControls from '@/components/recorder/RecorderControls.vue'
 import RecorderDraft from '@/components/recorder/RecorderDraft.vue'
 import RecorderList from '@/components/recorder/RecorderList.vue'
+import { ROUTES } from '@/router/index.js'
 import type { RecordingEntry } from '@/types/recorder'
 
 const store = useStore()
+const router = useRouter()
 
 const isRecording = ref(false)
 const isProcessing = ref(false)
@@ -271,6 +275,13 @@ const discardDraft = () => {
 
 const removeEntry = (id: string) => {
   store.dispatch('recorder/removeEntry', id)
+}
+
+const editEntry = (id: string) => {
+  router.push({
+    name: ROUTES.EDITOR,
+    params: { id }
+  })
 }
 
 onMounted(() => {

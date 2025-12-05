@@ -29,13 +29,22 @@
           :src="entry.dataUrl"
           controls
         />
-        <button
-          class="recorder-list__remove"
-          type="button"
-          @click="() => emitRemove(entry.id)"
-        >
-          Удалить
-        </button>
+        <div class="recorder-list__actions">
+          <button
+            class="recorder-list__action recorder-list__action--ghost"
+            type="button"
+            @click="() => emitEdit(entry.id)"
+          >
+            Редактировать
+          </button>
+          <button
+            class="recorder-list__action recorder-list__action--remove"
+            type="button"
+            @click="() => emitRemove(entry.id)"
+          >
+            Удалить
+          </button>
+        </div>
       </li>
     </ul>
   </section>
@@ -52,10 +61,15 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (event: 'remove', value: string): void
+  (event: 'edit', value: string): void
 }>()
 
 const emitRemove = (id: string) => {
   emit('remove', id)
+}
+
+const emitEdit = (id: string) => {
+  emit('edit', id)
 }
 </script>
 
@@ -144,22 +158,36 @@ const emitRemove = (id: string) => {
     width: 100%;
   }
 
-  &__remove {
-    align-self: flex-start;
+  &__actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__action {
     padding: 8px 14px;
     border-radius: 10px;
-    border: 1px solid rgba(244, 63, 94, 0.5);
+    border: 1px solid transparent;
     background: transparent;
-    color: rgba(244, 63, 94, 0.9);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease, background 0.2s ease;
 
     &:hover {
-      border-color: rgba(244, 63, 94, 0.8);
-      color: rgba(244, 63, 94, 1);
       transform: translateY(-1px);
+    }
+
+    &--ghost {
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #2563eb;
+      background: rgba(59, 130, 246, 0.08);
+    }
+
+    &--remove {
+      border-color: rgba(244, 63, 94, 0.5);
+      color: rgba(244, 63, 94, 0.9);
+      background: rgba(244, 63, 94, 0.06);
     }
   }
 
@@ -175,9 +203,16 @@ const emitRemove = (id: string) => {
       box-shadow: 0 12px 24px rgba(2, 6, 23, 0.3);
     }
 
-    &__remove {
-      border-color: rgba(248, 113, 113, 0.5);
-      color: rgba(248, 113, 113, 0.9);
+    &__action {
+      &--ghost {
+        border-color: rgba(59, 130, 246, 0.5);
+        color: rgba(191, 219, 254, 0.9);
+      }
+
+      &--remove {
+        border-color: rgba(248, 113, 113, 0.5);
+        color: rgba(248, 113, 113, 0.9);
+      }
     }
   }
 }
