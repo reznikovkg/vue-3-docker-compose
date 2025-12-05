@@ -1,60 +1,60 @@
 <template>
   <div class="editor-wrapper">
-    <div class="editor-container">
+    <div class="editor">
       <h2 class="editor__title">Редактор фигур тетриса</h2>
 
       <div class="editor__content">
         <!-- Список фигур -->
-        <div class="figures">
-          <h3>Все фигуры</h3>
-          <div class="figures__grid">
+        <div class="editor__figures">
+          <h3 class="editor__figures-title">Все фигуры</h3>
+          <div class="editor__figures-grid">
             <div
               v-for="(tetromino, key) in allTetrominoes"
               :key="key"
-              :class="['figures__item', { 'figures__item--active': selectedId === key }]"
+              :class="['editor__figure', { 'editor__figure--active': selectedId === key }]"
               @click="selectTetromino(key)"
             >
-              <div class="figures__preview">
+              <div class="editor__figure-preview">
                 <div
                   v-for="(row, y) in tetromino.shape"
                   :key="y"
-                  class="figures__row"
+                  class="editor__figure-row"
                 >
                   <div
                     v-for="(cell, x) in row"
                     :key="x"
-                    :class="['figures__cell', cell ? `figures__cell--color-${tetromino.color}` : '']"
+                    :class="['editor__figure-cell', cell ? `editor__figure-cell--color-${tetromino.color}` : '']"
                   ></div>
                 </div>
               </div>
-              <div class="figures__name">{{ tetromino.name }}</div>
-              <div class="figures__type">{{ tetromino.isBase ? 'Базовая' : 'Своя' }}</div>
+              <div class="editor__figure-name">{{ tetromino.name }}</div>
+              <div class="editor__figure-type">{{ tetromino.isBase ? 'Базовая' : 'Своя' }}</div>
             </div>
           </div>
 
-          <button class="btn btn--primary" @click="createNew">
+          <button class="editor__btn editor__btn--primary" @click="createNew">
             ➕ Создать новую фигуру
           </button>
         </div>
 
         <!-- Редактор выбранной фигуры -->
-        <div v-if="editingTetromino" class="editor-panel">
-          <h3>Редактирование: {{ editingTetromino.name }}</h3>
+        <div v-if="editingTetromino" class="editor__panel">
+          <h3 class="editor__panel-title">Редактирование: {{ editingTetromino.name }}</h3>
 
-          <div class="form">
-            <label class="form__label">Название фигуры:</label>
+          <div class="editor__form">
+            <label class="editor__label">Название фигуры:</label>
             <input
               v-model="editingTetromino.name"
               type="text"
-              class="form__input"
+              class="editor__input"
               placeholder="Название"
             />
           </div>
 
-          <div class="form">
-            <label class="form__label">Размер сетки:</label>
-            <div class="form__size-controls">
-              <select v-model.number="gridSize" class="form__select" @change="handleGridSizeChange">
+          <div class="editor__form">
+            <label class="editor__label">Размер сетки:</label>
+            <div class="editor__size-controls">
+              <select v-model.number="gridSize" class="editor__select" @change="handleGridSizeChange">
                 <option :value="2">2×2</option>
                 <option :value="3">3×3</option>
                 <option :value="4">4×4</option>
@@ -62,65 +62,65 @@
             </div>
           </div>
 
-          <div class="form">
-            <label class="form__label">Цвет фигуры:</label>
-            <div class="color-picker">
+          <div class="editor__form">
+            <label class="editor__label">Цвет фигуры:</label>
+            <div class="editor__color-picker">
               <div
                 v-for="color in availableColors"
                 :key="color.key"
-                :class="['color-picker__option', { 'color-picker__option--active': editingTetromino.color === color.key }]"
+                :class="['editor__color-option', { 'editor__color-option--active': editingTetromino.color === color.key }]"
                 @click="selectColor(color.key)"
               >
-                <div :class="['color-picker__preview', `color-picker__preview--${color.key}`]"></div>
-                <div class="color-picker__name">{{ color.name }}</div>
+                <div :class="['editor__color-preview', `editor__color-preview--${color.key}`]"></div>
+                <div class="editor__color-name">{{ color.name }}</div>
               </div>
             </div>
           </div>
 
-          <div class="form">
-            <label class="form__label">Форма фигуры (кликайте по клеткам):</label>
-            <div class="shape-editor">
+          <div class="editor__form">
+            <label class="editor__label">Форма фигуры (кликайте по клеткам):</label>
+            <div class="editor__shape">
               <div
                 v-for="(row, y) in editingTetromino.shape"
                 :key="y"
-                class="shape-editor__row"
+                class="editor__shape-row"
               >
                 <div
                   v-for="(cell, x) in row"
                   :key="x"
-                  :class="['shape-editor__cell', cell ? `shape-editor__cell--color-${editingTetromino.color}` : '']"
+                  :class="['editor__shape-cell', cell ? `editor__shape-cell--color-${editingTetromino.color}` : '']"
                   @click="toggleCell(y, x)"
                 ></div>
               </div>
             </div>
           </div>
 
-          <div class="button-group">
-            <button class="btn btn--success" @click="saveTetromino">
+          <div class="editor__button-group">
+            <button class="editor__btn editor__btn--success" @click="saveTetromino">
               💾 Сохранить
             </button>
             <button
               v-if="editingTetromino.isBase"
-              class="btn btn--secondary"
+              class="editor__btn editor__btn--secondary"
               @click="saveAsNew"
             >
               📋 Сохранить как новую
             </button>
             <button
               v-if="editingTetromino.isCustom"
-              class="btn btn--danger"
+              class="editor__btn editor__btn--danger"
               @click="deleteTetromino"
             >
               🗑️ Удалить
             </button>
-            <button class="btn btn--secondary" @click="cancel">
+            <button class="editor__btn editor__btn--secondary" @click="cancel">
               ❌ Отмена
             </button>
           </div>
         </div>
       </div>
 
-      <button class="btn btn--back" @click="$emit('close')">
+      <button class="editor__btn editor__btn--back" @click="handleClose">
         ← Вернуться к игре
       </button>
     </div>
@@ -133,6 +133,10 @@ import { useStore } from 'vuex'
 
 const store = useStore()
 const emit = defineEmits(['close'])
+
+const handleClose = () => {
+  emit('close')
+}
 
 const selectedId = ref(null)
 const editingTetromino = ref(null)
@@ -288,275 +292,275 @@ const cancel = () => {
   z-index: 1000;
 }
 
-.editor-container {
+.editor {
   max-width: 1200px;
   margin: 0 auto;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-}
 
-.editor__title {
-  text-align: center;
-  font-size: 2.5em;
-  margin-bottom: 30px;
-  color: #333;
-}
-
-.editor__content {
-  display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 30px;
-  margin-bottom: 20px;
-
-  @media (max-width: 968px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.figures {
-  h3 {
-    margin-bottom: 15px;
+  &__title {
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 30px;
     color: #333;
   }
-}
 
-.figures__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
-  max-height: 500px;
-  overflow-y: auto;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 10px;
-}
-
-.figures__item {
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  &--active {
-    border-color: #ee5a24;
-    background: #fff8f0;
-  }
-}
-
-.figures__preview {
-  display: inline-block;
-  margin-bottom: 5px;
-}
-
-.figures__row {
-  display: flex;
-  gap: 2px;
-}
-
-.figures__cell {
-  width: 15px;
-  height: 15px;
-  background: #eee;
-  border-radius: 2px;
-
-  &--color-i { background: rgba(80, 227, 230, 1); }
-  &--color-j { background: rgba(36, 95, 223, 1); }
-  &--color-l { background: rgba(255, 174, 174, 1); }
-  &--color-o { background: rgba(223, 217, 36, 1); }
-  &--color-s { background: rgba(48, 211, 56, 1); }
-  &--color-t { background: rgba(132, 61, 198, 1); }
-  &--color-z { background: rgba(240, 80, 195, 1); }
-}
-
-.figures__name {
-  font-weight: bold;
-  font-size: 0.9em;
-  margin-bottom: 3px;
-}
-
-.figures__type {
-  font-size: 0.75em;
-  color: #666;
-}
-
-.editor-panel {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-  h3 {
+  &__content {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
     margin-bottom: 20px;
-    color: #333;
-  }
-}
 
-.form {
-  margin-bottom: 20px;
-}
-
-.form__label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #555;
-}
-
-.form__input,
-.form__select {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  font-size: 1em;
-  transition: border-color 0.2s;
-
-  &:focus {
-    outline: none;
-    border-color: #ee5a24;
-  }
-}
-
-.color-picker {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-}
-
-.color-picker__option {
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s;
-
-  &:hover {
-    transform: scale(1.05);
+    @media (max-width: 968px) {
+      grid-template-columns: 1fr;
+    }
   }
 
-  &--active {
-    border-color: #ee5a24;
-    background: #fff8f0;
-  }
-}
+  &__figures {
+    &-title {
+      margin-bottom: 15px;
+      color: #333;
+    }
 
-.color-picker__preview {
-  width: 100%;
-  height: 40px;
-  border-radius: 5px;
-  margin-bottom: 5px;
-
-  &--i { background: rgba(80, 227, 230, 1); }
-  &--j { background: rgba(36, 95, 223, 1); }
-  &--l { background: rgba(255, 174, 174, 1); }
-  &--o { background: rgba(223, 217, 36, 1); }
-  &--s { background: rgba(48, 211, 56, 1); }
-  &--t { background: rgba(132, 61, 198, 1); }
-  &--z { background: rgba(240, 80, 195, 1); }
-}
-
-.color-picker__name {
-  font-size: 0.85em;
-  color: #555;
-}
-
-.shape-editor {
-  display: inline-block;
-  background: #f5f5f5;
-  padding: 10px;
-  border-radius: 8px;
-  border: 2px solid #ddd;
-}
-
-.shape-editor__row {
-  display: flex;
-  gap: 3px;
-}
-
-.shape-editor__cell {
-  width: 40px;
-  height: 40px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #ee5a24;
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+    }
   }
 
-  &--color-i { background: rgba(80, 227, 230, 1); border-color: rgba(80, 227, 230, 0.5); }
-  &--color-j { background: rgba(36, 95, 223, 1); border-color: rgba(36, 95, 223, 0.5); }
-  &--color-l { background: rgba(255, 174, 174, 1); border-color: rgba(255, 174, 174, 0.5); }
-  &--color-o { background: rgba(223, 217, 36, 1); border-color: rgba(223, 217, 36, 0.5); }
-  &--color-s { background: rgba(48, 211, 56, 1); border-color: rgba(48, 211, 56, 0.5); }
-  &--color-t { background: rgba(132, 61, 198, 1); border-color: rgba(132, 61, 198, 0.5); }
-  &--color-z { background: rgba(240, 80, 195, 1); border-color: rgba(240, 80, 195, 0.5); }
-}
+  &__figure {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
 
-.button-group {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
 
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1em;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
+    &--active {
+      border-color: #ee5a24;
+      background: #fff8f0;
+    }
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    &-preview {
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+
+    &-row {
+      display: flex;
+      gap: 2px;
+    }
+
+    &-cell {
+      width: 15px;
+      height: 15px;
+      background: #eee;
+      border-radius: 2px;
+
+      &--color-i { background: rgba(80, 227, 230, 1); }
+      &--color-j { background: rgba(36, 95, 223, 1); }
+      &--color-l { background: rgba(255, 174, 174, 1); }
+      &--color-o { background: rgba(223, 217, 36, 1); }
+      &--color-s { background: rgba(48, 211, 56, 1); }
+      &--color-t { background: rgba(132, 61, 198, 1); }
+      &--color-z { background: rgba(240, 80, 195, 1); }
+    }
+
+    &-name {
+      font-weight: bold;
+      font-size: 0.9em;
+      margin-bottom: 3px;
+    }
+
+    &-type {
+      font-size: 0.75em;
+      color: #666;
+    }
   }
 
-  &:active {
-    transform: translateY(0);
+  &__panel {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    &-title {
+      margin-bottom: 20px;
+      color: #333;
+    }
   }
 
-  &--primary {
-    background: linear-gradient(145deg, #ee5a24, #ffff6b);
-    color: white;
+  &__form {
+    margin-bottom: 20px;
+  }
+
+  &__label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #555;
+  }
+
+  &__input,
+  &__select {
     width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #ee5a24;
+    }
   }
 
-  &--success {
-    background: #48c774;
-    color: white;
+  &__color-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
   }
 
-  &--secondary {
-    background: #3273dc;
-    color: white;
+  &__color-option {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    &--active {
+      border-color: #ee5a24;
+      background: #fff8f0;
+    }
   }
 
-  &--danger {
-    background: #f14668;
-    color: white;
-  }
-
-  &--back {
-    background: #363636;
-    color: white;
+  &__color-preview {
     width: 100%;
-    margin-top: 20px;
+    height: 40px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+
+    &--i { background: rgba(80, 227, 230, 1); }
+    &--j { background: rgba(36, 95, 223, 1); }
+    &--l { background: rgba(255, 174, 174, 1); }
+    &--o { background: rgba(223, 217, 36, 1); }
+    &--s { background: rgba(48, 211, 56, 1); }
+    &--t { background: rgba(132, 61, 198, 1); }
+    &--z { background: rgba(240, 80, 195, 1); }
+  }
+
+  &__color-name {
+    font-size: 0.85em;
+    color: #555;
+  }
+
+  &__shape {
+    display: inline-block;
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+
+    &-row {
+      display: flex;
+      gap: 3px;
+    }
+
+    &-cell {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        border-color: #ee5a24;
+      }
+
+      &--color-i { background: rgba(80, 227, 230, 1); border-color: rgba(80, 227, 230, 0.5); }
+      &--color-j { background: rgba(36, 95, 223, 1); border-color: rgba(36, 95, 223, 0.5); }
+      &--color-l { background: rgba(255, 174, 174, 1); border-color: rgba(255, 174, 174, 0.5); }
+      &--color-o { background: rgba(223, 217, 36, 1); border-color: rgba(223, 217, 36, 0.5); }
+      &--color-s { background: rgba(48, 211, 56, 1); border-color: rgba(48, 211, 56, 0.5); }
+      &--color-t { background: rgba(132, 61, 198, 1); border-color: rgba(132, 61, 198, 0.5); }
+      &--color-z { background: rgba(240, 80, 195, 1); border-color: rgba(240, 80, 195, 0.5); }
+    }
+  }
+
+  &__button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &--primary {
+      background: linear-gradient(145deg, #ee5a24, #ffff6b);
+      color: white;
+      width: 100%;
+    }
+
+    &--success {
+      background: #48c774;
+      color: white;
+    }
+
+    &--secondary {
+      background: #3273dc;
+      color: white;
+    }
+
+    &--danger {
+      background: #f14668;
+      color: white;
+    }
+
+    &--back {
+      background: #363636;
+      color: white;
+      width: 100%;
+      margin-top: 20px;
+    }
   }
 }
 </style>
