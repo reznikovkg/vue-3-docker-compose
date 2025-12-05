@@ -8,12 +8,12 @@
         class="location-selector__card"
         @click="goToLocation(location)"
       >
-        <div class="location-image" :style="{ backgroundImage: `url(${location.image})` }">
-          <div class="location-overlay">
-            <h3>{{ location.name }}</h3>
-            <p>{{ location.description }}</p>
-            <div class="fish-preview">
-              <span v-for="fish in location.fish" :key="fish.name" class="fish-emoji">
+        <div class="location-selector__image" :style="{ backgroundImage: `url(${location.image})` }">
+          <div class="location-selector__overlay">
+            <h3 class="location-selector__location-name">{{ location.name }}</h3>
+            <p class="location-selector__location-description">{{ location.description }}</p>
+            <div class="location-selector__fish-preview">
+              <span v-for="fish in location.fish" :key="fish.name" class="location-selector__fish-emoji">
                 {{ fish.emoji }}
               </span>
             </div>
@@ -35,10 +35,9 @@ defineProps<{
 }>()
 
 const goToLocation = (location: Location) => {
-  console.log('Navigating to location:', location.id, location.name) // для отладки
+  console.log('Navigating to location:', location.id, location.name)
   router.push(`/location/${location.id}`)
 }
-
 </script>
 
 <style scoped lang="less">
@@ -54,66 +53,66 @@ const goToLocation = (location: Location) => {
   backdrop-filter: blur(10px);
   height: fit-content;
 
-  h2 {
+  &__title {
     margin-bottom: 15px;
     color: @text-color;
   }
-}
 
-.location-selector__list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.location-selector__card {
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 3px solid transparent;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    border-color: @card-hover-color;
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
   }
-}
 
-.location-image {
-  height: 100px;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
+  &__card {
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 3px solid transparent;
 
-.location-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.8));
-  color: white;
-  padding: 10px;
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      border-color: @card-hover-color;
+    }
+  }
 
-  h3 {
+  &__image {
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+
+  &__overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    color: white;
+    padding: 10px;
+  }
+
+  &__location-name {
     margin-bottom: 5px;
     font-size: 1em;
   }
 
-  p {
+  &__location-description {
     font-size: 0.7em;
     opacity: 0.9;
     margin-bottom: 5px;
   }
-}
 
-.fish-preview {
-  display: flex;
-  gap: 5px;
-}
+  &__fish-preview {
+    display: flex;
+    gap: 5px;
+  }
 
-.fish-emoji {
-  font-size: 0.8em;
+  &__fish-emoji {
+    font-size: 0.8em;
+  }
 }
 </style>

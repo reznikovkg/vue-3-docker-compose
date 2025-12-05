@@ -1,29 +1,64 @@
 <template>
-  <div class="fishing-area">
-    <div class="fishing-background" :style="{ backgroundImage: `url(${location.image})` }">
-      <div class="fishing-content">
-        <div class="location-info">
-          <h2>{{ location.name }}</h2>
-          <p>{{ location.description }}</p>
+  <div class="fishing-area" v-if="location">
+    <div class="fishing-area__background" :style="{ backgroundImage: `url(${location.image})` }">
+      <div class="fishing-area__content">
+        <div class="fishing-area__location-info">
+          <div class="fishing-area__back-button-container">
+            <button class="fishing-area__back-button" @click="goBack">
+              ← Назад к выбору локации
+            </button>
+          </div>
+
+          <h2 class="fishing-area__location-name">{{ location.name }}</h2>
+          <p class="fishing-area__location-description">{{ location.description }}</p>
+        </div>
+
+        <div class="fishing-area__hot-spot-indicator" v-if="hotSpotActive && fishingState === 'waiting'">
+          <div class="hot-spot-badge">
+            🔥 {{ currentHotSpot?.name }}
+          </div>
+        </div>
+
+        <div
+          class="fishing-area__float-visualization"
+          v-if="fishingState === 'waiting' || fishingState === 'fighting'"
+          :style="floatStyle"
+        >
+          <div class="float-bobber" :class="{ 'float-bobber--biting': fishingState === 'fighting' }">
+            🎯
+          </div>
+          <div class="ripple-effect" v-if="showRipple"></div>
+
+          <div
+            class="hot-spot-glow"
+            v-if="hotSpotActive && currentHotSpot"
+            :style="hotSpotStyle"
+          >
+            <div class="hot-spot-glow__ring"></div>
+            <div class="hot-spot-glow__text">{{ currentHotSpot.name }}</div>
+          </div>
         </div>
 
         <div class="tension-meter" v-if="fishingState === 'fighting'">
-          <div class="tension-label">Натяжение лески: {{ Math.round(tension) }}%</div>
-          <div class="tension-bar">
+          <div class="tension-meter__label">Натяжение лески: {{ Math.round(tension) }}%</div>
+          <div class="tension-meter__bar">
             <div
-              class="tension-fill"
+              class="tension-meter__fill"
               :style="{ width: tension + '%' }"
               :class="tensionClass"
             ></div>
           </div>
-          <div class="tension-hint">
+          <div class="tension-meter__hint">
             {{ tensionHint }}
+          </div>
+          <div class="tension-meter__break-warning" v-if="tension > 80 && equippedRod?.id !== 'rod_basic'">
+            ⚠️ Высокий риск поломки удочки!
           </div>
         </div>
 
-        <div class="fishing-controls">
+        <div class="fishing-area__controls">
           <button
-            class="fish-button"
+            class="fishing-area__fish-button"
             @click="handleStartFishing"
             :disabled="fishingState !== 'idle'"
             v-if="fishingState === 'idle'"
@@ -32,7 +67,7 @@
           </button>
 
           <button
-            class="reel-button"
+            class="fishing-area__reel-button"
             @mousedown="startReeling"
             @mouseup="stopReeling"
             @touchstart="startReeling"
@@ -43,46 +78,85 @@
             🎣 ТЯНУТЬ (Удерживайте ЛКМ)
           </button>
 
-          <div class="result-container" v-if="showResult">
-            <div class="success-message" v-if="fishingResult && fishingResult.type === 'success'">
-              <div class="success-icon">🎉</div>
-              <div class="success-text">
-                <h3>Поймали!</h3>
-                <p>{{ currentFish?.emoji }} {{ currentFish?.name }}</p>
+          <div class="fishing-area__result-container" v-if="showResult">
+            <div class="result-message result-message--success" v-if="fishingResult && fishingResult.type === 'success'">
+              <h3 class="result-message__title">🎉 Поймали!</h3>
+              <p class="result-message__text">{{ currentFish?.emoji }} {{ currentFish?.name }}</p>
+
+              <div class="result-message__fish-size-info" v-if="currentFish?.caughtSize && currentFish?.weight">
+                <div class="result-message__fish-size">
+                  Размер: {{ currentFish.caughtSize.name }}
+                  <span class="result-message__fish-weight">({{ currentFish.weight }}г)</span>
+                </div>
+                <div class="result-message__size-badge" :class="getSizeClass(currentFish.caughtSize.name)">
+                  {{ getSizeEmoji(currentFish.caughtSize.name) }}
+                </div>
+              </div>
+
+              <div class="result-message__fish-strength" v-if="currentFish">
+                Сила: {{ currentFish.actualStrength || currentFish.strength }}
               </div>
             </div>
 
-            <div class="failed-message" v-if="fishingResult && fishingResult.type === 'failed'">
-              <div class="failed-icon">❌</div>
-              <div class="failed-text">
-                <h3>Рыба ушла!</h3>
-                <p>{{ fishingResult.message }}</p>
+            <div class="result-message result-message--failed" v-if="fishingResult && fishingResult.type === 'failed'">
+              <h3 class="result-message__title">❌ Рыба ушла!</h3>
+              <p class="result-message__text">{{ fishingResult.message }}</p>
+            </div>
+
+            <div class="result-message result-message--rod-break" v-if="fishingResult && fishingResult.type === 'rod_break'">
+              <h3 class="result-message__title">💥 Удочка сломалась!</h3>
+              <p class="result-message__text">{{ fishingResult.message }}</p>
+              <div class="result-message__break-consequence">
+                <p>🆘 Бесплатная удочка добавлена в инвентарь</p>
+                <p>🎣 Экипирована простая удочка</p>
               </div>
             </div>
           </div>
 
-          <div class="fishing-hint" v-if="fishingState === 'waiting'">
-            ⏳ Ждем поклевки...
+          <div class="fishing-area__hint" v-if="fishingState === 'waiting'">
+            <div class="fishing-area__waiting-animation">⏳</div>
+            <div class="fishing-area__waiting-text">Ждем поклевки...</div>
           </div>
 
-          <div class="fishing-hint" v-if="fishingState === 'fighting'">
-            🎣 Удерживайте ЛКМ чтобы вытащить рыбу! Цель: натяжение ≤ 10%
+          <div class="fishing-area__hint" v-if="fishingState === 'fighting'">
+            <div class="fishing-area__fighting-instruction">
+              🎣 Удерживайте ЛКМ чтобы вытащить рыбу!
+            </div>
+            <div class="fishing-area__fighting-target">
+              Цель: натяжение ≤ 10%
+            </div>
+            <div class="fishing-area__break-hint" v-if="tension > 80 && equippedRod?.id !== 'rod_basic'">
+              ⚠️ Осторожно! При натяжении >80% удочка может сломаться
+            </div>
+          </div>
+
+          <div class="fishing-area__casting-animation" v-if="fishingState === 'casting'">
+            <div class="fishing-area__casting-text">Забрасываем удочку...</div>
+            <div class="fishing-area__casting-dots">
+              <span class="fishing-area__casting-dot"></span>
+              <span class="fishing-area__casting-dot"></span>
+              <span class="fishing-area__casting-dot"></span>
+            </div>
           </div>
         </div>
 
-        <div class="fishing-rod-container">
+        <div class="fishing-area__rod-container">
           <div class="fishing-rod" :class="{
-            casting: fishingState === 'casting',
-            waiting: fishingState === 'waiting',
-            reeling: isReeling
+            'fishing-rod--casting': fishingState === 'casting',
+            'fishing-rod--waiting': fishingState === 'waiting',
+            'fishing-rod--reeling': isReeling,
+            'fishing-rod--fighting': fishingState === 'fighting',
+            'fishing-rod--broken': fishingResult?.type === 'rod_break'
           }">
-            <div class="rod-handle"></div>
-            <div class="rod-line"></div>
-            <div class="fishing-hook" :class="{ biting: fishingState === 'fighting' }"></div>
+            <div class="fishing-rod__handle"></div>
+            <div class="fishing-rod__line"></div>
+            <div class="fishing-rod__hook" :class="{
+              'fishing-rod__hook--biting': fishingState === 'fighting'
+            }"></div>
           </div>
 
           <div
-            class="biting-fish"
+            class="fishing-area__biting-fish"
             v-if="fishingState === 'fighting' && currentFish"
           >
             {{ currentFish.emoji }}
@@ -91,15 +165,19 @@
       </div>
     </div>
   </div>
+  <div v-else class="fishing-area__loading">
+    Загрузка локации...
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, computed, watch } from 'vue'
+import { onUnmounted, computed, watch, ref, reactive } from 'vue'
 import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 import type { Location, Fish } from '@/types'
 
 const props = defineProps<{
-  location: Location
+  location: Location | null
 }>()
 
 const emit = defineEmits<{
@@ -107,6 +185,11 @@ const emit = defineEmits<{
 }>()
 
 const store = useStore()
+const router = useRouter()
+
+const goBack = () => {
+  router.push('/')
+}
 
 const fishingState = computed(() => store.getters['game/fishingState'])
 const isReeling = computed(() => store.getters['game/isReeling'])
@@ -114,13 +197,70 @@ const tension = computed(() => store.getters['game/tension'])
 const currentFish = computed(() => store.getters['game/currentFish'])
 const showResult = computed(() => store.getters['game/showResult'])
 const fishingResult = computed(() => store.getters['game/fishingResult'])
-
+const canStartFishing = computed(() => store.getters['game/canStartFishing'])
+const equippedTackle = computed(() => store.getters['fishing/equippedTackle'])
 const tensionClass = computed(() => store.getters['game/tensionClass'])
 const tensionHint = computed(() => store.getters['game/tensionHint'])
+const hotSpotActive = computed(() => store.getters['game/hotSpotActive'])
+const currentHotSpot = computed(() => store.getters['game/currentHotSpot'])
+const equippedRod = computed(() => equippedTackle.value.rod)
 
-const handleStartFishing = async () => {
+const fishAlreadyAdded = ref(false)
+const floatPosition = reactive({
+  x: 50,
+  y: 30
+})
+const showRipple = ref(false)
+const castInProgress = ref(false)
+
+const floatStyle = computed(() => ({
+  left: `${floatPosition.x}%`,
+  top: `${floatPosition.y}%`,
+  opacity: (fishingState.value === 'waiting' || fishingState.value === 'fighting') ? 1 : 0,
+  transform: castInProgress.value ? 'scale(0.5)' : 'scale(1)'
+}))
+
+const hotSpotStyle = computed(() => ({
+  left: `${hotSpotPosition.value.x}%`,
+  top: `${hotSpotPosition.value.y}%`
+}))
+
+const hotSpotPosition = computed(() => {
+  if (!currentHotSpot.value) return { x: 50, y: 50 }
+  const spotId = currentHotSpot.value.id
+  const x = (spotId.charCodeAt(0) * 17 + spotId.charCodeAt(1) * 13) % 70 + 15
+  const y = (spotId.charCodeAt(2) * 19 + spotId.charCodeAt(3) * 11) % 60 + 20
+  return { x, y }
+})
+
+const getSizeClass = (sizeName: string) => {
+  const sizeClasses = {
+    'Мелкий': 'result-message__size-badge--small',
+    'Средний': 'result-message__size-badge--medium',
+    'Крупный': 'result-message__size-badge--large',
+    'Трофейный': 'result-message__size-badge--trophy'
+  }
+  return sizeClasses[sizeName] || 'result-message__size-badge--small'
+}
+
+const getSizeEmoji = (sizeName: string) => {
+  const sizeEmojis = {
+    'Мелкий': '🔸',
+    'Средний': '🔷',
+    'Крупный': '💠',
+    'Трофейный': '🏆'
+  }
+  return sizeEmojis[sizeName] || '🔸'
+}
+
+const handleStartFishing = () => {
   store.dispatch('fishing/setCurrentLocation', props.location)
-  store.dispatch('game/startFishing')
+    .then(() => {
+      return store.dispatch('game/startFishing')
+    })
+    .catch((error: any) => {
+      console.error('Ошибка начала рыбалки:', error)
+    })
 }
 
 const startReeling = () => {
@@ -132,21 +272,65 @@ const stopReeling = () => {
   store.dispatch('game/setIsReeling', false)
 }
 
+const castFloat = () => {
+  castInProgress.value = true
+  if (hotSpotActive.value && Math.random() < 0.6) {
+    floatPosition.x = hotSpotPosition.value.x + (Math.random() * 20 - 10)
+    floatPosition.y = hotSpotPosition.value.y + (Math.random() * 15 - 7.5)
+  } else {
+    floatPosition.x = 30 + Math.random() * 40
+    floatPosition.y = 20 + Math.random() * 30
+  }
+  floatPosition.x = Math.max(10, Math.min(90, floatPosition.x))
+  floatPosition.y = Math.max(15, Math.min(70, floatPosition.y))
+
+  setTimeout(() => {
+    castInProgress.value = false
+    showRipple.value = true
+    setTimeout(() => {
+      showRipple.value = false
+    }, 1000)
+  }, 800)
+}
+
 const handleFishCaught = () => {
   const fish = store.getters['game/currentFish']
   if (fish) {
     const fishWithLocation = {
       ...fish,
-      location: props.location.name,
-      timestamp: new Date().toLocaleTimeString()
+      location: props.location?.name || 'Неизвестная локация',
+      timestamp: new Date().toLocaleTimeString(),
+      strength: fish.strength
     }
-    emit('catch-fish', fishWithLocation)
+    fishAlreadyAdded.value = true
+    store.dispatch('fishing/addCaughtFish', fishWithLocation)
+      .then(() => {
+        emit('catch-fish', fishWithLocation)
+      })
+      .catch((error: any) => {
+        console.error('Ошибка добавления рыбы:', error)
+      })
   }
 }
 
+watch(fishingState, (newState, oldState) => {
+  if (newState === 'idle' || newState === 'casting') {
+    fishAlreadyAdded.value = false
+  }
+  if (newState === 'waiting' && oldState === 'casting') {
+    castFloat()
+  }
+  if (newState === 'idle' || newState === 'success' || newState === 'failed') {
+    castInProgress.value = false
+    showRipple.value = false
+  }
+})
+
 watch(fishingResult, (newResult) => {
   if (newResult?.type === 'success' && currentFish.value) {
-    handleFishCaught()
+    setTimeout(() => {
+      handleFishCaught()
+    }, 100)
   }
 })
 
@@ -167,6 +351,7 @@ onUnmounted(() => {
 @text-dark: #333;
 @success-text: #2E7D32;
 @failed-text: #C62828;
+@break-color: #D32F2F;
 
 .fishing-area {
   border-radius: 15px;
@@ -175,295 +360,636 @@ onUnmounted(() => {
   height: 600px;
   position: relative;
 
-  .fishing-background {
+  &__background {
     height: 100%;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     position: relative;
 
-    .fishing-content {
+    .fishing-area__content {
       position: relative;
       height: 100%;
       display: flex;
       flex-direction: column;
       background: rgba(0, 0, 0, 0.4);
       color: white;
-
-      .location-info {
-        padding: 20px;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-        z-index: 2;
-
-        h2 {
-          color: white;
-          margin-bottom: 8px;
-        }
-
-        p {
-          color: rgba(255, 255, 255, 0.9);
-        }
-      }
-
-      .tension-meter {
-        background: rgba(0, 0, 0, 0.7);
-        padding: 15px;
-        border-radius: 10px;
-        margin: 20px auto;
-        max-width: 400px;
-        backdrop-filter: blur(10px);
-        z-index: 3;
-
-        .tension-label {
-          color: white;
-          margin-bottom: 10px;
-          font-weight: bold;
-        }
-
-        .tension-bar {
-          position: relative;
-          height: 30px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 15px;
-          overflow: hidden;
-          margin-bottom: 8px;
-
-          .tension-fill {
-            height: 100%;
-            border-radius: 15px;
-            transition: width 0.1s ease, background-color 0.3s ease;
-
-            &.safe {
-              background: linear-gradient(90deg, @safe-color, lighten(@safe-color, 10%));
-            }
-
-            &.warning {
-              background: linear-gradient(90deg, @warning-color, lighten(@warning-color, 10%));
-            }
-
-            &.danger {
-              background: linear-gradient(90deg, @danger-color, lighten(@danger-color, 10%));
-              animation: pulse-danger 0.5s infinite alternate;
-            }
-          }
-        }
-
-        .tension-hint {
-          color: #FFC107;
-          font-size: 0.9em;
-          text-align: center;
-          margin-top: 5px;
-        }
-      }
-
-      .fishing-controls {
-        text-align: center;
-        padding: 20px;
-        z-index: 3;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-
-        .fish-button, .reel-button {
-          color: white;
-          border: none;
-          padding: 15px 30px;
-          font-size: 1.2em;
-          border-radius: 25px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          font-weight: bold;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-          min-width: 200px;
-
-          &:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-          }
-        }
-
-        .fish-button {
-          background: linear-gradient(135deg, @safe-color, darken(@safe-color, 10%));
-        }
-
-        .reel-button {
-          background: linear-gradient(135deg, #2196F3, #1976D2);
-        }
-
-        .fish-button:disabled,
-        .reel-button:disabled {
-          background: #666;
-          cursor: not-allowed;
-          transform: none;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .result-container {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 1000;
-          animation: popIn 0.5s ease-out;
-
-          .success-message, .failed-message {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            min-width: 300px;
-            border: 4px solid;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-          }
-
-          .success-message {
-            border-color: @safe-color;
-            background: linear-gradient(135deg, @success-bg, lighten(@success-bg, 5%));
-
-            .success-text {
-              h3 {
-                color: @success-text;
-                margin: 0 0 10px 0;
-                font-size: 1.5em;
-              }
-
-              p {
-                color: @text-dark;
-                margin: 0;
-                font-size: 1.3em;
-                font-weight: bold;
-              }
-            }
-          }
-
-          .failed-message {
-            border-color: @danger-color;
-            background: linear-gradient(135deg, @failed-bg, lighten(@failed-bg, 5%));
-
-            .failed-text {
-              h3 {
-                color: @failed-text;
-                margin: 0 0 10px 0;
-                font-size: 1.5em;
-              }
-
-              p {
-                color: @text-dark;
-                margin: 0;
-                font-size: 1.3em;
-                font-weight: bold;
-              }
-            }
-          }
-
-          .success-icon, .failed-icon {
-            font-size: 3em;
-            animation: bounce 1s infinite;
-          }
-        }
-
-        .fishing-hint {
-          color: #FFC107;
-          text-align: center;
-          font-size: 0.9em;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-          background: rgba(0, 0, 0, 0.7);
-          padding: 10px 15px;
-          border-radius: 8px;
-          backdrop-filter: blur(10px);
-        }
-      }
-
-      .fishing-rod-container {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 200px;
-        z-index: 5;
-        pointer-events: none;
-
-        .fishing-rod {
-          position: absolute;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          transform-origin: bottom center;
-          z-index: 1;
-          transition: all 0.5s ease;
-
-          &.casting {
-            animation: castRod 1.5s ease;
-          }
-
-          &.waiting {
-            animation: waitRod 2s infinite alternate;
-          }
-
-          &.reeling {
-            animation: reelRod 0.3s infinite alternate;
-          }
-
-          .rod-handle {
-            width: 6px;
-            height: 80px;
-            background: linear-gradient(to right, @rod-color, lighten(@rod-color, 10%), @rod-color);
-            border-radius: 3px;
-            position: relative;
-            z-index: 1;
-          }
-
-          .rod-line {
-            width: 2px;
-            height: 150px;
-            background: linear-gradient(to bottom,
-              rgba(255, 255, 255, 0.8) 0%,
-              rgba(255, 255, 255, 0.6) 50%,
-              rgba(255, 255, 255, 0.4) 100%);
-            margin: 0 auto;
-            position: relative;
-            top: -5px;
-          }
-
-          .fishing-hook {
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 12px;
-            height: 12px;
-            border: 2px solid @hook-color;
-            border-top: none;
-            border-right: none;
-            border-radius: 0 0 0 50%;
-            transform-origin: top left;
-            transform: translateX(-50%) rotate(-45deg);
-
-            &.biting {
-              animation: biteHook 0.5s infinite alternate;
-            }
-          }
-        }
-
-        .biting-fish {
-          position: absolute;
-          bottom: 130px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 32px;
-          z-index: 2;
-          animation: bite 0.5s infinite alternate;
-          filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-      }
     }
   }
+
+  &__location-info {
+    position: relative;
+    padding: 20px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+    z-index: 2;
+  }
+
+  &__back-button-container {
+    margin-bottom: 15px;
+  }
+
+  &__back-button {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: 2px solid #4CAF50;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85em;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+
+    &:hover {
+      background: #4CAF50;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+  }
+
+  &__location-name {
+    color: white;
+    margin-bottom: 8px;
+    font-size: 1.8em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+
+  &__location-description {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  }
+
+  &__hot-spot-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+  }
+
+  &__float-visualization {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  &__controls {
+    text-align: center;
+    padding: 20px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  &__fish-button, &__reel-button {
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    min-width: 200px;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+  }
+
+  &__fish-button {
+    background: linear-gradient(135deg, @safe-color, darken(@safe-color, 10%));
+  }
+
+  &__reel-button {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+  }
+
+  &__fish-button:disabled,
+  &__reel-button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  &__result-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    animation: popIn 0.5s ease-out;
+  }
+
+  &__hint {
+    color: #FFC107;
+    text-align: center;
+    font-size: 0.9em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+  }
+
+  &__waiting-animation {
+    font-size: 2em;
+    margin-bottom: 10px;
+    animation: pulse 2s infinite;
+  }
+
+  &__waiting-text {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+  }
+
+  &__fighting-instruction {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  &__fighting-target {
+    color: #4CAF50;
+    font-weight: bold;
+  }
+
+  &__break-hint {
+    color: #FF6B6B;
+    font-weight: bold;
+    margin-top: 8px;
+    font-size: 0.8em;
+    background: rgba(255, 107, 107, 0.2);
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #FF6B6B;
+  }
+
+  &__casting-animation {
+    text-align: center;
+    color: #FFC107;
+  }
+
+  &__casting-text {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  &__casting-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  &__casting-dot {
+    width: 8px;
+    height: 8px;
+    background: #FFC107;
+    border-radius: 50%;
+    animation: castingDots 1.4s infinite ease-in-out;
+
+    &:nth-child(1) { animation-delay: -0.32s; }
+    &:nth-child(2) { animation-delay: -0.16s; }
+  }
+
+  &__rod-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  &__biting-fish {
+    position: absolute;
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    z-index: 2;
+    animation: bite 0.5s infinite alternate;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+
+  &__loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 600px;
+    font-size: 1.5em;
+    color: #666;
+    background: #f8f9fa;
+    border-radius: 15px;
+  }
+}
+
+.hot-spot-badge {
+  background: rgba(255, 107, 107, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 0.9em;
+  backdrop-filter: blur(10px);
+  border: 2px solid #FFD700;
+  animation: pulse 2s infinite;
+}
+
+.float-bobber {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  animation: floatBob 3s ease-in-out infinite;
+
+  &--biting {
+    animation: biteAnimation 0.5s infinite alternate;
+  }
+}
+
+.ripple-effect {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ripple 1s ease-out;
+}
+
+.hot-spot-glow {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+
+  &__ring {
+    width: 80px;
+    height: 80px;
+    border: 3px solid #FFD700;
+    border-radius: 50%;
+    animation: hotSpotPulse 2s infinite;
+    background: radial-gradient(
+      circle,
+      rgba(255, 215, 0, 0.3) 0%,
+      rgba(255, 215, 0, 0.1) 50%,
+      transparent 70%
+    );
+  }
+
+  &__text {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 0.8em;
+    white-space: nowrap;
+    text-shadow: 0 0 3px rgba(0,0,0,0.8);
+    background: rgba(255, 107, 107, 0.9);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+}
+
+.tension-meter {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px auto;
+  max-width: 400px;
+  backdrop-filter: blur(10px);
+  z-index: 3;
+
+  &__label {
+    color: white;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  &__bar {
+    position: relative;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  &__fill {
+    height: 100%;
+    border-radius: 15px;
+    transition: width 0.1s ease, background-color 0.3s ease;
+
+    &.safe {
+      background: linear-gradient(90deg, @safe-color, lighten(@safe-color, 10%));
+    }
+
+    &.warning {
+      background: linear-gradient(90deg, @warning-color, lighten(@warning-color, 10%));
+    }
+
+    &.danger {
+      background: linear-gradient(90deg, @danger-color, lighten(@danger-color, 10%));
+      animation: pulse 0.5s infinite alternate;
+    }
+  }
+
+  &__hint {
+    color: #FFC107;
+    font-size: 0.9em;
+    text-align: center;
+    margin-top: 5px;
+  }
+
+  &__break-warning {
+    color: #FF6B6B;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 8px;
+    animation: warningPulse 1s infinite;
+    background: rgba(255, 107, 107, 0.2);
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #FF6B6B;
+  }
+}
+
+.result-message {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  text-align: center;
+  min-width: 300px;
+  border: 4px solid;
+
+  &--success {
+    border-color: @safe-color;
+    background: linear-gradient(135deg, @success-bg, lighten(@success-bg, 5%));
+  }
+
+  &--failed {
+    border-color: @danger-color;
+    background: linear-gradient(135deg, @failed-bg, lighten(@failed-bg, 5%));
+  }
+
+  &--rod-break {
+    border-color: @break-color;
+    background: linear-gradient(135deg, #FFEBEE, lighten(#FFEBEE, 5%));
+  }
+
+  &__title {
+    margin: 0 0 10px 0;
+    font-size: 1.5em;
+  }
+
+  &--success &__title {
+    color: @success-text;
+  }
+
+  &--failed &__title {
+    color: @failed-text;
+  }
+
+  &--rod-break &__title {
+    color: @break-color;
+  }
+
+  &__text {
+    color: @text-dark;
+    margin: 0;
+    font-size: 1.3em;
+    font-weight: bold;
+  }
+
+  &__fish-size-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+  }
+
+  &__fish-size {
+    font-weight: bold;
+    color: #333;
+  }
+
+  &__fish-weight {
+    color: #666;
+    font-size: 0.9em;
+  }
+
+  &__size-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+
+    &--small {
+      background: #E8F5E8;
+      color: #2E7D32;
+    }
+
+    &--medium {
+      background: #E3F2FD;
+      color: #1565C0;
+    }
+
+    &--large {
+      background: #FFF3E0;
+      color: #EF6C00;
+    }
+
+    &--trophy {
+      background: linear-gradient(135deg, #FFD700, #FFA000);
+      color: #7B1FA2;
+      animation: glow 2s infinite alternate;
+    }
+  }
+
+  &__fish-strength {
+    color: #666;
+    font-size: 0.9em;
+    margin-top: 10px;
+  }
+
+  &__break-consequence {
+    background: rgba(255, 255, 255, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+
+    p {
+      margin: 5px 0;
+      font-size: 0.9em;
+      color: #666;
+    }
+  }
+}
+
+.fishing-rod {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  transform-origin: bottom center;
+  z-index: 1;
+  transition: all 0.5s ease;
+
+  &--casting {
+    animation: castRod 1.5s ease;
+  }
+
+  &--waiting {
+    animation: waitRod 2s infinite alternate;
+  }
+
+  &--reeling {
+    animation: reelRod 0.3s infinite alternate;
+  }
+
+  &--fighting {
+    animation: fightRod 0.5s infinite alternate;
+  }
+
+  &--broken {
+    animation: breakRod 0.5s ease forwards;
+  }
+
+  &__handle {
+    width: 6px;
+    height: 80px;
+    background: linear-gradient(to right, @rod-color, lighten(@rod-color, 10%), @rod-color);
+    border-radius: 3px;
+    position: relative;
+    z-index: 1;
+  }
+
+  &__line {
+    width: 2px;
+    height: 150px;
+    background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.8) 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      rgba(255, 255, 255, 0.4) 100%);
+    margin: 0 auto;
+    position: relative;
+    top: -5px;
+  }
+
+  &__hook {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 12px;
+    border: 2px solid @hook-color;
+    border-top: none;
+    border-right: none;
+    border-radius: 0 0 0 50%;
+    transform-origin: top left;
+    transform: translateX(-50%) rotate(-45deg);
+    transition: all 0.3s ease;
+
+    &--biting {
+      animation: biteHook 0.5s infinite alternate;
+    }
+  }
+}
+
+@keyframes breakRod {
+  0% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-50%) rotate(15deg);
+  }
+  50% {
+    transform: translateX(-50%) rotate(-10deg);
+  }
+  75% {
+    transform: translateX(-50%) rotate(5deg);
+  }
+  100% {
+    transform: translateX(-50%) rotate(0deg) scale(0.8);
+    opacity: 0.5;
+    filter: grayscale(100%);
+  }
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes floatBob {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(5deg);
+  }
+}
+
+@keyframes biteAnimation {
+  0% {
+    transform: translateY(0px) scale(1);
+  }
+  100% {
+    transform: translateY(-8px) scale(1.1);
+    filter: drop-shadow(0 0 8px #FFD700);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
+
+@keyframes hotSpotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 5px #FFD700; }
+  100% { box-shadow: 0 0 20px #FFA000; }
 }
 
 @keyframes castRod {
@@ -492,6 +1018,11 @@ onUnmounted(() => {
   100% { bottom: 25px; }
 }
 
+@keyframes fightRod {
+  0% { transform: translateX(-50%) rotate(-5deg); }
+  100% { transform: translateX(-50%) rotate(5deg); }
+}
+
 @keyframes biteHook {
   0% { transform: translateX(-50%) rotate(-45deg); }
   100% { transform: translateX(-50%) rotate(-35deg); }
@@ -502,9 +1033,13 @@ onUnmounted(() => {
   100% { transform: translateX(-50%) translateY(-10px); }
 }
 
-@keyframes pulse-danger {
-  0% { opacity: 1; }
-  100% { opacity: 0.7; }
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 @keyframes popIn {
@@ -522,12 +1057,12 @@ onUnmounted(() => {
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
+@keyframes castingDots {
+  0%, 80%, 100% {
+    transform: scale(0);
   }
-  50% {
-    transform: translateY(-10px);
+  40% {
+    transform: scale(1);
   }
 }
 
@@ -535,19 +1070,19 @@ onUnmounted(() => {
   .fishing-area {
     height: 500px;
 
-    .fishing-controls .result-container {
-      .success-message, .failed-message {
+    &__result-container {
+      .result-message {
         min-width: 250px;
         padding: 20px;
       }
     }
 
-    .fishing-rod-container {
-      .rod-line {
+    &__rod-container {
+      .fishing-rod__line {
         height: 120px;
       }
 
-      .biting-fish {
+      .fishing-area__biting-fish {
         bottom: 100px;
       }
     }
