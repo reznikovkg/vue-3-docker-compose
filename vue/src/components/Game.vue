@@ -2,12 +2,12 @@
   <div class="game">
     <TetrominoEditor 
       v-if="showEditor" 
-      @close="closeEditor" 
+      @close="() => closeEditor()" 
     />
     <Menu 
       v-else-if="gameOver" 
-      @start="startGame" 
-      @openEditor="openEditor"
+      @start="() => startGame()" 
+      @openEditor="() => openEditor()"
     />
     <Tetris 
       v-else 
