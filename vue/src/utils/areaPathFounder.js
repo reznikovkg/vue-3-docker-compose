@@ -1,4 +1,7 @@
-let triangles = []
+const data = {
+  triangles: [],
+  graph: {}
+}
 
 const cross = (ax, ay, bx, by) => ax * by - ay * bx
 
@@ -203,11 +206,17 @@ const findEarIndex = (poly, indices) => {
 
   return earIndex
 }
+const setArea = (polies) => {
+  data.triangles = []
+  polies.forEach(poly => {
+    data.triangles = data.triangles.concat(triangulate(poly))
+  })
+  data.graph = buildTriangleGraph(data.triangles)
+}
 
-const setArea = (poly) => {
+const triangulate = (poly) => {
   const result = []
   if (!poly || poly.length < 3) {
-    triangles = result
     return result
   }
 
@@ -248,17 +257,14 @@ const setArea = (poly) => {
     const c = poly[indices[2]]
     result.push({ a, b, c })
   }
-
-  triangles = result
   return result
 }
 
 const findShortestTrianglePath = (startPoint, endPoint) => {
+  const triangles = data.triangles
   if (!triangles || triangles.length === 0) {
     return []
   }
-
-  const graph = buildTriangleGraph(triangles)
 
   let startIndex = 0
   let minDist = dist(closestPointInTriangle(startPoint, triangles[0]), startPoint)
@@ -313,7 +319,7 @@ const findShortestTrianglePath = (startPoint, endPoint) => {
     if (isTarget) {
       reached = true
     } else {
-      const neighbors = graph[current]
+      const neighbors = data.graph[current]
       let i = 0
       while (i < neighbors.length) {
         const next = neighbors[i]
