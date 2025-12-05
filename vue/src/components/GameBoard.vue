@@ -42,6 +42,7 @@
     <div v-for="visitor in visitors" :key="visitor.id"
      :style="{ '--visitor-x': visitor.x, '--visitor-y': visitor.y }"
      class="game-board__visitor-ball">
+      <div class="game-board__visitor-balance">{{ visitor.balance }}</div>
     </div>
   </div>
 </template>
@@ -218,5 +219,19 @@ onUnmounted(() => {
     transform: translate(50%, 50%);
     transition: left 0.5s, top 0.5s;
   }
+  &__visitor-balance {
+    position: absolute;
+    top: -20px; 
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    pointer-events: none; 
+    z-index: 10; 
+  } 
 }
 </style>

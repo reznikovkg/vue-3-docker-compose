@@ -28,7 +28,8 @@ const availableObjects = ref([
     height: 2,
     timer: 5,
     visitors: 5,
-    cost: 100
+    cost: 100,
+    price_for_visitor: 10
   },
   {
     id: 2,
@@ -38,7 +39,8 @@ const availableObjects = ref([
      height: 2,
     timer: 4,
     visitors: 6,
-    cost: 150
+    cost: 150,
+    price_for_visitor: 8
   },
   {
     id: 3,
@@ -48,7 +50,8 @@ const availableObjects = ref([
     height: 1,
     timer: 3,
     visitors: 4,
-    cost: 80
+    cost: 80, 
+    price_for_visitor: 6
   },
   {
     id: 4,
@@ -58,7 +61,8 @@ const availableObjects = ref([
     height: 1,
     timer: 5,
     visitors: 2,
-    cost: 50
+    cost: 50,
+    price_for_visitor: 5
   },
   {
     id: 5,

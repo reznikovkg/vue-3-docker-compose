@@ -280,6 +280,7 @@ export default createStore({
           timer: state.selectedObject.timer,
           visitors: state.selectedObject.visitors,
           cost: state.selectedObject.cost,
+          price_for_visitor: state.selectedObject.price_for_visitor,
           buildingEntrance: {row: originRow + state.selectedObject.height - 1, col: originCol}
         };
 
@@ -435,6 +436,13 @@ export default createStore({
       });
 
       dispatch('enterToBuilding', visitorId);
+
+      const isNeartheEntrance = 
+      (Math.abs(visitor.y - state.entrance.row) === 1 && visitor.x === state.entrance.col) ||
+      (Math.abs(visitor.x - state.entrance.col) === 1 && visitor.y === state.entrance.row);
+      if (isNeartheEntrance) {
+        dispatch('moveVisitorToExit', visitor.id);
+      }
     },
 
     enterToBuilding: ({commit, state, dispatch, getters}, visitorId) => {
@@ -456,7 +464,7 @@ export default createStore({
             v.targetBuildingId === buildingEntryId && v.status === 'inBuilding').length
 
         if (visitorsInBuilding < building.visitors) {
-          const spendInBuilding = Math.floor(Math.random() * (20 - 10 + 1)) + 10;
+          const spendInBuilding = building.price_for_visitor;
           if (visitor.balance <= spendInBuilding)
           {
             dispatch('exitTheBuilding', visitor.id);
@@ -550,7 +558,7 @@ export default createStore({
             if (v.visitorTimer <= 0 )
             {
               dispatch('exitTheBuilding', v.id)
-              if (v.balance < 10) {
+              if (v.balance < 5) {
               dispatch('moveVisitorToExit', v.id);
               }
             }
