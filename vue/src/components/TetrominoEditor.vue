@@ -1,60 +1,60 @@
 <template>
   <div class="editor-wrapper">
     <div class="editor-container">
-      <h2 class="editor-title">Редактор фигур тетриса</h2>
+      <h2 class="editor__title">Редактор фигур тетриса</h2>
 
-      <div class="editor-content">
+      <div class="editor__content">
         <!-- Список фигур -->
-        <div class="figures-list">
+        <div class="figures">
           <h3>Все фигуры</h3>
-          <div class="figures-grid">
+          <div class="figures__grid">
             <div
               v-for="(tetromino, key) in allTetrominoes"
               :key="key"
-              :class="['figure-item', { active: selectedId === key }]"
+              :class="['figures__item', { 'figures__item--active': selectedId === key }]"
               @click="selectTetromino(key)"
             >
-              <div class="mini-preview">
+              <div class="figures__preview">
                 <div
                   v-for="(row, y) in tetromino.shape"
                   :key="y"
-                  class="mini-row"
+                  class="figures__row"
                 >
                   <div
                     v-for="(cell, x) in row"
                     :key="x"
-                    :class="['mini-cell', cell ? `color-${tetromino.color}` : '']"
+                    :class="['figures__cell', cell ? `figures__cell--color-${tetromino.color}` : '']"
                   ></div>
                 </div>
               </div>
-              <div class="figure-name">{{ tetromino.name }}</div>
-              <div class="figure-type">{{ tetromino.isBase ? 'Базовая' : 'Своя' }}</div>
+              <div class="figures__name">{{ tetromino.name }}</div>
+              <div class="figures__type">{{ tetromino.isBase ? 'Базовая' : 'Своя' }}</div>
             </div>
           </div>
 
-          <button class="btn btn-primary" @click="createNew">
+          <button class="btn btn--primary" @click="createNew">
             ➕ Создать новую фигуру
           </button>
         </div>
 
         <!-- Редактор выбранной фигуры -->
-        <div class="editor-panel" v-if="editingTetromino">
+        <div v-if="editingTetromino" class="editor-panel">
           <h3>Редактирование: {{ editingTetromino.name }}</h3>
 
-          <div class="form-group">
-            <label>Название фигуры:</label>
+          <div class="form">
+            <label class="form__label">Название фигуры:</label>
             <input
-              type="text"
               v-model="editingTetromino.name"
-              class="input"
+              type="text"
+              class="form__input"
               placeholder="Название"
             />
           </div>
 
-          <div class="form-group">
-            <label>Размер сетки:</label>
-            <div class="size-controls">
-              <select v-model.number="gridSize" class="select">
+          <div class="form">
+            <label class="form__label">Размер сетки:</label>
+            <div class="form__size-controls">
+              <select v-model.number="gridSize" class="form__select" @change="handleGridSizeChange">
                 <option :value="2">2×2</option>
                 <option :value="3">3×3</option>
                 <option :value="4">4×4</option>
@@ -62,33 +62,33 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Цвет фигуры:</label>
+          <div class="form">
+            <label class="form__label">Цвет фигуры:</label>
             <div class="color-picker">
               <div
                 v-for="color in availableColors"
                 :key="color.key"
-                :class="['color-option', { active: editingTetromino.color === color.key }]"
-                @click="editingTetromino.color = color.key"
+                :class="['color-picker__option', { 'color-picker__option--active': editingTetromino.color === color.key }]"
+                @click="selectColor(color.key)"
               >
-                <div :class="['color-preview', `color-${color.key}`]"></div>
-                <div class="color-name">{{ color.name }}</div>
+                <div :class="['color-picker__preview', `color-picker__preview--${color.key}`]"></div>
+                <div class="color-picker__name">{{ color.name }}</div>
               </div>
             </div>
           </div>
 
-          <div class="form-group">
-            <label>Форма фигуры (кликайте по клеткам):</label>
+          <div class="form">
+            <label class="form__label">Форма фигуры (кликайте по клеткам):</label>
             <div class="shape-editor">
               <div
                 v-for="(row, y) in editingTetromino.shape"
                 :key="y"
-                class="shape-row"
+                class="shape-editor__row"
               >
                 <div
                   v-for="(cell, x) in row"
                   :key="x"
-                  :class="['shape-cell', cell ? `color-${editingTetromino.color}` : '']"
+                  :class="['shape-editor__cell', cell ? `shape-editor__cell--color-${editingTetromino.color}` : '']"
                   @click="toggleCell(y, x)"
                 ></div>
               </div>
@@ -96,31 +96,31 @@
           </div>
 
           <div class="button-group">
-            <button class="btn btn-success" @click="saveTetromino">
+            <button class="btn btn--success" @click="saveTetromino">
               💾 Сохранить
             </button>
             <button
-              class="btn btn-secondary"
-              @click="saveAsNew"
               v-if="editingTetromino.isBase"
+              class="btn btn--secondary"
+              @click="saveAsNew"
             >
               📋 Сохранить как новую
             </button>
             <button
-              class="btn btn-danger"
-              @click="deleteTetromino"
               v-if="editingTetromino.isCustom"
+              class="btn btn--danger"
+              @click="deleteTetromino"
             >
               🗑️ Удалить
             </button>
-            <button class="btn btn-secondary" @click="cancel">
+            <button class="btn btn--secondary" @click="cancel">
               ❌ Отмена
             </button>
           </div>
         </div>
       </div>
 
-      <button class="btn btn-back" @click="$emit('close')">
+      <button class="btn btn--back" @click="$emit('close')">
         ← Вернуться к игре
       </button>
     </div>
@@ -128,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
@@ -149,6 +149,29 @@ const availableColors = [
   { key: 't', name: 'Фиолетовый' },
   { key: 'z', name: 'Пурпурный' },
 ]
+
+const handleGridSizeChange = () => {
+  if (!editingTetromino.value) return
+  
+  const oldShape = editingTetromino.value.shape
+  const newSize = gridSize.value
+  const newShape = Array(newSize).fill(0).map(() => Array(newSize).fill(0))
+  
+  // Копируем старые данные в новую сетку
+  for (let y = 0; y < Math.min(oldShape.length, newSize); y++) {
+    for (let x = 0; x < Math.min(oldShape[y].length, newSize); x++) {
+      newShape[y][x] = oldShape[y][x]
+    }
+  }
+  
+  editingTetromino.value.shape = newShape
+}
+
+const selectColor = (colorKey) => {
+  if (editingTetromino.value) {
+    editingTetromino.value.color = colorKey
+  }
+}
 
 const selectTetromino = (id) => {
   selectedId.value = id
@@ -183,23 +206,6 @@ const createNew = () => {
 const toggleCell = (y, x) => {
   editingTetromino.value.shape[y][x] = editingTetromino.value.shape[y][x] ? 0 : 1
 }
-
-// Следим за изменением размера сетки
-watch(gridSize, (newSize) => {
-  if (!editingTetromino.value) return
-  
-  const oldShape = editingTetromino.value.shape
-  const newShape = Array(newSize).fill(0).map(() => Array(newSize).fill(0))
-  
-  // Копируем старые данные в новую сетку
-  for (let y = 0; y < Math.min(oldShape.length, newSize); y++) {
-    for (let x = 0; x < Math.min(oldShape[y].length, newSize); x++) {
-      newShape[y][x] = oldShape[y][x]
-    }
-  }
-  
-  editingTetromino.value.shape = newShape
-})
 
 const saveTetromino = () => {
   if (!editingTetromino.value) return
@@ -291,14 +297,14 @@ const cancel = () => {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
-.editor-title {
+.editor__title {
   text-align: center;
   font-size: 2.5em;
   margin-bottom: 30px;
   color: #333;
 }
 
-.editor-content {
+.editor__content {
   display: grid;
   grid-template-columns: 400px 1fr;
   gap: 30px;
@@ -309,14 +315,14 @@ const cancel = () => {
   }
 }
 
-.figures-list {
+.figures {
   h3 {
     margin-bottom: 15px;
     color: #333;
   }
 }
 
-.figures-grid {
+.figures__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 10px;
@@ -328,7 +334,7 @@ const cancel = () => {
   border-radius: 10px;
 }
 
-.figure-item {
+.figures__item {
   background: white;
   border: 2px solid #ddd;
   border-radius: 8px;
@@ -342,44 +348,44 @@ const cancel = () => {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
 
-  &.active {
+  &--active {
     border-color: #ee5a24;
     background: #fff8f0;
   }
 }
 
-.mini-preview {
+.figures__preview {
   display: inline-block;
   margin-bottom: 5px;
 }
 
-.mini-row {
+.figures__row {
   display: flex;
   gap: 2px;
 }
 
-.mini-cell {
+.figures__cell {
   width: 15px;
   height: 15px;
   background: #eee;
   border-radius: 2px;
 
-  &.color-i { background: rgba(80, 227, 230, 1); }
-  &.color-j { background: rgba(36, 95, 223, 1); }
-  &.color-l { background: rgba(255, 174, 174, 1); }
-  &.color-o { background: rgba(223, 217, 36, 1); }
-  &.color-s { background: rgba(48, 211, 56, 1); }
-  &.color-t { background: rgba(132, 61, 198, 1); }
-  &.color-z { background: rgba(240, 80, 195, 1); }
+  &--color-i { background: rgba(80, 227, 230, 1); }
+  &--color-j { background: rgba(36, 95, 223, 1); }
+  &--color-l { background: rgba(255, 174, 174, 1); }
+  &--color-o { background: rgba(223, 217, 36, 1); }
+  &--color-s { background: rgba(48, 211, 56, 1); }
+  &--color-t { background: rgba(132, 61, 198, 1); }
+  &--color-z { background: rgba(240, 80, 195, 1); }
 }
 
-.figure-name {
+.figures__name {
   font-weight: bold;
   font-size: 0.9em;
   margin-bottom: 3px;
 }
 
-.figure-type {
+.figures__type {
   font-size: 0.75em;
   color: #666;
 }
@@ -396,18 +402,19 @@ const cancel = () => {
   }
 }
 
-.form-group {
+.form {
   margin-bottom: 20px;
-
-  label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #555;
-  }
 }
 
-.input, .select {
+.form__label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #555;
+}
+
+.form__input,
+.form__select {
   width: 100%;
   padding: 10px;
   border: 2px solid #ddd;
@@ -427,7 +434,7 @@ const cancel = () => {
   gap: 10px;
 }
 
-.color-option {
+.color-picker__option {
   border: 2px solid #ddd;
   border-radius: 8px;
   padding: 10px;
@@ -439,28 +446,28 @@ const cancel = () => {
     transform: scale(1.05);
   }
 
-  &.active {
+  &--active {
     border-color: #ee5a24;
     background: #fff8f0;
   }
 }
 
-.color-preview {
+.color-picker__preview {
   width: 100%;
   height: 40px;
   border-radius: 5px;
   margin-bottom: 5px;
 
-  &.color-i { background: rgba(80, 227, 230, 1); }
-  &.color-j { background: rgba(36, 95, 223, 1); }
-  &.color-l { background: rgba(255, 174, 174, 1); }
-  &.color-o { background: rgba(223, 217, 36, 1); }
-  &.color-s { background: rgba(48, 211, 56, 1); }
-  &.color-t { background: rgba(132, 61, 198, 1); }
-  &.color-z { background: rgba(240, 80, 195, 1); }
+  &--i { background: rgba(80, 227, 230, 1); }
+  &--j { background: rgba(36, 95, 223, 1); }
+  &--l { background: rgba(255, 174, 174, 1); }
+  &--o { background: rgba(223, 217, 36, 1); }
+  &--s { background: rgba(48, 211, 56, 1); }
+  &--t { background: rgba(132, 61, 198, 1); }
+  &--z { background: rgba(240, 80, 195, 1); }
 }
 
-.color-name {
+.color-picker__name {
   font-size: 0.85em;
   color: #555;
 }
@@ -473,12 +480,12 @@ const cancel = () => {
   border: 2px solid #ddd;
 }
 
-.shape-row {
+.shape-editor__row {
   display: flex;
   gap: 3px;
 }
 
-.shape-cell {
+.shape-editor__cell {
   width: 40px;
   height: 40px;
   background: white;
@@ -491,13 +498,13 @@ const cancel = () => {
     border-color: #ee5a24;
   }
 
-  &.color-i { background: rgba(80, 227, 230, 1); border-color: rgba(80, 227, 230, 0.5); }
-  &.color-j { background: rgba(36, 95, 223, 1); border-color: rgba(36, 95, 223, 0.5); }
-  &.color-l { background: rgba(255, 174, 174, 1); border-color: rgba(255, 174, 174, 0.5); }
-  &.color-o { background: rgba(223, 217, 36, 1); border-color: rgba(223, 217, 36, 0.5); }
-  &.color-s { background: rgba(48, 211, 56, 1); border-color: rgba(48, 211, 56, 0.5); }
-  &.color-t { background: rgba(132, 61, 198, 1); border-color: rgba(132, 61, 198, 0.5); }
-  &.color-z { background: rgba(240, 80, 195, 1); border-color: rgba(240, 80, 195, 0.5); }
+  &--color-i { background: rgba(80, 227, 230, 1); border-color: rgba(80, 227, 230, 0.5); }
+  &--color-j { background: rgba(36, 95, 223, 1); border-color: rgba(36, 95, 223, 0.5); }
+  &--color-l { background: rgba(255, 174, 174, 1); border-color: rgba(255, 174, 174, 0.5); }
+  &--color-o { background: rgba(223, 217, 36, 1); border-color: rgba(223, 217, 36, 0.5); }
+  &--color-s { background: rgba(48, 211, 56, 1); border-color: rgba(48, 211, 56, 0.5); }
+  &--color-t { background: rgba(132, 61, 198, 1); border-color: rgba(132, 61, 198, 0.5); }
+  &--color-z { background: rgba(240, 80, 195, 1); border-color: rgba(240, 80, 195, 0.5); }
 }
 
 .button-group {
@@ -523,39 +530,33 @@ const cancel = () => {
   &:active {
     transform: translateY(0);
   }
-}
 
-.btn-primary {
-  background: linear-gradient(145deg, #ee5a24, #ffff6b);
-  color: white;
-  width: 100%;
-}
+  &--primary {
+    background: linear-gradient(145deg, #ee5a24, #ffff6b);
+    color: white;
+    width: 100%;
+  }
 
-.btn-success {
-  background: #48c774;
-  color: white;
-}
+  &--success {
+    background: #48c774;
+    color: white;
+  }
 
-.btn-secondary {
-  background: #3273dc;
-  color: white;
-}
+  &--secondary {
+    background: #3273dc;
+    color: white;
+  }
 
-.btn-danger {
-  background: #f14668;
-  color: white;
-}
+  &--danger {
+    background: #f14668;
+    color: white;
+  }
 
-.btn-back {
-  background: #363636;
-  color: white;
-  width: 100%;
-  margin-top: 20px;
-}
-
-.size-controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  &--back {
+    background: #363636;
+    color: white;
+    width: 100%;
+    margin-top: 20px;
+  }
 }
 </style>
