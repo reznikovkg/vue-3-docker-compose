@@ -3,10 +3,10 @@
     <h1>ТЕТРИС</h1>
     <br />
     <div class="menu-buttons">
-      <button class="button" @click="$emit('start')">
+      <button class="button" @click="handleStart">
         🎮 Начать игру
       </button>
-      <button class="button button-secondary" @click="$emit('openEditor')">
+      <button class="button button--secondary" @click="handleOpenEditor">
         ✏️ Редактор фигур
       </button>
     </div>
@@ -14,7 +14,15 @@
 </template>
 
 <script setup>
-defineEmits(['start', 'openEditor'])
+const emit = defineEmits(['start', 'openEditor'])
+
+const handleStart = () => {
+  emit('start')
+}
+
+const handleOpenEditor = () => {
+  emit('openEditor')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -69,7 +77,7 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     transform: translateY(0);
   }
 
-  &.button-secondary {
+  &.button--secondary {
     background: $button-secondary-gradient;
     font-size: 1.5em;
   }
@@ -84,7 +92,7 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     font-size: 1.5em;
     padding: 1.2em 2.4em;
 
-    &.button-secondary {
+    &.button--secondary {
       font-size: 1.3em;
     }
   }
