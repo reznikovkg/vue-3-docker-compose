@@ -397,7 +397,7 @@ const getPathPoint = (tri1, tri2, point) => {
   }
 
   if (common.length !== 2) {
-    throw new Error("Треугольники не имеют ровно одного общего ребра.");
+    throw new Error("Triangles doesn't have contiguous edge");
   }
 
   const a = common[0];
