@@ -164,11 +164,26 @@ const craftItem = () => {
     return
   }
   store.dispatch('inventory/addToInventory', craftResult.value)
-  recipeSlots.value = Array.from({ length: 9 }, () => ({ id: '', count: 0 }))
+  recipeSlots.value = Array.from({ length: 6 }, () => ({ id: '', count: 0 }))
+  craftResult.value = null
+}
+
+const returnItemsToInventory = () => {
+  recipeSlots.value.forEach(slot => {
+    if (slot.id && slot.count > 0) {
+      store.dispatch('inventory/addToInventory', {
+        id: slot.id,
+        count: slot.count
+      })
+    }
+  })
+
+  recipeSlots.value = Array.from({ length: 6 }, () => ({ id: '', count: 0 }))
   craftResult.value = null
 }
 
 const closeCrafting = () => {
+  returnItemsToInventory()
   emit('close')
   if (props.onClose) {
     props.onClose()
