@@ -182,17 +182,17 @@ export default createStore({
         const pos = store.getters.getPlayerTransform
         const x = path[pointIndex].x - pos.x
         const y = path[pointIndex].y - pos.y
-        const magnitude = Math.sqrt(x * x + y * y) + 0.0001
-        const dx = x * speed / magnitude
-        const dy = y * speed / magnitude
+        const magnitude = Math.sqrt(x * x + y * y)
         if (magnitude < 10) {
           pointIndex += 1;
           if (pointIndex >= path.length) {
             clearInterval(intervalId)
             store.dispatch('interactWithItem', item)
-            return
           }
+          return
         }
+        const dx = x * speed / magnitude
+        const dy = y * speed / magnitude
         store.commit(MUTATIONS.MOVE_PLAYER, {x: dx, y: dy, intervalId: intervalId})
       }, 0.02)
     },
@@ -223,15 +223,15 @@ export default createStore({
         const y = path[pointIndex].y;
         const dx = x - pos.x
         const dy = y - pos.y
-        const dist = Math.sqrt(dx * dx + dy * dy) + 0.0001
+        const dist = Math.sqrt(dx * dx + dy * dy)
         if (dist < 5) {
           pointIndex += 1;
           if (pointIndex >= path.length) {
             clearInterval(intervalId)
             store.commit(MUTATIONS.UPDATE_PLAYER_STATE, {isRun: false})
             store.state.intervalId = null
-            return
           }
+          return
         }
         const stepX = (dx / dist) * speed
         const stepY = (dy / dist) * speed
