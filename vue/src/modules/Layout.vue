@@ -2,7 +2,7 @@
   <div class="layout">
     <Header v-if="$route.name !== ROUTES.MAIN" />
     <main class="layout__main">
-      <router-view />
+      <RouterView />
     </main>
   </div>
 </template>

@@ -1,117 +1,293 @@
 import { createStore } from 'vuex';
-import { ActionTree, MutationTree } from 'vuex/types';
+import { MutationTree, ActionTree } from 'vuex/types';
 
-import { MUTATIONS, TOWER_COSTS } from '@/store/constants';
-import { Mutations, State, Actions } from '@/store/types';
+import { LEVELS, MAPS } from '@/shared/constants';
+import { Point, ZoneModel } from '@/shared/models';
+import { createGameLoop } from '@/shared/utils';
+import { TOWER_BASE_COST } from '@/store/constants';
+import {
+  computePathPixel,
+  placeTowerIfAllowed,
+  deleteObjectAt as engineDeleteObjectAt,
+  spawnOneEnemy,
+  computeNextTick,
+  upgradeTowerAt,
+} from '@/store/gameEngine';
+import { Actions, Mutations, SpawnConfig, State } from '@/store/types';
+
+let gameLoop: ReturnType<typeof createGameLoop> | null = null;
 
 const initialState: State = {
-  money: 1500,
-  lives: 5,
-  towers: [],
-  selectedTowerType: null,
-  wave: 0,
+  money: 0,
   isPlaying: false,
-  path: [
-    { x: -15, y: 0 },
-    { x: -10, y: 0 },
-    { x: -10, y: 5 },
-    { x: 5, y: 5 },
-    { x: 5, y: -5 },
-    { x: 10, y: -5 },
-    { x: 15, y: -5 },
-  ],
-  enemies: [],
-};
+  gameOver: false,
+  gameResult: null,
 
+  currentLevelId: LEVELS[0]?.id ?? 1,
+
+  zoneSize: null,
+
+  buildZones: [],
+  path: [],
+  pathPixel: [],
+
+  towers: [],
+  enemies: [],
+  selectedEnemyIndex: null,
+
+  spawnConfig: null,
+  spawnState: { timer: 0, remaining: 0, index: 0 },
+};
 const mutations: MutationTree<State> & Mutations = {
-  [MUTATIONS.ADD_MONEY]: (state, value) => {
+  SET_MONEY(state, value) {
+    state.money = value;
+  },
+  ADD_MONEY(state, value) {
     state.money += value;
   },
-  [MUTATIONS.REDUCE_MONEY]: (state, value) => {
-    state.money -= value;
+  REDUCE_MONEY(state, value) {
+    state.money = Math.max(0, state.money - value);
   },
-  [MUTATIONS.REDUCE_LIVES]: (state) => {
-    state.lives = Math.max(0, state.lives - 1);
-  },
-  [MUTATIONS.SET_TOWER]: (state, newTower) => {
-    state.towers = [...state.towers, newTower];
-  },
-  [MUTATIONS.REMOVE_TOWER]: (state, id) => {
-    state.towers = state.towers.filter((tower) => tower.id !== id);
-  },
-  [MUTATIONS.SET_SELECTED_TOWER_TYPE]: (state, type) => {
-    state.selectedTowerType = type;
-  },
-  [MUTATIONS.SET_NEXT_WAVE]: (state) => {
-    state.wave += 1;
-  },
-  [MUTATIONS.SET_PLAYING_STATE]: (state, value) => {
+
+  SET_IS_PLAYING(state, value) {
     state.isPlaying = value;
   },
-  [MUTATIONS.RESET_GAME]: (state, newState) => {
-    state = newState;
+  SET_GAME_OVER(state, value) {
+    state.gameOver = value;
   },
-  [MUTATIONS.SET_ENEMY]: (state, newEnemy) => {
-    state.enemies = [...state.enemies, newEnemy];
+  SET_GAME_RESULT(state, value) {
+    state.gameResult = value;
   },
-  [MUTATIONS.REMOVE_ENEMY]: (state, id) => {
-    state.enemies = state.enemies.filter((enemy) => enemy.id !== id);
+  SET_LEVEL_ID(state, value) {
+    state.currentLevelId = value;
   },
-  [MUTATIONS.DAMAGE_ENEMY]: (state, { id, damage }) => {
-    state.enemies = state.enemies
-      .map((enemy) =>
-        enemy.id === id
-          ? { ...enemy, health: Math.max(0, enemy.health - damage) }
-          : enemy
-      )
-      .filter((enemy) => enemy.health > 0);
+  SET_ZONE_SIZE(state, value) {
+    state.zoneSize = value;
   },
-  [MUTATIONS.UPDATE_ENEMY_POSITION]: (state, { id, ...position }) => {
-    state.enemies = state.enemies.map((enemy) =>
-      enemy.id === id ? { ...enemy, position } : enemy
-    );
+
+  SET_BUILD_ZONES(state, zones) {
+    state.buildZones = zones;
+  },
+  SET_PATH(state, path) {
+    state.path = path;
+  },
+  SET_PATH_PIXEL(state, path) {
+    state.pathPixel = path;
+  },
+
+  SET_TOWERS(state, towers) {
+    state.towers = towers;
+  },
+  SET_ENEMIES(state, enemies) {
+    state.enemies = enemies;
+  },
+  SET_SELECTED_ENEMY_INDEX(state, index) {
+    state.selectedEnemyIndex = index;
+  },
+
+  SET_SPAWN_CONFIG(state, cfg) {
+    state.spawnConfig = cfg;
+  },
+  SET_SPAWN_STATE(state, spawnState) {
+    state.spawnState = spawnState;
+  },
+
+  RESET_LEVEL_STATE(state, payload) {
+    state.money = payload.money;
+    state.isPlaying = false;
+    state.gameOver = false;
+    state.gameResult = null;
+
+    state.buildZones = payload.buildZones;
+    state.path = payload.path;
+    state.pathPixel = [];
+
+    state.towers = [];
+    state.enemies = [];
+    state.selectedEnemyIndex = null;
+
+    state.spawnConfig = payload.spawnConfig;
+    const remaining =
+      payload.spawnConfig?.enemies?.length ?? payload.spawnConfig?.count ?? 0;
+    state.spawnState = { timer: 0, remaining, index: 0 };
   },
 };
 
 const actions: ActionTree<State, State> & Actions = {
-  reduceMoney({ commit, state }, value) {
-    if (state.money >= value) {
-      commit(MUTATIONS.REDUCE_MONEY, value);
+  initLevel({ state, commit, dispatch }, levelId) {
+    const targetId =
+      typeof levelId === 'number' ? levelId : state.currentLevelId;
+    const level =
+      MAPS.find((m) => m.id === targetId) ??
+      MAPS.find((m) => m.id === LEVELS[0]?.id)!;
+
+    commit('SET_LEVEL_ID', level.id);
+
+    const money = level.money ?? 0;
+    const spawnConfig: SpawnConfig = level.spawn as SpawnConfig;
+    const zones: ZoneModel[] = level.zones;
+    const path: Point[] = level.path;
+
+    commit('RESET_LEVEL_STATE', {
+      money,
+      spawnConfig,
+      buildZones: zones,
+      path,
+    });
+
+    if (state.zoneSize) {
+      dispatch('recomputePathPixel');
+    }
+  },
+
+  setZoneSize({ commit, dispatch }, size) {
+    commit('SET_ZONE_SIZE', size);
+    dispatch('recomputePathPixel');
+  },
+
+  recomputePathPixel({ state, commit }) {
+    const px = computePathPixel(state.zoneSize, state.path);
+    commit('SET_PATH_PIXEL', px);
+  },
+
+  placeTowerAt({ state, commit }, point) {
+    const upgraded = upgradeTowerAt({
+      towers: state.towers,
+      point,
+      money: state.money,
+      baseCost: TOWER_BASE_COST,
+    });
+    if (upgraded) {
+      if (upgraded.towers !== state.towers) {
+        commit('SET_TOWERS', upgraded.towers);
+      }
+      if (upgraded.money !== state.money) {
+        commit('SET_MONEY', upgraded.money);
+      }
       return true;
     }
-    return false;
-  },
-  placeTower({ commit, state }, tower) {
-    const cost = TOWER_COSTS[tower.type];
-    if (state.money < cost) return false;
 
-    const newTower = {
-      id: `tower-${Date.now()}`,
-      type: tower.type,
-      x: tower.x,
-      y: tower.y,
-    };
+    if (state.money < TOWER_BASE_COST) return false;
 
-    commit(MUTATIONS.SET_TOWER, newTower);
-    commit(MUTATIONS.REDUCE_MONEY, cost);
+    const towers = placeTowerIfAllowed({
+      towers: state.towers,
+      enemies: state.enemies,
+      buildZones: state.buildZones,
+      zoneSize: state.zoneSize,
+      point,
+      installCost: TOWER_BASE_COST,
+    });
+    if (!towers) return false;
+
+    commit('SET_TOWERS', towers);
+    commit('REDUCE_MONEY', TOWER_BASE_COST);
     return true;
   },
-  startWave({ commit }) {
-    commit(MUTATIONS.SET_NEXT_WAVE);
-    commit(MUTATIONS.SET_PLAYING_STATE, true);
-  },
-  spawnEnemy({ commit, state }) {
-    const { path } = state;
-    const startPoint = path[0];
-    const maxHealth = 100;
 
-    const newEnemy = {
-      id: `enemy-${Date.now()}`,
-      position: { x: startPoint.x, y: startPoint.y },
-      health: maxHealth,
-      maxHealth,
-    };
-    commit(MUTATIONS.SET_ENEMY, newEnemy);
+  deleteObjectAt({ state, commit }, point) {
+    const { towers, enemies, selectedEnemyIndex } = engineDeleteObjectAt({
+      towers: state.towers,
+      enemies: state.enemies,
+      selectedEnemyIndex: state.selectedEnemyIndex,
+      point,
+    });
+    if (towers !== state.towers) commit('SET_TOWERS', towers);
+    if (enemies !== state.enemies) commit('SET_ENEMIES', enemies);
+    if (selectedEnemyIndex !== state.selectedEnemyIndex) {
+      commit('SET_SELECTED_ENEMY_INDEX', selectedEnemyIndex);
+    }
+  },
+
+  spawnEnemy({ state, commit }) {
+    const next = spawnOneEnemy({
+      pathPixel: state.pathPixel,
+      spawnConfig: state.spawnConfig,
+      spawnState: state.spawnState,
+      enemies: state.enemies,
+    });
+    if (!next) return;
+    commit('SET_ENEMIES', next.enemies);
+    commit('SET_SPAWN_STATE', next.spawnState);
+  },
+
+  updateGame({ state, commit }, deltaTime) {
+    const next = computeNextTick(state, deltaTime);
+
+    if (next.gameResult) {
+      if (next.gameResult !== state.gameResult) {
+        commit('SET_GAME_RESULT', next.gameResult);
+      }
+      if (!state.gameOver) {
+        commit('SET_GAME_OVER', true);
+      }
+      if (gameLoop) {
+        gameLoop.stop();
+        gameLoop = null;
+      }
+      if (state.isPlaying) {
+        commit('SET_IS_PLAYING', false);
+      }
+      return;
+    }
+
+    if (next.towers !== state.towers) {
+      commit('SET_TOWERS', next.towers);
+    }
+    if (next.enemies !== state.enemies) {
+      commit('SET_ENEMIES', next.enemies);
+    }
+    if ((next.selectedEnemyIndex ?? null) !== state.selectedEnemyIndex) {
+      commit('SET_SELECTED_ENEMY_INDEX', next.selectedEnemyIndex);
+    }
+    if (next.money !== state.money) {
+      commit('SET_MONEY', next.money);
+    }
+    if (
+      next.spawnState.timer !== state.spawnState.timer ||
+      next.spawnState.remaining !== state.spawnState.remaining ||
+      next.spawnState.index !== state.spawnState.index
+    ) {
+      commit('SET_SPAWN_STATE', next.spawnState);
+    }
+    if (next.gameResult !== state.gameResult) {
+      commit('SET_GAME_RESULT', next.gameResult);
+    }
+
+    if (next.gameOver !== state.gameOver) {
+      commit('SET_GAME_OVER', next.gameOver);
+    }
+    if (next.gameOver) {
+      if (gameLoop) {
+        gameLoop.stop();
+        gameLoop = null;
+      }
+      if (state.isPlaying) {
+        commit('SET_IS_PLAYING', false);
+      }
+      return;
+    }
+  },
+
+  startGameLoop({ commit, dispatch }) {
+    if (gameLoop) {
+      gameLoop.stop();
+      gameLoop = null;
+    }
+    commit('SET_GAME_OVER', false);
+    commit('SET_GAME_RESULT', null);
+    gameLoop = createGameLoop((delta: number) => {
+      dispatch('updateGame', delta);
+    });
+    commit('SET_IS_PLAYING', true);
+    gameLoop.start();
+  },
+
+  stopGameLoop({ commit }) {
+    if (gameLoop) {
+      gameLoop.stop();
+      gameLoop = null;
+    }
+    commit('SET_IS_PLAYING', false);
   },
 };
 

@@ -1,5 +1,4 @@
-import { MOVEMENT_KEY_OFFSETS } from './constants';
-import { Arrows } from './types';
+import { EnemyType } from './types';
 
 export class ZoneModel {
   points: Point[];
@@ -38,8 +37,9 @@ export class TowerModel {
   kills: number;
   attackSpeed: number;
   cooldownRemaining: number;
+  totalInvested: number;
 
-  constructor(position: Point, level = 1) {
+  constructor(position: Point, level = 1, initialInvestment = 0) {
     this.position = position;
     this.level = level;
     this.damage = 10 * level;
@@ -48,6 +48,7 @@ export class TowerModel {
     this.kills = 0;
     this.attackSpeed = 5;
     this.cooldownRemaining = 0;
+    this.totalInvested = initialInvestment;
   }
 
   update(deltaTime: number): void {
@@ -66,12 +67,17 @@ export class TowerModel {
 
   increaseKills(): void {
     this.kills++;
+  }
 
-    if (this.kills % 3 === 0) {
-      this.level++;
-      this.damage = 10 * this.level;
-      this.radius = 100 * this.level;
-    }
+  upgrade(cost: number): void {
+    this.level++;
+    this.damage += 2.5 * this.level;
+    this.radius += 10 * this.level;
+    this.totalInvested += cost;
+  }
+
+  getSellValue(refundRate: number): number {
+    return Math.floor(this.totalInvested * refundRate);
   }
 }
 
@@ -79,21 +85,65 @@ export class EnemyModel {
   position: Point;
   speed: number;
   health: number;
-  selected: boolean;
+  maxHealth: number;
+  type: EnemyType;
 
-  constructor(position: Point, speed = 3) {
+  private path: Point[] = [];
+  private targetIndex = 1;
+  reward: number;
+
+  constructor(
+    position: Point,
+    type: EnemyType,
+    speed = 80,
+    health = 100,
+    reward = 10
+  ) {
     this.position = position;
     this.speed = speed;
-    this.health = 100;
-    this.selected = false;
+    this.health = health;
+    this.maxHealth = health;
+    this.reward = reward;
+    this.type = type;
   }
 
-  move(key: Arrows): void {
-    if (!this.selected) return;
+  setPath(points: Point[]) {
+    this.path = points ?? [];
+    this.targetIndex = this.path.length > 1 ? 1 : 0;
+  }
 
-    const offset = MOVEMENT_KEY_OFFSETS[key];
-    this.position.x += offset.dx * this.speed;
-    this.position.y += offset.dy * this.speed;
+  update(deltaTimeMs: number): boolean {
+    if (this.path.length <= 1 || this.targetIndex >= this.path.length) {
+      return this.path.length > 0 && this.targetIndex >= this.path.length;
+    }
+
+    let remaining = (this.speed * deltaTimeMs) / 1000;
+
+    while (remaining > 0 && this.targetIndex < this.path.length) {
+      const target = this.path[this.targetIndex];
+      const dx = target.x - this.position.x;
+      const dy = target.y - this.position.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist === 0) {
+        this.targetIndex++;
+        continue;
+      }
+
+      if (dist <= remaining) {
+        this.position.x = target.x;
+        this.position.y = target.y;
+        this.targetIndex++;
+        remaining -= dist;
+      } else {
+        const ratio = remaining / dist;
+        this.position.x += dx * ratio;
+        this.position.y += dy * ratio;
+        remaining = 0;
+      }
+    }
+
+    return this.targetIndex >= this.path.length;
   }
 
   takeDamage(amount: number): boolean {

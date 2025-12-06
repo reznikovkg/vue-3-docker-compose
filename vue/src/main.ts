@@ -1,4 +1,3 @@
-import PrimeVue from 'primevue/config';
 import { createApp, type App as VueApp, type Plugin } from 'vue';
 
 import App from './App.vue';
@@ -14,9 +13,4 @@ const routes: Plugin = {
   },
 };
 
-createApp(App)
-  .use(router)
-  .use(routes)
-  .use(store)
-  .use(PrimeVue)
-  .mount('#project');
+createApp(App).use(router).use(routes).use(store).mount('#project');

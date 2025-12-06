@@ -1,36 +1,58 @@
 import { ActionContext } from 'vuex/types';
 
-export type TowerType = 'basic' | 'sniper' | 'heavy';
+import { Point, ZoneModel, TowerModel, EnemyModel } from '@/shared/models';
+import { EnemyType } from '@/shared/types';
+
+export interface ZoneSize {
+  width: number;
+  height: number;
+}
+
+export interface SpawnEnemyItem {
+  health?: number;
+  speed?: number;
+  reward?: number;
+  type?: EnemyType;
+}
+
+export interface SpawnConfig {
+  interval: number;
+  count?: number;
+  speed: number;
+  health: number;
+  reward: number;
+  type: EnemyType;
+  enemies?: SpawnEnemyItem[];
+}
+
+export interface SpawnState {
+  timer: number;
+  remaining: number;
+  index: number;
+}
+
+export type GameResult = 'win' | 'lose';
 
 export interface State {
   money: number;
-  lives: number;
-  towers: Tower[];
-  selectedTowerType: TowerType | null;
-  wave: number;
   isPlaying: boolean;
-  path: PathPoint[];
-  enemies: Enemy[];
-}
+  gameOver: boolean;
+  gameResult: GameResult | null;
 
-export interface PathPoint {
-  x: number;
-  y: number;
-}
+  currentLevelId: number;
 
-export interface Tower {
-  id: string;
-  type: TowerType;
-  x: number;
-  y: number;
-  lastShot?: number;
-}
+  zoneSize: ZoneSize | null;
 
-export interface Enemy {
-  id: string;
-  position: { x: number; y: number };
-  health: number;
-  maxHealth: number;
+  buildZones: ZoneModel[];
+  path: Point[];
+  pathPixel: Point[];
+
+  towers: TowerModel[];
+  enemies: EnemyModel[];
+  selectedEnemyIndex: number | null;
+
+  spawnConfig: SpawnConfig | null;
+  spawnState: SpawnState;
 }
 
 export type AugmentedActionContext = {
@@ -47,24 +69,43 @@ type Action<P = undefined, R = void> = (
 ) => R;
 
 export interface Mutations {
+  SET_MONEY: Mutation<number>;
   ADD_MONEY: Mutation<number>;
   REDUCE_MONEY: Mutation<number>;
-  REDUCE_LIVES: Mutation;
-  SET_TOWER: Mutation<Tower>;
-  REMOVE_TOWER: Mutation<string>;
-  SET_SELECTED_TOWER_TYPE: Mutation<TowerType | null>;
-  SET_NEXT_WAVE: Mutation;
-  SET_PLAYING_STATE: Mutation<boolean>;
-  RESET_GAME: Mutation<State>;
-  SET_ENEMY: Mutation<Enemy>;
-  REMOVE_ENEMY: Mutation<string>;
-  DAMAGE_ENEMY: Mutation<{ id: string; damage: number }>;
-  UPDATE_ENEMY_POSITION: Mutation<{ id: string; x: number; y: number }>;
+
+  SET_IS_PLAYING: Mutation<boolean>;
+  SET_GAME_OVER: Mutation<boolean>;
+  SET_GAME_RESULT: Mutation<GameResult | null>;
+  SET_LEVEL_ID: Mutation<number>;
+  SET_ZONE_SIZE: Mutation<ZoneSize | null>;
+
+  SET_BUILD_ZONES: Mutation<ZoneModel[]>;
+  SET_PATH: Mutation<Point[]>;
+  SET_PATH_PIXEL: Mutation<Point[]>;
+
+  SET_TOWERS: Mutation<TowerModel[]>;
+  SET_ENEMIES: Mutation<EnemyModel[]>;
+  SET_SELECTED_ENEMY_INDEX: Mutation<number | null>;
+
+  SET_SPAWN_CONFIG: Mutation<SpawnConfig | null>;
+  SET_SPAWN_STATE: Mutation<SpawnState>;
+
+  RESET_LEVEL_STATE: Mutation<{
+    money: number;
+    spawnConfig: SpawnConfig;
+    buildZones: ZoneModel[];
+    path: Point[];
+  }>;
 }
 
 export interface Actions {
-  reduceMoney: Action<number, boolean>;
-  placeTower: Action<{ x: number; y: number; type: TowerType }, boolean>;
-  startWave: Action;
-  spawnEnemy: Action;
+  initLevel: Action<number | undefined, void>;
+  setZoneSize: Action<ZoneSize, void>;
+  recomputePathPixel: Action<void, void>;
+  placeTowerAt: Action<Point, boolean>;
+  deleteObjectAt: Action<Point, void>;
+  spawnEnemy: Action<void, void>;
+  updateGame: Action<number, void>;
+  startGameLoop: Action<void, void>;
+  stopGameLoop: Action<void, void>;
 }
