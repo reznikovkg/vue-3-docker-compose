@@ -40,9 +40,9 @@ const pointInPolygon = (point) => {
   const y = point.y
   const n = polygon.length
 
-  for (let i = 0, j = n - 1; i < n; j = i++) {
+  for (let i = 0; i < n; i++) {
     const pi = polygon[i]
-    const pj = polygon[j]
+    const pj = polygon[(i + 1) % n]
 
     if (pointOnSegment(point, pi, pj)) {
       return true
@@ -221,15 +221,17 @@ const findClosestPoint = (point) => {
   }
 
   const edges = []
+  const n = data.polygon.length
 
-  for(let i = 1; i < data.polygon.length; i++) {
+  for (let i = 0; i < n; i++) {
+    const i2 = (i + 1) % n
     if (segmentsProperlyIntersect(
-      data.polygon[i - 1],
       data.polygon[i],
+      data.polygon[i2],
       { x: point.x, y: 0},
       { x: point.x, y: 600 })
     ) {
-      edges.push({ a: data.polygon[i - 1], b: data.polygon[i] })
+      edges.push({ a: data.polygon[i], b: data.polygon[i2] })
     }
   }
 
@@ -237,7 +239,7 @@ const findClosestPoint = (point) => {
   let index = 0
 
   if (edges.length === 0) {
-    for (let i = 0; i < data.polygon.length; i++) {
+    for (let i = 0; i < n; i++) {
       const distance = dist(data.polygon[i], point)
       if (distance < minDist) {
         minDist = distance
@@ -245,13 +247,13 @@ const findClosestPoint = (point) => {
       }
     }
     if (
-        dist(data.polygon[index - 1], point) > dist(data.polygon[(index + 1) % data.polygon.length], point)
+        dist(data.polygon[index - 1], point) > dist(data.polygon[(index + 1) % n], point)
     ) {
       return closestPointOnSegment(
           point,
           {
             a: data.polygon[index],
-            b: data.polygon[(index + 1) % data.polygon.length]
+            b: data.polygon[(index + 1) % n]
           })
     }
     return closestPointOnSegment(

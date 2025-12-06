@@ -178,7 +178,6 @@ export default createStore({
           store.getters.getPlayerTransform,
           {x: item.x, y: item.y}
       )
-      console.log(path)
       const intervalId = setInterval(() => {
         const pos = store.getters.getPlayerTransform
         const x = path[pointIndex].x - pos.x
