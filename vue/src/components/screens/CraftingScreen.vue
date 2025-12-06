@@ -177,7 +177,6 @@ const returnItemsToInventory = () => {
       })
     }
   })
-
   recipeSlots.value = Array.from({ length: 6 }, () => ({ id: '', count: 0 }))
   craftResult.value = null
 }
