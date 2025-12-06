@@ -105,29 +105,9 @@ const onSceneClick = (event) => {
   hideTooltip()
   store.dispatch("movePlayerToPoint", { x, y })
 }
-
-const emit = defineEmits(['startMinigame'])
 const select = (item) => {
   hideTooltip()
-  if (item.collectible) {
-    new Promise((resolve) => {
-      emit('startMinigame', {
-        difficulty: item.difficulty || 1,
-        onSuccess: () => resolve(true),
-        onClose: () => resolve(false)
-      })
-    })
-    .then((success) => {
-      if (success) {
-        store.dispatch('selectObject', item)
-      }
-    })
-    .catch ((error) => {
-      console.error('Error in minigame:', error)
-    })
-  } else {
-    store.dispatch('selectObject', item)
-  }
+  store.dispatch('selectObject', item)
 }
 </script>
 

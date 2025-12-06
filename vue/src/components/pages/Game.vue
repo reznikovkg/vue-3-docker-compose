@@ -12,7 +12,6 @@
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
-        @startMinigame="(data) => openMinigame(data)"
       />
       <MiniGameScreen
         v-if="isMinigameActive" 
@@ -45,7 +44,6 @@ const playerTransform = computed(() => store.getters.getPlayerTransform)
 const gameState = computed(() => store.getters.getGameState)
 const isMinigameActive = computed(() => store.getters.isMinigameActive)
 const minigame = computed(() => store.getters.getMinigameData)
-const openMinigame = (game) => { store.commit("START_MINIGAME", game)}
 const isCraftingOpen = ref(false)
 const closeCrafting = () => {isCraftingOpen.value = false}
 

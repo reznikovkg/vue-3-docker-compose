@@ -187,7 +187,24 @@ export default createStore({
           pointIndex += 1;
           if (pointIndex >= path.length) {
             clearInterval(intervalId)
-            store.dispatch('interactWithItem', item)
+            store.commit(MUTATIONS.STOP_PLAYER);
+            if (item.collectible) {
+              new Promise((resolve) => {
+                store.commit("START_MINIGAME", {
+                  difficulty: item.difficulty || 1,
+                  onSuccess: () => resolve(true),
+                  onClose: () => resolve(false)
+                })
+              }).then((success) => {
+                if (success) {
+                  store.dispatch('interactWithItem', item)
+                }
+              }).catch ((error) => {
+                console.error('Error in minigame:', error)
+              })
+            } else {
+              store.dispatch('interactWithItem', item)
+            }
           }
           return
         }
