@@ -18,8 +18,8 @@ export const DictophoneModule = {
     getRecordings: (state) => state.recordings,
     getCurrentAudioUrl: (state) => state.currentAudioUrl,
     getRecordingsCount: (state) => state.recordings.length,
-    getHasRecordings: (state) => state.recordings.length > 0
-  },
+    getHasRecordings: (state) => state.recordings.length > 0,
+   },
 
   mutations: {
     SET_RECORDING(state, isRecording) {
@@ -200,7 +200,7 @@ export const DictophoneModule = {
     },
 
  updateRecording({ commit, state }, { id, url, name }) {
-  const item = state.recordings.find(rec => rec.id === id)    
+  const item = state.recordings.find(rec => rec.id === id)
   const index = state.recordings.findIndex(rec => rec.id === id)
   URL.revokeObjectURL(state.recordings[index].url)
   commit('UPDATE_RECORDING', {
