@@ -1,3 +1,5 @@
+const eps = 0.001
+
 const data = {
   polygon: []
 }
@@ -13,7 +15,7 @@ const dist = (a, b) => {
 }
 
 const equalPoints = (p1, p2) => {
-  return Math.abs(p1.x - p2.x) < 0.001 && Math.abs(p1.y - p2.y) < 0.001
+  return Math.abs(p1.x - p2.x) < eps && Math.abs(p1.y - p2.y) < eps
 }
 
 
@@ -21,7 +23,7 @@ const orientation = (a, b, c) => {
   return cross(b.x - a.x, b.y - a.y, c.x - a.x, c.y - a.y)
 }
 
-const pointOnSegment = (p, a, b, eps = 1e-9) => {
+const pointOnSegment = (p, a, b) => {
   const cr = orientation(a, b, p)
   if (Math.abs(cr) > eps) {
     return false
@@ -80,7 +82,7 @@ const segmentsProperlyIntersect = (p1, p2, q1, q2) => {
   const o3 = orientation(q1, q2, p1)
   const o4 = orientation(q1, q2, p2)
 
-  return o1 * o2 < 0 && o3 * o4 < 0
+  return o1 * o2 < -eps && o3 * o4 < -eps
 }
 
 const segmentsProperlyIntersectWithOn = (p1, p2, q1, q2) => {
@@ -89,7 +91,7 @@ const segmentsProperlyIntersectWithOn = (p1, p2, q1, q2) => {
   const o3 = orientation(q1, q2, p1)
   const o4 = orientation(q1, q2, p2)
 
-  return o1 * o2 <= 0 && o3 * o4 <= 0
+  return o1 * o2 < eps && o3 * o4 < eps
 }
 
 const segmentInsidePolygon = (p, q) => {
