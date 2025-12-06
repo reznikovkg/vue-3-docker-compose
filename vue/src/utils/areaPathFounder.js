@@ -80,6 +80,15 @@ const segmentsProperlyIntersect = (p1, p2, q1, q2) => {
   const o3 = orientation(q1, q2, p1)
   const o4 = orientation(q1, q2, p2)
 
+  return o1 * o2 < 0 && o3 * o4 < 0
+}
+
+const segmentsProperlyIntersectWithOn = (p1, p2, q1, q2) => {
+  const o1 = orientation(p1, p2, q1)
+  const o2 = orientation(p1, p2, q2)
+  const o3 = orientation(q1, q2, p1)
+  const o4 = orientation(q1, q2, p2)
+
   return o1 * o2 <= 0 && o3 * o4 <= 0
 }
 
@@ -162,10 +171,22 @@ const dijkstra = (adj, start, target) => {
 }
 
 const buildVisibilityGraph = (A, B) => {
+  const points = []
+  const len = data.polygon.length
+  for(let i = 0; i < len; i++) {
+    const a = data.polygon[i]
+    const b = data.polygon[(i + 1) % len]
+    const c = data.polygon[(i - 1 + len) % len]
+    if (orientation(a, b, c) < 0) {
+      points.push(data.polygon[i])
+    }
+  }
+
+
   const nodes = [
     makePoint(A),
     makePoint(B),
-    ...data.polygon.map(makePoint)
+    ...points.map(makePoint)
   ]
   const n = nodes.length
   const adj = Array.from({ length: n }, () => [])
@@ -225,7 +246,7 @@ const findClosestPoint = (point) => {
 
   for (let i = 0; i < n; i++) {
     const i2 = (i + 1) % n
-    if (segmentsProperlyIntersect(
+    if (segmentsProperlyIntersectWithOn(
       data.polygon[i],
       data.polygon[i2],
       { x: point.x, y: 0},
