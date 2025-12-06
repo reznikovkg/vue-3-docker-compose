@@ -143,9 +143,9 @@ const clearAllRecordings = () => store.dispatch('dictophone/clearAllRecordings')
 const saveRecord = () => store.dispatch('dictophone/saveRecording')
 const discardRecording = () => store.dispatch('dictophone/discardRecording')
 const handleEditRecording = (id: string) => {
-  router.push({ 
-    name: 'dictophone-editor', 
-    params: { id: id } 
+  router.push({
+    name: 'DICTOPHONE_EDITOR',
+    params: { id: id }
   })
 }
 
