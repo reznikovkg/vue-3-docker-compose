@@ -173,22 +173,10 @@ const dijkstra = (adj, start, target) => {
 }
 
 const buildVisibilityGraph = (A, B) => {
-  const points = []
-  const len = data.polygon.length
-  for(let i = 0; i < len; i++) {
-    const a = data.polygon[i]
-    const b = data.polygon[(i + 1) % len]
-    const c = data.polygon[(i - 1 + len) % len]
-    if (orientation(a, b, c) < 0) {
-      points.push(data.polygon[i])
-    }
-  }
-
-
   const nodes = [
     makePoint(A),
     makePoint(B),
-    ...points.map(makePoint)
+    ...data.polygon.map(makePoint)
   ]
   const n = nodes.length
   const adj = Array.from({ length: n }, () => [])
