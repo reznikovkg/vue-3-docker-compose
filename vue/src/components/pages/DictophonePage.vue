@@ -143,7 +143,10 @@ const clearAllRecordings = () => store.dispatch('dictophone/clearAllRecordings')
 const saveRecord = () => store.dispatch('dictophone/saveRecording')
 const discardRecording = () => store.dispatch('dictophone/discardRecording')
 const handleEditRecording = (id: string) => {
-  router.push(`/dictophone-editor/${id}`)
+  router.push({ 
+    name: 'dictophone-editor', 
+    params: { id: id } 
+  })
 }
 
 const handleStartRecording = () => startRecording()
