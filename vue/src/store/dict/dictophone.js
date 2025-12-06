@@ -199,21 +199,19 @@ export const DictophoneModule = {
       }
     },
 
-    updateRecording({ commit, state }, { id, url, name }) {
-      const index = state.recordings.findIndex(rec => rec.id === id)
-      if (index !== -1) {
-        URL.revokeObjectURL(state.recordings[index].url)
-
-        commit('UPDATE_RECORDING', {
-          index,
-          recording: {
-            ...state.recordings[index],
-            url,
-            name: name || state.recordings[index].name,
-            date: new Date().toLocaleString('ru-RU')
-          }
-        })
-      }
+ updateRecording({ commit, state }, { id, url, name }) {
+  const item = state.recordings.find(rec => rec.id === id)    
+  const index = state.recordings.findIndex(rec => rec.id === id)
+  URL.revokeObjectURL(state.recordings[index].url)
+  commit('UPDATE_RECORDING', {
+    index,
+    recording: {
+      ...state.recordings[index],
+      url,
+      name: name || state.recordings[index].name,
+      date: new Date().toLocaleString('ru-RU')
+        }
+      })
     }
   }
 }
