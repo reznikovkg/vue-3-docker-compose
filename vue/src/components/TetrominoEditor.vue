@@ -33,7 +33,7 @@
           </div>
 
           <button class="editor__btn editor__btn--primary" @click="() => createNew()">
-            ➕ Создать новую фигуру
+           Создать новую фигуру
           </button>
         </div>
 
@@ -97,31 +97,31 @@
 
           <div class="editor__button-group">
             <button class="editor__btn editor__btn--success" @click="() => saveTetromino()">
-              💾 Сохранить
+              Сохранить
             </button>
             <button
               v-if="editingTetromino.isBase"
               class="editor__btn editor__btn--secondary"
               @click="() => saveAsNew()"
             >
-              📋 Сохранить как новую
+              Сохранить как новую
             </button>
             <button
               v-if="editingTetromino.isCustom"
               class="editor__btn editor__btn--danger"
               @click="() => deleteTetromino()"
             >
-              🗑️ Удалить
+              Удалить
             </button>
             <button class="editor__btn editor__btn--secondary"  @click="() => cancel()">
-              ❌ Отмена
+              Отмена
             </button>
           </div>
         </div>
       </div>
 
       <button class="editor__btn editor__btn--back" @click="() => handleClose()">
-        ← Вернуться к игре
+        Вернуться к игре
       </button>
     </div>
   </div>
@@ -239,7 +239,7 @@ const saveTetromino = () => {
     })
   }
   
-  alert('✅ Фигура сохранена!')
+  alert('Фигура сохранена!')
   selectedId.value = null
   editingTetromino.value = null
 }
@@ -256,7 +256,7 @@ const saveAsNew = () => {
   }
   
   store.dispatch('tetrominoes/addCustomTetromino', newTetromino)
-  alert('✅ Создана новая фигура!')
+  alert('Создана новая фигура!')
   
   selectedId.value = null
   editingTetromino.value = null
@@ -269,7 +269,7 @@ const deleteTetromino = () => {
     store.dispatch('tetrominoes/deleteTetromino', selectedId.value)
     selectedId.value = null
     editingTetromino.value = null
-    alert('🗑️ Фигура удалена!')
+    alert(' Фигура удалена!')
   }
 }
 

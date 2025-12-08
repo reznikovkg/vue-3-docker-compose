@@ -4,10 +4,10 @@
     <br />
     <div class="menu-buttons">
       <button class="button" @click="() => handleStart()">
-        🎮 Начать игру
+       Начать игру
       </button>
       <button class="button button--secondary" @click="() => handleOpenEditor()">
-        ✏️ Редактор фигур
+       Редактор фигур
       </button>
     </div>
   </div>
