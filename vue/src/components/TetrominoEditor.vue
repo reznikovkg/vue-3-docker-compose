@@ -12,7 +12,7 @@
               v-for="(tetromino, key) in allTetrominoes"
               :key="key"
               :class="['editor__figure', { 'editor__figure--active': selectedId === key }]"
-              @click="selectTetromino(key)"
+              @click="() => selectTetromino(key)"
             >
               <div class="editor__figure-preview">
                 <div
@@ -32,7 +32,7 @@
             </div>
           </div>
 
-          <button class="editor__btn editor__btn--primary" @click="createNew">
+          <button class="editor__btn editor__btn--primary" @click="() => createNew()">
             ➕ Создать новую фигуру
           </button>
         </div>
@@ -54,7 +54,7 @@
           <div class="editor__form">
             <label class="editor__label">Размер сетки:</label>
             <div class="editor__size-controls">
-              <select v-model.number="gridSize" class="editor__select" @change="handleGridSizeChange">
+              <select v-model.number="gridSize" class="editor__select" @change="() => handleGridSizeChange()">
                 <option :value="2">2×2</option>
                 <option :value="3">3×3</option>
                 <option :value="4">4×4</option>
@@ -69,7 +69,7 @@
                 v-for="color in availableColors"
                 :key="color.key"
                 :class="['editor__color-option', { 'editor__color-option--active': editingTetromino.color === color.key }]"
-                @click="selectColor(color.key)"
+                @click="() => selectColor(color.key)"
               >
                 <div :class="['editor__color-preview', `editor__color-preview--${color.key}`]"></div>
                 <div class="editor__color-name">{{ color.name }}</div>
@@ -89,38 +89,38 @@
                   v-for="(cell, x) in row"
                   :key="x"
                   :class="['editor__shape-cell', cell ? `editor__shape-cell--color-${editingTetromino.color}` : '']"
-                  @click="toggleCell(y, x)"
+                  @click="() => toggleCell(y, x)"
                 ></div>
               </div>
             </div>
           </div>
 
           <div class="editor__button-group">
-            <button class="editor__btn editor__btn--success" @click="saveTetromino">
+            <button class="editor__btn editor__btn--success" @click="() => saveTetromino()">
               💾 Сохранить
             </button>
             <button
               v-if="editingTetromino.isBase"
               class="editor__btn editor__btn--secondary"
-              @click="saveAsNew"
+              @click="() => saveAsNew()"
             >
               📋 Сохранить как новую
             </button>
             <button
               v-if="editingTetromino.isCustom"
               class="editor__btn editor__btn--danger"
-              @click="deleteTetromino"
+              @click="() => deleteTetromino()"
             >
               🗑️ Удалить
             </button>
-            <button class="editor__btn editor__btn--secondary" @click="cancel">
+            <button class="editor__btn editor__btn--secondary"  @click="() => cancel()">
               ❌ Отмена
             </button>
           </div>
         </div>
       </div>
 
-      <button class="editor__btn editor__btn--back" @click="handleClose">
+      <button class="editor__btn editor__btn--back" @click="() => handleClose()">
         ← Вернуться к игре
       </button>
     </div>

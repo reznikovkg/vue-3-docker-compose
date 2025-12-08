@@ -3,10 +3,10 @@
     <h1>ТЕТРИС</h1>
     <br />
     <div class="menu-buttons">
-      <button class="button" @click="handleStart">
+      <button class="button" @click="() => handleStart()">
         🎮 Начать игру
       </button>
-      <button class="button button--secondary" @click="handleOpenEditor">
+      <button class="button button--secondary" @click="() => handleOpenEditor()">
         ✏️ Редактор фигур
       </button>
     </div>
