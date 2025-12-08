@@ -1,6 +1,14 @@
 <template>
   <div class="game">
-    <Menu v-if="gameOver" @start="startGame" />
+    <TetrominoEditor 
+      v-if="showEditor" 
+      @close="() => closeEditor()" 
+    />
+    <Menu 
+      v-else-if="gameOver" 
+      @start="() => startGame()" 
+      @openEditor="() => openEditor()"
+    />
     <Tetris 
       v-else 
       :rows="rows" 
@@ -10,10 +18,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import Menu from './Menu.vue'
 import Tetris from './Tetris.vue'
+import TetrominoEditor from './TetrominoEditor.vue'
 
 const props = defineProps({
   rows: { type: Number, default: 20 },
@@ -21,11 +30,24 @@ const props = defineProps({
 })
 
 const store = useStore()
+const showEditor = ref(false)
 
 const gameOver = computed(() => store.getters['game/gameOver'])
 
 const startGame = () => {
   store.dispatch('game/startGame')
-  // console.log('Game started')
 }
+
+const openEditor = () => {
+  showEditor.value = true
+}
+
+const closeEditor = () => {
+  showEditor.value = false
+}
+
+// Загружаем сохраненные фигуры при монтировании
+onMounted(() => {
+  store.dispatch('tetrominoes/loadFromStorage')
+})
 </script>

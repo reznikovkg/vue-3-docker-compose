@@ -2,18 +2,32 @@
   <div class="menu">
     <h1>ТЕТРИС</h1>
     <br />
-    <button class="button" @click="$emit('start')">
-      Начать игру
-    </button>
+    <div class="menu-buttons">
+      <button class="button" @click="() => handleStart()">
+       Начать игру
+      </button>
+      <button class="button button--secondary" @click="() => handleOpenEditor()">
+       Редактор фигур
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-defineEmits(['start'])
+const emit = defineEmits(['start', 'openEditor'])
+
+const handleStart = () => {
+  emit('start')
+}
+
+const handleOpenEditor = () => {
+  emit('openEditor')
+}
 </script>
 
 <style lang="scss" scoped>
 $button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
+$button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
 
 .menu {
   display: flex;
@@ -33,9 +47,17 @@ $button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
   }
 }
 
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 350px;
+}
+
 .button {
   padding: 1.5em 3em;
-  font-size: 2em;
+  font-size: 1.8em;
   border-radius: 20px;
   border: none;
   box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 60px;
@@ -44,7 +66,7 @@ $button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
   color: white;
   font-weight: bold;
   transition: all 0.3s ease;
-  min-width: 280px;
+  width: 100%;
 
   &:hover {
     transform: translateY(-2px);
@@ -54,6 +76,11 @@ $button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
   &:active {
     transform: translateY(0);
   }
+
+  &.button--secondary {
+    background: $button-secondary-gradient;
+    font-size: 1.5em;
+  }
 }
 
 @media (max-width: 768px) {
@@ -62,9 +89,12 @@ $button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
   }
 
   .button {
-    font-size: 1.7em;
+    font-size: 1.5em;
     padding: 1.2em 2.4em;
-    min-width: 240px;
+
+    &.button--secondary {
+      font-size: 1.3em;
+    }
   }
 }
 
@@ -79,9 +109,12 @@ $button-gradient: linear-gradient(145deg, #ffff6b, #ee5a24);
   }
 
   .button {
-    font-size: 1.4em;
+    font-size: 1.2em;
     padding: 1em 2em;
-    min-width: 200px;
+
+    &.button-secondary {
+      font-size: 1.1em;
+    }
   }
 }
 </style>

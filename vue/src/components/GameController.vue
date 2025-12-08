@@ -50,7 +50,9 @@ const onKeyUp = (event) => {
 const onKeyDown = (event) => {
   const action = actionForKey(event.code)
 
-  if (!action) return
+  if (!action) {
+    return
+  }
 
   if (action === Action.Pause) {
     store.dispatch('game/togglePause')
