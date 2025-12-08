@@ -198,15 +198,15 @@ export default {
       saveToStorageSync(data)
     },
 
-    async loadFromStorage({ commit }) {
-      try {
-        const data = await loadFromStorageSync()
-        if (data) {
-          commit(MUTATIONS.LOAD_FROM_STORAGE, data)
-        }
-      } catch (error) {
-        console.log(' Не удалось загрузить фигуры:', error.message)
-      }
+    loadFromStorage({ commit }) {
+      return loadFromStorageSync()
+        .then(data => {
+          if (data) {
+            commit(MUTATIONS.LOAD_FROM_STORAGE, data)
+          }
+        }).catch(error => {
+          console.log(' Не удалось загрузить фигуры:', error.message)
+        })
     },
 
     addCustomTetromino({ commit, dispatch }, tetromino) {
