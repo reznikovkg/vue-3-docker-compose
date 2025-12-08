@@ -33,7 +33,7 @@
           </div>
 
           <button class="editor__btn editor__btn--primary" @click="() => createNew()">
-           Создать новую фигуру
+            Создать новую фигуру
           </button>
         </div>
 
@@ -155,7 +155,9 @@ const availableColors = [
 ]
 
 const handleGridSizeChange = () => {
-  if (!editingTetromino.value) return
+  if (!editingTetromino.value) {
+    return
+  }
   
   const oldShape = editingTetromino.value.shape
   const newSize = gridSize.value
@@ -212,7 +214,9 @@ const toggleCell = (y, x) => {
 }
 
 const saveTetromino = () => {
-  if (!editingTetromino.value) return
+  if (!editingTetromino.value) {
+    return
+  }
   
   // Проверяем, что есть хотя бы одна заполненная клетка
   const hasFilledCell = editingTetromino.value.shape.some(row => 
@@ -245,7 +249,9 @@ const saveTetromino = () => {
 }
 
 const saveAsNew = () => {
-  if (!editingTetromino.value) return
+  if (!editingTetromino.value) {
+    return
+  }
   
   const newTetromino = {
     ...editingTetromino.value,
@@ -263,7 +269,9 @@ const saveAsNew = () => {
 }
 
 const deleteTetromino = () => {
-  if (!editingTetromino.value || !editingTetromino.value.isCustom) return
+  if (!editingTetromino.value || !editingTetromino.value.isCustom) {
+    return
+  }
   
   if (confirm('Вы уверены, что хотите удалить эту фигуру?')) {
     store.dispatch('tetrominoes/deleteTetromino', selectedId.value)
