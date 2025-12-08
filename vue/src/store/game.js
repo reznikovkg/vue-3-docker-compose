@@ -117,13 +117,13 @@ export default {
       state.previousDropTime = null
 
       // ЛОГИРОВАНИЕ
-      console.group('🎮 СКОРОСТЬ ИГРЫ ОБНОВЛЕНА');
-      console.log('📊 Исчезло строк:', lines);
-      console.log('📈 Всего строк исчезло:', `${oldTotalLines} → ${state.totalLinesCleared}`);
-      console.log('⚡ Ускорение:', `${(speedReduction * 100).toFixed(1)}%`);
-      console.log('⏱️ Старая скорость (dropTime):', `${oldDropTime}ms`);
-      console.log('⏱️ Новая скорость (dropTime):', `${state.dropTime}ms`);
-      console.log('🚀 Изменение скорости:', `${(oldDropTime - state.dropTime).toFixed(0)}ms быстрее`);
+      console.group(' СКОРОСТЬ ИГРЫ ОБНОВЛЕНА');
+      console.log(' Исчезло строк:', lines);
+      console.log(' Всего строк исчезло:', `${oldTotalLines} → ${state.totalLinesCleared}`);
+      console.log(' Ускорение:', `${(speedReduction * 100).toFixed(1)}%`);
+      console.log(' Старая скорость (dropTime):', `${oldDropTime}ms`);
+      console.log(' Новая скорость (dropTime):', `${state.dropTime}ms`);
+      console.log(' Изменение скорости:', `${(oldDropTime - state.dropTime).toFixed(0)}ms быстрее`);
       console.groupEnd();
     },
 
@@ -187,7 +187,7 @@ export default {
       commit(MUTATIONS.RESET_GAME_OVER)
       commit(MUTATIONS.RESET_GAME_STATS)
       
-      // ✨ Сначала инициализируем игрока с загруженными фигурами
+      //  Сначала инициализируем игрока с загруженными фигурами
       await dispatch('player/initPlayer', null, { root: true })
       
       // Теперь сбрасываем игрока
@@ -203,7 +203,7 @@ export default {
         
         // Если скорость изменилась, перезапускаем игровой цикл
         if (state.dropTime !== oldDropTime) {
-          console.log('🔄 Перезапуск игрового цикла с новой скоростью:', state.dropTime + 'ms');
+          console.log(' Перезапуск игрового цикла с новой скоростью:', state.dropTime + 'ms');
           commit(MUTATIONS.CLEAR_PREVIOUS_DROP_TIME)
           commit(MUTATIONS.SET_IS_PAUSED, false)
           dispatch('restartGameLoop')

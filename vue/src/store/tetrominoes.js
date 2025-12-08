@@ -37,18 +37,18 @@ const saveToStorageSync = (data) => {
     // Пробуем window.storage (для Claude Artifacts)
     if (window.storage && typeof window.storage.set === 'function') {
       window.storage.set(STORAGE_KEY, JSON.stringify(data))
-        .then(() => console.log('✅ Фигуры сохранены (window.storage)'))
-        .catch(err => console.error('❌ Ошибка window.storage:', err))
+        .then(() => console.log(' Фигуры сохранены (window.storage)'))
+        .catch(err => console.error(' Ошибка window.storage:', err))
     } 
     // Fallback на localStorage
     else if (typeof localStorage !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      console.log('✅ Фигуры сохранены (localStorage)')
+      console.log(' Фигуры сохранены (localStorage)')
     } else {
-      console.warn('⚠️ Хранилище недоступно, фигуры не сохранены')
+      console.warn(' Хранилище недоступно, фигуры не сохранены')
     }
   } catch (error) {
-    console.error('❌ Ошибка сохранения:', error)
+    console.error(' Ошибка сохранения:', error)
   }
 }
 
@@ -59,13 +59,13 @@ const loadFromStorageSync = () => {
       return window.storage.get(STORAGE_KEY)
         .then(result => {
           if (result && result.value) {
-            console.log('✅ Фигуры загружены (window.storage)')
+            console.log(' Фигуры загружены (window.storage)')
             return JSON.parse(result.value)
           }
           return null
         })
         .catch(err => {
-          console.log('ℹ️ window.storage недоступен:', err.message)
+          console.log('window.storage недоступен:', err.message)
           return null
         })
     }
@@ -73,13 +73,13 @@ const loadFromStorageSync = () => {
     else if (typeof localStorage !== 'undefined') {
       const data = localStorage.getItem(STORAGE_KEY)
       if (data) {
-        console.log('✅ Фигуры загружены (localStorage)')
+        console.log('Фигуры загружены (localStorage)')
         return Promise.resolve(JSON.parse(data))
       }
     }
     return Promise.resolve(null)
   } catch (error) {
-    console.log('ℹ️ Ошибка загрузки:', error.message)
+    console.log('Ошибка загрузки:', error.message)
     return Promise.resolve(null)
   }
 }
@@ -205,7 +205,7 @@ export default {
           commit(MUTATIONS.LOAD_FROM_STORAGE, data)
         }
       } catch (error) {
-        console.log('ℹ️ Не удалось загрузить фигуры:', error.message)
+        console.log(' Не удалось загрузить фигуры:', error.message)
       }
     },
 
