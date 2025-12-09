@@ -5,14 +5,6 @@
     @touchmove.prevent="handleTouchMove"
     @touchend.prevent="handleTouchEnd"
   >
-    <div class="touch-overlay">
-      <div class="touch-hint" v-if="showHint">
-        <div class="hint-item"> Свайп влево/вправо - движение</div>
-        <div class="hint-item"> Свайп вверх - поворот</div>
-        <div class="hint-item"> Свайп вниз - ускорить</div>
-        <div class="hint-item"> Зажать - быстрое падение</div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -33,6 +25,7 @@ const touchStartY = ref(0)
 const touchStartTime = ref(0)
 const isLongPress = ref(false)
 const longPressTimer = ref(null)
+const longPressHandled = ref(false) // Новый флаг
 
 const board = computed(() => store.getters['board/board'])
 const player = computed(() => store.getters['player/player'])
@@ -62,13 +55,19 @@ const handleTouchStart = (event) => {
   touchStartY.value = touch.clientY
   touchStartTime.value = Date.now()
   isLongPress.value = false
+  longPressHandled.value = false // Сбрасываем флаг
 
   // Устанавливаем таймер для долгого нажатия
   longPressTimer.value = setTimeout(() => {
     isLongPress.value = true
+    longPressHandled.value = true // Отмечаем что обработали
+    
+    // Только приостанавливаем dropTime, но НЕ вызываем pauseDropTime
+    // который устанавливает isPaused и останавливает игровой цикл
     if (dropTime.value !== null) {
-      store.dispatch('game/pauseDropTime')
+      store.commit('game/PAUSE_DROP_TIME')
     }
+    
     handleInput({ action: Action.FastDrop })
   }, LONG_PRESS_DURATION)
 }
@@ -87,9 +86,14 @@ const handleTouchEnd = (event) => {
     longPressTimer.value = null
   }
 
-  // Если это было долгое нажатие, не обрабатываем как свайп
-  if (isLongPress.value) {
+  // Если это было долгое нажатие, восстанавливаем dropTime
+  if (longPressHandled.value) {
+    // Восстанавливаем только dropTime, без вызова resumeDropTime
+    if (store.state.game.previousDropTime !== null) {
+      store.commit('game/RESUME_DROP_TIME')
+    }
     isLongPress.value = false
+    longPressHandled.value = false
     return
   }
 
@@ -124,37 +128,6 @@ const handleTouchEnd = (event) => {
     // Быстрый тап - поворот
     handleInput({ action: Action.Rotate })
   }
-}
-
-// Обработчики для виртуальных кнопок
-const handleLeft = () => {
-  handleInput({ action: Action.Left })
-}
-
-const handleRight = () => {
-  handleInput({ action: Action.Right })
-}
-
-const handleRotate = () => {
-  handleInput({ action: Action.Rotate })
-}
-
-const handleDown = () => {
-  if (dropTime.value !== null) {
-    store.dispatch('game/pauseDropTime')
-  }
-  handleInput({ action: Action.SlowDrop })
-}
-
-const handleDownRelease = () => {
-  store.dispatch('game/resumeDropTime')
-}
-
-const handleDrop = () => {
-  if (dropTime.value !== null) {
-    store.dispatch('game/pauseDropTime')
-  }
-  handleInput({ action: Action.FastDrop })
 }
 
 // Показываем подсказку при первом запуске
@@ -206,7 +179,7 @@ onUnmounted(() => {
   right: 0;
   bottom: 0;
   z-index: 5;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .touch-overlay {
@@ -246,5 +219,4 @@ onUnmounted(() => {
     transform: translate(-50%, -50%) scale(1);
   }
 }
-
 </style>
