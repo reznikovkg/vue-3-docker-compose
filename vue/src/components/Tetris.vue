@@ -6,6 +6,7 @@
       <Previews />
     </div>
     <GameController />
+    <TouchControls />
   </div>
 </template>
 
@@ -14,12 +15,12 @@ import Board from './Board.vue'
 import GameStats from './GameStats.vue'
 import Previews from './Previews.vue'
 import GameController from './GameController.vue'
+import TouchControls from './TouchControls.vue'
 
 const props = defineProps({
   rows: { type: Number, default: 20 },
   columns: { type: Number, default: 10 }
 })
-
 </script>
 
 <style lang="scss" scoped>
@@ -66,6 +67,15 @@ const props = defineProps({
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
     gap: 20px;
+    padding: 15px;
+    padding-bottom: 180px; 
+  }
+}
+
+@media (max-width: 480px) {
+  .tetris {
+    padding: 10px;
+    padding-bottom: 200px;
   }
 }
 </style>
