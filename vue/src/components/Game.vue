@@ -6,12 +6,13 @@
     />
     <BoardSizeSelector
       v-else-if="showSizeSelector"
+      :hardMode="hardMode"
       @start="handleSizeSelected"
       @back="() => showSizeSelector = false"
     />
     <Menu 
       v-else-if="gameOver" 
-      @start="() => showSizeSelector = true" 
+      @start="handleMenuStart" 
       @openEditor="() => openEditor()"
     />
     <Tetris 
@@ -38,12 +39,18 @@ const props = defineProps({
 const store = useStore()
 const showEditor = ref(false)
 const showSizeSelector = ref(false)
+const hardMode = ref(false)
 
 // Размеры поля (по умолчанию из props)
 const boardRows = ref(props.rows)
 const boardColumns = ref(props.columns)
 
 const gameOver = computed(() => store.getters['game/gameOver'])
+
+const handleMenuStart = ({ hardMode: selectedHardMode }) => {
+  hardMode.value = selectedHardMode
+  showSizeSelector.value = true
+}
 
 const handleSizeSelected = ({ rows, columns }) => {
   boardRows.value = rows
@@ -60,6 +67,9 @@ const handleSizeSelected = ({ rows, columns }) => {
   
   // Обновляем размеры в store перед запуском игры
   store.commit('board/SET_BOARD_SIZE', { rows, columns })
+  
+  // Устанавливаем режим сложности
+  store.dispatch('game/setHardMode', hardMode.value)
   
   // Запускаем игру
   startGame()

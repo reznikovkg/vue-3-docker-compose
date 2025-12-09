@@ -74,7 +74,7 @@ const handleStart = () => {
   // Сохраняем выбор режима
   localStorage.setItem('tetris_hard_mode', hardMode.value.toString())
   store.dispatch('game/setHardMode', hardMode.value)
-  emit('start')
+  emit('start', { hardMode: hardMode.value })
 }
 
 const handleOpenEditor = () => {

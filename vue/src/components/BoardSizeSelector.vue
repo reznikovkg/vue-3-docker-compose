@@ -3,6 +3,11 @@
     <div class="selector-content">
       <h2 class="selector-title">Размер поля</h2>
       
+      <!-- Индикатор сложного режима -->
+      <div v-if="hardMode" class="hard-mode-badge">
+        <span class="badge-text">Сложный режим активен</span>
+      </div>
+      
       <div class="presets">
         <h3 class="presets-title">Быстрый выбор</h3>
         <div class="preset-grid">
@@ -10,7 +15,7 @@
             v-for="preset in presets"
             :key="preset.name"
             :class="['preset-btn', { active: isPresetActive(preset) }]"
-            @click="() =>selectPreset(preset)" 
+           @click="() =>selectPreset(preset)" 
           >
             <div class="preset-icon">{{ preset.icon }}</div>
             <div class="preset-name">{{ preset.name }}</div>
@@ -75,6 +80,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+
+const props = defineProps({
+  hardMode: { type: Boolean, default: false }
+})
 
 const emit = defineEmits(['start', 'back'])
 
@@ -141,12 +150,52 @@ const handleBack = () => {
 .selector-title {
   text-align: center;
   font-size: 2.2em;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   color: #333;
 
   @media (max-width: 768px) {
     font-size: 1.8em;
+    margin-bottom: 15px;
+  }
+}
+
+.hard-mode-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(145deg, rgba(255, 100, 100, 0.3), rgba(200, 50, 50, 0.3));
+  border: 2px solid rgba(255, 100, 100, 0.5);
+  border-radius: 15px;
+  padding: 12px 20px;
+  margin-bottom: 25px;
+  animation: pulse-badge 2s ease-in-out infinite;
+
+  @media (max-width: 768px) {
+    padding: 10px 15px;
     margin-bottom: 20px;
+  }
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(255, 100, 100, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(255, 100, 100, 0.5);
+  }
+}
+
+.badge-text {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #c62828;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+
+  @media (max-width: 768px) {
+    font-size: 1em;
   }
 }
 
@@ -323,8 +372,6 @@ const handleBack = () => {
   font-size: 0.85em;
   color: #999;
 }
-
-
 
 .actions {
   display: flex;
