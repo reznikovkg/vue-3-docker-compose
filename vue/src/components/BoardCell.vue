@@ -1,5 +1,5 @@
 <template>
-  <div :class="['board-cell', cell.className]">
+  <div :class="['board-cell', cell.className, { 'board-cell--steel': cell.isSteel }]">
     <div class="sparkle"></div>
   </div>
 </template>
@@ -41,6 +41,58 @@ defineProps({
     .sparkle {
       opacity: 0;
     }
+  }
+
+  // Стальная фигура - темный градиент поверх основного цвета
+  &.steel {
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(0, 0, 0, 0.4) 0%, 
+        rgba(0, 0, 0, 0.6) 50%, 
+        rgba(0, 0, 0, 0.4) 100%
+      );
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .sparkle {
+      background-color: rgba(128, 128, 128, 0.6);
+    }
+  }
+}
+
+// Стальная клетка после размещения (не в составе фигуры)
+.board-cell--steel {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(0, 0, 0, 0.4) 0%, 
+      rgba(0, 0, 0, 0.6) 50%, 
+      rgba(0, 0, 0, 0.4) 100%
+    );
+    border-radius: 6px;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .sparkle {
+    background-color: rgba(128, 128, 128, 0.6);
+    z-index: 15;
   }
 }
 

@@ -6,8 +6,21 @@
       <button class="button button--primary" @click="() => handleStart()">
         <span class="button-text">Начать игру</span>
       </button>
+      
+      <div class="difficulty-selector">
+        <label class="difficulty-label">
+          <input 
+            type="checkbox" 
+            v-model="hardMode" 
+            class="difficulty-checkbox"
+          />
+          <span class="difficulty-text">
+            Сложный режим
+          </span>
+        </label>
+      </div>
+
       <button class="button button--secondary" @click="() => handleOpenEditor()">
-        
         <span class="button-text">Редактор фигур</span>
       </button>
     </div>
@@ -37,14 +50,30 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useStore } from 'vuex'
+
 const emit = defineEmits(['start', 'openEditor'])
+const store = useStore()
+
+const hardMode = ref(false)
+
+onMounted(() => {
+  // Загружаем сохраненное значение
+  const saved = localStorage.getItem('tetris_hard_mode')
+  if (saved !== null) {
+    hardMode.value = saved === 'true'
+  }
+})
 
 const handleStart = () => {
+  // Сохраняем выбор режима
+  localStorage.setItem('tetris_hard_mode', hardMode.value.toString())
+  store.dispatch('game/setHardMode', hardMode.value)
   emit('start')
 }
 
@@ -93,8 +122,6 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     transform: scale(1.02);
   }
 }
-
-
 
 .menu-buttons {
   display: flex;
@@ -177,11 +204,53 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
   }
 }
 
-
 .button-text {
   flex: 1;
   text-align: center;
 }
+
+.difficulty-selector {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s;
+
+  &:has(.difficulty-checkbox:checked) {
+    background: rgba(255, 100, 100, 0.2);
+    border-color: rgba(255, 100, 100, 0.5);
+  }
+}
+
+.difficulty-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.difficulty-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: #ee5a24;
+}
+
+.difficulty-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3em;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 768px) {
+    font-size: 1.1em;
+  }
+}
+
 
 .menu-controls {
   background: rgba(255, 255, 255, 0.15);
@@ -239,10 +308,10 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
   }
-  &.comp-only{
+
+  &.comp-only {
     display: block;
   }
-
 
   &.mobile-only {
     display: none;
@@ -254,9 +323,10 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     &.mobile-only {
       display: block;
     }
-      &.comp-only{
-    display: none;
-  }
+
+    &.comp-only {
+      display: none;
+    }
   }
 }
 
@@ -280,7 +350,4 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     font-size: 0.85em;
   }
 }
-
-
-
 </style>

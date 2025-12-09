@@ -9,16 +9,16 @@ const MUTATIONS = {
   INIT_PLAYER: 'INIT_PLAYER'
 }
 
-const buildPlayer = (previous, store = null) => {
+const buildPlayer = (previous, store = null, hardMode = false) => {
   let tetrominoes
 
   if (previous) {
     tetrominoes = [...previous.tetrominoes]
-    tetrominoes.unshift(randomTetromino(store))
+    tetrominoes.unshift(randomTetromino(store, hardMode))
   } else {
     tetrominoes = Array(5)
       .fill(0)
-      .map(() => randomTetromino(store))
+      .map(() => randomTetromino(store, hardMode))
   }
 
   return {
@@ -35,7 +35,7 @@ export default {
 
   state() {
     return {
-      player: null,  // ⚠️ Изменено: теперь null вместо buildPlayer()
+      player: null,
       initialized: false
     }
   },
@@ -48,10 +48,9 @@ export default {
   },
 
   mutations: {
-    // ✨ НОВОЕ: Инициализация с доступом к store
-    [MUTATIONS.INIT_PLAYER](state, store) {
+    [MUTATIONS.INIT_PLAYER](state, { store, hardMode }) {
       if (!state.initialized) {
-        state.player = buildPlayer(null, store)
+        state.player = buildPlayer(null, store, hardMode)
         state.initialized = true
       }
     },
@@ -60,8 +59,8 @@ export default {
       state.player = player
     },
 
-    [MUTATIONS.RESET_PLAYER](state, store = null) {
-      state.player = buildPlayer(state.player, store)
+    [MUTATIONS.RESET_PLAYER](state, { store, hardMode }) {
+      state.player = buildPlayer(state.player, store, hardMode)
     },
 
     [MUTATIONS.UPDATE_POSITION](state, position) {
@@ -87,10 +86,9 @@ export default {
   },
 
   actions: {
-    // ✨ НОВОЕ: Инициализация игрока
-    initPlayer({ commit, state }) {
-      if (!state.initialized) {
-        commit(MUTATIONS.INIT_PLAYER, this)
+    initPlayer({ commit, rootGetters }, { hardMode = false } = {}) {
+      if (!this.state.player.initialized) {
+        commit(MUTATIONS.INIT_PLAYER, { store: this, hardMode })
       }
     },
 
@@ -99,9 +97,9 @@ export default {
       dispatch('board/updateBoard', null, { root: true })
     },
 
-    // 🔧 ИСПРАВЛЕНО: передаем this вместо rootState
-    resetPlayer({ commit, dispatch }) {
-      commit(MUTATIONS.RESET_PLAYER, this)
+    resetPlayer({ commit, dispatch, rootGetters }) {
+      const hardMode = rootGetters['game/hardMode']
+      commit(MUTATIONS.RESET_PLAYER, { store: this, hardMode })
       dispatch('board/updateBoard', null, { root: true })
     },
 

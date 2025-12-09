@@ -49,15 +49,16 @@ export const nextBoard = ({ board, player, resetPlayer, addLinesCleared }) => {
   });
 
   // Place ghost
-  const className = `${tetromino.className} ${
+  const ghostClassName = `${tetromino.className} ${
     player.isFastDropping ? "" : "ghost"
   }`;
   rows = transferToBoard({
-    className,
+    className: ghostClassName,
     isOccupied: player.isFastDropping,
     position: dropPosition,
     rows,
     shape: tetromino.shape,
+    isSteel: tetromino.isSteel && player.isFastDropping,
   });
 
   // Place the piece.
@@ -69,16 +70,39 @@ export const nextBoard = ({ board, player, resetPlayer, addLinesCleared }) => {
       position,
       rows,
       shape: tetromino.shape,
+      isSteel: tetromino.isSteel && player.collided,
     });
   }
 
   // Check for cleared lines
   const blankRow = rows[0].map((_) => ({ ...defaultCell }));
   let linesCleared = 0;
+  
   rows = rows.reduce((acc, row) => {
     if (row.every((column) => column.occupied)) {
       linesCleared++;
-      acc.unshift([...blankRow]);
+      
+      // Обрабатываем стальные клетки
+      const processedRow = row.map(cell => {
+        if (cell.isSteel) {
+          // Стальная клетка при первом попадании становится обычной
+          return {
+            ...cell,
+            isSteel: false,
+            className: cell.className.replace(' steel', ''), // Убираем класс steel
+          };
+        }
+        // Обычные клетки исчезают
+        return null;
+      });
+      
+      // Если все клетки стали null (не было стальных), добавляем пустую строку сверху
+      if (processedRow.every(cell => cell === null)) {
+        acc.unshift([...blankRow]);
+      } else {
+        // Иначе возвращаем обработанную строку (стальные клетки остаются)
+        acc.push(processedRow.map(cell => cell || { ...defaultCell }));
+      }
     } else {
       acc.push(row);
     }
