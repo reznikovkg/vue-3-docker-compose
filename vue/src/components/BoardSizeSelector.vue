@@ -1,7 +1,7 @@
 <template>
   <div class="size-selector">
     <div class="selector-content">
-      <h2 class="selector-title">Выбор размера поля</h2>
+      <h2 class="selector-title">Размер поля</h2>
       
       <div class="presets">
         <h3 class="presets-title">Быстрый выбор</h3>
@@ -58,20 +58,6 @@
             <span>12</span>
             <span>30</span>
           </div>
-        </div>
-      </div>
-
-      <div class="preview">
-        <div class="preview-label">Предпросмотр поля</div>
-        <div class="preview-board" :style="previewStyle">
-          <div 
-            v-for="n in rows * columns" 
-            :key="n" 
-            class="preview-cell"
-          ></div>
-        </div>
-        <div class="preview-info">
-          {{ columns }}×{{ rows }} = {{ columns * rows }} клеток
         </div>
       </div>
 
@@ -338,50 +324,7 @@ const handleBack = () => {
   color: #999;
 }
 
-.preview {
-  margin-bottom: 30px;
-  text-align: center;
 
-  @media (max-width: 768px) {
-    margin-bottom: 20px;
-  }
-}
-
-.preview-label {
-  font-size: 1.1em;
-  margin-bottom: 15px;
-  color: #555;
-
-  @media (max-width: 768px) {
-    font-size: 1em;
-  }
-}
-
-.preview-board {
-  display: inline-grid;
-  gap: 1px;
-  background: #ccc;
-  padding: 5px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  max-height: 300px;
-  overflow: hidden;
-
-  @media (max-width: 768px) {
-    max-height: 250px;
-  }
-}
-
-.preview-cell {
-  background: white;
-  aspect-ratio: 1;
-}
-
-.preview-info {
-  font-size: 0.9em;
-  color: #666;
-  margin-top: 10px;
-}
 
 .actions {
   display: flex;

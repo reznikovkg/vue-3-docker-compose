@@ -1,9 +1,9 @@
 <template>
   <div 
     class="touch-controls"
-    @touchstart="handleTouchStart"
-    @touchmove="handleTouchMove"
-    @touchend="handleTouchEnd"
+    @touchstart.prevent="handleTouchStart"
+    @touchmove.prevent="handleTouchMove"
+    @touchend.prevent="handleTouchEnd"
   >
     <div class="touch-overlay">
       <div class="touch-hint" v-if="showHint">
@@ -171,12 +171,30 @@ onMounted(() => {
   // Определяем мобильное устройство
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
   showButtons.value = isMobile || window.innerWidth < 768
+  
+  // Блокируем скролл страницы на мобильных
+  if (isMobile || window.innerWidth < 768) {
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.width = '100%'
+    document.body.style.height = '100%'
+    
+    // Блокируем pull-to-refresh и bounce эффект
+    document.body.style.overscrollBehavior = 'none'
+  }
 })
 
 onUnmounted(() => {
   if (longPressTimer.value) {
     clearTimeout(longPressTimer.value)
   }
+  
+  // Восстанавливаем скролл
+  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.width = ''
+  document.body.style.height = ''
+  document.body.style.overscrollBehavior = ''
 })
 </script>
 

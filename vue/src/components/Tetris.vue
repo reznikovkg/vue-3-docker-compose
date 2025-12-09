@@ -37,6 +37,7 @@ const props = defineProps({
   margin: 0 auto;
   padding: 20px;
   min-height: 100vh;
+  overflow: hidden; /* Блокируем внутренний скролл */
 }
 
 .sidebar {
@@ -67,15 +68,19 @@ const props = defineProps({
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
     gap: 20px;
-    padding: 15px;
-    padding-bottom: 180px; 
+    padding: 10px;
+    padding-bottom: 150px; /* Уменьшено место для кнопок */
+    max-height: 100vh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
 }
 
 @media (max-width: 480px) {
   .tetris {
-    padding: 10px;
-    padding-bottom: 200px;
+    padding: 5px;
+    padding-bottom: 160px;
+    gap: 15px;
   }
 }
 </style>

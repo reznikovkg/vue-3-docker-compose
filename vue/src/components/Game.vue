@@ -1,5 +1,5 @@
 <template>
-  <div class="game">
+  <div class="game" :class="{ 'game--playing': !gameOver && !showEditor && !showSizeSelector }">
     <TetrominoEditor 
       v-if="showEditor" 
       @close="() => closeEditor()" 
@@ -97,5 +97,17 @@ onMounted(() => {
 <style scoped>
 .game {
   position: relative;
+}
+
+/* Блокируем скролл во время игры */
+.game--playing {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100vh;
 }
 </style>
