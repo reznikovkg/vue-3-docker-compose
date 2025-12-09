@@ -10,7 +10,7 @@
             v-for="preset in presets"
             :key="preset.name"
             :class="['preset-btn', { active: isPresetActive(preset) }]"
-            @click="selectPreset(preset)"
+            @click="() =>selectPreset(preset)" 
           >
             <div class="preset-icon">{{ preset.icon }}</div>
             <div class="preset-name">{{ preset.name }}</div>
@@ -62,10 +62,10 @@
       </div>
 
       <div class="actions">
-        <button class="action-btn start-btn" @click="handleStart">
+        <button class="action-btn start-btn" @click="() => handleStart()">
           Начать игру
         </button>
-        <button class="action-btn back-btn" @click="handleBack">
+        <button class="action-btn back-btn" @click="() => handleBack() ">
           Назад
         </button>
       </div>

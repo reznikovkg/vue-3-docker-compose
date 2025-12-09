@@ -50,6 +50,11 @@ const handleInput = ({ action }) => {
 }
 
 const handleTouchStart = (event) => {
+  // Игнорируем касания на кнопках и header
+  if (event.target.closest('.mobile-header, .mobile-previews')) {
+    return
+  }
+
   const touch = event.touches[0]
   touchStartX.value = touch.clientX
   touchStartY.value = touch.clientY
@@ -73,6 +78,11 @@ const handleTouchStart = (event) => {
 }
 
 const handleTouchMove = (event) => {
+  // Игнорируем касания на кнопках и header
+  if (event.target.closest('.mobile-header, .mobile-previews')) {
+    return
+  }
+
   // Отменяем долгое нажатие если палец двигается
   if (longPressTimer.value) {
     clearTimeout(longPressTimer.value)
@@ -81,6 +91,11 @@ const handleTouchMove = (event) => {
 }
 
 const handleTouchEnd = (event) => {
+  // Игнорируем касания на кнопках и header
+  if (event.target.closest('.mobile-header, .mobile-previews')) {
+    return
+  }
+
   if (longPressTimer.value) {
     clearTimeout(longPressTimer.value)
     longPressTimer.value = null
@@ -182,32 +197,6 @@ onUnmounted(() => {
   pointer-events: auto;
 }
 
-.touch-overlay {
-  width: 100%;
-  height: 100%;
-  pointer-events: auto;
-}
-
-.touch-hint {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  padding: 25px;
-  border-radius: 15px;
-  z-index: 1000;
-  text-align: center;
-  max-width: 90%;
-  animation: fadeIn 0.3s ease-in;
-
-  .hint-item {
-    margin: 12px 0;
-    font-size: 1.1em;
-    line-height: 1.6;
-  }
-}
 
 @keyframes fadeIn {
   from {

@@ -2,7 +2,7 @@
   <div class="tetris">
     <!-- Мобильный header с кнопками -->
     <div class="mobile-header">
-      <button class="mobile-header__btn mobile-header__btn--back" @click="handleQuit">
+      <button class="mobile-header__btn mobile-header__btn--back" @click.stop.prevent="() => handleQuit() " @touchend.stop.prevent="() => handleQuit() ">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
@@ -23,7 +23,7 @@
         </div>
       </div>
       
-      <button class="mobile-header__btn mobile-header__btn--pause" @click="handlePause">
+      <button class="mobile-header__btn mobile-header__btn--pause" @click.stop.prevent="() => handlePause()" @touchend.stop.prevent="() => handlePause() ">
         <svg v-if="!isPaused" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
           <rect x="6" y="4" width="4" height="16" rx="1"/>
           <rect x="14" y="4" width="4" height="16" rx="1"/>
@@ -188,6 +188,8 @@ const handleQuit = () => {
     padding: 8px 12px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 100; // Поднимаем выше touch overlay
 
     &__btn {
       background: rgba(255, 255, 255, 0.2);
@@ -202,6 +204,10 @@ const handleQuit = () => {
       cursor: pointer;
       transition: all 0.2s;
       flex-shrink: 0;
+      position: relative;
+      z-index: 101; // Еще выше
+      pointer-events: auto; // Явно разрешаем клики
+      touch-action: manipulation; // Быстрая реакция на тач
 
       &:active {
         transform: scale(0.95);
@@ -210,6 +216,7 @@ const handleQuit = () => {
 
       svg {
         filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
+        pointer-events: none; // Клики проходят через SVG на кнопку
       }
     }
   }
