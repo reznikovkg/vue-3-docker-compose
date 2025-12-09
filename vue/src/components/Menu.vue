@@ -15,11 +15,11 @@
     <div class="menu-controls">
       <div class="controls-title">Управление</div>
       <div class="controls-grid">
-        <div class="control-item">
+        <div class="control-item ">
           <div class="control-key">← →</div>
           <div class="control-desc">Движение</div>
         </div>
-        <div class="control-item">
+        <div class="control-item ">
           <div class="control-key">↑</div>
           <div class="control-desc">Поворот</div>
         </div>
@@ -27,16 +27,12 @@
           <div class="control-key">↓</div>
           <div class="control-desc">Ускорить</div>
         </div>
-        <div class="control-item">
+        <div class="control-item comp-only">
           <div class="control-key">SPACE</div>
           <div class="control-desc">Сброс</div>
         </div>
         <div class="control-item mobile-only">
-          <div class="control-key">👆</div>
-          <div class="control-desc">Свайпы</div>
-        </div>
-        <div class="control-item mobile-only">
-          <div class="control-key">✋</div>
+          <div class="control-key">Сброс</div>
           <div class="control-desc">Зажать</div>
         </div>
       </div>
@@ -243,6 +239,10 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
   }
+  &.comp-only{
+    display: block;
+  }
+
 
   &.mobile-only {
     display: none;
@@ -254,6 +254,9 @@ $button-secondary-gradient: linear-gradient(145deg, #3273dc, #5e72e4);
     &.mobile-only {
       display: block;
     }
+      &.comp-only{
+    display: none;
+  }
   }
 }
 

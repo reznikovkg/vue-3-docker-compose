@@ -229,9 +229,4 @@ onUnmounted(() => {
   }
 }
 
-
-
-
-
-
 </style>
