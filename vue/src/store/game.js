@@ -13,7 +13,8 @@ const MUTATIONS = {
   SET_INTERVAL_ID: 'SET_INTERVAL_ID',
   SET_GAME_TICK_CALLBACK: 'SET_GAME_TICK_CALLBACK',
   CLEAR_PREVIOUS_DROP_TIME: 'CLEAR_PREVIOUS_DROP_TIME',
-  SET_TOTAL_LINES_CLEARED: 'SET_TOTAL_LINES_CLEARED'
+  SET_TOTAL_LINES_CLEARED: 'SET_TOTAL_LINES_CLEARED',
+  SET_HARD_MODE: 'SET_HARD_MODE'
 }
 
 const getScoreForLines = (lines) => {
@@ -45,7 +46,8 @@ export default {
       isPaused: false,
       intervalId: null,
       gameTickCallback: null,
-      totalLinesCleared: 0  // Общее количество исчезнувших строк
+      totalLinesCleared: 0,
+      hardMode: false, // Новое: режим сложности
     }
   },
 
@@ -59,7 +61,8 @@ export default {
     }),
     dropTime: (state) => state.dropTime,
     isPaused: (state) => state.isPaused,
-    linesToLevel: (state) => state.linesPerLevel - state.linesCompleted
+    linesToLevel: (state) => state.linesPerLevel - state.linesCompleted,
+    hardMode: (state) => state.hardMode,
   },
 
   mutations: {
@@ -87,6 +90,10 @@ export default {
       state.totalLinesCleared = total
     },
 
+    [MUTATIONS.SET_HARD_MODE](state, value) {
+      state.hardMode = value
+    },
+
     [MUTATIONS.ADD_LINES_CLEARED](state, lines) {
       const oldDropTime = state.dropTime
       const oldTotalLines = state.totalLinesCleared
@@ -94,12 +101,10 @@ export default {
       const linesScore = getScoreForLines(lines)
       state.points += linesScore
 
-      // Увеличиваем общее количество исчезнувших строк
       state.totalLinesCleared += lines
 
       const newLinesCompleted = state.linesCompleted + lines
       
-      // Проверяем переход на новый уровень
       if (newLinesCompleted >= state.linesPerLevel) {
         state.level += 1
         state.linesCompleted = newLinesCompleted % state.linesPerLevel
@@ -107,16 +112,12 @@ export default {
         state.linesCompleted = newLinesCompleted
       }
 
-      // Вычисляем новую скорость на основе общего количества исчезнувших строк
-      // Каждая строка уменьшает dropTime на 1% от начального значения
-      const speedReduction = state.totalLinesCleared * 0.01 // 1% за каждую строку
+      const speedReduction = state.totalLinesCleared * 0.01
       const newDropTime = defaultDropTime * (1 - speedReduction)
       
-      // Ограничиваем минимальную скорость
       state.dropTime = Math.max(newDropTime, minimumDropTime)
       state.previousDropTime = null
 
-      // ЛОГИРОВАНИЕ
       console.group(' СКОРОСТЬ ИГРЫ ОБНОВЛЕНА');
       console.log(' Исчезло строк:', lines);
       console.log(' Всего строк исчезло:', `${oldTotalLines} → ${state.totalLinesCleared}`);
@@ -183,14 +184,18 @@ export default {
       }
     },
 
-    startGame({ commit, dispatch }) {
+    setHardMode({ commit }, value) {
+      commit(MUTATIONS.SET_HARD_MODE, value)
+    },
+
+    startGame({ commit, dispatch, state }) {
       commit(MUTATIONS.RESET_GAME_OVER)
       commit(MUTATIONS.RESET_GAME_STATS)
       
-      //  Сначала инициализируем игрока с загруженными фигурами
-      return dispatch('player/initPlayer', null, { root: true })
+      const hardMode = state.hardMode
+      
+      return dispatch('player/initPlayer', { hardMode }, { root: true })
         .then(() => {
-          // Теперь сбрасываем игрока
           return dispatch('player/resetPlayer', null, { root: true })
         })
         .then(() => {
@@ -204,7 +209,6 @@ export default {
         
         commit(MUTATIONS.ADD_LINES_CLEARED, lines)
         
-        // Если скорость изменилась, перезапускаем игровой цикл
         if (state.dropTime !== oldDropTime) {
           console.log(' Перезапуск игрового цикла с новой скоростью:', state.dropTime + 'ms');
           commit(MUTATIONS.CLEAR_PREVIOUS_DROP_TIME)

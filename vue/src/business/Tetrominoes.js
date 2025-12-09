@@ -59,20 +59,18 @@ export const TETROMINOES = {
   },
 };
 
-// Флаг для включения/выключения отладочных логов
-const DEBUG_LOGS = false; // Поставьте true, если нужны логи
+const DEBUG_LOGS = false;
 
 // Функция для получения случайной фигуры
-export const randomTetromino = (store = null) => {
+export const randomTetromino = (store = null, hardMode = false) => {
   let tetrominoes = TETROMINOES;
   
-  // Если передан store, используем фигуры из него
   if (store) {
     try {
       const gameTetrominoes = store.getters['tetrominoes/getGameTetrominoes'];
       
       if (DEBUG_LOGS) {
-        console.log('🎲 Доступные фигуры:', Object.keys(gameTetrominoes));
+        console.log(' Доступные фигуры:', Object.keys(gameTetrominoes));
       }
       
       if (gameTetrominoes && Object.keys(gameTetrominoes).length > 0) {
@@ -80,7 +78,7 @@ export const randomTetromino = (store = null) => {
       }
     } catch (e) {
       if (DEBUG_LOGS) {
-        console.warn('⚠️ Store недоступен, используем базовые фигуры');
+        console.warn(' Store недоступен, используем базовые фигуры');
       }
     }
   }
@@ -88,12 +86,23 @@ export const randomTetromino = (store = null) => {
   const keys = Object.keys(tetrominoes);
   const index = Math.floor(Math.random() * keys.length);
   const key = keys[index];
+  const baseTetromino = { ...tetrominoes[key] };
   
-  if (DEBUG_LOGS) {
-    console.log('✅ Выбрана фигура:', key, tetrominoes[key]);
+  // В сложном режиме с вероятностью 0.2 делаем фигуру стальной
+  const isSteel = hardMode && Math.random() < 0.2;
+  
+  if (isSteel) {
+    baseTetromino.className = `${baseTetromino.className} steel`;
+    baseTetromino.isSteel = true;
+  } else {
+    baseTetromino.isSteel = false;
   }
   
-  return tetrominoes[key];
+  if (DEBUG_LOGS) {
+    console.log(' Выбрана фигура:', key, isSteel ? ' СТАЛЬНАЯ' : '', baseTetromino);
+  }
+  
+  return baseTetromino;
 };
 
 export const rotate = ({ piece, direction }) => {
@@ -116,6 +125,7 @@ export const transferToBoard = ({
   position,
   rows,
   shape,
+  isSteel = false, // Новый параметр
 }) => {
   shape.forEach((row, y) => {
     row.forEach((cell, x) => {
@@ -123,7 +133,11 @@ export const transferToBoard = ({
         const occupied = isOccupied;
         const _y = y + position.row;
         const _x = x + position.column;
-        rows[_y][_x] = { occupied, className };
+        rows[_y][_x] = { 
+          occupied, 
+          className,
+          isSteel: isSteel && occupied, // Стальные только если occupied
+        };
       }
     });
   });

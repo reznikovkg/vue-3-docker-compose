@@ -4,8 +4,10 @@
     type="text"
     @keydown="onKeyDown"
     @keyup="onKeyUp"
-    autofocus
     ref="inputRef"
+    readonly
+    inputmode="none"
+    autocomplete="off"
   />
 </template>
 
@@ -73,9 +75,30 @@ const onKeyDown = (event) => {
   }
 }
 
+// Предотвращаем открытие клавиатуры на мобильных
+const preventMobileKeyboard = (e) => {
+  if (inputRef.value) {
+    inputRef.value.blur() // Убираем фокус
+    e.preventDefault()
+  }
+}
+
 onMounted(() => {
   if (inputRef.value) {
-    inputRef.value.focus()
+    // Не фокусируем автоматически на мобильных
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    if (!isMobile) {
+      inputRef.value.focus()
+    }
+    
+    // Блокируем клавиатуру на тач-устройствах
+    inputRef.value.addEventListener('touchstart', preventMobileKeyboard)
+    inputRef.value.addEventListener('focus', (e) => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      if (isMobile) {
+        e.target.blur()
+      }
+    })
   }
   
   store.dispatch('game/registerGameTick', gameTick)
@@ -83,6 +106,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (inputRef.value) {
+    inputRef.value.removeEventListener('touchstart', preventMobileKeyboard)
+  }
   store.dispatch('game/stopGameLoop')
 })
 </script>
@@ -91,5 +117,16 @@ onUnmounted(() => {
 .game-controller {
   position: absolute;
   top: -100em;
+  left: -100em;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  
+  /* Блокируем клавиатуру на мобильных */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 </style>

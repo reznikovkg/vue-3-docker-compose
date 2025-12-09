@@ -1,0 +1,211 @@
+<template>
+  <div 
+    class="touch-controls"
+    @touchstart.prevent="handleTouchStart"
+    @touchmove.prevent="handleTouchMove"
+    @touchend.prevent="handleTouchEnd"
+  >
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useStore } from 'vuex'
+import { Action } from '../business/Input.js'
+import { playerController } from '../business/PlayerController.js'
+
+const store = useStore()
+
+const showHint = ref(false)
+const showButtons = ref(true)
+
+// Touch state
+const touchStartX = ref(0)
+const touchStartY = ref(0)
+const touchStartTime = ref(0)
+const isLongPress = ref(false)
+const longPressTimer = ref(null)
+const longPressHandled = ref(false) // Новый флаг
+
+const board = computed(() => store.getters['board/board'])
+const player = computed(() => store.getters['player/player'])
+const dropTime = computed(() => store.getters['game/dropTime'])
+
+// Минимальное расстояние для распознавания свайпа
+const SWIPE_THRESHOLD = 50
+const LONG_PRESS_DURATION = 300 // мс для определения зажатия
+
+const handleInput = ({ action }) => {
+  playerController({
+    action,
+    board: board.value,
+    player: player.value,
+    setPlayer: (newPlayer) => {
+      store.dispatch('player/setPlayer', newPlayer)
+    },
+    setGameOver: (gameOver) => {
+      store.dispatch('game/setGameOver', gameOver)
+    }
+  })
+}
+
+const handleTouchStart = (event) => {
+  // Игнорируем касания на кнопках и header
+  if (event.target.closest('.mobile-header, .mobile-previews')) {
+    return
+  }
+
+  const touch = event.touches[0]
+  touchStartX.value = touch.clientX
+  touchStartY.value = touch.clientY
+  touchStartTime.value = Date.now()
+  isLongPress.value = false
+  longPressHandled.value = false // Сбрасываем флаг
+
+  // Устанавливаем таймер для долгого нажатия
+  longPressTimer.value = setTimeout(() => {
+    isLongPress.value = true
+    longPressHandled.value = true // Отмечаем что обработали
+    
+    // Только приостанавливаем dropTime, но НЕ вызываем pauseDropTime
+    // который устанавливает isPaused и останавливает игровой цикл
+    if (dropTime.value !== null) {
+      store.commit('game/PAUSE_DROP_TIME')
+    }
+    
+    handleInput({ action: Action.FastDrop })
+  }, LONG_PRESS_DURATION)
+}
+
+const handleTouchMove = (event) => {
+  // Игнорируем касания на кнопках и header
+  if (event.target.closest('.mobile-header, .mobile-previews')) {
+    return
+  }
+
+  // Отменяем долгое нажатие если палец двигается
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+}
+
+const handleTouchEnd = (event) => {
+  // Игнорируем касания на кнопках и header
+  if (event.target.closest('.mobile-header, .mobile-previews')) {
+    return
+  }
+
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+
+  // Если это было долгое нажатие, восстанавливаем dropTime
+  if (longPressHandled.value) {
+    // Восстанавливаем только dropTime, без вызова resumeDropTime
+    if (store.state.game.previousDropTime !== null) {
+      store.commit('game/RESUME_DROP_TIME')
+    }
+    isLongPress.value = false
+    longPressHandled.value = false
+    return
+  }
+
+  const touch = event.changedTouches[0]
+  const deltaX = touch.clientX - touchStartX.value
+  const deltaY = touch.clientY - touchStartY.value
+  const duration = Date.now() - touchStartTime.value
+
+  // Определяем направление свайпа
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
+
+  if (absX > SWIPE_THRESHOLD || absY > SWIPE_THRESHOLD) {
+    if (absX > absY) {
+      // Горизонтальный свайп
+      if (deltaX > 0) {
+        handleInput({ action: Action.Right })
+      } else {
+        handleInput({ action: Action.Left })
+      }
+    } else {
+      // Вертикальный свайп
+      if (deltaY > 0) {
+        // Свайп вниз - ускоряем падение
+        handleInput({ action: Action.SlowDrop })
+      } else {
+        // Свайп вверх - поворот
+        handleInput({ action: Action.Rotate })
+      }
+    }
+  } else if (duration < 200) {
+    // Быстрый тап - поворот
+    handleInput({ action: Action.Rotate })
+  }
+}
+
+// Показываем подсказку при первом запуске
+onMounted(() => {
+  const hintShown = localStorage.getItem('tetris_touch_hint_shown')
+  if (!hintShown) {
+    showHint.value = true
+    setTimeout(() => {
+      showHint.value = false
+      localStorage.setItem('tetris_touch_hint_shown', 'true')
+    }, 5000)
+  }
+
+  // Определяем мобильное устройство
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  showButtons.value = isMobile || window.innerWidth < 768
+  
+  // Блокируем скролл страницы на мобильных
+  if (isMobile || window.innerWidth < 768) {
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.width = '100%'
+    document.body.style.height = '100%'
+    
+    // Блокируем pull-to-refresh и bounce эффект
+    document.body.style.overscrollBehavior = 'none'
+  }
+})
+
+onUnmounted(() => {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+  }
+  
+  // Восстанавливаем скролл
+  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.width = ''
+  document.body.style.height = ''
+  document.body.style.overscrollBehavior = ''
+})
+</script>
+
+<style lang="scss" scoped>
+.touch-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+</style>

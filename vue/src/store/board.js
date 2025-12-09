@@ -3,7 +3,8 @@ import { buildBoard, nextBoard } from '../business/Board.js'
 const MUTATIONS = {
   SET_BOARD: 'SET_BOARD',
   UPDATE_BOARD: 'UPDATE_BOARD',
-  RESET_BOARD: 'RESET_BOARD'
+  RESET_BOARD: 'RESET_BOARD',
+  SET_BOARD_SIZE: 'SET_BOARD_SIZE'
 }
 
 export default {
@@ -25,6 +26,15 @@ export default {
   mutations: {
     [MUTATIONS.SET_BOARD](state, board) {
       state.board = board
+    },
+
+    [MUTATIONS.SET_BOARD_SIZE](state, { rows, columns }) {
+      state.rows = rows
+      state.columns = columns
+      // Пересоздаем доску с новыми размерами
+      state.board = buildBoard({ rows, columns })
+      
+      console.log(`🎯 Размер поля обновлен: ${columns}×${rows}`)
     },
 
     [MUTATIONS.UPDATE_BOARD](state, { player, resetPlayer, addLinesCleared }) {
@@ -54,6 +64,10 @@ export default {
 
     resetBoard({ commit }) {
       commit(MUTATIONS.RESET_BOARD)
+    },
+
+    setBoardSize({ commit }, { rows, columns }) {
+      commit(MUTATIONS.SET_BOARD_SIZE, { rows, columns })
     }
   }
 }
