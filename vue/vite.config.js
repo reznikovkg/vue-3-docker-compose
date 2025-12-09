@@ -15,4 +15,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  //  Добавлены настройки для мобильного тестирования
+  server: {
+    host: '0.0.0.0', 
+    port: 5173,
+    strictPort: false,
+    open: false,
+  },
 })
