@@ -112,6 +112,7 @@ const selectShape = (shape: Shape): void => {
 
 <style scoped lang="less">
 .shape-picker {
+  width: 350px;
   margin-bottom: 20px;
 
   &__title {

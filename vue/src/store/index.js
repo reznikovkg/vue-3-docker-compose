@@ -1,4 +1,5 @@
 import { createStore } from 'vuex'
+import { moodUtils, INDICATOR_TYPES } from '../moodUtils'
 
 const MUTATIONS = {
   SET_GRID: 'SET_GRID',
@@ -23,74 +24,6 @@ const MUTATIONS = {
   UPGRADE_BUILDINGS: 'UPGRADE_BUILDINGS',
   UPGRADE_ROADS: 'UPGRADE_ROADS',
   UPGRADE_MAP: 'UPGRADE_MAP'
-}
-
-const INDICATOR_TYPES = {
-  FATIGUE: 'fatigue',
-  HUNGER: 'hunger',
-  BOREDOM: 'boredom',
-  NATURAL_NEED: 'naturalNeed'
-} 
-
-const MOOD_COLORS = {
-  GOOD: '#4CAF50',    
-  MEDIUM: '#FFC107',  
-  BAD: '#F44336'     
-} 
-
-const MOOD_THRESHOLDS = {
-  GOOD: 7,
-  MEDIUM: 4
-} 
-
-const moodUtils = {
-
-  getMoodColor(moodValue) {
-    if (moodValue >= MOOD_THRESHOLDS.GOOD) {
-      return MOOD_COLORS.GOOD
-    } else if (moodValue >= MOOD_THRESHOLDS.MEDIUM) {
-      return MOOD_COLORS.MEDIUM
-    } else {
-      return MOOD_COLORS.BAD
-    }
-  },
-  
-  calculateMoodValue(indicators) {
-    const { FATIGUE, HUNGER, BOREDOM, NATURAL_NEED } = INDICATOR_TYPES
-    
-    const values = [
-      indicators[FATIGUE] || 0,
-      indicators[HUNGER] || 0,
-      indicators[BOREDOM] || 0,
-      indicators[NATURAL_NEED] || 0
-    ]
-    
-    const average = values.reduce((sum, value) => sum + value, 0) / values.length
-    return parseFloat(average.toFixed(1))
-  },
-  
-  getCriticalIndicators(indicators, threshold = 3) {
-    const criticalIndicators = []
-    
-    Object.values(INDICATOR_TYPES).forEach(indicatorType => {
-      if (indicators[indicatorType] < threshold) {
-        criticalIndicators.push(indicatorType)
-      }
-    })
-    
-    return criticalIndicators
-  },
-  
-  generateInitialIndicators() {
-    const getRandomValue = () => Math.floor(Math.random() * 4) + 5
-    
-    return {
-      [INDICATOR_TYPES.FATIGUE]: getRandomValue(),
-      [INDICATOR_TYPES.HUNGER]: getRandomValue(),
-      [INDICATOR_TYPES.BOREDOM]: getRandomValue(),
-      [INDICATOR_TYPES.NATURAL_NEED]: getRandomValue()
-    }
-  }
 }
 
 export default createStore({
@@ -206,21 +139,21 @@ export default createStore({
         square: { 
           [INDICATOR_TYPES.BOREDOM]: 6, 
           [INDICATOR_TYPES.FATIGUE]: 5, 
-          [INDICATOR_TYPES.NATURAL_NEED]:3
-        },        
+          [INDICATOR_TYPES.NATURAL_NEED]: 3
+        },
         line: { 
           [INDICATOR_TYPES.HUNGER]: 5 
-        },               
+        },
         lshape: { 
           [INDICATOR_TYPES.BOREDOM]: 4,
           [INDICATOR_TYPES.HUNGER]: 4 
-        },                     
+        },
         toilet: { 
           [INDICATOR_TYPES.NATURAL_NEED]: 5 
-        },             
+        },
         bench: { 
           [INDICATOR_TYPES.FATIGUE]: 3 
-        }                    
+        }
       }
     }
   },
@@ -249,6 +182,7 @@ export default createStore({
       }
     },
     getBuildingEffects: (state) => state.buildingEffects,
+    getMoodUtils: () => moodUtils,
     getIndicatorDisplayNames: () => {
       return {
         [INDICATOR_TYPES.FATIGUE]: 'усталость',
@@ -392,7 +326,7 @@ export default createStore({
       const entranceRow = Math.floor(state.gridSizeY / 2)
       const hasEntranceRoad = state.roads.some(road => road.row === entranceRow && road.col === -1)
       if (!hasEntranceRoad) {
-      state.roads.push({ row: entranceRow, col: -1 })
+        state.roads.push({ row: entranceRow, col: -1 })
       }
  
       state.people.forEach(person => {
@@ -438,7 +372,7 @@ export default createStore({
     },
     
     addShape: (store, payload) => {
-      
+
       if (store.state.parkBalance < payload.shape.cost) {
         alert('Недостаточно средств')
         return
@@ -516,6 +450,14 @@ export default createStore({
         const targetRow = payload.row + part.y
         const targetCol = payload.col + part.x
 
+        const isOnRoad = store.state.roads.some(road => 
+          road.row === targetRow && road.col === targetCol
+        )
+        if (isOnRoad) {
+          store.commit(MUTATIONS.SET_PREVIEW_CELLS, [])
+          return
+        }
+
         preview.push({ row: targetRow, col: targetCol})
       }
       
@@ -552,7 +494,6 @@ export default createStore({
         const initialIndicators = moodUtils.generateInitialIndicators()
 
         const initialMood = moodUtils.calculateMoodValue(initialIndicators)
-        const initialMoodColor = moodUtils.getMoodColor(initialMood)
         const initialCriticalIndicators = moodUtils.getCriticalIndicators(initialIndicators)
         
         const person = {
@@ -569,14 +510,17 @@ export default createStore({
           direction: 'right',
           indicators: initialIndicators,
           mood: initialMood,
-          moodColor: initialMoodColor,
-          criticalIndicators: initialCriticalIndicators
+          criticalIndicators: initialCriticalIndicators,
+          tooltipText: moodUtils.formatTooltip({ 
+            indicators: initialIndicators, 
+            mood: initialMood, 
+            balance: Math.floor(Math.random() * 91) + 10,
+            criticalIndicators: initialCriticalIndicators 
+          })
         }
         
         store.commit(MUTATIONS.ADD_PERSON, person)
         store.commit(MUTATIONS.INCREMENT_NEXT_PERSON_ID)
-
-        store.dispatch('updatePersonTooltip', person.id)
       }
     },
     
@@ -647,10 +591,10 @@ export default createStore({
       if (!person || person.state !== 'walking') return
       
       const directions = [
-        { dx: 1, dy: 0, dir: 'right', weight: 40 },   
-        { dx: 0, dy: -1, dir: 'up', weight: 25 },     
-        { dx: 0, dy: 1, dir: 'down', weight: 25 },    
-        { dx: -1, dy: 0, dir: 'left', weight: 10 }   
+        { dx: 1, dy: 0, dir: 'right', weight: 40 },
+        { dx: 0, dy: -1, dir: 'up', weight: 25 },
+        { dx: 0, dy: 1, dir: 'down', weight: 25 },
+        { dx: -1, dy: 0, dir: 'left', weight: 10 }
       ]
       
       const validDirections = directions.filter(({ dx, dy }) => {
@@ -735,7 +679,7 @@ export default createStore({
       if (!person || person.state !== 'walking' || person.balance <= 5) return
 
       const hasCritical = person.criticalIndicators && person.criticalIndicators.length > 0
-      const baseChance = hasCritical ? 0.8 : 0.4
+      const baseChance = hasCritical ? 0.9 : 0.4
       
       if (Math.random() > baseChance) return
 
@@ -767,6 +711,10 @@ export default createStore({
           }
         }
         
+        if (entry.building.income > 0 && person.balance < entry.building.income) {
+          continue
+        }
+
         const desire = store.dispatch('calculateBuildingDesire', {
           personId,
           buildingType: entry.building.type
@@ -808,27 +756,6 @@ export default createStore({
           store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
         }
       }
-    },
-
-    updatePersonTooltip: (store, personId) => {
-      const person = store.state.people.find(p => p.id === personId)
-      if (!person) return
-      
-      const indicators = person.indicators || {}
-      const critical = person.criticalIndicators || []
-      
-      let tooltip = `Настроение: ${person.mood?.toFixed(1) || '?'}/10\n`
-      tooltip += `Усталость: ${indicators[INDICATOR_TYPES.FATIGUE] || 0}${critical.includes(INDICATOR_TYPES.FATIGUE) ? ' !' : ''}\n`
-      tooltip += `Голод: ${indicators[INDICATOR_TYPES.HUNGER] || 0}${critical.includes(INDICATOR_TYPES.HUNGER) ? ' !' : ''}\n`
-      tooltip += `Скука: ${indicators[INDICATOR_TYPES.BOREDOM] || 0}${critical.includes(INDICATOR_TYPES.BOREDOM) ? ' !' : ''}\n`
-      tooltip += `Нужда: ${indicators[INDICATOR_TYPES.NATURAL_NEED] || 0}${critical.includes(INDICATOR_TYPES.NATURAL_NEED) ? ' !' : ''}\n`
-      tooltip += `Баланс: ${person.balance}`
-      
-      if (critical.length > 0) {
-        tooltip += `\n\n!Критические показатели!`
-      }
-
-      person.tooltipText = tooltip
     },
 
     leaveBuilding: (store, personId) => {
@@ -888,19 +815,20 @@ export default createStore({
       if (!person || !person.indicators) return
 
       const moodValue = moodUtils.calculateMoodValue(person.indicators)
-      const moodColor = moodUtils.getMoodColor(moodValue)
       const criticalIndicators = moodUtils.getCriticalIndicators(person.indicators)
       
       store.commit(MUTATIONS.UPDATE_PERSON, {
         personId,
         updates: {
           mood: moodValue,
-          moodColor,
-          criticalIndicators
+          criticalIndicators,
+          tooltipText: moodUtils.formatTooltip({
+            ...person,
+            mood: moodValue,
+            criticalIndicators
+          })
         }
       })
-   
-      store.dispatch('updatePersonTooltip', personId)
     },
  
     decreaseRandomIndicator: (store, personId) => {

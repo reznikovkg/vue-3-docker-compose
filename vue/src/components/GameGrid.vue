@@ -1,82 +1,125 @@
 <template>
   <div class="game-grid">
-    <div class="game-grid__container" :style="gridStyle">
-      <div
-        v-for="row in storeGridSizeY"
-        :key="row"
-        class="game-grid__row"
-      >
-        <div
-          v-for="col in storeGridSizeX"
-          :key="col"
-          class="game-grid__cell"
-          :class="getCellClasses(row - 1, col - 1)"
-          @click="() => handleCellClick(row - 1, col - 1)"
-          @mouseover="() => handleCellHover(row - 1, col - 1)"
-        >
-          <div class="game-grid__ground"></div>
-          <div 
-            v-if="hasShape(row - 1, col - 1)" 
-            class="game-grid__shape"
-            :style="{ backgroundColor: getShapeColor(row - 1, col - 1) }"
-          >
-            <div class="game-grid__shape-info">
-              <div v-if="getShapeLevel(row - 1, col - 1) > 1" class="game-grid__shape-level">
-                Ур.{{ getShapeLevel(row - 1, col - 1) }}
-              </div>
-              <div v-if="getShapeCapacity(row - 1, col - 1) > 0" class="game-grid__shape-capacity">
-                {{ getCurrentVisitors(row - 1, col - 1) }}/{{ getShapeCapacity(row - 1, col - 1) }}
-              </div>
-              <div v-if="getShapeIncome(row - 1, col - 1) > 0" class="game-grid__shape-income">
-                +{{ getShapeIncome(row - 1, col - 1) }}
-              </div>
-            </div>
-          </div>
-          <div 
-            v-if="isPreviewCell(row - 1, col - 1) && !hasShape(row - 1, col - 1)"
-            class="game-grid__preview"
-          ></div>
-          <div 
+    <svg 
+      class="game-grid__container" 
+      :viewBox="viewBox" 
+      :style="gridStyle"
+    >
+      <g v-for="row in storeGridSizeY" :key="`row-${row}`">
+        <g v-for="col in storeGridSizeX" :key="`cell-${row}-${col}`">
+          <polygon
+            :points="getCellPoints(row - 1, col - 1)"
+            class="game-grid__ground"
+            :class="getCellClasses(row - 1, col - 1)"
+            @click="() => handleCellClick(row - 1, col - 1)"
+            @mouseover="() => handleCellHover(row - 1, col - 1)"
+          />
+          <polygon
             v-if="isRoad(row - 1, col - 1)"
+            :points="getCellPoints(row - 1, col - 1)"
             class="game-grid__road"
-          ></div>
-        </div>
-      </div>
-      <div
-        class="game-grid__entrance"
-        :style="entranceStyle"
-      ></div>
-      <div 
-        v-if="hoveredPerson && hoveredPerson.tooltipText"
-        class="game-grid__tooltip"
-        :style="getTooltipStyle()"
+          />
+          <polygon
+            v-if="isPreviewCell(row - 1, col - 1) && !hasShape(row - 1, col - 1)"
+            :points="getCellPoints(row - 1, col - 1)"
+            class="game-grid__preview"
+          />
+          <g v-if="hasShape(row - 1, col - 1)">
+            <polygon
+              :points="getCellPoints(row - 1, col - 1)"
+              class="game-grid__shape"
+              :style="{ fill: getShapeColor(row - 1, col - 1) }"
+            />
+            <g v-if="isMainCell(row - 1, col - 1)">
+              <text
+                v-if="getShapeLevel(row - 1, col - 1) > 1"
+                :x="getCellCenterX(row - 1, col - 1)"
+                :y="getCellCenterY(row - 1, col - 1)-15"
+                text-anchor="middle"
+                class="game-grid__shape-level"
+              >
+                Ур.{{ getShapeLevel(row - 1, col - 1) }}
+              </text>
+              <text
+                v-if="getShapeCapacity(row - 1, col - 1) > 0"
+                :x="getCellCenterX(row - 1, col - 1)"
+                :y="getCellCenterY(row - 1, col - 1)"
+                text-anchor="middle"
+                class="game-grid__shape-capacity"
+              >
+                {{ getCurrentVisitors(row - 1, col - 1) }}/{{ getShapeCapacity(row - 1, col - 1) }}
+              </text>
+              <text
+                v-if="getShapeIncome(row - 1, col - 1) > 0"
+                :x="getCellCenterX(row - 1, col - 1)"
+                :y="getCellCenterY(row - 1, col - 1) + 15"
+                text-anchor="middle"
+                class="game-grid__shape-income"
+              >
+                +{{ getShapeIncome(row - 1, col - 1) }}
+              </text>
+            </g>
+          </g>
+        </g>
+      </g>
+      <g v-if="storeGridSizeY > 0">
+        <polygon
+          :points="getEntrancePoints()"
+          class="game-grid__entrance"
+        />
+      </g>
+      <g v-for="person in people" :key="person.id">
+        <g :transform="`translate(${getPersonX(person)}, ${getPersonY(person)})`">
+          <circle
+            v-if="person.criticalIndicators && person.criticalIndicators.length > 0"
+            :cx="CELL_SIZE / 5"
+            :cy="-CELL_SIZE / 5"
+            r="5"
+            class="game-grid__person-warning"
+          >
+          </circle>
+          <circle
+            :cx="0"
+            :cy="0"
+            :r="CELL_SIZE / 5"
+            class="game-grid__person"
+            :class="getPersonClass(person)"
+            :stroke="getMoodBorderColor(person.mood)"
+            stroke-width="2"
+            @mouseenter="() => hoveredPerson = person"
+            @mouseleave="() => hoveredPerson = null"
+          />
+          <text
+            :x="0"
+            :y="0"
+            text-anchor="middle"
+            dominant-baseline="middle"
+            class="game-grid__person-balance"
+          >
+            {{ person.balance }}
+          </text>
+        </g>
+      </g>
+      <foreignObject
+        v-if="hoveredPerson"
+        :x="getTooltipX()"
+        :y="getTooltipY()"
+        width="150"
+        height="100"
+        class="game-grid__tooltip-foreign"
       >
-        {{ hoveredPerson.tooltipText }}
-      </div>
-      <div
-        v-for="person in people"
-        :key="person.id"
-        class="game-grid__person"
-        :style="getPersonStyle(person)"
-        :class="getPersonClass(person)"
-        @mouseenter="hoveredPerson = person"
-        @mouseleave="hoveredPerson = null"
-      >
-        <span class="game-grid__person-balance">
-          {{ person.balance }}
-        </span>
-        <div v-if="person.criticalIndicators && person.criticalIndicators.length > 0" 
-             class="game-grid__person-warning">
-          !
+        <div class="game-grid__tooltip">
+          {{ hoveredPerson.tooltipText }}
         </div>
-      </div>
-    </div>
+      </foreignObject>
+    </svg>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
+import { moodUtils } from '../moodUtils'
 
 const CELL_SIZE = 50
 const hoveredPerson = ref<any>(null)
@@ -93,33 +136,115 @@ const roads = computed(() => store.getters.getRoads)
 const isRoadMode = computed(() => store.getters.getIsRoadMode)
 const people = computed(() => store.getters.getPeople)
 
-const gridStyle = computed(() => ({
-  '--cell-size': `${CELL_SIZE}px`,
-  '--grid-size-x': storeGridSizeX.value,
-  '--grid-size-y': storeGridSizeY.value
-}))
-
-const entranceStyle = computed(() => {
-  const entranceRow = Math.floor(storeGridSizeY.value / 2)
-  return {
-    left: `${-1 * CELL_SIZE}px`,
-    top: `${entranceRow * CELL_SIZE}px`,
-    width: `${CELL_SIZE}px`,
-    height: `${CELL_SIZE}px`
-  }
+const viewBox = computed(() => {
+  return '-200 -100 600 700'
 })
 
-const getTooltipStyle = () => {
-  if (!hoveredPerson.value) return {}
+const getMoodBorderColor = (mood: number): string => {
+  return moodUtils.getBorderColor(mood)
+}
 
-  const x = hoveredPerson.value.x * CELL_SIZE + CELL_SIZE / 2
-  const y = hoveredPerson.value.y * CELL_SIZE - 10
-  
-  return {
-    left: `${x}px`,
-    top: `${y}px`,
-    transform: 'translateX(-50%) translateY(-100%)'
+const gridStyle = computed(() => ({
+  '--cell-size': `${CELL_SIZE}px`,
+  width: '100%',
+  height: '100%',
+  minHeight: '600px'
+}))
+
+const getCellCenterX = (row: number, col: number): number => {
+  const offsetX = CELL_SIZE * 2
+  return offsetX + (col - row) * (CELL_SIZE / 2)
+}
+
+const getCellCenterY = (row: number, col: number): number => {
+  return (col + row) * (CELL_SIZE / 2)
+}
+
+const isMainCell = (row: number, col: number): boolean => {
+  const cellData = grid.value[row]?.[col]
+  if (!cellData || !cellData.id) {
+    return false
   }
+  
+  const shapeId = cellData.id
+
+  let minRow = Infinity
+  let minCol = Infinity
+  
+  for (let r = 0; r < storeGridSizeY.value; r++) {
+    for (let c = 0; c < storeGridSizeX.value; c++) {
+      const cell = grid.value[r]?.[c]
+      if (cell?.id === shapeId) {
+        if (r < minRow) {
+          minRow = r
+          minCol = c
+        } else if (r === minRow && c < minCol) {
+          minCol = c
+        }
+      }
+    }
+  }
+
+  return row === minRow && col === minCol
+}
+
+const getCellPoints = (row: number, col: number): string => {
+  const centerX = getCellCenterX(row, col)
+  const centerY = getCellCenterY(row, col)
+  
+  const points = [
+    [centerX, centerY - CELL_SIZE / 2],
+    [centerX + CELL_SIZE / 2, centerY],
+    [centerX, centerY + CELL_SIZE / 2],
+    [centerX - CELL_SIZE / 2, centerY]
+  ]
+  
+  return points.map(p => p.join(',')).join(' ')
+}
+
+const getEntranceCenterX = (): number => {
+  const entranceRow = Math.floor(storeGridSizeY.value / 2)
+  const offsetX = CELL_SIZE * 2
+  return offsetX + (-1 - entranceRow) * (CELL_SIZE / 2)
+}
+
+const getEntranceCenterY = (): number => {
+  const entranceRow = Math.floor(storeGridSizeY.value / 2)
+  return (-1 + entranceRow) * (CELL_SIZE / 2)
+}
+
+const getEntrancePoints = (): string => {
+  const centerX = getEntranceCenterX()
+  const centerY = getEntranceCenterY()
+  
+  const points = [
+    [centerX, centerY - CELL_SIZE / 2],
+    [centerX + CELL_SIZE / 2, centerY],
+    [centerX, centerY + CELL_SIZE / 2],
+    [centerX - CELL_SIZE / 2, centerY]
+  ]
+  
+  return points.map(p => p.join(',')).join(' ')
+}
+
+const getPersonX = (person: any): number => {
+  const offsetX = CELL_SIZE * 2
+  return offsetX + (person.x - person.y) * (CELL_SIZE / 2)
+}
+
+const getPersonY = (person: any): number => {
+  return (person.x + person.y) * (CELL_SIZE / 2)
+}
+
+const getTooltipX = (): number => {
+  if (!hoveredPerson.value) return 0
+  const offsetX = CELL_SIZE * 2
+  return offsetX + (hoveredPerson.value.x - hoveredPerson.value.y) * (CELL_SIZE / 2) - 100
+}
+
+const getTooltipY = (): number => {
+  if (!hoveredPerson.value) return 0
+  return (hoveredPerson.value.x + hoveredPerson.value.y) * (CELL_SIZE / 2) - 140
 }
 
 const getShapeColor = (row: number, col: number): string => {
@@ -150,23 +275,6 @@ const getCurrentVisitors = (row: number, col: number): number => {
   return people.value.filter((person: any) => 
     person.targetBuilding?.id === shapeId && person.state === 'inBuilding'
   ).length
-}
-
-const getPersonStyle = (person: any) => {
-  return {
-    left: `${person.x * CELL_SIZE + CELL_SIZE / 4}px`,
-    top: `${person.y * CELL_SIZE + CELL_SIZE / 4}px`,
-    width: `${CELL_SIZE / 2}px`,
-    height: `${CELL_SIZE / 2}px`,
-    backgroundColor: person.moodColor || '#4CAF50',
-    border: `2px solid ${getBorderColor(person.mood)}`
-  }
-}
-
-const getBorderColor = (mood: number) => {
-  if (mood >= 7) return '#2E7D32' 
-  if (mood >= 4) return '#FF8F00' 
-  return '#C62828' 
 }
 
 const getPersonClass = (person: any) => ({
@@ -244,6 +352,12 @@ const handleAddShape = (row: number, col: number): void => {
       alert('Нельзя разместить фигуру - место занято')
       return
     }
+
+    if (isRoad(targetRow, targetCol)) {
+      canAdd = false
+      alert('Нельзя разместить фигуру на дороге')
+      return
+    }
   }
 
   if (canAdd) {
@@ -277,7 +391,7 @@ onMounted(() => {
 
 setInterval(() => {
   store.dispatch('updatePeople')
-}, 500)
+}, 800)
 </script>
 
 <style scoped lang="less">
@@ -286,231 +400,171 @@ setInterval(() => {
   justify-content: center;
   align-items: center;
   padding: 20px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: #f0f0f0;
 
   &__container {
-    display: grid;
-    grid-template-columns: repeat(var(--grid-size-x), var(--cell-size));
-    grid-template-rows: repeat(var(--grid-size-y), var(--cell-size));
-    gap: 2px;
-    transform: rotateX(45deg) rotateZ(45deg);
-    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 700px; 
+    min-height: 800px; 
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  &__row {
-    display: contents;
-  }
-
-  &__cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-    position: relative;
+  &__ground {
+    fill: #b9f795;
+    stroke: #32CD32;
+    stroke-width: 1;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-      transform: translateZ(5px);
-      z-index: 10;
+      fill: #a5e085;
+      stroke-width: 2;
     }
 
-    &--preview .game-grid__ground {
-      background: rgba(144, 238, 144, 0.6);
-      border: 2px dashed #32CD32;
+    &.game-grid__cell--preview {
+      fill: rgba(144, 238, 144, 0.6);
+      stroke: #32CD32;
+      stroke-dasharray: 4;
+      stroke-width: 2;
     }
 
-    &--occupied .game-grid__ground {
-      background: transparent;
-      border: 2px solid #8B4513;
+    &.game-grid__cell--occupied {
+      fill: transparent;
+      stroke: #8B4513;
+      stroke-width: 2;
     }
 
-    &--road .game-grid__ground {
-      background: #a0a0a0;
-      border: 1px solid #808080;
+    &.game-grid__cell--road {
+      fill: #a0a0a0;
+      stroke: #808080;
+      stroke-width: 1;
     }
-  }
-
-  &__ground {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #b9f795;
-    border: 1px solid #32CD32;
-  }
-
-  &__shape {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 2px solid #654321;
-    z-index: 5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2px;
-    box-sizing: border-box;
-  }
-
-  &__shape-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1px;
-    width: 100%;
-  }
-
-  &__shape-level {
-    background: gold;
-    color: black;
-    font-size: 8px;
-    font-weight: bold;
-    padding: 1px 3px;
-    border-radius: 3px;
-  }
-
-  &__shape-capacity {
-    background: rgba(255, 255, 255, 0.9);
-    padding: 1px 3px;
-    border-radius: 3px;
-    font-size: 8px;
-    font-weight: bold;
-    color: #2E7D32;
-  }
-
-  &__shape-income {
-    background: rgba(255, 215, 0, 0.9);
-    padding: 1px 3px;
-    border-radius: 3px;
-    font-size: 8px;
-    font-weight: bold;
-    color: #8B4513;
-  }
-
-  &__preview {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(144, 238, 144, 0.6);
-    border: 2px dashed #32CD32;
-    z-index: 6;
   }
 
   &__road {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #a0a0a0;
-    border: 1px solid #808080;
-    z-index: 1;
+    fill: #a0a0a0;
+    stroke: #808080;
+    stroke-width: 1;
+    pointer-events: none;
+  }
+
+  &__preview {
+    fill: rgba(144, 238, 144, 0.6);
+    stroke: #32CD32;
+    stroke-dasharray: 4;
+    stroke-width: 2;
+    pointer-events: none;
+  }
+
+  &__shape {
+    fill: var(--shape-color, #8B4513);
+    stroke: #78604e;
+    stroke-width: 1;
+    pointer-events: none;
+  }
+
+  &__shape-info {
+    font-size: 14px;
+    font-weight: bold;
+    pointer-events: none;
+  }
+
+  &__shape-level {
+    fill: rgb(245, 89, 11);
+    stroke: #f5f5f5;
+    stroke-width: 0.5;
+    paint-order: stroke;
+    font-size: 12px;
+  }
+
+  &__shape-capacity {
+    fill: white;
+    stroke: #388e3c;
+    stroke-width: 1.5;
+    paint-order: stroke;
+    font-size: 12px;
+  }
+
+  &__shape-income {
+    fill: rgb(255, 255, 255);
+    stroke: #e27d30;
+    stroke-width: 1.5;
+    paint-order: stroke;
+    font-size: 12px;
   }
 
   &__entrance {
-    position: absolute;
-    background-color: #4CAF50;
-    border: 2px dashed #2E7D32;
-    z-index: 2;
+    fill: #4CAF50;
+    stroke: #2E7D32;
+    stroke-dasharray: 4;
+    stroke-width: 2;
+    pointer-events: none;
   }
 
   &__person {
-    position: absolute;
-    background: linear-gradient(45deg, #ff6b6b, #ffa500);
-    border-radius: 50%;
-    z-index: 20;
-    transition: all 0.5s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     cursor: pointer;
+    transition: all 0.3s ease;
+    stroke-width: 2;
 
     &--waiting {
-      background: linear-gradient(45deg, #ff6b6b, #ffa500);
+      fill: #d04b0e;
     }
 
     &--walking {
-      background: linear-gradient(45deg, #4CAF50, #8BC34A);
+      fill: #4CAF50;
     }
 
     &--inBuilding {
-      background: linear-gradient(45deg, #2196F3, #03A9F4);
+      fill: #2196F3;
     }
 
     &:hover {
-      transform: scale(1.2);
-      z-index: 30;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      r: calc(var(--cell-size) / 4);
+      stroke-width: 3;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
     }
   }
 
   &__person-balance {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     font-size: 8px;
     font-weight: bold;
-    color: white;
-    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+    fill: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
-    white-space: nowrap;
+    font-family: Arial, sans-serif;
   }
 
   &__person-warning {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #9b9a9a;
-    color: white;
-    font-size: 10px;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 21;
-    animation: pulse 1s infinite;
-    border: 1px solid white;
+    fill: #ee67a4;
+    stroke: white;
+    stroke-width: 0.5;
+    pointer-events: none;
   }
 
+  &__tooltip-foreign {
+    overflow: visible;
+    pointer-events: none;
+  }
+  
   &__tooltip {
-    position: absolute;
     background: rgba(0, 0, 0, 0.95);
     color: white;
-    padding: 12px;
+    padding: 8px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 10px;
     line-height: 1.5;
     white-space: pre-line;
-    min-width: 200px;
-    max-width: 280px;
-    z-index: 1000;
-    pointer-events: none;
     border: 1px solid #666;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
     word-wrap: break-word;
     font-family: Arial, sans-serif;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 8px;
-      border-style: solid;
-      border-color: rgba(0, 0, 0, 0.95) transparent transparent transparent;
-    }
-  }
-
-  @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
   }
 }
 </style>
