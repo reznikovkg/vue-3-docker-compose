@@ -1,5 +1,8 @@
 <template>
   <div class="scene" ref="sceneRef" :style="cursorStyle" @click="(event) => onSceneClick(event)">
+    <svg class="zone">
+      <polygon :points="areaPolygon" class="zone__polygon" />
+    </svg>
     <div
       v-for="item in scene"
       class="area"
@@ -13,7 +16,8 @@
         :id="item.id"
         :is="gameObjects[item.id.split('.')[0]]"
         :item="item"
-        class="game-object"/>
+        class="game-object"
+      />
     </div>
     <Character
       class="area"
@@ -31,7 +35,7 @@
 </template>
 
 <script setup>
-import { defineProps, ref } from "vue"
+import {computed, defineProps, ref} from "vue"
 import Door from "@/components/objects/Door.vue"
 import Character from "@/components/Character.vue"
 import Key from "@/components/items/Key.vue"
@@ -63,6 +67,9 @@ const tooltipX = ref(0)
 const tooltipY = ref(0)
 const sceneRef = ref(null)
 const store = useStore()
+const areaPolygon = computed(() =>
+  store.getters.getArea.map(p => `${p.x},${p.y}`).join(' ')
+)
 
 const showTooltip = (text) => {
   tooltipText.value = text
@@ -98,38 +105,30 @@ const onSceneClick = (event) => {
   hideTooltip()
   store.dispatch("movePlayerToPoint", { x, y })
 }
-
-const emit = defineEmits(['startMinigame'])
 const select = (item) => {
   hideTooltip()
-  if (item.collectible) {
-    new Promise((resolve) => {
-      emit('startMinigame', {
-        difficulty: item.difficulty || 1,
-        onSuccess: () => resolve(true),
-        onClose: () => resolve(false)
-      })
-    })
-    .then((success) => {
-      if (success) {
-        store.dispatch('selectObject', item)
-      }
-    })
-    .catch ((error) => {
-      console.error('Error in minigame:', error)
-    })
-  } else {
-    store.dispatch('selectObject', item)
-  }
+  store.dispatch('selectObject', item)
 }
 </script>
 
 <style scoped lang="less">
+.zone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  &__polygon {
+    fill: rgba(0, 255, 0, 0.15);
+    stroke: rgba(0, 255, 0, 0.6);
+    stroke-width: 1;
+  }
+}
 .scene {
   position: relative;
-  width: 600px;
-  height: 400px;
-  margin-bottom: 20px;
+  width: 100%;
+  height: 100%;
   cursor: inherit
 }
 .scene * {

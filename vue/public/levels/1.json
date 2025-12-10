@@ -1,14 +1,31 @@
 {
   "objects": [
-    { "id": "door.1", "type": "game-object", "x": 120, "y": 220, "tooltip": "Найдите ключ, чтобы открыть дверь", "isActive": false, "condition": "key" },
-    { "id": "gold.1", "type": "item", "x": 500, "y": 300, "tooltip": "Возьмите золото", "count": 1, "collectible": true, "difficulty": 1 },
-    { "id": "stick.1", "type": "item", "x": 600, "y": 300, "tooltip": "Возьмите палку", "count": 1, "collectible": true, "difficulty": 1 }
+    { "id": "door.1", "type": "game-object", "x": 270, "y": 225, "tooltip": "Найдите ключ, чтобы открыть дверь", "isActive": false, "condition": "key" },
+    { "id": "gold.1", "type": "item", "x": 100, "y": 430, "tooltip": "Возьмите золото", "count": 1, "collectible": true, "difficulty": 1 },
+    { "id": "stick.1", "type": "item", "x": 750, "y": 480, "tooltip": "Возьмите палку", "count": 1, "collectible": true, "difficulty": 1 }
   ],
-  "playerTransform": { "x": 200, "y": 350, "isRun": false, "toLeft": false },
+  "playerTransform": { "x": 450, "y": 450, "isRun": false, "toLeft": false },
   "completeCondition": {
     "id": "door.1",
     "property": "isActive",
     "value": true
   },
+  "moveArea": [
+    { "x": 4,   "y": 440 },
+    { "x": 260, "y": 440 },
+    { "x": 320, "y": 480 },
+    { "x": 260, "y": 380 },
+    { "x": 390, "y": 380 },
+    { "x": 480, "y": 480 },
+    { "x": 450, "y": 430 },
+    { "x": 700, "y": 400 },
+    { "x": 900, "y": 332 },
+    { "x": 900, "y": 368 },
+    { "x": 650, "y": 460 },
+    { "x": 670, "y": 490 },
+    { "x": 900, "y": 489 },
+    { "x": 900, "y": 540 },
+    { "x": 5,   "y": 540 }
+  ],
   "background": "bg.png"
 }

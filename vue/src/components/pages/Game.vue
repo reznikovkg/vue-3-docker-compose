@@ -12,7 +12,6 @@
       <SceneScreen
         :scene="list"
         :player-transform="playerTransform"
-        @startMinigame="(data) => openMinigame(data)"
       />
       <MiniGameScreen
         v-if="isMinigameActive" 
@@ -21,7 +20,7 @@
         :onClose="minigame.onClose"
       />
       <CraftingScreen v-if="isCraftingOpen" :onClose="() => closeCrafting()" @close="() => closeCrafting()"/>
-      <Inventory/>
+      <Inventory class="inventory"/>
       <WinScreen v-if="gameState.state === 1"/>
     </div>
     <LoadScreen  v-if="gameState.isLoading"/>
@@ -45,7 +44,6 @@ const playerTransform = computed(() => store.getters.getPlayerTransform)
 const gameState = computed(() => store.getters.getGameState)
 const isMinigameActive = computed(() => store.getters.isMinigameActive)
 const minigame = computed(() => store.getters.getMinigameData)
-const openMinigame = (game) => { store.commit("START_MINIGAME", game)}
 const isCraftingOpen = ref(false)
 const closeCrafting = () => {isCraftingOpen.value = false}
 
@@ -61,6 +59,13 @@ const openCrafting = () => { isCraftingOpen.value = true}
   width: 900px;
   height: 540px;
   cursor: url('/cursors/default-cursor.png'), auto;
+}
+.inventory {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 20px;
+  margin-inline: auto;
+  width: fit-content;
 }
 .game {
   width: 100%;

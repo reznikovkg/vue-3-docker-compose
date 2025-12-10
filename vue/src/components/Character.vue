@@ -19,75 +19,90 @@ const isFacingLeft = ref(false)
 const moveInterval = ref<number | null>(null)
 
 const keys = {
- ArrowLeft: false,
- ArrowRight: false
+  ArrowLeft: false,
+  ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false,
 }
 
 const onKeyDown = (e: KeyboardEvent) => {
- if (e.key in keys) {
-   keys[e.key as keyof typeof keys] = true
-   startMovement()
- }
+  if (e.key in keys) {
+    keys[e.key as keyof typeof keys] = true
+    startMovement()
+  }
 }
 
 const onKeyUp = (e: KeyboardEvent) => {
- if (e.key in keys) {
-   keys[e.key as keyof typeof keys] = false
-   if (!keys.ArrowLeft && !keys.ArrowRight) {
-     stopMovement()
-   } else {
-     updateDirection()
-   }
- }
+  if (e.key in keys) {
+    keys[e.key as keyof typeof keys] = false
+    if (
+      !keys.ArrowLeft
+      && !keys.ArrowRight
+      && !keys.ArrowUp
+      && !keys.ArrowDown
+    ) {
+      stopMovement()
+    } else {
+      updateDirection()
+    }
+  }
 }
 
 const startMovement = () => {
- if (!moveInterval.value) {
-   updateDirection()
-   moveInterval.value = window.setInterval(moveCharacter, MOVE_INTERVAL)
- } else {
-   updateDirection()
- }
+  if (!moveInterval.value) {
+    updateDirection()
+    moveInterval.value = window.setInterval(moveCharacter, MOVE_INTERVAL)
+  } else {
+    updateDirection()
+  }
 }
 
 const stopMovement = () => {
- if (moveInterval.value) {
-   clearInterval(moveInterval.value)
-   moveInterval.value = null
- }
- isRunning.value = false
- updateStore()
+  if (moveInterval.value) {
+    clearInterval(moveInterval.value)
+    moveInterval.value = null
+  }
+  isRunning.value = false
+  updateStore()
 }
 
 const updateDirection = () => {
- isRunning.value = keys.ArrowLeft || keys.ArrowRight
- isFacingLeft.value = keys.ArrowLeft
+  isRunning.value = keys.ArrowLeft || keys.ArrowRight
+  isFacingLeft.value = keys.ArrowLeft
 }
 
 const moveCharacter = () => {
- if (keys.ArrowLeft) {
-   store.dispatch('movePlayer', { x: -MOVE_SPEED, y: 0 })
- } else if (keys.ArrowRight) {
-   store.dispatch('movePlayer', { x: MOVE_SPEED, y: 0 })
- }
+  let payload = { x: 0, y: 0 }
+  if (keys.ArrowLeft) {
+    payload = { x: -MOVE_SPEED, y: 0 }
+  } else if (keys.ArrowRight) {
+    payload = { x: MOVE_SPEED, y: 0 }
+  } else if (keys.ArrowUp) {
+    payload = { x: 0, y: -MOVE_SPEED }
+  } else if (keys.ArrowDown) {
+    payload = { x: 0, y: MOVE_SPEED }
+  } else {
+    return
+  }
+  store.dispatch('movePlayer', payload)
 }
 
 const updateStore = () => {
- store.dispatch('updatePlayerState', {
-   isRun: isRunning.value,
-   toLeft: isFacingLeft.value
- })
+  store.dispatch('updatePlayerState', {
+    isRun: isRunning.value,
+    toLeft: isFacingLeft.value
+  })
 }
 
 onMounted(() => {
- window.addEventListener('keydown', onKeyDown)
- window.addEventListener('keyup', onKeyUp)
+  window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
 })
 
 onUnmounted(() => {
- window.removeEventListener('keydown', onKeyDown)
- window.removeEventListener('keyup', onKeyUp)
- stopMovement()
+  window.removeEventListener('keydown', onKeyDown)
+  window.removeEventListener('keyup', onKeyUp)
+  stopMovement()
 })
 </script>
 
@@ -96,6 +111,7 @@ onUnmounted(() => {
   pointer-events: none;
   width: 100px;
   height: 150px;
+  transform: translate(-50%, -90%);
   background-repeat: no-repeat;
   background-image: url("@/assets/character/idle.png");
   background-size: contain;
@@ -107,7 +123,7 @@ onUnmounted(() => {
     background-size: contain;
   }
   &--left {
-    transform: scaleX(-1);
+    transform: scaleX(-1) translate(50%, -90%);
   }
 }
 @keyframes run {
