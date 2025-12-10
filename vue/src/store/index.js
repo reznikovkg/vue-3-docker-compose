@@ -1,4 +1,5 @@
 import { createStore } from 'vuex'
+import { moodUtils, INDICATOR_TYPES } from '../moodUtils'
 
 const MUTATIONS = {
   SET_GRID: 'SET_GRID',
@@ -17,7 +18,12 @@ const MUTATIONS = {
   REMOVE_ROAD: 'REMOVE_ROAD',
   SET_ROAD_MODE: 'SET_ROAD_MODE',
   ADD_BUILDING_ENTRY: 'ADD_BUILDING_ENTRY',
-  REMOVE_BUILDING_ENTRY: 'REMOVE_BUILDING_ENTRY'
+  REMOVE_BUILDING_ENTRY: 'REMOVE_BUILDING_ENTRY',
+  INCREMENT_NEXT_SHAPE_ID: 'INCREMENT_NEXT_SHAPE_ID',
+  INCREMENT_NEXT_PERSON_ID: 'INCREMENT_NEXT_PERSON_ID',
+  UPGRADE_BUILDINGS: 'UPGRADE_BUILDINGS',
+  UPGRADE_ROADS: 'UPGRADE_ROADS',
+  UPGRADE_MAP: 'UPGRADE_MAP'
 }
 
 export default createStore({
@@ -36,7 +42,12 @@ export default createStore({
       nextPersonId: 1,
       roads: [],
       isRoadMode: false,
-      buildingEntries: [], 
+      buildingEntries: [],
+      upgrades: {
+        buildings: 1,
+        roads: 1,
+        map: 1
+      },
       availableShapes: [
         {
           id: 1,
@@ -50,7 +61,9 @@ export default createStore({
           cost: 200,
           capacity: 5,
           visitTime: 10,
-          entry: { x: 1, y: 1 } 
+          entry: { x: 1, y: 1 },
+          income: 30,
+          level: 1
         },
         {
           id: 2,
@@ -63,7 +76,9 @@ export default createStore({
           cost: 100,
           capacity: 2,
           visitTime: 5,
-          entry: { x: 2, y: 0 } 
+          entry: { x: 2, y: 0 },
+          income: 20,
+          level: 1
         },
         {
           id: 3,
@@ -75,8 +90,10 @@ export default createStore({
           ],
           cost: 100,
           capacity: 3,
-          visitTime: 18,
-          entry: { x: 1, y: 0 } 
+          visitTime: 8,
+          entry: { x: 1, y: 0 },
+          income: 5,
+          level: 1
         },
         {
           id: 4,
@@ -87,9 +104,57 @@ export default createStore({
           cost: 50,
           capacity: 0,
           visitTime: 0,
-          entry: { x: 0, y: 0 }
+          entry: { x: 0, y: 0 },
+          income: 0,
+          level: 1
+        },
+        {
+          id: 5,
+          name: 'Туалет',
+          type: 'toilet',
+          color: '#907a5fff',
+          layout: [{ x: 0, y: 0 }],
+          cost: 80,
+          capacity: 3,
+          visitTime: 3,
+          entry: { x: 0, y: 0 },
+          income: 0,
+          level: 1
+        },
+        {
+          id: 6,
+          name: 'Лавочка',
+          type: 'bench',
+          color: '#A0522D',
+          layout: [{ x: 0, y: 0 }],
+          cost: 60,
+          capacity: 2,
+          visitTime: 4,
+          entry: { x: 0, y: 0 },
+          income: 0,
+          level: 1
         }
-      ]
+      ],
+      buildingEffects: {
+        square: { 
+          [INDICATOR_TYPES.BOREDOM]: 6, 
+          [INDICATOR_TYPES.FATIGUE]: 5, 
+          [INDICATOR_TYPES.NATURAL_NEED]: 3
+        },
+        line: { 
+          [INDICATOR_TYPES.HUNGER]: 5 
+        },
+        lshape: { 
+          [INDICATOR_TYPES.BOREDOM]: 4,
+          [INDICATOR_TYPES.HUNGER]: 4 
+        },
+        toilet: { 
+          [INDICATOR_TYPES.NATURAL_NEED]: 5 
+        },
+        bench: { 
+          [INDICATOR_TYPES.FATIGUE]: 3 
+        }
+      }
     }
   },
   getters: {
@@ -106,7 +171,26 @@ export default createStore({
     getRoads: (state) => state.roads,
     getIsRoadMode: (state) => state.isRoadMode,
     getVisitorsCount: (state) => state.people.length,
-    getBuildingEntries: (state) => state.buildingEntries
+    getBuildingEntries: (state) => state.buildingEntries,
+    getUpgrades: (state) => state.upgrades,
+    getRoadCapacityBonus: (state) => {
+      switch (state.upgrades.roads) {
+        case 1: return 0;
+        case 2: return state.roads.length;
+        case 3: return state.roads.length * 2;
+        default: return 0;
+      }
+    },
+    getBuildingEffects: (state) => state.buildingEffects,
+    getMoodUtils: () => moodUtils,
+    getIndicatorDisplayNames: () => {
+      return {
+        [INDICATOR_TYPES.FATIGUE]: 'усталость',
+        [INDICATOR_TYPES.HUNGER]: 'голод',
+        [INDICATOR_TYPES.BOREDOM]: 'скука',
+        [INDICATOR_TYPES.NATURAL_NEED]: 'нужда'
+      }
+    }
   },
   mutations: {
     [MUTATIONS.SET_GRID]: (state, grid) => {
@@ -131,10 +215,12 @@ export default createStore({
           color: payload.color,
           capacity: payload.capacity,
           visitTime: payload.visitTime,
-          entry: payload.entry
+          entry: payload.entry,
+          income: payload.income,
+          level: payload.level || 1,
+          effect: payload.effect
         }
       })
-      state.nextShapeId++
     },
     [MUTATIONS.REMOVE_SHAPE]: (state, payload) => {
       for (let row = 0; row < payload.gridSizeY; row++) {
@@ -180,6 +266,81 @@ export default createStore({
     },
     [MUTATIONS.REMOVE_BUILDING_ENTRY]: (state, shapeId) => {
       state.buildingEntries = state.buildingEntries.filter(entry => entry.shapeId !== shapeId)
+    },
+    [MUTATIONS.INCREMENT_NEXT_SHAPE_ID]: (state) => {
+      state.nextShapeId++
+    },
+    [MUTATIONS.INCREMENT_NEXT_PERSON_ID]: (state) => {
+      state.nextPersonId++
+    },
+    [MUTATIONS.UPGRADE_BUILDINGS]: (state) => {
+      state.upgrades.buildings += 1
+      for (let row = 0; row < state.gridSizeY; row++) {
+        for (let col = 0; col < state.gridSizeX; col++) {
+          const cell = state.grid[row]?.[col]
+          if (cell && cell.type && cell.type !== 'single' && cell.income > 0) {
+            cell.level += 1
+            cell.income = Math.floor(cell.income * 1.5)
+            cell.capacity += 1
+          }
+        }
+      }
+    },
+    [MUTATIONS.UPGRADE_ROADS]: (state) => {
+      state.upgrades.roads += 1
+    },
+    [MUTATIONS.UPGRADE_MAP]: (state) => {
+      state.upgrades.map += 1
+      
+      const oldGrid = [...state.grid]
+      const oldSizeX = state.gridSizeX
+      const oldSizeY = state.gridSizeY
+      
+      state.gridSizeX = oldSizeX + 2
+      state.gridSizeY = oldSizeY + 2
+      
+      const newGrid = Array(state.gridSizeY)
+        .fill(null)
+        .map(() => Array(state.gridSizeX).fill(null))
+    
+      for (let row = 0; row < oldSizeY; row++) {
+        for (let col = 0; col < oldSizeX; col++) {
+          newGrid[row + 1][col + 1] = oldGrid[row]?.[col] || null
+        }
+      }
+      
+      state.grid = newGrid
+     
+      state.buildingEntries = state.buildingEntries.map(entry => ({
+        ...entry,
+        row: entry.row + 1,
+        col: entry.col + 1
+      }))
+    
+      state.roads = state.roads.map(road => ({
+        ...road,
+        row: road.row + 1,
+        col: road.col + 1
+      }))
+     
+      const entranceRow = Math.floor(state.gridSizeY / 2)
+      const hasEntranceRoad = state.roads.some(road => road.row === entranceRow && road.col === -1)
+      if (!hasEntranceRoad) {
+        state.roads.push({ row: entranceRow, col: -1 })
+      }
+ 
+      state.people.forEach(person => {
+        person.x += 1
+        person.y += 1
+        if (person.lastPosition) {
+          person.lastPosition.x += 1
+          person.lastPosition.y += 1
+        }
+        person.path = person.path.map(pos => ({
+          x: pos.x + 1,
+          y: pos.y + 1
+        }))
+      })
     }
   },
   actions: {
@@ -211,9 +372,7 @@ export default createStore({
     },
     
     addShape: (store, payload) => {
-      const gridSizeX = payload.gridSizeX || store.state.gridSizeX
-      const gridSizeY = payload.gridSizeY || store.state.gridSizeY
- 
+
       if (store.state.parkBalance < payload.shape.cost) {
         alert('Недостаточно средств')
         return
@@ -236,7 +395,10 @@ export default createStore({
         color: payload.shape.color,
         capacity: payload.shape.capacity,
         visitTime: payload.shape.visitTime,
-        entry: payload.shape.entry
+        entry: payload.shape.entry,
+        income: payload.shape.income,
+        effect: payload.shape.effect,
+        level: 1
       })
 
       store.commit(MUTATIONS.ADD_BUILDING_ENTRY, {
@@ -245,6 +407,8 @@ export default createStore({
         col: entryCol,
         building: payload.shape
       })
+
+      store.commit(MUTATIONS.INCREMENT_NEXT_SHAPE_ID)
     
       store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance - payload.shape.cost)
    
@@ -286,6 +450,14 @@ export default createStore({
         const targetRow = payload.row + part.y
         const targetCol = payload.col + part.x
 
+        const isOnRoad = store.state.roads.some(road => 
+          road.row === targetRow && road.col === targetCol
+        )
+        if (isOnRoad) {
+          store.commit(MUTATIONS.SET_PREVIEW_CELLS, [])
+          return
+        }
+
         preview.push({ row: targetRow, col: targetCol})
       }
       
@@ -315,8 +487,15 @@ export default createStore({
     },
     
     addVisitor: (store) => {
-      if (store.state.people.length < store.state.maxVisitors) {
+      const maxWithBonus = store.state.maxVisitors + store.getters.getRoadCapacityBonus
+      if (store.state.people.length < maxWithBonus) {
         const entranceRow = Math.floor(store.state.gridSizeY / 2)
+
+        const initialIndicators = moodUtils.generateInitialIndicators()
+
+        const initialMood = moodUtils.calculateMoodValue(initialIndicators)
+        const initialCriticalIndicators = moodUtils.getCriticalIndicators(initialIndicators)
+        
         const person = {
           id: store.state.nextPersonId,
           x: -1,
@@ -328,10 +507,20 @@ export default createStore({
           spawnTimer: 2,
           path: [],
           lastPosition: null,
-          direction: 'right'
+          direction: 'right',
+          indicators: initialIndicators,
+          mood: initialMood,
+          criticalIndicators: initialCriticalIndicators,
+          tooltipText: moodUtils.formatTooltip({ 
+            indicators: initialIndicators, 
+            mood: initialMood, 
+            balance: Math.floor(Math.random() * 91) + 10,
+            criticalIndicators: initialCriticalIndicators 
+          })
         }
+        
         store.commit(MUTATIONS.ADD_PERSON, person)
-        store.state.nextPersonId++
+        store.commit(MUTATIONS.INCREMENT_NEXT_PERSON_ID)
       }
     },
     
@@ -358,6 +547,9 @@ export default createStore({
             store.dispatch('movePersonFromEntrance', person.id)
           }
         } else if (person.state === 'walking') {
+          if (Math.random() < 0.3) {
+            store.dispatch('decreaseRandomIndicator', person.id)
+          }
           store.dispatch('movePersonRandomly', person.id)
         } else if (person.state === 'inBuilding') {
           person.buildingTimer--
@@ -367,7 +559,7 @@ export default createStore({
         }
       })
       
-      if (store.state.people.length < store.state.maxVisitors && Math.random() < 0.1) {
+      if (store.state.people.length < (store.state.maxVisitors + store.getters.getRoadCapacityBonus) && Math.random() < 0.1) {
         store.dispatch('addVisitor')
       }
     },
@@ -399,10 +591,10 @@ export default createStore({
       if (!person || person.state !== 'walking') return
       
       const directions = [
-        { dx: 1, dy: 0, dir: 'right', weight: 40 },   
-        { dx: 0, dy: -1, dir: 'up', weight: 25 },     
-        { dx: 0, dy: 1, dir: 'down', weight: 25 },    
-        { dx: -1, dy: 0, dir: 'left', weight: 10 }   
+        { dx: 1, dy: 0, dir: 'right', weight: 40 },
+        { dx: 0, dy: -1, dir: 'up', weight: 25 },
+        { dx: 0, dy: 1, dir: 'down', weight: 25 },
+        { dx: -1, dy: 0, dir: 'left', weight: 10 }
       ]
       
       const validDirections = directions.filter(({ dx, dy }) => {
@@ -456,14 +648,13 @@ export default createStore({
           }
         })
 
-        if (Math.random() < 0.2) {
+        if (person.balance > 5 && Math.random() < 0.4) {
           store.dispatch('checkBuildingEntry', personId)
         }
       
         const entranceRow = Math.floor(store.state.gridSizeY / 2)
         if (newX === -1 && newY === entranceRow) {
           store.dispatch('removePersonFromEntrance', personId)
-          return
         }
       }
     },
@@ -484,38 +675,85 @@ export default createStore({
     
     checkBuildingEntry: (store, personId) => {
       const person = store.state.people.find(p => p.id === personId)
-      if (!person || person.state !== 'walking') return
+      
+      if (!person || person.state !== 'walking' || person.balance <= 5) return
 
+      const hasCritical = person.criticalIndicators && person.criticalIndicators.length > 0
+      const baseChance = hasCritical ? 0.9 : 0.4
+      
+      if (Math.random() > baseChance) return
+
+      const availableBuildings = []
+      
       for (const entry of store.state.buildingEntries) {
-
         const isAdjacentToEntry = 
           (Math.abs(person.y - entry.row) === 1 && person.x === entry.col) || 
-          (Math.abs(person.x - entry.col) === 1 && person.y === entry.row)    
+          (Math.abs(person.x - entry.col) === 1 && person.y === entry.row)
         
-        if (isAdjacentToEntry) {
-          const visitorsInBuilding = store.state.people.filter(p => 
-            p.targetBuilding?.id === entry.shapeId && p.state === 'inBuilding'
-          ).length
-          
-          if (visitorsInBuilding < entry.building.capacity) {
-            const spendAmount = Math.min(person.balance, Math.floor(Math.random() * 20) + 5)
+        if (!isAdjacentToEntry) continue
+ 
+        const visitorsInBuilding = store.state.people.filter(p => 
+          p.targetBuilding?.id === entry.shapeId && p.state === 'inBuilding'
+        ).length
+        
+        if (visitorsInBuilding >= entry.building.capacity) continue
+        
+        const buildingEffects = store.state.buildingEffects
+        const effect = buildingEffects[entry.building.type] || {}
 
-            store.commit(MUTATIONS.UPDATE_PERSON, {
-              personId,
-              updates: {
-                x: entry.col, 
-                y: entry.row, 
-                state: 'inBuilding',
-                targetBuilding: { ...entry.building, id: entry.shapeId },
-                buildingTimer: entry.building.visitTime,
-                balance: person.balance - spendAmount,
-                lastPosition: { x: person.x, y: person.y } 
-              }
-            })
-            
-            store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
-            return
+        if (hasCritical) {
+          const solvesCritical = person.criticalIndicators.some(indicator => 
+            Object.keys(effect).includes(indicator)
+          )
+
+          if (!solvesCritical) {
+            continue
           }
+        }
+        
+        if (entry.building.income > 0 && person.balance < entry.building.income) {
+          continue
+        }
+
+        const desire = store.dispatch('calculateBuildingDesire', {
+          personId,
+          buildingType: entry.building.type
+        })
+        
+        availableBuildings.push({
+          entry,
+          desire
+        })
+      }
+
+      if (availableBuildings.length > 0) {
+        availableBuildings.sort((a, b) => b.desire - a.desire)
+
+        const selected = availableBuildings[0]
+        
+        const spendAmount = selected.entry.building.income > 0 ? 
+          Math.min(person.balance, selected.entry.building.income) : 0
+
+        store.commit(MUTATIONS.UPDATE_PERSON, {
+          personId,
+          updates: {
+            x: selected.entry.col, 
+            y: selected.entry.row, 
+            state: 'inBuilding',
+            targetBuilding: { ...selected.entry.building, id: selected.entry.shapeId },
+            buildingTimer: selected.entry.building.visitTime,
+            balance: person.balance - spendAmount,
+            lastPosition: { x: person.x, y: person.y } 
+          }
+        })
+
+        store.dispatch('applyBuildingEffect', {
+          personId,
+          buildingType: selected.entry.building.type
+        })
+        
+        if (spendAmount > 0) {
+          store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance + spendAmount)
         }
       }
     },
@@ -538,31 +776,136 @@ export default createStore({
             lastPosition: {x: person.x, y: person.y}
           }
         })
-        
-        if (person.balance <= 5) {
-          store.dispatch('moveToExit', personId)
-        }
       }
     },
-    
-    moveToExit: (store, personId) => {
+
+    upgradeBuildings: (store, cost) => {
+      if (store.state.parkBalance >= cost) {
+        store.commit(MUTATIONS.UPGRADE_BUILDINGS)
+        store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance - cost)
+        alert('Все здания улучшены до уровня ' + store.state.upgrades.buildings)
+      } else {
+        alert('Недостаточно средств для улучшения зданий')
+      }
+    },
+
+    upgradeRoads: (store, cost) => {
+      if (store.state.parkBalance >= cost) {
+        store.commit(MUTATIONS.UPGRADE_ROADS)
+        store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance - cost)
+        alert('Дороги улучшены до уровня ' + store.state.upgrades.roads)
+      } else {
+        alert('Недостаточно средств для улучшения дорог')
+      }
+    },
+
+    upgradeMap: (store, cost) => {
+      if (store.state.parkBalance >= cost) {
+        store.commit(MUTATIONS.SET_PARK_BALANCE, store.state.parkBalance - cost)
+        store.commit(MUTATIONS.UPGRADE_MAP)
+        store.dispatch('updateMaxVisitors')
+        alert('Карта улучшена до уровня ' + store.state.upgrades.map)
+      } else {
+        alert('Недостаточно средств для улучшения карты')
+      }
+    },
+   
+    updateMood: (store, personId) => {
       const person = store.state.people.find(p => p.id === personId)
-      if (!person) return
-      
-      const entranceRow = Math.floor(store.state.gridSizeY / 2)
+      if (!person || !person.indicators) return
+
+      const moodValue = moodUtils.calculateMoodValue(person.indicators)
+      const criticalIndicators = moodUtils.getCriticalIndicators(person.indicators)
       
       store.commit(MUTATIONS.UPDATE_PERSON, {
         personId,
         updates: {
-          x: -1,
-          y: entranceRow,
-          state: 'leaving'
+          mood: moodValue,
+          criticalIndicators,
+          tooltipText: moodUtils.formatTooltip({
+            ...person,
+            mood: moodValue,
+            criticalIndicators
+          })
+        }
+      })
+    },
+ 
+    decreaseRandomIndicator: (store, personId) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return
+      
+      const indicators = person.indicators
+
+      const weights = {}
+      Object.values(INDICATOR_TYPES).forEach(indicatorType => {
+        weights[indicatorType] = Math.max(1, 10 - (indicators[indicatorType] || 0))
+      })
+      
+      const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0)
+      let random = Math.random() * totalWeight
+      
+      let selectedIndicator = null
+      for (const [indicator, weight] of Object.entries(weights)) {
+        random -= weight
+        if (random <= 0) {
+          selectedIndicator = indicator
+          break
+        }
+      }
+      
+      if (selectedIndicator && person.indicators[selectedIndicator] > 0) {
+        const updatedIndicators = { ...person.indicators }
+        updatedIndicators[selectedIndicator] = Math.max(0, updatedIndicators[selectedIndicator] - 1)
+        
+        store.commit(MUTATIONS.UPDATE_PERSON, {
+          personId,
+          updates: { indicators: updatedIndicators }
+        })
+  
+        store.dispatch('updateMood', personId)
+      }
+    },
+    
+    applyBuildingEffect: (store, { personId, buildingType }) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return
+      
+      const buildingEffects = store.state.buildingEffects
+      const effect = buildingEffects[buildingType] || {}
+      
+      const updatedIndicators = { ...person.indicators }
+
+      Object.entries(effect).forEach(([indicator, value]) => {
+        if (updatedIndicators[indicator] !== undefined) {
+          updatedIndicators[indicator] = Math.min(10, updatedIndicators[indicator] + value)
         }
       })
       
-      setTimeout(() => {
-        store.commit(MUTATIONS.REMOVE_PERSON, personId)
-      }, 2000)
+      store.commit(MUTATIONS.UPDATE_PERSON, {
+        personId,
+        updates: { indicators: updatedIndicators }
+      })
+ 
+      store.dispatch('updateMood', personId)
+    },
+
+    calculateBuildingDesire: (store, { personId, buildingType }) => {
+      const person = store.state.people.find(p => p.id === personId)
+      if (!person || !person.indicators) return 0
+      
+      const buildingEffects = store.state.buildingEffects
+      const effect = buildingEffects[buildingType] || {}
+      
+      let desire = 0
+      Object.entries(effect).forEach(([indicator, value]) => {
+        if (person.indicators[indicator] !== undefined) {
+          const needLevel = 10 - person.indicators[indicator] 
+          desire += needLevel * (value / 10) * 2
+        }
+      })
+      
+      return Math.min(10, Math.max(0, desire))
     }
   }
 })
