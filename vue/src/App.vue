@@ -3,6 +3,9 @@
   <div id="app">
     <div class="balance-indicator">
       Баланс парка: <strong>{{ parkBalance }} ₽</strong>
+      | Уровень дорог: {{ roadLevel }}
+      | Уровень карты: {{ mapLevel }}
+      | Макс. посетителей: {{ maxVisitors }}
     </div>
     <div class="container">
       <div class="grid">
@@ -13,22 +16,27 @@
           :game-mode="gameMode"
           :entrance="entrance"
           ref="gameBoard"
+          @visitor-clicked="handleVisitorClick"
         />
       </div>
       <div class="objects">
         <Toolbar @set-mode="(mode) => setGameModeHandler(mode)" :current-mode="gameMode" />
         <ObjectSelector @select-object="(object) => setSelectedObjectHandler(object)" />
+        <UpgradesPanel />  
+        <VisitorStats v-if="selectedVisitorId" :visitor-id="selectedVisitorId" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useStore } from 'vuex';
 import GameBoard from './components/GameBoard.vue';
 import ObjectSelector from './components/ObjectSelector.vue';
 import Toolbar from './components/Toolbar.vue';
+import UpgradesPanel from './components/UpgradesPanel.vue';
+import VisitorStats from './components/VisitorStats.vue';
 
 const store = useStore();
 
@@ -38,6 +46,9 @@ const selectedObject = computed(() => store.getters.getSelectedObject);
 const gameMode = computed(() => store.getters.getGameMode);
 const entrance = computed(() => store.getters.getEntrance);
 const parkBalance = computed(() => store.getters.getParkBalance);
+const roadLevel = computed(() => store.getters.getRoadLevel);
+const mapLevel = computed(() => store.getters.getMapLevel);
+const maxVisitors = computed(() => store.getters.maxVisitors);
 
 const setGameModeHandler = (mode) => {
   store.dispatch('setGameMode', mode);
@@ -45,6 +56,12 @@ const setGameModeHandler = (mode) => {
 
 const setSelectedObjectHandler = (object) => {
   store.dispatch('setSelectedObject', object);
+};
+
+const selectedVisitorId = ref(null);
+
+const handleVisitorClick = (visitorId) => {
+  selectedVisitorId.value = visitorId;
 };
 </script>
 

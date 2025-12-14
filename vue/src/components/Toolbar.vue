@@ -38,20 +38,21 @@ const triggerModeChange = (mode) => {
 
 <style scoped lang="less">
 .toolbar {
-  margin-bottom: 30px;
+  margin-bottom: 15px;
   display: flex;
-  gap: 20px;
+  gap: 10px;
 }
 
 .btn {
-  font-size: 20px;
-  padding: 20px 25px;
+  font-size: 14px;
+  padding: 8px 12px;
   border: 1px solid #ccc;
-  border-radius: 15px;
+  border-radius: 8px;
   cursor: pointer;
   background-color: #f0f0f0;
   transition: background-color 0.2s, border-color 0.2s;
   color: #333;
+  min-width: 80px;
 
   &:hover {
     background-color: #e0e0e0;

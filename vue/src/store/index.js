@@ -19,7 +19,25 @@ const MUTATIONS = {
   SET_VISITOR_PATH: 'SET_VISITOR_PATH',           
   SET_VISITOR_STATUS: 'SET_VISITOR_STATUS',
   SET_OBJECT_TYPE: 'SET_OBJECT_TYPE', 
-  SET_PARK_BALANCE:'SET_PARK_BALANCE' 
+  SET_PARK_BALANCE:'SET_PARK_BALANCE', 
+  UPGRADE_BUILDING: 'UPGRADE_BUILDING',
+  UPGRADE_ROADS: 'UPGRADE_ROADS',
+  UPGRADE_MAP: 'UPGRADE_MAP',
+  SET_ROAD_COUNT: 'SET_ROAD_COUNT',
+  SET_BUILDING_QUEUE: 'SET_BUILDING_QUEUE',
+  ADD_TO_BUILDING_QUEUE: 'ADD_TO_BUILDING_QUEUE',
+  REMOVE_FROM_BUILDING_QUEUE: 'REMOVE_FROM_BUILDING_QUEUE',
+  SET_BUILDING_OCCUPANCY: 'SET_BUILDING_OCCUPANCY',
+  INCREMENT_BUILDING_OCCUPANCY: 'INCREMENT_BUILDING_OCCUPANCY',
+  DECREMENT_BUILDING_OCCUPANCY: 'DECREMENT_BUILDING_OCCUPANCY',
+  UPDATE_BUILDING_BONUS:'UPDATE_BUILDING_BONUS'
+};
+
+const BUILDING_TYPES = {
+  ATTRACTION: 'attraction', 
+  BENCH: 'bench',           
+  TOILET: 'toilet',         
+  FOOD: 'food'              
 };
 
 export default createStore({
@@ -35,7 +53,15 @@ export default createStore({
       entrance: { row: -1, col: -1 },
       visitors: [],
       parkBalance: 1000,    
-      spawningInterval: null
+      spawningInterval: null,
+      upgrades: {
+        buildings: {}, 
+        roads: 1, 
+        map: 1    
+      },
+      roadCount: 0, 
+      buildingQueue: {},    
+      buildingOccupancy: {},
     };
   },
   getters: {
@@ -50,15 +76,97 @@ export default createStore({
     getVisitorById: (state) => (id) => state.visitors.find(v => v.id === id),
     getEntrance: (state) => state.entrance, 
     getParkBalance: (state) => state.parkBalance,
-    maxVisitors: (state) => {
-      return 5 * state.allPlacedObjects.length;
+    maxVisitors: (state, getters) => {
+      const baseMax = 5 * getters.hasBuildings.length;
+      const roadLevel = getters.getRoadLevel;
+      const roadCount = getters.getRoadCount;
+    
+      if (roadLevel === 1)
+      {
+        return baseMax;
+      }
+      if (roadLevel === 2)
+      {
+        return baseMax + roadCount; 
+      }
+      if (roadLevel === 3)
+      {
+        return baseMax + (roadCount * 2); 
+      }
+      return baseMax;
     },
-    hasRoads: (state) => {
-      return state.allPlacedObjects.filter(obj => obj.name === 'Road');
+    getRoads: (state) => {
+      return state.allPlacedObjects.filter(obj => obj && obj.type === 'road');
     },
-    hasBuildings: (state) => {
-      return state.allPlacedObjects.filter(obj => obj.name !== 'Road');
+    
+    getBuildings: (state) => {
+      return state.allPlacedObjects.filter(obj => obj && obj.type !== 'road');
     },
+    hasRoads: (state, getters) => getters.getRoads,
+    hasBuildings: (state, getters) => getters.getBuildings,
+    getRoadLevel: (state) => state.upgrades.roads,
+    getMapLevel: (state) => state.upgrades.map,
+    getBuildingLevel: (state) => (buildingId) => state.upgrades.buildings[buildingId] || 1,
+    getRoadCount: (state) => state.roadCount,
+    getBuildingIncome: (state, getters) => (buildingId) => {
+      const building = state.allPlacedObjects.find(obj => obj.id === buildingId);
+      if (!building || building.type === 'road') 
+      {
+        return 0;
+      }
+      
+      const level = getters.getBuildingLevel(buildingId);
+      const baseIncome = building.price_for_visitor || 0;
+      
+      return Math.floor(baseIncome * (1 + (level - 1) * 0.5));
+    },
+    getBuildingBonus: (state, getters) => (buildingId) => {
+      const building = state.allPlacedObjects.find(obj => obj.id === buildingId);
+      if (!building) 
+      {
+        return {};
+      }
+      
+      const level = getters.getBuildingLevel(buildingId);
+      
+      if (building.statBonusByLevel) {
+        return building.statBonusByLevel[level] || building.statBonusByLevel[1] || {};
+      }
+      
+      if (building.statBonus) {
+        return building.statBonus;
+      }
+      
+      return building.statBonus || {};
+    },
+    getBuildingQueue: (state) => (buildingId) => state.buildingQueue[buildingId] || [],
+    getBuildingOccupancy: (state) => (buildingId) => state.buildingOccupancy[buildingId] || 0,
+    getBuildingQueueLength: (state) => (buildingId) => (state.buildingQueue[buildingId] || []).length,
+    calculateMood: () => (stats) => {
+      const { fatigue, hunger, boredom, need } = stats;
+      return (fatigue + hunger + boredom + need) / 4;
+    },
+    calculateDesire: () => (visitorStats, building) => {
+      const { stats } = visitorStats;
+      let desire = 0;
+        
+      switch(building.type) {
+        case BUILDING_TYPES.FOOD:
+          desire = 10 - stats.hunger;
+          break;
+        case BUILDING_TYPES.TOILET:
+          desire = 10 - stats.need;
+          break;
+        case BUILDING_TYPES.BENCH:
+          desire = 10 - stats.fatigue;
+          break;
+        case BUILDING_TYPES.ATTRACTION:
+        default:
+          desire = 10 - stats.boredom;
+          break;
+      } 
+      return Math.max(0, Math.min(10, desire));
+    }
   },
   mutations: {
     [MUTATIONS.SET_GRID_WIDTH]: (state, width) => {
@@ -84,13 +192,20 @@ export default createStore({
     },
     [MUTATIONS.ADD_PLACED_OBJECT]: (state, obj) => {
       state.allPlacedObjects.push(obj);
+      if (obj.type === 'road') {
+        state.roadCount++;
+      }
     },
     [MUTATIONS.REMOVE_PLACED_OBJECT]: (state, index) => {
+      const removedObj = state.allPlacedObjects[index];
+      if (removedObj.type === 'road') {
+        state.roadCount--;
+      }
       state.allPlacedObjects.splice(index, 1);
     },
     [MUTATIONS.OCCUPY_CELLS]: (state, { cells, objectData }) => {
       cells.forEach(({ row, col }) => {
-        const isRoad = objectData.name === 'Road';
+        const isRoad = objectData.name === 'road';
         state.grid[row][col] = {
           ...state.grid[row][col], 
           isOccupied: true,
@@ -112,6 +227,7 @@ export default createStore({
               isOccupied: false,
               occupyingObjectId: null,
               occupyingObjectColor: null,
+              type: 'EMPTY',
             };
           }
         }
@@ -167,7 +283,61 @@ export default createStore({
     },
     [MUTATIONS.SET_PARK_BALANCE]: (state, balance) => {
       state.parkBalance = balance;
-    }
+    },
+     [MUTATIONS.UPGRADE_BUILDING]: (state, { buildingId, newLevel }) => {
+      state.upgrades.buildings[buildingId] = newLevel;
+    },
+    
+    [MUTATIONS.UPGRADE_ROADS]: (state, newLevel) => {
+      state.upgrades.roads = newLevel;
+    },
+    
+    [MUTATIONS.UPGRADE_MAP]: (state, newLevel) => {
+      state.upgrades.map = newLevel;
+    },
+    
+    [MUTATIONS.SET_ROAD_COUNT]: (state, count) => {
+      state.roadCount = count;
+    },
+
+    [MUTATIONS.SET_BUILDING_QUEUE]: (state, { buildingId, queue }) => {
+      state.buildingQueue[buildingId] = queue;
+    },
+    
+    [MUTATIONS.ADD_TO_BUILDING_QUEUE]: (state, { buildingId, visitorId }) => {
+      if (!state.buildingQueue[buildingId]) {
+        state.buildingQueue[buildingId] = [];
+      }
+      if (!state.buildingQueue[buildingId].includes(visitorId)) {
+        state.buildingQueue[buildingId].push(visitorId);
+      }
+    },
+    
+    [MUTATIONS.REMOVE_FROM_BUILDING_QUEUE]: (state, { buildingId, visitorId }) => {
+      if (state.buildingQueue[buildingId]) {
+        state.buildingQueue[buildingId] = state.buildingQueue[buildingId].filter(id => id !== visitorId);
+      }
+    },
+    
+    [MUTATIONS.SET_BUILDING_OCCUPANCY]: (state, { buildingId, occupancy }) => {
+      state.buildingOccupancy[buildingId] = occupancy;
+    },
+    
+    [MUTATIONS.INCREMENT_BUILDING_OCCUPANCY]: (state, buildingId) => {
+      state.buildingOccupancy[buildingId] = (state.buildingOccupancy[buildingId] || 0) + 1;
+    },
+    
+    [MUTATIONS.DECREMENT_BUILDING_OCCUPANCY]: (state, buildingId) => {
+      if (state.buildingOccupancy[buildingId] > 0) {
+        state.buildingOccupancy[buildingId]--;
+      }
+    },
+    [MUTATIONS.UPDATE_BUILDING_BONUS]: (state, { buildingId, bonus }) => {
+      const building = state.allPlacedObjects.find(obj => obj.id === buildingId);
+      if (building) {
+        building.statBonus = bonus;
+      }
+    },
   },
   actions: {
     setGridWidth: ({ commit }, width) => {
@@ -205,6 +375,35 @@ export default createStore({
     },
     setEntarnce: ({commit}, coords) => {
       commit(MUTATIONS.SET_ENTRANCE, coords);
+    },
+    addToBuildingQueue: ({ commit }, { buildingId, visitorId }) => {
+      commit(MUTATIONS.ADD_TO_BUILDING_QUEUE, { buildingId, visitorId });
+    },
+    
+    removeFromBuildingQueue: ({ commit }, { buildingId, visitorId }) => {
+      commit(MUTATIONS.REMOVE_FROM_BUILDING_QUEUE, { buildingId, visitorId });
+    },
+    
+    incrementBuildingOccupancy: ({ commit }, buildingId) => {
+      commit(MUTATIONS.INCREMENT_BUILDING_OCCUPANCY, buildingId);
+    },
+    
+    decrementBuildingOccupancy: ({ commit }, buildingId) => {
+      commit(MUTATIONS.DECREMENT_BUILDING_OCCUPANCY, buildingId);
+    },
+    
+    clearBuildingQueue: ({ commit }, buildingId) => {
+      commit(MUTATIONS.SET_BUILDING_QUEUE, { buildingId, queue: [] });
+    },
+    updateVisitor: ({ commit }, { id, updates }) => {
+      commit(MUTATIONS.UPDATE_VISITOR, { id, updates });
+    },
+
+    updateVisitorTimer: ({ commit }, { id, timer }) => {
+      commit(MUTATIONS.UPDATE_VISITOR, {
+        id,
+        updates: { visitorTimer: timer }
+      });
     },
 
     initializeGrid: ({ commit, state }) => {
@@ -274,6 +473,7 @@ export default createStore({
           id: newObjectId,
           name: state.selectedObject.name,
           color: state.selectedObject.color,
+          colors: state.selectedObject.colors, 
           shape: state.selectedObject.shape,
           origin: { row: originRow, col: originCol },
           height: state.selectedObject.height,
@@ -281,7 +481,10 @@ export default createStore({
           visitors: state.selectedObject.visitors,
           cost: state.selectedObject.cost,
           price_for_visitor: state.selectedObject.price_for_visitor,
-          buildingEntrance: {row: originRow + state.selectedObject.height - 1, col: originCol}
+          buildingEntrance: {row: originRow + state.selectedObject.height - 1, col: originCol},
+          type: state.selectedObject.type,
+          statBonusByLevel: state.selectedObject.statBonusByLevel,
+          statBonus: state.selectedObject.statBonus
         };
 
         commit(MUTATIONS.OCCUPY_CELLS, { cells: cellsToOccupy, objectData: placedObjectData });
@@ -338,7 +541,17 @@ export default createStore({
         direction: 'left',
         lastPosition: 'null',
         balance: Math.floor(Math.random() * 91) + 10,
+        stats: {
+          fatigue: 10,     
+          hunger: 10,       
+          boredom: 10,      
+          need: 10          
+        },
+        mood: 10,           
+        criticalStats: [],  
+        visitedBuildings: [] 
       };
+      visitor.mood = getters.calculateMood(visitor.stats);
       commit('ADD_VISITORS', visitor);
     },
 
@@ -384,6 +597,95 @@ export default createStore({
       if(!visitor || visitor.status !== 'walking') {
         return;
       }
+
+      const stats = { ...visitor.stats };
+      
+      const probabilities = {
+        fatigue: 10 - stats.fatigue,
+        hunger: 10 - stats.hunger,
+        boredom: 10 - stats.boredom,
+        need: 10 - stats.need
+      };
+
+      const totalProbability = probabilities.fatigue + probabilities.hunger + 
+                              probabilities.boredom + probabilities.need;
+
+       const random = Math.random() * totalProbability;
+      
+      let currentSum = 0;
+      let statToDecrease = null;
+      
+      for (const [stat, prob] of Object.entries(probabilities)) {
+        currentSum += prob;
+        if (random < currentSum) {
+          statToDecrease = stat;
+          break;
+        }
+      }
+
+      if (statToDecrease && stats[statToDecrease] > 0) {
+        stats[statToDecrease]--;
+      }
+
+      const criticalStats = [];
+      for (const [stat, value] of Object.entries(stats)) {
+        if (value < 3) {
+          criticalStats.push(stat);
+        }
+      }
+
+      const mood = getters.calculateMood(stats);
+
+      commit(MUTATIONS.UPDATE_VISITOR, {
+        id: visitorId,
+        updates: {
+          stats: stats,
+          criticalStats: criticalStats,
+          mood: mood
+        }
+      });
+
+       const buildings = getters.getBuildings || [];
+      
+      if (criticalStats.length > 0) {
+        const stat = criticalStats[0];
+        const statToBuildingType = {
+          hunger: BUILDING_TYPES.FOOD,
+          fatigue: BUILDING_TYPES.BENCH,
+          need: BUILDING_TYPES.TOILET,
+          boredom: BUILDING_TYPES.ATTRACTION
+        };
+        
+        const targetType = statToBuildingType[stat];
+        
+        if (targetType) {
+          const suitableBuildings = buildings.filter(b => {
+            if (!b) 
+            {
+              return false;
+            }
+            if (b.id === visitor.targetBuildingId) 
+            {
+              return false; 
+            }
+            return b.type === targetType;
+          });
+          
+          if (suitableBuildings.length > 0) {
+            const buildingForCritical = suitableBuildings[Math.floor(Math.random() * suitableBuildings.length)];
+            
+            commit(MUTATIONS.UPDATE_VISITOR, {
+              id: visitorId,
+              updates: {
+                targetBuildingId: buildingForCritical.id,
+                visitorTimer: buildingForCritical.timer || 5
+              }
+            });
+          }
+        }
+      }
+
+      const updatedVisitor = state.visitors.find(v => v.id === visitorId) || visitor;
       const directions = [
       { dx: 0, dy: 1, dir: 'right', weight: 10 },
       { dx: 1, dy: 0, dir: 'up', weight: 20 },
@@ -391,17 +693,47 @@ export default createStore({
       { dx: 0, dy: -1, dir: 'left', weight: 50 }
       ];
 
+      const roads = getters.getRoads;
+
       const validDirections = directions.filter(({ dx, dy }) => {
-        const newX = visitor.x + dx;
-        const newY = visitor.y + dy;
-        const isRoad = getters.hasRoads.some(road => road.origin.row === newY && road.origin.col === newX);
+        const newX = updatedVisitor.x + dx;
+        const newY = updatedVisitor.y + dy;
+
+        if (newX < 0 || newX >= state.gridWidth || newY < 0 || newY >= state.gridHeight) 
+        {
+          return false;
+        }
+
+        const isRoad = roads.some(road => {
+          if (!road || !road.origin) 
+          {
+            return false;
+          }
+          
+          if (road.shape && Array.isArray(road.shape)) {
+            return road.shape.some(shapePart => {
+              const roadX = road.origin.col + shapePart.x;
+              const roadY = road.origin.row + shapePart.y;
+              return roadX === newX && roadY === newY;
+            });
+          } else {
+            return road.origin.col === newX && road.origin.row === newY;
+          }
+        });
+
         return isRoad;
       });
 
+      if (validDirections.length === 0) 
+      {
+        return;
+      }
+
       const forwardDirections = validDirections.filter(({ dx, dy }) => {
-        const newX = visitor.x + dx;
-        const newY = visitor.y + dy;
-        if (visitor.lastPosition && newX === visitor.lastPosition.x && newY === visitor.lastPosition.y) {
+        const newX = updatedVisitor.x + dx;
+        const newY = updatedVisitor.y + dy;
+        if (updatedVisitor.lastPosition && newX === updatedVisitor.lastPosition.x && newY === updatedVisitor.lastPosition.y) 
+        {
           return false;
         }
         return true;
@@ -421,8 +753,8 @@ export default createStore({
         }
       }
 
-      const newX = visitor.x + selectedDir.dx;
-      const newY = visitor.y + selectedDir.dy;
+      const newX = updatedVisitor.x + selectedDir.dx;
+      const newY = updatedVisitor.y + selectedDir.dy;
 
       commit(MUTATIONS.UPDATE_VISITOR, {
         id: visitorId,
@@ -435,14 +767,36 @@ export default createStore({
         }
       });
 
+      commit(MUTATIONS.UPDATE_VISITOR, {
+        id: visitorId,
+        updates: {
+          lastPosition: { x: updatedVisitor.x, y: updatedVisitor.y },
+          x: newX,
+          y: newY,
+          direction: selectedDir.dir,
+          path: [...(updatedVisitor.path || []), { x: newX, y: newY }]
+        }
+      });
+
       dispatch('enterToBuilding', visitorId);
 
       const isNeartheEntrance = 
-      (Math.abs(visitor.y - state.entrance.row) === 1 && visitor.x === state.entrance.col) ||
-      (Math.abs(visitor.x - state.entrance.col) === 1 && visitor.y === state.entrance.row);
+      (Math.abs(updatedVisitor.y - state.entrance.row) === 1 && updatedVisitor.x === state.entrance.col) ||
+      (Math.abs(updatedVisitor.x - state.entrance.col) === 1 && updatedVisitor.y === state.entrance.row);
       if (isNeartheEntrance) {
         dispatch('moveVisitorToExit', visitor.id);
       }
+    },
+
+    calculateDesireWithQueue: ({ getters }, { visitorStats, building, buildingId }) => {
+      const baseDesire = getters.calculateDesire(visitorStats, building);
+      const queueLength = getters.getBuildingQueueLength(buildingId) || 0;
+      const maxVisitors = building.visitors || 3;
+      
+      const maxQueueLength = maxVisitors * 2;
+      const queueFactor = Math.max(0.1, 1 - (queueLength / maxQueueLength));
+      
+      return baseDesire * queueFactor;
     },
 
     enterToBuilding: ({commit, state, dispatch, getters}, visitorId) => {
@@ -453,24 +807,95 @@ export default createStore({
 
       const buildingEntryId = visitor.targetBuildingId;
       const building = getters.hasBuildings.find(v => v.id === buildingEntryId);
-      const buildingEntry = getters.hasBuildings.find(v => v.id === buildingEntryId).buildingEntrance;
+
+       if (!building) {
+        dispatch('findNewTarget', visitorId);
+        return;
+      }
+
+      const buildingEntry = building.buildingEntrance;
 
       const isNeartheEntrance = 
       (Math.abs(visitor.y - buildingEntry.row) === 1 && visitor.x === buildingEntry.col) ||
       (Math.abs(visitor.x - buildingEntry.col) === 1 && visitor.y === buildingEntry.row);
 
       if (isNeartheEntrance) {
-        const visitorsInBuilding = state.visitors.filter(v => 
-            v.targetBuildingId === buildingEntryId && v.status === 'inBuilding').length
-
-        if (visitorsInBuilding < building.visitors) {
-          const spendInBuilding = building.price_for_visitor;
-          if (visitor.balance <= spendInBuilding)
-          {
-            dispatch('exitTheBuilding', visitor.id);
-            return;
+        const currentOccupancy = getters.getBuildingOccupancy(buildingEntryId) || 0;
+        const maxVisitors = building.visitors || 3;
+        const queueLength = getters.getBuildingQueueLength(buildingEntryId) || 0;
+        
+        if (currentOccupancy < maxVisitors) {
+          if (visitor.criticalStats && visitor.criticalStats.length > 0) {
+            const criticalStat = visitor.criticalStats[0];
+            
+            const buildingBonus = getters.getBuildingBonus(buildingEntryId);
+            const helpsCritical = buildingBonus && buildingBonus[criticalStat];
+            
+            if (!helpsCritical) {
+              if (visitor.mood < 4) { 
+                const suitableBuildings = getters.hasBuildings.filter(b => {
+                  if (!b || b.id === buildingEntryId)
+                  {
+                    return false;
+                  }
+                  const bBonus = getters.getBuildingBonus(b.id);
+                  return bBonus && bBonus[criticalStat];
+                });
+                
+                if (suitableBuildings.length > 0) {
+                  const suitableBuilding = suitableBuildings[0];
+                  commit(MUTATIONS.UPDATE_VISITOR, {
+                    id: visitorId,
+                    updates: {
+                      targetBuildingId: suitableBuilding.id,
+                      visitorTimer: suitableBuilding.timer || 5,
+                      status: 'walking'
+                    }
+                  });
+                  return;
+                } else if (visitor.mood < 2) {
+                  dispatch('moveVisitorToExit', visitorId);
+                  return;
+                }
+              }
+            }
           }
-
+          
+          const buildingIncome = getters.getBuildingIncome(buildingEntryId) || 0;
+          
+          if (buildingIncome > 0) { 
+            if (visitor.balance < buildingIncome) {
+              dispatch('findNewTarget', visitorId);
+              return;
+            }
+            
+            visitor.balance = visitor.balance - buildingIncome;
+            
+            commit(MUTATIONS.SET_PARK_BALANCE, state.parkBalance + buildingIncome);
+          }
+          
+        
+          dispatch('incrementBuildingOccupancy', buildingEntryId);
+          
+          const buildingBonus = getters.getBuildingBonus(buildingEntryId);
+          const newStats = { ...visitor.stats };
+          
+          if (buildingBonus) {
+            for (const [stat, bonus] of Object.entries(buildingBonus)) {
+              newStats[stat] = Math.min(10, Math.max(0, newStats[stat] + bonus));
+            }
+          }
+          
+          const buildingLevel = getters.getBuildingLevel(buildingEntryId);
+          const baseTimer = building.timer || 5;
+          const stayTimer = Math.max(3, baseTimer + (buildingLevel - 1));
+          
+          const newMood = getters.calculateMood(newStats);
+          
+          const newCriticalStats = Object.entries(newStats)
+            .filter(([_, value]) => value < 3)
+            .map(([stat]) => stat);
+          
           commit(MUTATIONS.UPDATE_VISITOR, {
             id: visitorId,
             updates: {
@@ -478,13 +903,123 @@ export default createStore({
               x: buildingEntry.col,
               y: buildingEntry.row,
               status: 'inBuilding',
-              balance: visitor.balance - spendInBuilding,
+              stats: newStats,
+              mood: newMood,
+              criticalStats: newCriticalStats,
+              visitorTimer: stayTimer,
+              lastPayment: buildingIncome > 0 ? buildingIncome : 0
             }
           });
-
-          commit(MUTATIONS.SET_PARK_BALANCE, state.parkBalance + spendInBuilding);
+          
+          if (!visitor.visitedBuildings.includes(buildingEntryId)) {
+            visitor.visitedBuildings.push(buildingEntryId);
+          }
+          
+          if (!visitor.visitedBuildingLevels) {
+            visitor.visitedBuildingLevels = {};
+          }
+          visitor.visitedBuildingLevels[buildingEntryId] = buildingLevel;
+          
+        } else {
+          const maxQueueLength = 4; 
+          
+          if (queueLength >= maxQueueLength) {
+            dispatch('findNewTarget', visitorId);
+            return;
+          }
+          
+          if (visitor.criticalStats && visitor.criticalStats.length > 0) {
+            const criticalStat = visitor.criticalStats[0];
+            const buildingBonus = getters.getBuildingBonus(buildingEntryId);
+            const helpsCritical = buildingBonus && buildingBonus[criticalStat];
+            
+            if (!helpsCritical && visitor.mood < 3) {
+              dispatch('findNewTarget', visitorId);
+              return;
+            }
+          }
+          
+          const buildingIncome = getters.getBuildingIncome(buildingEntryId) || 0;
+          if (buildingIncome > 0 && visitor.balance < buildingIncome) {
+            dispatch('findNewTarget', visitorId);
+            return;
+          }
+          
+          dispatch('addToBuildingQueue', { buildingId: buildingEntryId, visitorId });
+          
+          commit(MUTATIONS.UPDATE_VISITOR, {
+            id: visitorId,
+            updates: {
+              status: 'inQueue',
+              queuePosition: queueLength + 1,
+              queueBuildingId: buildingEntryId,
+              queueWaitTime: 0,
+              lastPosition: { x: visitor.x, y: visitor.y } 
+            }
+          });
+          
+          commit(MUTATIONS.UPDATE_VISITOR_POSITION, {
+            id: visitorId,
+            x: visitor.x,
+            y: visitor.y
+          });
         }
       }
+    },
+
+    findNewTarget: ({ commit, state, getters, dispatch }, visitorId) => {
+      const visitor = state.visitors.find(v => v.id === visitorId);
+      if (!visitor)
+      {
+        return;
+      }
+      
+      const buildings = getters.getBuildings;
+      if (buildings.length === 0) 
+      {
+        dispatch('moveVisitorToExit', visitorId);
+        return;
+      }
+      
+      const buildingDesires = buildings.map(building => {
+        const baseDesire = getters.calculateDesire(visitor, building);
+        
+        const queueLength = getters.getBuildingQueueLength(building.id) || 0;
+        const maxVisitors = building.visitors || 3;
+        
+        const maxQueueLength = 4;
+        const queueFactor = Math.max(0.1, 1 - (queueLength / maxQueueLength));
+        
+        return {
+          building,
+          desire: baseDesire * queueFactor
+        };
+      });
+      
+      buildingDesires.sort((a, b) => b.desire - a.desire);
+      
+      const bestBuilding = buildingDesires[0].building;
+      
+      commit(MUTATIONS.UPDATE_VISITOR, {
+        id: visitorId,
+        updates: {
+          targetBuildingId: bestBuilding.id,
+          visitorTimer: bestBuilding.timer,
+          status: 'walking', 
+          queueBuildingId: null,
+          queuePosition: null,
+          queueWaitTime: 0
+        }
+      });
+      
+      if (visitor.queueBuildingId && visitor.queueBuildingId !== bestBuilding.id) {
+        dispatch('removeFromBuildingQueue', { 
+          buildingId: visitor.queueBuildingId, 
+          visitorId 
+        });
+      }
+      
+      dispatch('moveVisitor', visitorId);
     },
 
     exitTheBuilding: ({commit, state, dispatch, getters}, visitorId) => {
@@ -493,6 +1028,29 @@ export default createStore({
         return;
       }
       const buildingEntryId = visitor.targetBuildingId;
+
+      dispatch('decrementBuildingOccupancy', buildingEntryId);
+
+      const queue = getters.getBuildingQueue(buildingEntryId) || [];
+      if (queue.length > 0) {
+        const nextVisitorId = queue[0];
+        dispatch('removeFromBuildingQueue', { buildingId: buildingEntryId, visitorId: nextVisitorId });
+        
+        const updatedQueue = getters.getBuildingQueue(buildingEntryId) || [];
+        updatedQueue.forEach((queuedVisitorId, index) => {
+          const queuedVisitor = state.visitors.find(v => v.id === queuedVisitorId);
+          if (queuedVisitor && queuedVisitor.status === 'inQueue') {
+            commit(MUTATIONS.UPDATE_VISITOR, {
+              id: queuedVisitorId,
+              updates: {
+                queuePosition: index + 1
+              }
+            });
+          }
+        });
+        
+        dispatch('checkQueueEntry', { buildingId: buildingEntryId });
+      }
       const buildingEntry = getters.hasBuildings.find(v => v.id === buildingEntryId).buildingEntrance;
       var randomBuilding = getters.hasBuildings[Math.floor(Math.random() * getters.hasBuildings.length)];
       if (getters.hasBuildings.length === 1) 
@@ -520,11 +1078,60 @@ export default createStore({
           }
       });
     },
+
+    checkQueueEntry: ({ dispatch, getters, state }, { buildingId }) => {
+      const building = getters.hasBuildings.find(v => v.id === buildingId);
+      if (!building)
+      {
+        return;
+      }
+      
+      const currentOccupancy = getters.getBuildingOccupancy(buildingId) || 0;
+      const maxVisitors = building.visitors || 3;
+      
+      if (currentOccupancy < maxVisitors) {
+        const queue = getters.getBuildingQueue(buildingId) || [];
+        if (queue.length > 0) {
+          const nextVisitorId = queue[0];
+          const nextVisitor = state.visitors.find(v => v.id === nextVisitorId);
+          if (nextVisitor && nextVisitor.status === 'inQueue') {
+            dispatch('removeFromBuildingQueue', { buildingId, visitorId: nextVisitorId });
+            
+            const buildingEntry = building.buildingEntrance;
+            
+            dispatch('updateVisitor', {
+              id: nextVisitorId,
+              updates: {
+                x: buildingEntry.col,
+                y: buildingEntry.row,
+                status: 'walking',
+                queueBuildingId: null,
+                queuePosition: null,
+                queueWaitTime: 0,
+                targetBuildingId: buildingId,
+                visitorTimer: building.timer
+              }
+            });
+            
+            setTimeout(() => {
+              dispatch('enterToBuilding', nextVisitorId);
+            }, 100);
+          }
+        }
+      }
+    },
     moveVisitorToExit({ commit, state}, visitorId) {
       const visitor = state.visitors.find(v => v.id === visitorId);
       if (!visitor || visitor.status !== 'walking') 
       { 
         return;
+      }
+
+      if (visitor.queueBuildingId) {
+        dispatch('removeFromBuildingQueue', { 
+          buildingId: visitor.queueBuildingId, 
+          visitorId 
+        });
       }
 
       const entrance = state.entrance;
@@ -535,6 +1142,9 @@ export default createStore({
           x: entrance.col,
           y: entrance.row,
           status: 'exit',
+          queueBuildingId: null,
+          queuePosition: null,
+          queueWaitTime: 0
         }
       });
 
@@ -543,28 +1153,306 @@ export default createStore({
       }, 2000)
     },
     stepAllVisitors ({ dispatch, state }) {
-      state.visitors.forEach(v => 
+      const visitorsCopy = [...state.visitors];
+      visitorsCopy.forEach(v => {
+        if (!v || !v.id)
         {
-          if (v.status == 'spawning')
-          {
-            dispatch('makeFirstStep',v.id)
-          } else if (v.status == 'walking') 
-          {
-            dispatch('moveVisitor', v.id);
-          }
-          else if ('inBuilding', v.id) 
-          {
-            v.visitorTimer--
-            if (v.visitorTimer <= 0 )
-            {
-              dispatch('exitTheBuilding', v.id)
+          return;
+        }
+        if (v.status == 'spawning'){
+          dispatch('makeFirstStep',v.id)
+        } else if (v.status == 'walking') {
+          dispatch('moveVisitor', v.id);
+        } else if (v.status === 'inBuilding') {
+          if (v.visitorTimer !== undefined) {
+            const newTimer = v.visitorTimer - 1;
+            if (newTimer <= 0) {
+              dispatch('exitTheBuilding', v.id);
               if (v.balance < 5) {
-              dispatch('moveVisitorToExit', v.id);
+                dispatch('moveVisitorToExit', v.id);
               }
+            } else {
+                dispatch('updateVisitorTimer', { id: v.id, timer: newTimer });
             }
+            
           }
-        }  
-      )
+        } else if (v.status === 'inQueue') {
+          dispatch('checkQueuePatience', v.id);
+        }
+      });
+    },
+
+    checkQueuePatience: ({ commit, dispatch, state }, visitorId) => {
+      const visitor = state.visitors.find(v => v.id === visitorId);
+      if (!visitor || visitor.status !== 'inQueue')
+      {
+        return;
+      }
+      
+      const waitTime = (visitor.queueWaitTime || 0) + 1;
+      commit(MUTATIONS.UPDATE_VISITOR, {
+        id: visitorId,
+        updates: { queueWaitTime: waitTime }
+      });
+      if (waitTime > 10) {
+        dispatch('findNewTarget', visitorId);
+      }
+    },
+    upgradeBuilding: ({ commit, state, getters }, buildingId) => {
+      const currentLevel = getters.getBuildingLevel(buildingId);
+  
+      if (currentLevel >= 3) {
+        alert('Достигнут максимальный уровень');
+        return;
+      }
+      
+      const upgradeCost = currentLevel * 250;
+      if (state.parkBalance < upgradeCost) {
+        alert('Недостаточно средств для улучшения');
+        return;
+      }
+      
+      const building = state.allPlacedObjects.find(obj => obj.id === buildingId);
+      if (!building)
+      {
+        return;
+      }
+      
+      const newLevel = currentLevel + 1;
+      
+      commit(MUTATIONS.UPGRADE_BUILDING, { buildingId, newLevel });
+      
+      if (building.colors && building.colors[newLevel]) {
+        const newColor = building.colors[newLevel];
+        building.color = newColor;
+        
+        building.shape.forEach(shapePart => {
+          const targetRow = building.origin.row + shapePart.y;
+          const targetCol = building.origin.col + shapePart.x;
+          
+          if (state.grid[targetRow]?.[targetCol]) {
+            state.grid[targetRow][targetCol].occupyingObjectColor = newColor;
+          }
+        });
+      }
+  
+      if (building.statBonusByLevel && building.statBonusByLevel[newLevel]) {
+        const newBonus = building.statBonusByLevel[newLevel];
+        commit(MUTATIONS.UPDATE_BUILDING_BONUS, { buildingId, bonus: newBonus });
+      }
+      commit(MUTATIONS.SET_PARK_BALANCE, state.parkBalance - upgradeCost);
+      
+      alert('Здание "' + building.name + '" улучшено до ' + newLevel + ' уровня');
+    },
+    
+    upgradeRoads: ({ commit, state, getters }) => {
+      const currentLevel = getters.getRoadLevel;
+      if (currentLevel >= 3) {
+        alert('Дороги уже максимального уровня');
+        return;
+      }
+      
+      const upgradeCost = currentLevel * 150;
+      if (state.parkBalance < upgradeCost) {
+        alert('Недостаточно средств для улучшения дорог');
+        return;
+      }
+      
+      const newLevel = currentLevel + 1;
+      commit(MUTATIONS.UPGRADE_ROADS, newLevel);
+      commit(MUTATIONS.SET_PARK_BALANCE, state.parkBalance - upgradeCost);
+      
+      alert('Дороги улучшены до ' + newLevel +  ' уровня');
+    },
+    
+    upgradeMap: ({ commit, state, getters, dispatch }) => {
+      const currentLevel = getters.getMapLevel;
+      if (currentLevel >= 3) {
+        alert('Карта уже максимального размера');
+        return;
+      }
+      
+      const upgradeCost = currentLevel * 500; 
+      if (state.parkBalance < upgradeCost) {
+        alert('Недостаточно средств для расширения карты');
+        return;
+      }
+      
+      const newLevel = currentLevel + 1;
+      commit(MUTATIONS.UPGRADE_MAP, newLevel);
+      commit(MUTATIONS.SET_PARK_BALANCE, state.parkBalance - upgradeCost);
+    
+      dispatch('expandMap', newLevel);
+      
+      alert('Карта расширена до ' + newLevel + ' уровня');
+    },
+
+    expandMap: ({ commit, state, getters }) => {
+      const mapLevel = getters.getMapLevel || 1;
+      
+      const levelSizes = {
+        1: { width: 10, height: 10 },
+        2: { width: 12, height: 12 },
+        3: { width: 14, height: 14 }  
+      };
+      
+      const newSize = levelSizes[mapLevel];
+      if (!newSize) 
+      {
+        return;
+      }
+
+      const oldWidth = state.gridWidth;
+      const oldHeight = state.gridHeight;
+      const oldGrid = [...state.grid];
+      
+      const widthIncrease = newSize.width - oldWidth;
+      const heightIncrease = newSize.height - oldHeight;
+      
+      const colsToAddLeft = Math.floor(widthIncrease / 2);
+      const colsToAddRight = widthIncrease - colsToAddLeft;
+      
+      const rowsToAddTop = heightIncrease;
+      
+      const newGrid = [];
+      for (let newRow = 0; newRow < newSize.height; newRow++) {
+        const row = [];
+        for (let newCol = 0; newCol < newSize.width; newCol++) {
+          const oldRow = newRow - rowsToAddTop;
+          const oldCol = newCol - colsToAddLeft;
+          
+          if (
+            oldRow >= 0 && oldRow < oldHeight &&
+            oldCol >= 0 && oldCol < oldWidth &&
+            oldGrid[oldRow] && 
+            oldGrid[oldRow][oldCol]
+          ) {
+            const oldCell = oldGrid[oldRow][oldCol];
+            row.push({
+              ...oldCell,
+              row: newRow,
+              col: newCol
+            });
+          } else {
+            row.push({
+              row: newRow,
+              col: newCol,
+              isOccupied: false,
+              occupyingObjectId: null,
+              occupyingObjectColor: null,
+              type: 'EMPTY'
+            });
+            
+          }
+        }
+        newGrid.push(row);
+      }
+      
+      commit(MUTATIONS.SET_GRID_WIDTH, newSize.width);
+      commit(MUTATIONS.SET_GRID_HEIGHT, newSize.height);
+      commit(MUTATIONS.SET_GRID, newGrid);
+      
+      const colsToAddEachSide = colsToAddLeft;
+      
+      state.allPlacedObjects.forEach(building => {
+        if (building.origin) {
+          building.origin.row += rowsToAddTop;
+          building.origin.col += colsToAddEachSide;
+          
+          if (building.buildingEntrance) {
+            building.buildingEntrance.row += rowsToAddTop;
+            building.buildingEntrance.col += colsToAddEachSide;
+          }
+        }
+      });
+      
+      state.visitors.forEach(visitor => {
+        if (visitor.x !== undefined && visitor.y !== undefined) {
+          visitor.x += colsToAddEachSide;
+          visitor.y += rowsToAddTop;
+        }
+        if (visitor.lastPosition) {
+          visitor.lastPosition.x += colsToAddEachSide;
+          visitor.lastPosition.y += rowsToAddTop;
+        }
+        if (visitor.path && Array.isArray(visitor.path)) {
+          visitor.path = visitor.path.map(point => ({
+            x: point.x + colsToAddEachSide,
+            y: point.y + rowsToAddTop
+          }));
+        }
+      });
+      
+      const entranceRow = newSize.height; 
+      const entranceCol = Math.floor(newSize.width / 2);
+      
+      if (
+        entranceRow >= 0 && entranceRow < newSize.height &&
+        entranceCol >= 0 && entranceCol < newSize.width &&
+        newGrid[entranceRow] && 
+        newGrid[entranceRow][entranceCol]
+      ) {
+        if (newGrid[entranceRow][entranceCol].isOccupied) {
+          newGrid[entranceRow][entranceCol] = {
+            row: entranceRow,
+            col: entranceCol,
+            isOccupied: false,
+            occupyingObjectId: null,
+            occupyingObjectColor: null,
+            type: 'ENTRANCE'
+          };
+        } else {
+          newGrid[entranceRow][entranceCol].type = 'ENTRANCE';
+        }
+      }
+      
+      commit(MUTATIONS.SET_ENTRANCE, { row: entranceRow, col: entranceCol });
+      commit(MUTATIONS.SET_GRID, newGrid);
+    },
+    
+    updateVisitorStatsOnStep: ({ commit }, visitorId) => {
+      const visitor = state.visitors.find(v => v.id === visitorId);
+      if (!visitor) 
+      {
+        return null;
+      }
+      const stats = { ...visitor.stats };
+      const mood = calculateMood(stats);
+      commit(MUTATIONS.UPDATE_VISITOR, {id: visitorId,updates: { stats, mood }});
+      return { stats, mood };
+    },
+      
+    findBuildingForStat: ({ state, getters }, { stat, excludeBuildingId = null }) => {
+      const statToBuildingType = {
+        hunger: BUILDING_TYPES.FOOD,
+        fatigue: BUILDING_TYPES.BENCH,
+        need: BUILDING_TYPES.TOILET,
+        boredom: BUILDING_TYPES.ATTRACTION
+      };
+        
+      const targetType = statToBuildingType[stat];
+      if (!targetType)
+      { 
+        return null;
+      }
+        
+      const buildings = getters.getBuildings.filter(b => {
+        if (!b)
+        {
+          return false;
+        }
+        if (excludeBuildingId && b.id === excludeBuildingId)
+        {
+           return false;
+        }
+        return b.type === targetType;
+      });
+        
+      if (buildings.length === 0) 
+      {
+        return null;
+      }
+      return buildings[Math.floor(Math.random() * buildings.length)];
     }
   }
 });
