@@ -1,67 +1,53 @@
 <template>
   <section class="game-info">
     <header class="game-info__header">
-      <h2 class="game-info__title">Game Stats</h2>
-      <div class="game-info__level">Level {{ levelValue }}</div>
+      <h2 class="game-info__title">{{ title }}</h2>
+      <div class="game-info__level">Level {{ gameStats.level }}</div>
     </header>
 
     <div class="game-info__content">
-      <div class="game-info__field">
-        <span class="game-info__label">Target Score:</span>
-        <span class="game-info__value">{{ targetScoreValue }}</span>
-      </div>
+      <GameStatField
+        v-for="stat in gameStatFields"
+        :key="stat.label"
+        :label="stat.label"
+        :value="stat.value"
+        :variant="stat.variant"
+      />
 
-      <div class="game-info__field">
-        <span class="game-info__label">Your Score:</span>
-        <span class="game-info__value game-info__value--score">{{ scoreValue }}</span>
-      </div>
-
-      <div class="game-info__field">
-        <span class="game-info__label">Time Left:</span>
-        <span class="game-info__value game-info__value--time">{{ formatTime(timeLeftValue) }}</span>
-      </div>
-
-      <div class="game-info__field">
-        <span class="game-info__label">Moves:</span>
-        <span class="game-info__value">{{ moveCountValue }}</span>
-      </div>
-
-      <div class="game-info__field">
-        <span class="game-info__label">Crystals:</span>
-        <span class="game-info__value game-info__value--crystal">
-          {{ crystalsCollectedValue }}/{{ crystalsTotalValue }}
-        </span>
-      </div>
-
-      <div v-if="comboValue.active" class="combo-display">
+      <div v-if="gameStats.combo.active" class="combo-display">
         <div class="combo-display__title">COMBO!</div>
         <div class="combo-display__details">
-          <span class="combo-display__color" :style="{ backgroundColor: comboValue.color }"></span>
-          <span class="combo-display__count">x{{ comboValue.count }}</span>
-          <span class="combo-display__multiplier">×{{ comboValue.multiplier.toFixed(1) }}</span>
+          <span 
+            v-if="gameStats.combo.color" 
+            class="combo-display__color" 
+            :style="{ backgroundColor: gameStats.combo.color }" 
+          />
+          <span class="combo-display__count">x{{ gameStats.combo.count }}</span>
+          <span class="combo-display__multiplier">×{{ gameStats.combo.multiplier.toFixed(1) }}</span>
         </div>
-        <div v-if="comboValue.bonusType" class="combo-display__bonus">
-          Bonus: {{ getBonusName(comboValue.bonusType) }}
+        <div v-if="gameStats.combo.bonusType" class="combo-display__bonus">
+          Bonus: {{ getBonusName(gameStats.combo.bonusType) }}
         </div>
       </div>
 
-      <div v-if="bonusesValue.length > 0" class="bonuses-section">
+      <div v-if="hasBonuses" class="bonuses-section">
         <h3 class="bonuses-section__title">Active Bonuses</h3>
         <div class="bonuses-section__list">
-          <div
-            v-for="(bonus, index) in bonusesValue"
-            :key="index"
+          <button
+            v-for="(bonus, index) in gameStats.bonuses"
+            :key="bonus.id || index"
             class="bonus-item"
+            :disabled="gameStats.isProcessing"
             @click="activateBonus(index)"
           >
             <span class="bonus-item__icon">{{ getBonusSymbol(bonus.type) }}</span>
             <span class="bonus-item__name">{{ getBonusName(bonus.type) }}</span>
-          </div>
+          </button>
         </div>
       </div>
 
-      <div v-if="isProcessingValue" class="processing-indicator">
-        <div class="processing-indicator__spinner"></div>
+      <div v-if="gameStats.isProcessing" class="processing-indicator">
+        <div class="processing-indicator__spinner" />
         <span class="processing-indicator__text">Processing...</span>
       </div>
     </div>
@@ -72,64 +58,197 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 
-const store = useStore()
+// ============== TYPES ==============
+type BonusType = 
+  | 'bomb' 
+  | 'vertical' 
+  | 'horizontal' 
+  | 'random' 
+  | 'time' 
+  | 'crystal_hunter'
 
-// Безопасные вычисляемые свойства с значениями по умолчанию
-const scoreValue = computed(() => store.getters.score || 0)
-const levelValue = computed(() => store.getters.level || 1)
-const targetScoreValue = computed(() => store.getters.targetScore || 10000)
-const timeLeftValue = computed(() => store.getters.timeLeft || 120)
-const moveCountValue = computed(() => store.getters.moveCount || 0)
-const crystalsCollectedValue = computed(() => store.getters.crystalsCollected || 0)
-const crystalsTotalValue = computed(() => store.getters.crystalsTotal || 0)
-const comboValue = computed(() => store.getters.combo || { 
-  active: false, 
-  color: null, 
-  count: 0, 
+interface BonusItem {
+  type: BonusType
+  id?: string
+}
+
+interface ComboState {
+  active: boolean
+  color: string | null
+  count: number
+  multiplier: number
+  bonusType: BonusType | null
+}
+
+interface GameStats {
+  score: number
+  level: number
+  targetScore: number
+  timeLeft: number
+  moveCount: number
+  crystalsCollected: number
+  crystalsTotal: number
+  combo: ComboState
+  bonuses: BonusItem[]
+  isProcessing: boolean
+}
+
+interface StatField {
+  label: string
+  value: string | number
+  variant?: 'default' | 'score' | 'time' | 'crystal'
+}
+
+// ============== CONSTANTS ==============
+const BONUS_CONFIG: Record<BonusType, { symbol: string; name: string }> = {
+  bomb: { symbol: 'B', name: 'Bomb' },
+  vertical: { symbol: 'V', name: 'Vertical' },
+  horizontal: { symbol: 'H', name: 'Horizontal' },
+  random: { symbol: '?', name: 'Random' },
+  time: { symbol: 'T', name: 'Time+' },
+  crystal_hunter: { symbol: 'C', name: 'Crystal Hunter' }
+}
+
+const DEFAULT_COMBO: ComboState = {
+  active: false,
+  color: null,
+  count: 0,
   multiplier: 1,
   bonusType: null
-})
-const bonusesValue = computed(() => store.getters.bonuses || [])
-const isProcessingValue = computed(() => store.getters.isProcessing || false)
+}
 
-const formatTime = (seconds: number) => {
+const DEFAULT_STATS: GameStats = {
+  score: 0,
+  level: 1,
+  targetScore: 10000,
+  timeLeft: 120,
+  moveCount: 0,
+  crystalsCollected: 0,
+  crystalsTotal: 0,
+  combo: DEFAULT_COMBO,
+  bonuses: [],
+  isProcessing: false
+}
+
+const TITLE = 'Game Stats'
+
+// ============== COMPONENT LOGIC ==============
+const store = useStore()
+
+// Unified game stats computed property
+const gameStats = computed<GameStats>(() => ({
+  score: store.getters.score ?? DEFAULT_STATS.score,
+  level: store.getters.level ?? DEFAULT_STATS.level,
+  targetScore: store.getters.targetScore ?? DEFAULT_STATS.targetScore,
+  timeLeft: store.getters.timeLeft ?? DEFAULT_STATS.timeLeft,
+  moveCount: store.getters.moveCount ?? DEFAULT_STATS.moveCount,
+  crystalsCollected: store.getters.crystalsCollected ?? DEFAULT_STATS.crystalsCollected,
+  crystalsTotal: store.getters.crystalsTotal ?? DEFAULT_STATS.crystalsTotal,
+  combo: store.getters.combo ?? DEFAULT_STATS.combo,
+  bonuses: store.getters.bonuses ?? DEFAULT_STATS.bonuses,
+  isProcessing: store.getters.isProcessing ?? DEFAULT_STATS.isProcessing
+}))
+
+// Helper function to format time
+const formatTime = (seconds: number): string => {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-const getBonusSymbol = (bonusType: string) => {
-  const symbols: Record<string, string> = {
-    bomb: 'B',
-    vertical: 'V',
-    horizontal: 'H',
-    random: '?',
-    time: 'T',
-    crystal_hunter: 'C'
-  }
-  return symbols[bonusType] || '?'
-}
+// Bonus helper functions
+const getBonusSymbol = (type: string): string => 
+  BONUS_CONFIG[type as BonusType]?.symbol ?? '?'
 
-const getBonusName = (bonusType: string) => {
-  const names: Record<string, string> = {
-    bomb: 'Bomb',
-    vertical: 'Vertical',
-    horizontal: 'Horizontal',
-    random: 'Random',
-    time: 'Time+',
-    crystal_hunter: 'Crystal Hunter'
-  }
-  return names[bonusType] || 'Unknown'
-}
+const getBonusName = (type: string): string => 
+  BONUS_CONFIG[type as BonusType]?.name ?? 'Unknown'
 
-const activateBonus = (index: number) => {
-  if (!isProcessingValue.value) {
+// Computed properties
+const title = TITLE
+
+const gameStatFields = computed<StatField[]>(() => [
+  { 
+    label: 'Target Score:', 
+    value: gameStats.value.targetScore 
+  },
+  { 
+    label: 'Your Score:', 
+    value: gameStats.value.score,
+    variant: 'score' 
+  },
+  { 
+    label: 'Time Left:', 
+    value: formatTime(gameStats.value.timeLeft),
+    variant: 'time' 
+  },
+  { 
+    label: 'Moves:', 
+    value: gameStats.value.moveCount 
+  },
+  { 
+    label: 'Crystals:', 
+    value: `${gameStats.value.crystalsCollected}/${gameStats.value.crystalsTotal}`,
+    variant: 'crystal' 
+  }
+])
+
+const hasBonuses = computed(() => gameStats.value.bonuses.length > 0)
+
+// Event handlers
+const activateBonus = (index: number): void => {
+  if (!gameStats.value.isProcessing) {
     store.dispatch('game/activateBonus', index)
   }
+}
+
+// ============== COMPONENTS ==============
+// Sub-component for stat field (defined in template)
+const GameStatField = {
+  props: {
+    label: { type: String, required: true },
+    value: { type: [String, Number], required: true },
+    variant: { type: String, default: 'default' }
+  },
+  template: `
+    <div class="game-info__field">
+      <span class="game-info__label">{{ label }}</span>
+      <span 
+        class="game-info__value" 
+        :class="'game-info__value--' + variant"
+      >
+        {{ value }}
+      </span>
+    </div>
+  `
 }
 </script>
 
 <style scoped lang="scss">
+// ============== CSS VARIABLES ==============
+:root {
+  --game-text-strong: #0f172a;
+  --game-text-muted: rgba(15, 23, 42, 0.7);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --game-text-strong: #f8fafc;
+    --game-text-muted: rgba(226, 232, 240, 0.7);
+  }
+}
+
+// ============== ANIMATIONS ==============
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+// ============== MAIN CONTAINER ==============
 .game-info {
   display: flex;
   flex-direction: column;
@@ -140,8 +259,14 @@ const activateBonus = (index: number) => {
   border: 1px solid rgba(148, 163, 184, 0.2);
   backdrop-filter: blur(12px);
   min-width: 280px;
+
+  @media (prefers-color-scheme: dark) {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(14, 165, 233, 0.15));
+    border-color: rgba(148, 163, 184, 0.25);
+  }
 }
 
+// ============== HEADER ==============
 .game-info__header {
   display: flex;
   justify-content: space-between;
@@ -166,12 +291,14 @@ const activateBonus = (index: number) => {
   font-weight: 600;
 }
 
+// ============== CONTENT ==============
 .game-info__content {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+// ============== STAT FIELDS ==============
 .game-info__field {
   display: flex;
   justify-content: space-between;
@@ -189,23 +316,24 @@ const activateBonus = (index: number) => {
   font-size: 14px;
   color: var(--game-text-strong);
   font-weight: 600;
+
+  &--score {
+    color: #facc15;
+    text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+    font-size: 16px;
+  }
+
+  &--time {
+    color: #ef4444;
+    font-weight: 700;
+  }
+
+  &--crystal {
+    color: gold;
+  }
 }
 
-.game-info__value--score {
-  color: #facc15;
-  text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
-  font-size: 16px;
-}
-
-.game-info__value--time {
-  color: #ef4444;
-  font-weight: 700;
-}
-
-.game-info__value--crystal {
-  color: gold;
-}
-
+// ============== COMBO DISPLAY ==============
 .combo-display {
   background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
   border: 1px solid rgba(168, 85, 247, 0.4);
@@ -257,6 +385,7 @@ const activateBonus = (index: number) => {
   font-weight: 500;
 }
 
+// ============== BONUSES SECTION ==============
 .bonuses-section__title {
   font-size: 14px;
   color: var(--game-text-strong);
@@ -280,12 +409,19 @@ const activateBonus = (index: number) => {
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid transparent;
-}
+  width: 100%;
+  text-align: left;
 
-.bonus-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
-  transform: translateY(-1px);
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .bonus-item__icon {
@@ -299,6 +435,7 @@ const activateBonus = (index: number) => {
   font-weight: 500;
 }
 
+// ============== PROCESSING INDICATOR ==============
 .processing-indicator {
   display: flex;
   align-items: center;
@@ -317,34 +454,5 @@ const activateBonus = (index: number) => {
   border-top: 2px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@media (prefers-color-scheme: dark) {
-  .game-info {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(14, 165, 233, 0.15));
-    border-color: rgba(148, 163, 184, 0.25);
-  }
-}
-
-:root {
-  --game-text-strong: #0f172a;
-  --game-text-muted: rgba(15, 23, 42, 0.7);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --game-text-strong: #f8fafc;
-    --game-text-muted: rgba(226, 232, 240, 0.7);
-  }
 }
 </style>

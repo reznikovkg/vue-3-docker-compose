@@ -36,7 +36,6 @@
     </div>
     
     <div v-if="isProcessingValue" class="game-controls__loading">
-      <div class="game-controls__spinner"></div>
       <span class="game-controls__loading-text">Processing matches...</span>
     </div>
   </section>
@@ -226,15 +225,6 @@ onUnmounted(() => {
   border-radius: 8px;
   font-size: 13px;
   color: var(--game-text-muted);
-}
-
-.game-controls__spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-top: 2px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 .game-controls__loading-text {
