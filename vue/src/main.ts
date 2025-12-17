@@ -1,18 +1,17 @@
 import './assets/main.css'
 
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp, App } from 'vue'
+import AppComponent from './App.vue'
 import store from './store'
-import { router, ROUTES } from '@/router/index.js'
+import { router, ROUTES } from '@/router/index'
 
 const routes = {
-  install(app, options) {
-    console.log(ROUTES)
+  install(app: App) {
     app.config.globalProperties.$routes = ROUTES
   }
 }
 
-createApp(App)
+createApp(AppComponent)
   .use(router)
   .use(routes)
   .use(store)
