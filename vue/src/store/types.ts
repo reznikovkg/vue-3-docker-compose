@@ -34,6 +34,17 @@ export interface FeedingSpot {
   level: number
 }
 
+export interface Pirate {
+  id: string
+  x: number
+  y: number
+  dirX: number
+  dirY: number
+  mode: 'patrol' | 'chase'
+}
+
+export type TimeOfDay = 'day' | 'night'
+
 export interface Island {
   x: number
   y: number
@@ -57,6 +68,8 @@ export interface GameState {
     line?: string
     hook?: string
   }
+  pirates: Pirate[]
+  timeOfDay: TimeOfDay
 }
 
 export interface RootState {

@@ -7,13 +7,24 @@ import {
   RootState,
   FeedingSpot,
   Island,
+  Pirate,
+  TimeOfDay,
 } from '../types'
 
 const lsKey = 'fishing_state_v2'
-const VERSION = 1
+const VERSION = 2
 const INITIAL_BALANCE = 100
 const FEED_RADIUS = 220
 const MERGE_RADIUS = 220
+export const BASE_SCREEN = 720
+export const PIRATE_VISIBLE_RADIUS = BASE_SCREEN * 5
+export const PIRATE_PATROL_SPEED = 80
+export const PIRATE_CHASE_SPEED = PIRATE_PATROL_SPEED * 2
+export const PLAYER_SPEED_DAY = PIRATE_PATROL_SPEED * 3
+export const PLAYER_SPEED_NIGHT = PIRATE_PATROL_SPEED * 2
+export const BOARDING_DISTANCE = Math.floor(BASE_SCREEN * 0.14)
+export const DAY_MAX_PIRATES = 3
+export const NIGHT_MAX_PIRATES = 5
 
 export interface FishType {
   id: 'carp' | 'perch' | 'pike'
@@ -84,6 +95,14 @@ const ISLANDS: Island[] = [
   { x: -1500, y: 600, islandRadius: 220, shallowRadius: 380 },
 ]
 
+const PIRATE_VIEW_RADIUS = BASE_SCREEN * 1.35
+const PIRATE_LOSE_RADIUS = BASE_SCREEN * 1.8
+const PIRATE_SPAWN_MIN = BASE_SCREEN * 1.75
+const PIRATE_SPAWN_MAX = PIRATE_VISIBLE_RADIUS
+const PIRATE_MIN_COUNT = 1
+
+let pirateIdCounter = 1
+
 const defaultOwnedTackle: string[] = ['rod_t1', 'reel_t1', 'line_t1', 'hook_t1']
 const defaultEquippedTackle: GameState['equippedTackle'] = {
   rod: 'rod_t1',
@@ -105,6 +124,46 @@ const clampPosByIslands = (pos: { x: number; y: number }): { x: number; y: numbe
     }
   }
   return pos
+}
+
+const normalizeVec = (x: number, y: number): { x: number; y: number } => {
+  const len = Math.sqrt(x * x + y * y)
+  if (!len) return { x: 1, y: 0 }
+  return { x: x / len, y: y / len }
+}
+
+const createPirate = (pos: { x: number; y: number }): Pirate => {
+  const angle = Math.random() * Math.PI * 2
+  const dir = normalizeVec(Math.cos(angle), Math.sin(angle))
+  const spawnRadius = PIRATE_SPAWN_MIN + Math.random() * (PIRATE_SPAWN_MAX - PIRATE_SPAWN_MIN)
+  const spawnAngle = Math.random() * Math.PI * 2
+  const x = pos.x + Math.cos(spawnAngle) * spawnRadius
+  const y = pos.y + Math.sin(spawnAngle) * spawnRadius
+  const id = `pirate-${Date.now()}-${pirateIdCounter++}`
+  return {
+    id,
+    x,
+    y,
+    dirX: dir.x,
+    dirY: dir.y,
+    mode: 'patrol',
+  }
+}
+
+const ensurePirateCount = (
+  list: Pirate[],
+  pos: { x: number; y: number },
+  max: number,
+  dt: number = 0,
+): Pirate[] => {
+  const pirates = list.slice()
+  const spawnChance = Math.min(0.35, Math.max(0.02, dt * 0.9))
+  if (pirates.length < PIRATE_MIN_COUNT) {
+    pirates.push(createPirate(pos))
+  } else if (pirates.length < max && Math.random() < spawnChance) {
+    pirates.push(createPirate(pos))
+  }
+  return pirates
 }
 
 const loadState = (): Partial<GameState> | null => {
@@ -142,6 +201,10 @@ const generateZones = (): Zones => {
 
 const savedState = loadState()
 const initialZones = savedState && savedState.zones ? savedState.zones : generateZones()
+const initialTimeOfDay: TimeOfDay = (savedState && savedState.timeOfDay) || 'day'
+const initialPirates: Pirate[] = savedState && savedState.pirates
+  ? savedState.pirates
+  : ensurePirateCount([], { x: 0, y: 0 }, DAY_MAX_PIRATES)
 
 const createDefaultInventory = (): Inventory => ({
   fish: {
@@ -166,6 +229,8 @@ const MUTATIONS = {
   SET_CURRENT_BAIT: 'SET_CURRENT_BAIT',
   SET_OWNED_TACKLE: 'SET_OWNED_TACKLE',
   SET_EQUIPPED_TACKLE: 'SET_EQUIPPED_TACKLE',
+  SET_PIRATES: 'SET_PIRATES',
+  SET_TIME_OF_DAY: 'SET_TIME_OF_DAY',
 } as const
 
 type Ctx = ActionContext<GameState, RootState>
@@ -189,26 +254,26 @@ const cloneInventory = (inv: Inventory): Inventory => normalizeInventory(inv)
 
 export default {
   namespaced: true,
-  state(): GameState {
-    return {
-      pos: savedState && savedState.pos ? savedState.pos : { x: 0, y: 0 },
-      zones: initialZones,
-      inventory: savedState && savedState.inventory
-        ? normalizeInventory(savedState.inventory as Inventory)
-        : createDefaultInventory(),
-      balance: savedState && typeof savedState.balance === 'number' ? savedState.balance : INITIAL_BALANCE,
-      feedingSpots: (savedState && savedState.feedingSpots ? savedState.feedingSpots : []) as FeedingSpot[],
-      islands: ISLANDS,
-      marketNearby: false,
-      currentBaitId: (savedState && savedState.currentBaitId) || 'worm',
-      ownedTackleIds: (savedState && savedState.ownedTackleIds
-        ? savedState.ownedTackleIds
-        : [...defaultOwnedTackle]) as string[],
-      equippedTackle: (savedState && savedState.equippedTackle
-        ? savedState.equippedTackle
-        : { ...defaultEquippedTackle }) as GameState['equippedTackle'],
-    }
-  },
+  state: (): GameState => ({
+    pos: savedState && savedState.pos ? savedState.pos : { x: 0, y: 0 },
+    zones: initialZones,
+    inventory: savedState && savedState.inventory
+      ? normalizeInventory(savedState.inventory as Inventory)
+      : createDefaultInventory(),
+    balance: savedState && typeof savedState.balance === 'number' ? savedState.balance : INITIAL_BALANCE,
+    feedingSpots: (savedState && savedState.feedingSpots ? savedState.feedingSpots : []) as FeedingSpot[],
+    islands: ISLANDS,
+    marketNearby: false,
+    currentBaitId: (savedState && savedState.currentBaitId) || 'worm',
+    ownedTackleIds: (savedState && savedState.ownedTackleIds
+      ? savedState.ownedTackleIds
+      : [...defaultOwnedTackle]) as string[],
+    equippedTackle: (savedState && savedState.equippedTackle
+      ? savedState.equippedTackle
+      : { ...defaultEquippedTackle }) as GameState['equippedTackle'],
+    pirates: initialPirates,
+    timeOfDay: initialTimeOfDay,
+  }),
   getters: {
     getPos: (state: GameState) => state.pos,
     getInventory: (state: GameState) => normalizeInventory(state.inventory),
@@ -250,6 +315,8 @@ export default {
     getCurrentBaitId: (state: GameState) => state.currentBaitId,
     getOwnedTackleIds: (state: GameState) => state.ownedTackleIds,
     getEquippedTackle: (state: GameState) => state.equippedTackle,
+    getPirates: (state: GameState) => state.pirates,
+    getTimeOfDay: (state: GameState) => state.timeOfDay,
     getIslands: (state: GameState) => state.islands,
     getFeedingSpots: (state: GameState) => state.feedingSpots,
     getFeedLevel: (state: GameState): number => {
@@ -271,6 +338,10 @@ export default {
       }
       return power
     },
+    getMaxPirateCount: (state: GameState): number => (state.timeOfDay === 'night' ? NIGHT_MAX_PIRATES : DAY_MAX_PIRATES),
+    getPirateVisibleRadius: () => PIRATE_VISIBLE_RADIUS,
+    getBoardingDistance: () => BOARDING_DISTANCE,
+    getPlayerSpeed: (state: GameState): number => (state.timeOfDay === 'night' ? PLAYER_SPEED_NIGHT : PLAYER_SPEED_DAY),
   },
   mutations: {
     [MUTATIONS.SET_POS]: (state: GameState, payload: { x: number; y: number }) => {
@@ -300,6 +371,12 @@ export default {
     [MUTATIONS.SET_EQUIPPED_TACKLE]: (state: GameState, equipped: GameState['equippedTackle']) => {
       state.equippedTackle = equipped
     },
+    [MUTATIONS.SET_PIRATES]: (state: GameState, pirates: Pirate[]) => {
+      state.pirates = pirates
+    },
+    [MUTATIONS.SET_TIME_OF_DAY]: (state: GameState, time: TimeOfDay) => {
+      state.timeOfDay = time
+    },
   },
   actions: {
     moveBoat: (context: Ctx, payload: { x: number; y: number }) => {
@@ -325,7 +402,9 @@ export default {
       context.commit(MUTATIONS.SET_INVENTORY, inv)
       context.dispatch('saveToLocalStorage')
     },
-    catchFish: (context: Ctx, fishId: FishType['id']) => {
+    catchFish: (context: Ctx, payload: FishType['id'] | { fishId: FishType['id']; countMultiplier?: number }) => {
+      const fishId = typeof payload === 'string' ? payload : payload.fishId
+      const countMultiplier = typeof payload === 'string' ? 1 : Math.max(1, payload.countMultiplier || 1)
       const baitId = context.state.currentBaitId as BaitDef['id']
       const bait = getBaitDef(baitId)
       if (!bait || !bait.fishIds.includes(fishId)) return
@@ -334,7 +413,7 @@ export default {
       if (!inv.baits[baitId] || inv.baits[baitId] <= 0) return
 
       inv.baits[baitId] -= 1
-      inv.fish[fishId] = (inv.fish[fishId] || 0) + 1
+      inv.fish[fishId] = (inv.fish[fishId] || 0) + countMultiplier
       context.commit(MUTATIONS.SET_INVENTORY, inv)
       context.dispatch('saveToLocalStorage')
     },
@@ -383,13 +462,14 @@ export default {
       if (context.state.ownedTackleIds.includes(itemId)) return
 
       const item = TACKLE_ITEMS.find((t) => t.id === itemId)
-      if (!item || item.price <= 0) return
-      if (context.state.balance < item.price) return
+      if (!item) return
+      const cost = Math.max(0, item.price)
+      if (context.state.balance < cost) return
 
       const ids = context.state.ownedTackleIds.slice()
       ids.push(itemId)
       context.commit(MUTATIONS.SET_OWNED_TACKLE, ids)
-      context.commit(MUTATIONS.SET_BALANCE, context.state.balance - item.price)
+      context.commit(MUTATIONS.SET_BALANCE, context.state.balance - cost)
       context.dispatch('saveToLocalStorage')
     },
     sellTackle: (context: Ctx, itemId: string) => {
@@ -453,9 +533,91 @@ export default {
       context.commit(MUTATIONS.SET_INVENTORY, inv)
       context.dispatch('saveToLocalStorage')
     },
+    updatePirates: (context: Ctx, dt: number): string | null => {
+      const max = context.state.timeOfDay === 'night' ? NIGHT_MAX_PIRATES : DAY_MAX_PIRATES
+      const pirates = ensurePirateCount(context.state.pirates, context.state.pos, max, dt || 0)
+      const updated: Pirate[] = []
+      let boarded: string | null = null
+
+      for (const pirate of pirates) {
+        const dist = distance(pirate, context.state.pos)
+        let mode: Pirate['mode'] = pirate.mode
+        let dir = normalizeVec(pirate.dirX, pirate.dirY)
+        let speed = PIRATE_PATROL_SPEED
+
+        if (dist <= PIRATE_VIEW_RADIUS) {
+          mode = 'chase'
+          dir = normalizeVec(context.state.pos.x - pirate.x, context.state.pos.y - pirate.y)
+          speed = PIRATE_CHASE_SPEED
+        } else if (pirate.mode === 'chase' && dist > PIRATE_LOSE_RADIUS) {
+          mode = 'patrol'
+        } else if (pirate.mode === 'chase') {
+          dir = normalizeVec(context.state.pos.x - pirate.x, context.state.pos.y - pirate.y)
+          speed = PIRATE_CHASE_SPEED
+        }
+
+        const next: Pirate = {
+          ...pirate,
+          x: pirate.x + dir.x * speed * (dt || 0),
+          y: pirate.y + dir.y * speed * (dt || 0),
+          dirX: dir.x,
+          dirY: dir.y,
+          mode,
+        }
+
+        if (distance(next, context.state.pos) <= PIRATE_VISIBLE_RADIUS) {
+          updated.push(next)
+          if (!boarded && dist <= BOARDING_DISTANCE) {
+            boarded = pirate.id
+          }
+        }
+      }
+
+      context.commit(MUTATIONS.SET_PIRATES, updated)
+      context.dispatch('saveToLocalStorage')
+      return boarded
+    },
+    despawnPirate: (context: Ctx, pirateId: string) => {
+      const updated = context.state.pirates.filter((p) => p.id !== pirateId)
+      context.commit(MUTATIONS.SET_PIRATES, updated)
+      context.dispatch('saveToLocalStorage')
+    },
+    setTimeOfDay: (context: Ctx, time: TimeOfDay) => {
+      context.commit(MUTATIONS.SET_TIME_OF_DAY, time)
+      context.dispatch('saveToLocalStorage')
+    },
+    toggleTimeOfDay: (context: Ctx) => {
+      const next: TimeOfDay = context.state.timeOfDay === 'day' ? 'night' : 'day'
+      context.commit(MUTATIONS.SET_TIME_OF_DAY, next)
+      context.dispatch('saveToLocalStorage')
+    },
+    resolveBoarding: (context: Ctx, failures: number) => {
+      let balance = context.state.balance
+      let inv = cloneInventory(normalizeInventory(context.state.inventory))
+      let owned = context.state.ownedTackleIds.slice()
+      let equipped: GameState['equippedTackle'] = { ...context.state.equippedTackle }
+
+      if (failures >= 1) {
+        balance = 0
+      }
+      if (failures >= 2) {
+        owned = []
+        equipped = {}
+      }
+      if (failures >= 3) {
+        inv.fish = { carp: 0, perch: 0, pike: 0 }
+      }
+
+      context.commit(MUTATIONS.SET_BALANCE, balance)
+      context.commit(MUTATIONS.SET_INVENTORY, inv)
+      context.commit(MUTATIONS.SET_OWNED_TACKLE, owned)
+      context.commit(MUTATIONS.SET_EQUIPPED_TACKLE, equipped)
+      context.dispatch('saveToLocalStorage')
+    },
     resetGame: (context: Ctx) => {
       const inv = createDefaultInventory()
       const zones = generateZones()
+      const pirates = ensurePirateCount([], { x: 0, y: 0 }, DAY_MAX_PIRATES)
       context.commit(MUTATIONS.SET_POS, { x: 0, y: 0 })
       context.commit(MUTATIONS.SET_ZONES, zones)
       context.commit(MUTATIONS.SET_INVENTORY, inv)
@@ -465,6 +627,8 @@ export default {
       context.commit(MUTATIONS.SET_CURRENT_BAIT, 'worm')
       context.commit(MUTATIONS.SET_OWNED_TACKLE, [...defaultOwnedTackle])
       context.commit(MUTATIONS.SET_EQUIPPED_TACKLE, { ...defaultEquippedTackle })
+      context.commit(MUTATIONS.SET_PIRATES, pirates)
+      context.commit(MUTATIONS.SET_TIME_OF_DAY, 'day')
       context.dispatch('saveToLocalStorage')
     },
     saveToLocalStorage: (context: Ctx) => {
@@ -478,6 +642,8 @@ export default {
         ownedTackleIds: context.state.ownedTackleIds,
         equippedTackle: context.state.equippedTackle,
         currentBaitId: context.state.currentBaitId,
+        pirates: context.state.pirates,
+        timeOfDay: context.state.timeOfDay,
       }))
     },
   },

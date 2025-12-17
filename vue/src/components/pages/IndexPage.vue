@@ -37,13 +37,25 @@
         :style="feedStyle(spot)"
       ></div>
     </div>
+    <div class="game__pirates">
+      <div
+        v-for="p in pirates"
+        :key="p.id"
+        class="pirate"
+        :class="{ 'pirate--chase': p.mode === 'chase' }"
+        :style="pirateStyle(p)"
+      ></div>
+    </div>
     <div class="game__top">
       <div>Позиция: {{ pos.x }} / {{ pos.y }}</div>
       <div>Зона: {{ zoneLabel }}</div>
       <div>Баланс: {{ balance }}</div>
+      <div>Time: {{ timeOfDay }}</div>
+      <div>Pirates: {{ pirates.length }} / {{ pirateCap }}</div>
     </div>
     <div class="game__top-actions">
       <button class="btn btn--small btn--reset" @click="handleResetGame">Начать заново</button>
+      <button class="btn btn--small" @click="handleToggleTime">{{ timeOfDay === 'night' ? 'Set day' : 'Set night' }}</button>
     </div>
     <div class="game__left-bottom">
       <div class="controls">
@@ -52,6 +64,7 @@
         <div class="controls__row">Прикормка: {{ groundbaitCount }}</div>
         <div v-if="waiting">Ждем поклевку...</div>
         <div class="controls__hint">Сбросить прикормку: F</div>
+        <div class="controls__hint">Абордаж при дистанции {{ boardingDistance }}</div>
       </div>
       <FishingMiniGame :difficulty="miniDifficulty" v-if="active" @result="handleMiniResult" />
       <div class="bait-panel">
@@ -122,7 +135,7 @@
             <button
               class="btn btn--small"
               @click="handleBuyTackle(t.id)"
-              :disabled="ownedTackleIds.includes(t.id) || balance < t.price || t.price <= 0"
+              :disabled="ownedTackleIds.includes(t.id) || balance < t.price"
             >
               Купить
             </button>
@@ -154,6 +167,14 @@
         <path d="M20 80 Q60 100 100 80" fill="none" stroke="#d63031" stroke-width="6" />
       </svg>
     </div>
+    <div class="boarding" v-if="boardingActive">
+      <div class="boarding__panel">
+        <div class="boarding__title">Абордаж!</div>
+        <div class="boarding__status">Раунд {{ boardingRound }} / 3 — промахов: {{ boardingFailures }}</div>
+        <div class="boarding__hint">Пробел, когда индикатор в зеленой зоне</div>
+        <FishingMiniGame :difficulty="boardingDifficulty" @result="handleBoardingResult" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -162,18 +183,37 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
 import FishingMiniGame from '@/components/FishingMiniGame.vue'
 import InventoryPanel from '@/components/InventoryPanel.vue'
-import { BAITS, GROUNDBAIT_ITEMS, TACKLE_ITEMS, FISH_TYPES, type FishType, type TackleItem } from '@/store/game'
+import {
+  BAITS,
+  GROUNDBAIT_ITEMS,
+  TACKLE_ITEMS,
+  FISH_TYPES,
+  PLAYER_SPEED_DAY,
+  PLAYER_SPEED_NIGHT,
+  BOARDING_DISTANCE,
+  DAY_MAX_PIRATES,
+  NIGHT_MAX_PIRATES,
+  type FishType,
+  type TackleItem,
+} from '@/store/game'
+import type { Pirate } from '@/store/types'
 
 const store = useStore()
 
 const pressed = ref<Record<string, boolean>>({})
 const raf = ref(0)
 const last = ref(0)
-const speed = ref(240)
 const waiting = ref(false)
 const active = ref(false)
 const miniDifficulty = ref(1)
 const plannedFishId = ref<FishType['id'] | null>(null)
+const plannedCatchMultiplier = ref(1)
+const boardingActive = ref(false)
+const boardingRound = ref(0)
+const boardingFailures = ref(0)
+const boardingPirateId = ref<string | null>(null)
+const boardingDifficulty = ref(1.1)
+const boardingDistance = BOARDING_DISTANCE
 
 const baitList = BAITS
 const groundbaitItem = GROUNDBAIT_ITEMS[0]
@@ -194,6 +234,11 @@ const equippedTackle = computed(() => store.getters['game/getEquippedTackle'])
 const islands = computed(() => store.getters['game/getIslands'])
 const feedingSpots = computed(() => store.getters['game/getFeedingSpots'])
 const feedLevel = computed(() => store.getters['game/getFeedLevel'])
+const pirates = computed<Pirate[]>(() => store.getters['game/getPirates'])
+const timeOfDay = computed<'day' | 'night'>(() => store.getters['game/getTimeOfDay'])
+const isNight = computed(() => timeOfDay.value === 'night')
+const pirateCap = computed(() => (isNight.value ? NIGHT_MAX_PIRATES : DAY_MAX_PIRATES))
+const playerSpeed = computed(() => (isNight.value ? PLAYER_SPEED_NIGHT : PLAYER_SPEED_DAY))
 
 const groundbaitCount = computed(() => inventory.value.groundbait || 0)
 const currentBaitStock = computed(() => inventory.value.baits?.[currentBaitId.value] || 0)
@@ -202,7 +247,9 @@ const mapStyle = computed(() => {
   const x = -pos.value.x
   const y = -pos.value.y
   return {
-    backgroundPosition: `${x}px ${y}px`
+    backgroundPosition: `${x}px ${y}px`,
+    backgroundColor: isNight.value ? '#0d2740' : '#8ed8f7',
+    filter: isNight.value ? 'brightness(0.85)' : 'none',
   }
 })
 
@@ -231,21 +278,63 @@ const feedStyle = (spot: { x: number; y: number; level: number }) => {
   }
 }
 
+const pirateStyle = (pirate: Pirate) => ({
+  left: `calc(50% + ${pirate.x - pos.value.x}px)`,
+  top: `calc(50% + ${pirate.y - pos.value.y}px)`,
+})
+
+const startBoarding = (pirateId: string) => {
+  boardingActive.value = true
+  boardingRound.value = 1
+  boardingFailures.value = 0
+  boardingPirateId.value = pirateId
+  active.value = false
+  waiting.value = false
+}
+
+const finishBoarding = () => {
+  store.dispatch('game/resolveBoarding', boardingFailures.value)
+  if (boardingPirateId.value) {
+    store.dispatch('game/despawnPirate', boardingPirateId.value)
+  }
+  boardingActive.value = false
+  boardingRound.value = 0
+  boardingFailures.value = 0
+  boardingPirateId.value = null
+}
+
+const handleBoardingResult = (ok: boolean) => {
+  if (!boardingActive.value) return
+  if (!ok) boardingFailures.value += 1
+  if (boardingRound.value >= 3) {
+    finishBoarding()
+  } else {
+    boardingRound.value += 1
+  }
+}
+
 const tick = (t: number) => {
   const dt = last.value ? (t - last.value) / 1000 : 0
   last.value = t
   
-  if (active.value) {
+  const pirateBoarding = store.dispatch('game/updatePirates', dt) as Promise<string | null>
+  pirateBoarding.then((pid) => {
+    if (pid && !boardingActive.value) {
+      startBoarding(pid)
+    }
+  })
+  
+  if (active.value || boardingActive.value) {
     raf.value = requestAnimationFrame(tick)
     return
   }
   
   let dx = 0
   let dy = 0
-  if (pressed.value.ArrowLeft) dx -= speed.value * dt
-  if (pressed.value.ArrowRight) dx += speed.value * dt
-  if (pressed.value.ArrowUp) dy -= speed.value * dt
-  if (pressed.value.ArrowDown) dy += speed.value * dt
+  if (pressed.value.ArrowLeft) dx -= playerSpeed.value * dt
+  if (pressed.value.ArrowRight) dx += playerSpeed.value * dt
+  if (pressed.value.ArrowUp) dy -= playerSpeed.value * dt
+  if (pressed.value.ArrowDown) dy += playerSpeed.value * dt
   
   if (dx || dy) {
     const newX = Math.round(pos.value.x + dx)
@@ -288,7 +377,7 @@ const chooseFishForCurrentBait = () => {
 }
 
 const handleStartFishing = () => {
-  if (waiting.value || active.value) return
+  if (waiting.value || active.value || boardingActive.value) return
   if (currentBaitStock.value <= 0) return
   
   waiting.value = true
@@ -299,12 +388,18 @@ const handleStartFishing = () => {
 
   const fish = chooseFishForCurrentBait()
   plannedFishId.value = fish.id
+  plannedCatchMultiplier.value = isNight.value ? 2 : 1
   const power = rodPower.value || 1
   const base = fish.size / power
   const feedDelayMod = feedLevel.value >= 3 ? 0.5 : feedLevel.value === 2 ? 0.65 : feedLevel.value === 1 ? 0.8 : 1
   const feedDiffMod = feedLevel.value >= 3 ? 0.75 : feedLevel.value === 2 ? 0.85 : feedLevel.value === 1 ? 0.95 : 1
-  delay = Math.floor(delay * feedDelayMod)
-  miniDifficulty.value = Math.min(2.6, Math.max(0.35, base * feedDiffMod))
+  const nightDelayMod = isNight.value ? 1.45 : 1
+  const nightDiffMod = isNight.value ? 1.05 : 1
+  delay = Math.floor(delay * feedDelayMod * nightDelayMod)
+  if (delay === 0 && isNight.value) {
+    delay = 500
+  }
+  miniDifficulty.value = Math.min(2.6, Math.max(0.35, base * feedDiffMod * nightDiffMod))
 
   setTimeout(() => {
     waiting.value = false
@@ -315,9 +410,10 @@ const handleStartFishing = () => {
 const handleMiniResult = (ok: boolean) => {
   active.value = false
   if (ok && plannedFishId.value) {
-    store.dispatch('game/catchFish', plannedFishId.value)
+    store.dispatch('game/catchFish', { fishId: plannedFishId.value, countMultiplier: plannedCatchMultiplier.value })
   }
   plannedFishId.value = null
+  plannedCatchMultiplier.value = 1
 }
 
 const handleBuyBait = (id: string, count: number) => {
@@ -348,7 +444,19 @@ const handleSetBait = (id: string) => {
   store.dispatch('game/setCurrentBait', id)
 }
 
+const handleToggleTime = () => {
+  store.dispatch('game/toggleTimeOfDay')
+}
+
 const handleResetGame = () => {
+  boardingActive.value = false
+  boardingRound.value = 0
+  boardingFailures.value = 0
+  boardingPirateId.value = null
+  waiting.value = false
+  active.value = false
+  plannedFishId.value = null
+  plannedCatchMultiplier.value = 1
   store.dispatch('game/resetGame')
 }
 
@@ -385,7 +493,8 @@ onUnmounted(() => {
   }
 
   &__islands,
-  &__feeding {
+  &__feeding,
+  &__pirates {
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -490,6 +599,22 @@ onUnmounted(() => {
   &--level-3 {
     border-color: rgba(231, 76, 60, 0.9);
     background: rgba(231, 76, 60, 0.14);
+  }
+}
+
+.pirate {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #2c3e50;
+  background: rgba(44, 62, 80, 0.8);
+  box-shadow: 0 0 6px rgba(0,0,0,0.35);
+
+  &--chase {
+    background: rgba(231, 76, 60, 0.85);
+    border-color: #e74c3c;
   }
 }
 
@@ -620,6 +745,38 @@ onUnmounted(() => {
 
   &__name {
     flex: 1;
+  }
+}
+
+.boarding {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  &__panel {
+    pointer-events: auto;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+  }
+
+  &__title {
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  &__status,
+  &__hint {
+    font-size: 12px;
+    opacity: 0.9;
   }
 }
 </style>
