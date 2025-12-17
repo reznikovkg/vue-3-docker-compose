@@ -1,195 +1,311 @@
 <template>
-  <div class="fishing-area" v-if="location">
-    <div class="fishing-area__background" :style="{ backgroundImage: `url(${location.image})` }">
-      <div class="fishing-area__content">
-        <div class="fishing-area__location-info">
-          <div class="fishing-area__back-button-container">
-            <button class="fishing-area__back-button" @click="goBack">
-              ← Назад к выбору локации
-            </button>
-          </div>
+  <div class="fishing-area">
+    <div class="fishing-area__header">
+      <button class="fishing-area__back-button" @click="goBack">← Назад</button>
+      <h2 class="fishing-area__location-name">{{ location?.name }}</h2>
+    </div>
 
-          <h2 class="fishing-area__location-name">{{ location.name }}</h2>
-          <p class="fishing-area__location-description">{{ location.description }}</p>
+    <div
+      class="fishing-area__water"
+      :style="{ backgroundImage: `url(${location?.image})` }"
+      @click="handleWaterClick"
+    >
+      <div class="fishing-area__rod" :style="rodStyle">
+        🎣
+      </div>
+
+      <div
+        v-if="shouldShowFloat"
+        class="fishing-area__float"
+        :style="floatStyle"
+        :class="{ 'fishing-area__float--biting': fishingState === 'fighting' }"
+      >
+        🎯
+      </div>
+
+      <div
+        v-if="shouldShowFish"
+        class="fishing-area__fish"
+        :style="fishStyle"
+        :class="{
+          'fishing-area__fish--struggling': fishMovement?.isStruggling,
+          'fishing-area__fish--tired': fishMovement?.stamina < 30
+        }"
+      >
+        {{ currentFish?.emoji }}
+      </div>
+
+      <div
+        v-for="spot in groundbaitSpots"
+        :key="spot.id"
+        class="fishing-area__groundbait-spot"
+        :style="getGroundbaitSpotStyle(spot)"
+        :title="getGroundbaitSpotTooltip(spot)"
+      >
+        <div class="fishing-area__groundbait-pulse"></div>
+        <div class="fishing-area__groundbait-center">
+          <div class="fishing-area__groundbait-level">Ур. {{ spot.level }}</div>
+          <div class="fishing-area__groundbait-emoji">{{ spot.groundbaitType.emoji }}</div>
         </div>
-
-        <div class="fishing-area__hot-spot-indicator" v-if="hotSpotActive && fishingState === 'waiting'">
-          <div class="hot-spot-badge">
-            🔥 {{ currentHotSpot?.name }}
-          </div>
+        <div class="fishing-area__groundbait-info">
+          <div class="fishing-area__groundbait-uses">{{ spot.currentUses }}/{{ spot.groundbaitType.uses }}</div>
         </div>
+      </div>
 
-        <div
-          class="fishing-area__float-visualization"
-          v-if="fishingState === 'waiting' || fishingState === 'fighting'"
-          :style="floatStyle"
+      <div
+        v-if="fishingState === 'casting' || fishingState === 'waiting' || fishingState === 'fighting'"
+        class="fishing-area__line"
+        :style="currentLineStyle"
+      ></div>
+
+      <div class="fishing-area__shore"></div>
+    </div>
+
+    <div v-if="groundbaitEffectActive && fishingState === 'waiting'" class="fishing-area__groundbait-effect">
+      <div class="fishing-area__groundbait-effect-icon">🎯</div>
+      <div class="fishing-area__groundbait-effect-text">{{ groundbaitEffectMessage }}</div>
+    </div>
+
+    <div class="fishing-area__controls">
+      <div v-if="fishingState === 'idle'" class="fishing-area__cast-control">
+        <button
+          class="fishing-area__cast-button"
+          @click="startCastingMode"
+          :disabled="!hasBait"
         >
-          <div class="float-bobber" :class="{ 'float-bobber--biting': fishingState === 'fighting' }">
-            🎯
-          </div>
-          <div class="ripple-effect" v-if="showRipple"></div>
+          🎣
+        </button>
+        <div class="fishing-area__cast-label">Забросить</div>
+      </div>
 
-          <div
-            class="hot-spot-glow"
-            v-if="hotSpotActive && currentHotSpot"
-            :style="hotSpotStyle"
-          >
-            <div class="hot-spot-glow__ring"></div>
-            <div class="hot-spot-glow__text">{{ currentHotSpot.name }}</div>
-          </div>
+      <div v-if="fishingState === 'fighting'" class="fishing-area__reel-control">
+        <button
+          class="fishing-area__reel-button"
+          @mousedown="startReeling"
+          @mouseup="stopReeling"
+          @touchstart="startReeling"
+          @touchend="stopReeling"
+          :class="{ 'fishing-area__reel-button--active': isReeling }"
+        >
+          🎣
+        </button>
+        <div class="fishing-area__reel-label">
+          {{ isReeling ? 'ТЯНУТЬ...' : 'ТЯНУТЬ' }}
         </div>
+      </div>
 
-        <div class="tension-meter" v-if="fishingState === 'fighting'">
-          <div class="tension-meter__label">Натяжение лески: {{ Math.round(tension) }}%</div>
-          <div class="tension-meter__bar">
-            <div
-              class="tension-meter__fill"
-              :style="{ width: tension + '%' }"
-              :class="tensionClass"
-            ></div>
-          </div>
-          <div class="tension-meter__hint">
-            {{ tensionHint }}
-          </div>
-          <div class="tension-meter__break-warning" v-if="tension > 80 && equippedRod?.id !== 'rod_basic'">
-            ⚠️ Высокий риск поломки удочки!
-          </div>
+      <div v-if="isNetEquipped && fishingState === 'fighting'" class="fishing-area__net-control">
+        <button
+          class="fishing-area__net-button"
+          @click="useNet"
+          :disabled="!isNetAvailable"
+          :title="netButtonTitle"
+          :class="{
+            'fishing-area__net-button--active': isNetAvailable,
+            'fishing-area__net-button--warning': hasWarning
+          }"
+        >
+          🎯
+        </button>
+        <div class="fishing-area__net-label">
+          САЧОК (N)<br>
+          <span v-if="equippedNet">{{ equippedNet.usesLeft }}/{{ equippedNet.maxUses || 10 }}</span>
         </div>
+      </div>
 
-        <div class="fishing-area__controls">
-          <button
-            class="fishing-area__fish-button"
-            @click="handleStartFishing"
-            :disabled="fishingState !== 'idle'"
-            v-if="fishingState === 'idle'"
-          >
-            🎣 Забросить удочку
-          </button>
+      <div class="fishing-area__groundbait" @click="toggleGroundbaitPanel">
+        🍚
+        <div v-if="activeGroundbait" class="fishing-area__groundbait-active"></div>
+      </div>
+    </div>
 
-          <button
-            class="fishing-area__reel-button"
-            @mousedown="startReeling"
-            @mouseup="stopReeling"
-            @touchstart="startReeling"
-            @touchend="stopReeling"
-            :disabled="fishingState !== 'fighting'"
-            v-if="fishingState === 'fighting'"
-          >
-            🎣 ТЯНУТЬ (Удерживайте ЛКМ)
-          </button>
-
-          <div class="fishing-area__result-container" v-if="showResult">
-            <div class="result-message result-message--success" v-if="fishingResult && fishingResult.type === 'success'">
-              <h3 class="result-message__title">🎉 Поймали!</h3>
-              <p class="result-message__text">{{ currentFish?.emoji }} {{ currentFish?.name }}</p>
-
-              <div class="result-message__fish-size-info" v-if="currentFish?.caughtSize && currentFish?.weight">
-                <div class="result-message__fish-size">
-                  Размер: {{ currentFish.caughtSize.name }}
-                  <span class="result-message__fish-weight">({{ currentFish.weight }}г)</span>
-                </div>
-                <div class="result-message__size-badge" :class="getSizeClass(currentFish.caughtSize.name)">
-                  {{ getSizeEmoji(currentFish.caughtSize.name) }}
-                </div>
-              </div>
-
-              <div class="result-message__fish-strength" v-if="currentFish">
-                Сила: {{ currentFish.actualStrength || currentFish.strength }}
-              </div>
-            </div>
-
-            <div class="result-message result-message--failed" v-if="fishingResult && fishingResult.type === 'failed'">
-              <h3 class="result-message__title">❌ Рыба ушла!</h3>
-              <p class="result-message__text">{{ fishingResult.message }}</p>
-            </div>
-
-            <div class="result-message result-message--rod-break" v-if="fishingResult && fishingResult.type === 'rod_break'">
-              <h3 class="result-message__title">💥 Удочка сломалась!</h3>
-              <p class="result-message__text">{{ fishingResult.message }}</p>
-              <div class="result-message__break-consequence">
-                <p>🆘 Бесплатная удочка добавлена в инвентарь</p>
-                <p>🎣 Экипирована простая удочка</p>
-              </div>
-            </div>
+    <div v-if="fishingState === 'fighting'" class="fishing-area__indicators">
+      <div v-if="isNetEquipped" class="fishing-area__net-indicator">
+        <div class="fishing-area__net-indicator-label">🎯 Сачок: {{ equippedNet?.name }}</div>
+        <div class="fishing-area__net-indicator-info">
+          <div class="fishing-area__net-indicator-uses">
+            Использований: {{ equippedNet?.usesLeft || 0 }} из {{ equippedNet?.maxUses || 10 }}
           </div>
-
-          <div class="fishing-area__hint" v-if="fishingState === 'waiting'">
-            <div class="fishing-area__waiting-animation">⏳</div>
-            <div class="fishing-area__waiting-text">Ждем поклевки...</div>
+          <div class="fishing-area__net-indicator-weight">
+            Макс. вес: {{ equippedNet?.maxWeight || 3 }} кг
           </div>
-
-          <div class="fishing-area__hint" v-if="fishingState === 'fighting'">
-            <div class="fishing-area__fighting-instruction">
-              🎣 Удерживайте ЛКМ чтобы вытащить рыбу!
-            </div>
-            <div class="fishing-area__fighting-target">
-              Цель: натяжение ≤ 10%
-            </div>
-            <div class="fishing-area__break-hint" v-if="tension > 80 && equippedRod?.id !== 'rod_basic'">
-              ⚠️ Осторожно! При натяжении >80% удочка может сломаться
-            </div>
+          <div v-if="isNetAvailable && !isNetUsed" class="fishing-area__net-indicator-hint fishing-area__net-indicator-hint--active">
+            Нажмите N или кнопку для вылова!
           </div>
-
-          <div class="fishing-area__casting-animation" v-if="fishingState === 'casting'">
-            <div class="fishing-area__casting-text">Забрасываем удочку...</div>
-            <div class="fishing-area__casting-dots">
-              <span class="fishing-area__casting-dot"></span>
-              <span class="fishing-area__casting-dot"></span>
-              <span class="fishing-area__casting-dot"></span>
-            </div>
+          <div v-else-if="isNetUsed" class="fishing-area__net-indicator-hint fishing-area__net-indicator-hint--used">
+            ✅ Сачок использован
           </div>
-        </div>
-
-        <div class="fishing-area__rod-container">
-          <div class="fishing-rod" :class="{
-            'fishing-rod--casting': fishingState === 'casting',
-            'fishing-rod--waiting': fishingState === 'waiting',
-            'fishing-rod--reeling': isReeling,
-            'fishing-rod--fighting': fishingState === 'fighting',
-            'fishing-rod--broken': fishingResult?.type === 'rod_break'
-          }">
-            <div class="fishing-rod__handle"></div>
-            <div class="fishing-rod__line"></div>
-            <div class="fishing-rod__hook" :class="{
-              'fishing-rod__hook--biting': fishingState === 'fighting'
-            }"></div>
+          <div v-else-if="!isNetAvailable && distanceToRod > netActivationDistance" class="fishing-area__net-indicator-hint">
+            Подтяните рыбу ближе (менее {{ netActivationDistance }}%)
           </div>
-
-          <div
-            class="fishing-area__biting-fish"
-            v-if="fishingState === 'fighting' && currentFish"
-          >
-            {{ currentFish.emoji }}
+          <div v-else-if="!isNetAvailable && currentFish" class="fishing-area__net-indicator-hint fishing-area__net-indicator-hint--warning">
+            ❌ Рыба слишком тяжелая для этого сачка!
           </div>
         </div>
       </div>
+
+      <div class="fishing-area__fish-info">
+        <div class="fishing-area__fish-name">
+          {{ currentFish?.name }} ({{ currentFish?.caughtSize?.name || 'Мелкий' }})
+          <span v-if="currentFish?.weight" class="fishing-area__fish-weight">
+            • {{ currentFish.weight }}г ({{ (currentFish.weight / 1000).toFixed(1) }}кг)
+          </span>
+        </div>
+        <div class="fishing-area__fish-stats">
+          <div class="fishing-area__stat-item">
+            <span class="fishing-area__stat-icon">💪</span>
+            <span class="fishing-area__stat-text">{{ Math.round(fishMovement?.stamina || 0) }}%</span>
+          </div>
+          <div class="fishing-area__stat-item">
+            <span class="fishing-area__stat-icon">⚡</span>
+            <span class="fishing-area__stat-text">{{ fishStruggleCount }}</span>
+          </div>
+          <div class="fishing-area__stat-item">
+            <span class="fishing-area__stat-icon">🎣</span>
+            <span class="fishing-area__stat-text">{{ currentFish?.actualStrength || currentFish?.strength || 0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fishing-area__progress">
+        <div class="fishing-area__progress-label">Прогресс</div>
+        <div class="fishing-area__progress-bar">
+          <div
+            class="fishing-area__progress-fill"
+            :style="{ width: fishingProgress + '%' }"
+          ></div>
+        </div>
+        <div class="fishing-area__progress-value">{{ Math.round(fishingProgress) }}%</div>
+      </div>
+
+      <div class="fishing-area__tension">
+        <div class="fishing-area__tension-label">Натяжение</div>
+        <div class="fishing-area__tension-meter">
+          <div
+            class="fishing-area__tension-fill"
+            :style="{ width: tension + '%' }"
+            :class="tensionClass"
+          ></div>
+        </div>
+        <div class="fishing-area__tension-value">{{ Math.round(tension) }}%</div>
+        <div class="fishing-area__tension-hint">{{ tensionHint }}</div>
+      </div>
+
+      <div class="fishing-area__hints">
+        <div v-if="!isReeling && fishMovement?.stamina < 50" class="fishing-area__hint fishing-area__hint--good">
+          🎯 Рыба устала - самое время тянуть!
+        </div>
+        <div v-if="fishMovement?.isStruggling" class="fishing-area__hint fishing-area__hint--warning">
+          ⚡ Рыба борется! Ослабьте натяжение
+        </div>
+        <div v-if="tension > 70" class="fishing-area__hint fishing-area__hint--danger">
+          ⚠️ Опасно! Высокое натяжение
+        </div>
+        <div v-if="isReeling && !fishMovement?.isStruggling" class="fishing-area__hint fishing-area__hint--success">
+          ✅ Вы тянете рыбу к берегу!
+        </div>
+        <div v-if="fishingProgress > 80" class="fishing-area__hint fishing-area__hint--good">
+          🎉 Почти у берега!
+        </div>
+        <div v-if="isInGroundbaitSpot" class="fishing-area__hint fishing-area__hint--groundbait">
+          🎯 Прикормка активна! Бонус к шансу поклевки
+        </div>
+        <div v-if="isNetAvailable && !isNetUsed" class="fishing-area__hint fishing-area__hint--net">
+          🎯 Можно использовать сачок! Нажмите N или кнопку
+        </div>
+        <div v-if="isNetEquipped && !isNetAvailable && !isNetUsed && distanceToRod > netActivationDistance" class="fishing-area__hint fishing-area__hint--info">
+          🎯 Подтяните рыбу ближе для использования сачка (менее {{ netActivationDistance }}%)
+        </div>
+      </div>
     </div>
-  </div>
-  <div v-else class="fishing-area__loading">
-    Загрузка локации...
+
+    <div v-if="isCastingMode" class="fishing-area__casting">
+      <div class="fishing-area__casting-text">Кликните по воде для заброса</div>
+      <button class="fishing-area__casting-cancel" @click="cancelCastingMode">
+        Отменить
+      </button>
+    </div>
+
+    <div v-if="fishingState === 'waiting'" class="fishing-area__waiting">
+      <div class="fishing-area__waiting-animation">⏳</div>
+      <div class="fishing-area__waiting-text">Ждем поклевки...</div>
+    </div>
+
+    <div v-if="!hasBait && fishingState === 'idle'" class="fishing-area__no-bait">
+      ⚠️ Нет наживки! Купите в магазине
+    </div>
+
+    <div v-if="netBrokenMessage" class="fishing-area__net-broken">
+      <div class="fishing-area__net-broken-icon">💥</div>
+      <div class="fishing-area__net-broken-text">{{ netBrokenMessage }}</div>
+    </div>
+
+    <div v-if="showResult" class="fishing-area__result">
+      <div class="fishing-area__result-modal" :class="resultClass">
+        <div class="fishing-area__result-content">
+          <div class="fishing-area__result-icon">{{ resultIcon }}</div>
+          <h3 class="fishing-area__result-title">{{ resultTitle }}</h3>
+          <p class="fishing-area__result-message">{{ fishingResult?.message }}</p>
+
+          <div v-if="fishingResult?.type === 'success' && currentFish" class="fishing-area__result-fish">
+          <div class="fishing-area__result-row">
+            <div class="fishing-area__result-item">
+              <span class="fishing-area__result-label">Рыба:</span>
+              <span class="fishing-area__result-value">{{ currentFish.emoji }} {{ currentFish.name }}</span>
+            </div>
+            <div class="fishing-area__result-item">
+              <span class="fishing-area__result-label">Размер:</span>
+              <span class="fishing-area__result-value">{{ currentFish.caughtSize?.name }}</span>
+            </div>
+          </div>
+          <div class="fishing-area__result-row">
+            <div class="fishing-area__result-item">
+              <span class="fishing-area__result-label">Вес:</span>
+              <span class="fishing-area__result-value">{{ currentFish.weight }}г</span>
+            </div>
+            <div class="fishing-area__result-item">
+              <span class="fishing-area__result-label">Время:</span>
+              <span class="fishing-area__result-value">{{ fishingResult.duration || 0 }}с</span>
+            </div>
+          </div>
+        </div>
+
+          <button class="fishing-area__result-button" @click="closeResult">
+            {{ fishingResult?.type === 'rod_break' ? 'Продолжить' : 'Отлично!' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showGroundbaitPanel" class="fishing-area__groundbait-panel" @click="toggleGroundbaitPanel">
+      <div class="fishing-area__groundbait-panel-content" @click.stop>
+        <GroundbaitControl
+          :location-id="location?.id"
+          @close="toggleGroundbaitPanel"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onUnmounted, computed, watch, ref, reactive } from 'vue'
+import { computed, ref, onUnmounted, watch, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import type { Location, Fish } from '@/types'
+import GroundbaitControl from './GroundbaitControl.vue'
+import type { GroundbaitSpot } from '@/types'
 
 const props = defineProps<{
-  location: Location | null
+  location: any
 }>()
 
 const emit = defineEmits<{
-  'catch-fish': [fish: Fish & { location: string }]
+  'catch-fish': [fish: any]
 }>()
 
 const store = useStore()
 const router = useRouter()
-
-const goBack = () => {
-  router.push('/')
-}
+const showGroundbaitPanel = ref(false)
 
 const fishingState = computed(() => store.getters['game/fishingState'])
 const isReeling = computed(() => store.getters['game/isReeling'])
@@ -197,895 +313,1267 @@ const tension = computed(() => store.getters['game/tension'])
 const currentFish = computed(() => store.getters['game/currentFish'])
 const showResult = computed(() => store.getters['game/showResult'])
 const fishingResult = computed(() => store.getters['game/fishingResult'])
-const canStartFishing = computed(() => store.getters['game/canStartFishing'])
-const equippedTackle = computed(() => store.getters['fishing/equippedTackle'])
 const tensionClass = computed(() => store.getters['game/tensionClass'])
 const tensionHint = computed(() => store.getters['game/tensionHint'])
-const hotSpotActive = computed(() => store.getters['game/hotSpotActive'])
-const currentHotSpot = computed(() => store.getters['game/currentHotSpot'])
-const equippedRod = computed(() => equippedTackle.value.rod)
-
-const fishAlreadyAdded = ref(false)
-const floatPosition = reactive({
-  x: 50,
-  y: 30
+const fishMovement = computed(() => store.getters['game/fishMovement'])
+const fishPosition = computed(() => store.getters['game/fishPosition'])
+const distanceToRod = computed(() => store.getters['game/distanceToRod'])
+const fishStruggleCount = computed(() => store.getters['game/fishStruggleCount'])
+const floatPosition = computed(() => store.getters['game/floatPosition'])
+const isCastingMode = computed(() => store.getters['game/isCastingMode'])
+const shouldShowFloat = computed(() => store.getters['game/shouldShowFloat'])
+const shouldShowFish = computed(() => store.getters['game/shouldShowFish'])
+const fishingProgress = computed(() => store.getters['game/fishingProgress'])
+const groundbaitEffectActive = computed(() => store.getters['game/groundbaitEffectActive'])
+const groundbaitEffectMessage = computed(() => store.getters['game/groundbaitEffectMessage'])
+const isNetAvailable = computed(() => {
+  return isNetEquipped.value &&
+         !isNetUsed.value &&
+         fishingState.value === 'fighting' &&
+         distanceToRod.value <= netActivationDistance.value
 })
-const showRipple = ref(false)
-const castInProgress = ref(false)
+
+const isNetUsed = computed(() => store.getters['game/isNetUsed'])
+const netActivationDistance = computed(() => store.getters['game/netActivationDistance'] || 25)
+const netBrokenMessage = computed(() => store.getters['game/netBrokenMessage'])
+
+const hasBait = computed(() => store.getters['fishing/hasBait'])
+const groundbaitSpots = computed(() => {
+  if (!props.location) return []
+  return store.getters['fishing/groundbaitSpots'](props.location.id)
+})
+const activeGroundbait = computed(() => store.getters['fishing/activeGroundbait'])
+const equippedNet = computed(() => store.getters['fishing/equippedNet'])
+
+const isNetEquipped = computed(() => equippedNet.value !== null && equippedNet.value.usesLeft > 0)
+
+const netButtonTitle = computed(() => {
+  if (!isNetEquipped.value) return 'Сачок не экипирован'
+  if (equippedNet.value?.usesLeft <= 0) return 'Сачок сломан'
+  if (isNetUsed.value) return 'Сачок уже использован'
+  if (!isNetAvailable.value) {
+    if (distanceToRod.value > netActivationDistance.value) {
+      return `Подтяните рыбу ближе (${Math.round(distanceToRod.value)}% > ${netActivationDistance.value}%)`
+    }
+    return 'Сачок недоступен'
+  }
+  if (currentFish.value?.weight && equippedNet.value?.maxWeight) {
+    const fishWeightKg = currentFish.value.weight / 1000
+    if (fishWeightKg > equippedNet.value.maxWeight) {
+      return `⚠️ Рыба тяжелее сачка! (${fishWeightKg.toFixed(1)}кг > ${equippedNet.value.maxWeight}кг) Сачок сломается!`
+    }
+  }
+  return 'Использовать сачок'
+})
+
+const isInGroundbaitSpot = computed(() => {
+  if (!floatPosition.value || !props.location) return false
+
+  const groundbaitInfo = store.getters['fishing/isPositionInGroundbaitSpot']({
+    locationId: props.location.id,
+    position: floatPosition.value
+  })
+
+  return groundbaitInfo.isInside
+})
+
+const rodPosition = computed(() => ({ x: 50, y: 90 }))
+
+const rodStyle = computed(() => ({
+  left: `${rodPosition.value.x}%`,
+  top: `${rodPosition.value.y}%`,
+}))
 
 const floatStyle = computed(() => ({
-  left: `${floatPosition.x}%`,
-  top: `${floatPosition.y}%`,
-  opacity: (fishingState.value === 'waiting' || fishingState.value === 'fighting') ? 1 : 0,
-  transform: castInProgress.value ? 'scale(0.5)' : 'scale(1)'
+  left: `${floatPosition.value.x}%`,
+  top: `${floatPosition.value.y}%`,
 }))
 
-const hotSpotStyle = computed(() => ({
-  left: `${hotSpotPosition.value.x}%`,
-  top: `${hotSpotPosition.value.y}%`
-}))
-
-const hotSpotPosition = computed(() => {
-  if (!currentHotSpot.value) return { x: 50, y: 50 }
-  const spotId = currentHotSpot.value.id
-  const x = (spotId.charCodeAt(0) * 17 + spotId.charCodeAt(1) * 13) % 70 + 15
-  const y = (spotId.charCodeAt(2) * 19 + spotId.charCodeAt(3) * 11) % 60 + 20
-  return { x, y }
+const fishStyle = computed(() => {
+  const direction = fishMovement.value?.direction || 0
+  return {
+    left: `${fishPosition.value.x}%`,
+    top: `${fishPosition.value.y}%`,
+    transform: `translate(-50%, -50%) rotate(${direction}deg)`,
+    opacity: fishMovement.value?.isStruggling ? 0.8 : 1
+  }
 })
 
-const getSizeClass = (sizeName: string) => {
-  const sizeClasses = {
-    'Мелкий': 'result-message__size-badge--small',
-    'Средний': 'result-message__size-badge--medium',
-    'Крупный': 'result-message__size-badge--large',
-    'Трофейный': 'result-message__size-badge--trophy'
+const currentLineStyle = computed(() => {
+  const targetPosition = fishingState.value === 'fighting' ? fishPosition.value : floatPosition.value
+
+  if (!targetPosition || !rodPosition.value) return {}
+
+  const dx = targetPosition.x - rodPosition.value.x
+  const dy = targetPosition.y - rodPosition.value.y
+  const length = Math.sqrt(dx * dx + dy * dy)
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI
+
+  return {
+    left: `${rodPosition.value.x}%`,
+    top: `${rodPosition.value.y}%`,
+    width: `${length}%`,
+    transform: `rotate(${angle}deg)`,
+    transformOrigin: '0 0'
   }
-  return sizeClasses[sizeName] || 'result-message__size-badge--small'
+})
+
+const resultClass = computed(() => {
+  switch (fishingResult.value?.type) {
+    case 'success': return 'fishing-area__result-modal--success'
+    case 'failed': return 'fishing-area__result-modal--failed'
+    case 'rod_break': return 'fishing-area__result-modal--rod-break'
+    default: return ''
+  }
+})
+
+const resultIcon = computed(() => {
+  switch (fishingResult.value?.type) {
+    case 'success': return '🎉'
+    case 'failed': return '❌'
+    case 'rod_break': return '💥'
+    default: return '🎣'
+  }
+})
+
+const resultTitle = computed(() => {
+  switch (fishingResult.value?.type) {
+    case 'success': return 'Успех!'
+    case 'failed': return 'Рыба ушла!'
+    case 'rod_break': return 'Удочка сломалась!'
+    default: return ''
+  }
+})
+
+const goBack = () => {
+  router.push('/')
 }
 
-const getSizeEmoji = (sizeName: string) => {
-  const sizeEmojis = {
-    'Мелкий': '🔸',
-    'Средний': '🔷',
-    'Крупный': '💠',
-    'Трофейный': '🏆'
-  }
-  return sizeEmojis[sizeName] || '🔸'
+const startCastingMode = () => {
+  if (!hasBait.value) return
+  store.dispatch('game/startCastingMode')
 }
 
-const handleStartFishing = () => {
-  store.dispatch('fishing/setCurrentLocation', props.location)
-    .then(() => {
-      return store.dispatch('game/startFishing')
+const cancelCastingMode = () => {
+  store.dispatch('game/cancelCastingMode')
+}
+
+const handleWaterClick = (event: MouseEvent) => {
+  const waterArea = event.currentTarget as HTMLElement
+  const rect = waterArea.getBoundingClientRect()
+
+  const x = ((event.clientX - rect.left) / rect.width) * 100
+  const y = ((event.clientY - rect.top) / rect.height) * 100
+
+  const activeGroundbaitValue = activeGroundbait.value
+
+  if (activeGroundbaitValue && fishingState.value === 'idle') {
+    store.dispatch('fishing/useGroundbait', {
+      locationId: props.location?.id,
+      groundbaitId: activeGroundbaitValue.id,
+      position: { x, y }
+    }).then((result: any) => {
+      if (result.success) {
+        store.dispatch('fishing/setActiveGroundbait', null)
+      }
     })
-    .catch((error: any) => {
-      console.error('Ошибка начала рыбалки:', error)
-    })
+  } else if (isCastingMode.value && fishingState.value === 'idle') {
+    store.dispatch('fishing/setCurrentLocation', props.location)
+      .then(() => {
+        return store.dispatch('game/castToPosition', { x, y })
+      })
+  }
 }
 
 const startReeling = () => {
-  if (fishingState.value !== 'fighting') return
-  store.dispatch('game/setIsReeling', true)
+  store.dispatch('game/startReeling')
 }
 
 const stopReeling = () => {
-  store.dispatch('game/setIsReeling', false)
+  store.dispatch('game/stopReeling')
 }
 
-const castFloat = () => {
-  castInProgress.value = true
-  if (hotSpotActive.value && Math.random() < 0.6) {
-    floatPosition.x = hotSpotPosition.value.x + (Math.random() * 20 - 10)
-    floatPosition.y = hotSpotPosition.value.y + (Math.random() * 15 - 7.5)
-  } else {
-    floatPosition.x = 30 + Math.random() * 40
-    floatPosition.y = 20 + Math.random() * 30
+const useNet = async () => {
+  if (!isNetAvailable.value || isNetUsed.value || fishingState.value !== 'fighting') {
+    return
   }
-  floatPosition.x = Math.max(10, Math.min(90, floatPosition.x))
-  floatPosition.y = Math.max(15, Math.min(70, floatPosition.y))
 
-  setTimeout(() => {
-    castInProgress.value = false
-    showRipple.value = true
-    setTimeout(() => {
-      showRipple.value = false
-    }, 1000)
-  }, 800)
+  store.dispatch('game/useNet')
 }
 
-const handleFishCaught = () => {
-  const fish = store.getters['game/currentFish']
-  if (fish) {
+const closeResult = () => {
+  if (fishingResult.value?.type === 'success' && currentFish.value) {
     const fishWithLocation = {
-      ...fish,
-      location: props.location?.name || 'Неизвестная локация',
-      timestamp: new Date().toLocaleTimeString(),
-      strength: fish.strength
+      ...currentFish.value,
+      location: props.location?.name || 'Неизвестно',
+      timestamp: new Date().toISOString(),
+      strength: currentFish.value.strength,
+      stamina: fishMovement.value?.stamina || 0,
+      duration: store.getters['game/fishingDuration'],
+      struggles: fishStruggleCount.value
     }
-    fishAlreadyAdded.value = true
+
     store.dispatch('fishing/addCaughtFish', fishWithLocation)
       .then(() => {
         emit('catch-fish', fishWithLocation)
+        store.dispatch('game/setShowResult', false)
+
+        setTimeout(() => {
+          store.dispatch('game/resetGame')
+        }, 1000)
       })
-      .catch((error: any) => {
-        console.error('Ошибка добавления рыбы:', error)
-      })
+  } else {
+    store.dispatch('game/setShowResult', false)
+    setTimeout(() => {
+      store.dispatch('game/resetGame')
+    }, 1000)
   }
 }
 
-watch(fishingState, (newState, oldState) => {
-  if (newState === 'idle' || newState === 'casting') {
-    fishAlreadyAdded.value = false
-  }
-  if (newState === 'waiting' && oldState === 'casting') {
-    castFloat()
-  }
-  if (newState === 'idle' || newState === 'success' || newState === 'failed') {
-    castInProgress.value = false
-    showRipple.value = false
-  }
-})
+const getGroundbaitSpotStyle = (spot: GroundbaitSpot) => {
+  const level = spot.level || 1
+  const pulseSize = 100 + (level - 1) * 5
 
-watch(fishingResult, (newResult) => {
-  if (newResult?.type === 'success' && currentFish.value) {
-    setTimeout(() => {
-      handleFishCaught()
-    }, 100)
+  return {
+    left: `${spot.position.x}%`,
+    top: `${spot.position.y}%`,
+    width: `${spot.radius * 2}%`,
+    height: `${spot.radius * 2}%`,
+    borderColor: spot.groundbaitType.color,
+    backgroundColor: `${spot.groundbaitType.color}15`
   }
+}
+
+const getGroundbaitSpotTooltip = (spot: GroundbaitSpot) => {
+  const fishes = spot.fishAttraction.map(att =>
+    `${att.fishName} (x${att.attractionMultiplier.toFixed(1)})`
+  ).join('\n')
+
+  return `${spot.groundbaitType.name}\n` +
+         `Уровень: ${spot.level}\n` +
+         `Радиус: ${Math.round(spot.radius)}%\n` +
+         `Использований: ${spot.currentUses}/${spot.groundbaitType.uses}\n` +
+         `Привлекает:\n${fishes}`
+}
+
+const toggleGroundbaitPanel = () => {
+  showGroundbaitPanel.value = !showGroundbaitPanel.value
+}
+
+const handleKeyPress = (event: KeyboardEvent) => {
+  if ((event.key === 'n' || event.key === 'N' || event.key === ' ') &&
+      isNetAvailable.value &&
+      !isNetUsed.value &&
+      fishingState.value === 'fighting') {
+    event.preventDefault()
+    useNet()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyPress)
 })
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyPress)
   store.dispatch('game/stopGameLoop')
   store.dispatch('game/resetGame')
+})
+
+watch(fishingResult, () => {
 })
 </script>
 
 <style scoped lang="less">
-@safe-color: #4CAF50;
-@warning-color: #FF9800;
-@danger-color: #f44336;
-@success-bg: #E8F5E8;
-@failed-bg: #FFEBEE;
-@rod-color: #8B4513;
-@hook-color: #FFD700;
-@text-dark: #333;
-@success-text: #2E7D32;
-@failed-text: #C62828;
-@break-color: #D32F2F;
-
 .fishing-area {
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  height: 600px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #87CEEB 0%, #4682B4 100%);
   position: relative;
 
-  &__background {
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    position: relative;
-
-    .fishing-area__content {
-      position: relative;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      background: rgba(0, 0, 0, 0.4);
-      color: white;
-    }
-  }
-
-  &__location-info {
-    position: relative;
-    padding: 20px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
-    z-index: 2;
-  }
-
-  &__back-button-container {
-    margin-bottom: 15px;
+  &__header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 2px solid #4CAF50;
+    z-index: 10;
   }
 
   &__back-button {
-    background: rgba(255, 255, 255, 0.9);
-    color: #333;
-    border: 2px solid #4CAF50;
+    background: #6c757d;
+    color: white;
+    border: none;
     padding: 8px 16px;
-    border-radius: 20px;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 0.85em;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 
     &:hover {
-      background: #4CAF50;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      background: #5a6268;
     }
   }
 
   &__location-name {
-    color: white;
-    margin-bottom: 8px;
-    font-size: 1.8em;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    margin: 0;
+    color: #333;
+    font-size: 1.5em;
   }
 
-  &__location-description {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1em;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  &__water {
+    flex: 1;
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    overflow: hidden;
   }
 
-  &__hot-spot-indicator {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 10;
-  }
-
-  &__float-visualization {
+  &__rod {
     position: absolute;
     transform: translate(-50%, -50%);
-    transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 4;
-    pointer-events: none;
+    font-size: 36px;
+    z-index: 10;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+    animation: rodFloat 2s infinite alternate;
   }
 
-  &__controls {
-    text-align: center;
-    padding: 20px;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-  }
+  &__float {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    z-index: 8;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-  &__fish-button, &__reel-button {
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    font-size: 1.2em;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    min-width: 200px;
-
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    &--biting {
+      animation: biteFloat 0.5s infinite alternate;
     }
   }
 
-  &__fish-button {
-    background: linear-gradient(135deg, @safe-color, darken(@safe-color, 10%));
+  &__fish {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+    z-index: 6;
+    transition: left 0.3s ease, top 0.3s ease;
+
+    &--struggling {
+      animation: fishStruggle 0.3s infinite alternate;
+    }
+
+    &--tired {
+      opacity: 0.7;
+      filter: grayscale(0.5);
+    }
   }
 
-  &__reel-button {
-    background: linear-gradient(135deg, #2196F3, #1976D2);
+  &__line {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      rgba(255, 255, 255, 0.3) 100%);
+    transform-origin: 0 0;
+    z-index: 5;
   }
 
-  &__fish-button:disabled,
-  &__reel-button:disabled {
-    background: #666;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  &__groundbait-spot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 3px dashed;
+    border-radius: 50%;
+    opacity: 0.6;
+    z-index: 1;
+    pointer-events: none;
+    animation: groundbaitPulse 3s infinite ease-in-out;
+
+    &:hover {
+      opacity: 0.8;
+      z-index: 6;
+    }
   }
 
-  &__result-container {
-    position: fixed;
+  &__groundbait-pulse {
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 1000;
-    animation: popIn 0.5s ease-out;
-  }
-
-  &__hint {
-    color: #FFC107;
-    text-align: center;
-    font-size: 0.9em;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    background: rgba(0, 0, 0, 0.7);
-    padding: 15px;
-    border-radius: 8px;
-    backdrop-filter: blur(10px);
-  }
-
-  &__waiting-animation {
-    font-size: 2em;
-    margin-bottom: 10px;
-    animation: pulse 2s infinite;
-  }
-
-  &__waiting-text {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-  }
-
-  &__fighting-instruction {
-    font-size: 1.1em;
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-
-  &__fighting-target {
-    color: #4CAF50;
-    font-weight: bold;
-  }
-
-  &__break-hint {
-    color: #FF6B6B;
-    font-weight: bold;
-    margin-top: 8px;
-    font-size: 0.8em;
-    background: rgba(255, 107, 107, 0.2);
-    padding: 5px;
-    border-radius: 5px;
-    border: 1px solid #FF6B6B;
-  }
-
-  &__casting-animation {
-    text-align: center;
-    color: #FFC107;
-  }
-
-  &__casting-text {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-    font-weight: bold;
-  }
-
-  &__casting-dots {
-    display: flex;
-    justify-content: center;
-    gap: 5px;
-  }
-
-  &__casting-dot {
-    width: 8px;
-    height: 8px;
-    background: #FFC107;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
-    animation: castingDots 1.4s infinite ease-in-out;
-
-    &:nth-child(1) { animation-delay: -0.32s; }
-    &:nth-child(2) { animation-delay: -0.16s; }
+    background: currentColor;
+    opacity: 0.1;
+    animation: groundbaitInnerPulse 2s infinite;
   }
 
-  &__rod-container {
+  &__groundbait-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__groundbait-level {
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7em;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    white-space: nowrap;
+  }
+
+  &__groundbait-emoji {
+    font-size: 1.5em;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+
+  &__groundbait-info {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 0.7em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.5);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  &__groundbait-uses {
+    font-weight: bold;
+  }
+
+  &__shore {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 200px;
-    z-index: 5;
-    pointer-events: none;
-  }
-
-  &__biting-fish {
-    position: absolute;
-    bottom: 130px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 32px;
+    height: 40px;
+    background: linear-gradient(0deg,
+      #8B4513 0%,
+      #A0522D 100%);
     z-index: 2;
-    animation: bite 0.5s infinite alternate;
-    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
   }
 
-  &__loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 600px;
-    font-size: 1.5em;
-    color: #666;
-    background: #f8f9fa;
-    border-radius: 15px;
-  }
-}
-
-.hot-spot-badge {
-  background: rgba(255, 107, 107, 0.9);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 15px;
-  font-weight: bold;
-  font-size: 0.9em;
-  backdrop-filter: blur(10px);
-  border: 2px solid #FFD700;
-  animation: pulse 2s infinite;
-}
-
-.float-bobber {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-  animation: floatBob 3s ease-in-out infinite;
-
-  &--biting {
-    animation: biteAnimation 0.5s infinite alternate;
-  }
-}
-
-.ripple-effect {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  animation: ripple 1s ease-out;
-}
-
-.hot-spot-glow {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  z-index: 3;
-  pointer-events: none;
-
-  &__ring {
-    width: 80px;
-    height: 80px;
-    border: 3px solid #FFD700;
-    border-radius: 50%;
-    animation: hotSpotPulse 2s infinite;
-    background: radial-gradient(
-      circle,
-      rgba(255, 215, 0, 0.3) 0%,
-      rgba(255, 215, 0, 0.1) 50%,
-      transparent 70%
-    );
-  }
-
-  &__text {
+  &__groundbait-effect {
     position: absolute;
-    top: -30px;
+    top: 80px;
     left: 50%;
     transform: translateX(-50%);
-    color: #FFD700;
-    font-weight: bold;
-    font-size: 0.8em;
-    white-space: nowrap;
-    text-shadow: 0 0 3px rgba(0,0,0,0.8);
-    background: rgba(255, 107, 107, 0.9);
-    padding: 2px 8px;
-    border-radius: 10px;
-  }
-}
-
-.tension-meter {
-  background: rgba(0, 0, 0, 0.7);
-  padding: 15px;
-  border-radius: 10px;
-  margin: 20px auto;
-  max-width: 400px;
-  backdrop-filter: blur(10px);
-  z-index: 3;
-
-  &__label {
+    background: linear-gradient(135deg, rgba(139, 195, 74, 0.9), rgba(104, 159, 56, 0.9));
     color: white;
-    margin-bottom: 10px;
-    font-weight: bold;
+    padding: 12px 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideInDown 0.5s ease, pulseEffect 2s infinite;
+    border: 2px solid rgba(255,255,255,0.3);
+    max-width: 90%;
     text-align: center;
   }
 
-  &__bar {
-    position: relative;
-    height: 30px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    overflow: hidden;
-    margin-bottom: 8px;
+  &__groundbait-effect-icon {
+    font-size: 1.5em;
+    animation: bounce 1s infinite;
   }
 
-  &__fill {
-    height: 100%;
-    border-radius: 15px;
-    transition: width 0.1s ease, background-color 0.3s ease;
+  &__groundbait-effect-text {
+    font-weight: bold;
+    font-size: 0.9em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  }
 
-    &.safe {
-      background: linear-gradient(90deg, @safe-color, lighten(@safe-color, 10%));
+  &__controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 50;
+  }
+
+  &__cast-control,
+  &__reel-control,
+  &__net-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__cast-button,
+  &__reel-button,
+  &__net-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+
+    &:hover:not(:disabled) {
+      transform: scale(1.05);
     }
 
-    &.warning {
-      background: linear-gradient(90deg, @warning-color, lighten(@warning-color, 10%));
-    }
-
-    &.danger {
-      background: linear-gradient(90deg, @danger-color, lighten(@danger-color, 10%));
-      animation: pulse 0.5s infinite alternate;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      animation: none;
     }
   }
 
-  &__hint {
-    color: #FFC107;
+  &__cast-label,
+  &__reel-label,
+  &__net-label {
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
     font-size: 0.9em;
     text-align: center;
-    margin-top: 5px;
   }
 
-  &__break-warning {
-    color: #FF6B6B;
-    font-weight: bold;
-    text-align: center;
-    margin-top: 8px;
-    animation: warningPulse 1s infinite;
-    background: rgba(255, 107, 107, 0.2);
-    padding: 5px;
-    border-radius: 5px;
-    border: 1px solid #FF6B6B;
-  }
-}
-
-.result-message {
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  text-align: center;
-  min-width: 300px;
-  border: 4px solid;
-
-  &--success {
-    border-color: @safe-color;
-    background: linear-gradient(135deg, @success-bg, lighten(@success-bg, 5%));
+  &__cast-button {
+    border: 3px solid #4CAF50;
+    background: white;
   }
 
-  &--failed {
-    border-color: @danger-color;
-    background: linear-gradient(135deg, @failed-bg, lighten(@failed-bg, 5%));
+  &__reel-button {
+    border: 3px solid #2196F3;
+    background: white;
+
+    &--active {
+      background: #2196F3;
+      color: white;
+      animation: reelPulse 0.5s infinite;
+    }
   }
 
-  &--rod-break {
-    border-color: @break-color;
-    background: linear-gradient(135deg, #FFEBEE, lighten(#FFEBEE, 5%));
+  &__net-button {
+    border: 3px solid #9C27B0;
+    background: white;
+
+    &:hover:not(:disabled) {
+      background: #F3E5F5;
+      transform: scale(1.05);
+    }
+
+    &--active {
+      animation: netPulseActive 1s infinite;
+      background: #F3E5F5;
+    }
+
+    &:disabled {
+      animation: none;
+      background: #e0e0e0;
+      border-color: #9e9e9e;
+    }
   }
 
-  &__title {
-    margin: 0 0 10px 0;
-    font-size: 1.5em;
-  }
-
-  &--success &__title {
-    color: @success-text;
-  }
-
-  &--failed &__title {
-    color: @failed-text;
-  }
-
-  &--rod-break &__title {
-    color: @break-color;
-  }
-
-  &__text {
-    color: @text-dark;
-    margin: 0;
-    font-size: 1.3em;
-    font-weight: bold;
-  }
-
-  &__fish-size-info {
+  &__groundbait {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #8BC34A;
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin: 10px 0;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
   }
 
-  &__fish-size {
+  &__groundbait-active {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 15px;
+    height: 15px;
+    background: #FF5722;
+    border-radius: 50%;
+    border: 2px solid white;
+    animation: pulseActive 1s infinite;
+  }
+
+  &__indicators {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 280px;
+    z-index: 50;
+  }
+
+  &__net-indicator {
+    background: rgba(156, 39, 176, 0.9);
+    padding: 12px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  &__net-indicator-label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 1em;
+    text-align: center;
+  }
+
+  &__net-indicator-info {
+    font-size: 0.85em;
+  }
+
+  &__net-indicator-uses,
+  &__net-indicator-weight {
+    margin-bottom: 4px;
+  }
+
+  &__net-indicator-hint {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 6px;
+    border-radius: 4px;
+    margin-top: 6px;
+    font-weight: bold;
+    font-size: 0.8em;
+    text-align: center;
+
+    &--active {
+      animation: pulseHint 1.5s infinite;
+      background: rgba(255, 255, 255, 0.3);
+      color: #FFEB3B;
+    }
+
+    &--used {
+      background: rgba(76, 175, 80, 0.3);
+      color: #C8E6C9;
+    }
+
+    &--warning {
+      background: rgba(244, 67, 54, 0.3);
+      color: #FFCDD2;
+    }
+  }
+
+  &__fish-info {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  &__fish-name {
     font-weight: bold;
     color: #333;
+    margin-bottom: 6px;
+    text-align: center;
+    font-size: 0.95em;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
   }
 
   &__fish-weight {
     color: #666;
-    font-size: 0.9em;
+    font-size: 0.85em;
+    font-weight: normal;
   }
 
-  &__size-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
+  &__fish-stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 8px;
+  }
+
+  &__stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  &__stat-icon {
+    font-size: 1em;
+  }
+
+  &__stat-text {
     font-size: 0.8em;
     font-weight: bold;
+    color: #333;
+  }
 
-    &--small {
+  &__progress,
+  &__tension {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  &__progress-label,
+  &__tension-label {
+    color: #666;
+    font-size: 0.85em;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  &__progress-bar,
+  &__tension-meter {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 4px 0;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #66BB6A);
+    transition: width 0.3s ease;
+  }
+
+  &__tension-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.2s ease;
+
+    &.safe {
+      background: linear-gradient(90deg, #4CAF50, #66BB6A);
+    }
+
+    &.warning {
+      background: linear-gradient(90deg, #FF9800, #FFB74D);
+    }
+
+    &.danger {
+      background: linear-gradient(90deg, #f44336, #EF5350);
+      animation: dangerPulse 0.5s infinite;
+    }
+  }
+
+  &__progress-value,
+  &__tension-value {
+    font-weight: bold;
+    color: #333;
+    font-size: 1em;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  &__tension-hint {
+    color: #666;
+    font-size: 0.75em;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  &__hints {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__hint {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+    text-align: center;
+
+    &--good {
       background: #E8F5E8;
       color: #2E7D32;
+      border-left: 4px solid #4CAF50;
     }
 
-    &--medium {
-      background: #E3F2FD;
-      color: #1565C0;
-    }
-
-    &--large {
+    &--warning {
       background: #FFF3E0;
       color: #EF6C00;
+      border-left: 4px solid #FF9800;
     }
 
-    &--trophy {
-      background: linear-gradient(135deg, #FFD700, #FFA000);
+    &--danger {
+      background: #FFEBEE;
+      color: #C62828;
+      border-left: 4px solid #f44336;
+    }
+
+    &--success {
+      background: #E3F2FD;
+      color: #1565C0;
+      border-left: 4px solid #2196F3;
+    }
+
+    &--groundbait {
+      background: linear-gradient(135deg, #FFF3E0, #FFECB3);
+      color: #E65100;
+      border-left: 4px solid #FF9800;
+      animation: pulseHint 1.5s infinite;
+    }
+
+    &--net {
+      background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
       color: #7B1FA2;
-      animation: glow 2s infinite alternate;
+      border-left: 4px solid #9C27B0;
+      animation: netHintPulse 1s infinite;
+    }
+
+    &--info {
+      background: #E3F2FD;
+      color: #1565C0;
+      border-left: 4px solid #2196F3;
     }
   }
 
-  &__fish-strength {
-    color: #666;
-    font-size: 0.9em;
-    margin-top: 10px;
+  &__casting {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 16px 24px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    z-index: 40;
+    border: 2px solid #FF9800;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
   }
 
-  &__break-consequence {
+  &__casting-text {
+    color: #E65100;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+
+  &__casting-cancel {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+
+    &:hover {
+      background: #ff5252;
+    }
+  }
+
+  &__waiting {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__waiting-animation {
+    font-size: 48px;
+    animation: pulse 1.5s infinite;
+  }
+
+  &__waiting-text {
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    font-size: 1.1em;
+  }
+
+  &__no-bait {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: #f44336;
+    font-weight: bold;
+    text-align: center;
+    z-index: 40;
+    border: 2px solid #f44336;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+
+  &__net-broken {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.95), rgba(239, 108, 0, 0.95));
+    color: white;
+    padding: 20px 30px;
+    border-radius: 15px;
+    font-weight: bold;
+    text-align: center;
+    z-index: 200;
+    animation: fadeInOut 3s ease forwards;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 300px;
+    border: 3px solid #FF9800;
+    backdrop-filter: blur(5px);
+  }
+
+  &__net-broken-icon {
+    font-size: 2em;
+    animation: bounce 0.5s infinite alternate;
+  }
+
+  &__net-broken-text {
+    flex: 1;
+    font-size: 1.1em;
+  }
+
+  &__result {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  &__result-modal {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    animation: popIn 0.5s ease;
+
+    &--success {
+      border: 4px solid #4CAF50;
+      background: linear-gradient(135deg, #E8F5E8, #C8E6C9);
+    }
+
+    &--failed {
+      border: 4px solid #f44336;
+      background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+    }
+
+    &--rod-break {
+      border: 4px solid #FF9800;
+      background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+    }
+  }
+
+  &__result-content {
+    .fishing-area__result-icon {
+      font-size: 3em;
+      margin-bottom: 15px;
+    }
+
+    .fishing-area__result-title {
+      color: #333;
+      margin: 0 0 10px 0;
+      font-size: 1.5em;
+    }
+
+    .fishing-area__result-message {
+      color: #666;
+      margin: 0 0 20px 0;
+      line-height: 1.4;
+      font-size: 1.1em;
+    }
+  }
+
+  &__result-fish {
     background: rgba(255, 255, 255, 0.7);
     padding: 15px;
-    border-radius: 10px;
-    margin-top: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
 
-    p {
-      margin: 5px 0;
-      font-size: 0.9em;
-      color: #666;
+  &__result-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 5px;
     }
   }
-}
 
-.fishing-rod {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  transform-origin: bottom center;
-  z-index: 1;
-  transition: all 0.5s ease;
-
-  &--casting {
-    animation: castRod 1.5s ease;
+  &__result-item {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
   }
 
-  &--waiting {
-    animation: waitRod 2s infinite alternate;
+  &__result-label {
+    color: #666;
+    font-weight: 500;
   }
 
-  &--reeling {
-    animation: reelRod 0.3s infinite alternate;
+  &__result-value {
+    font-weight: bold;
+    color: #333;
   }
 
-  &--fighting {
-    animation: fightRod 0.5s infinite alternate;
-  }
+  &__result-button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
 
-  &--broken {
-    animation: breakRod 0.5s ease forwards;
-  }
-
-  &__handle {
-    width: 6px;
-    height: 80px;
-    background: linear-gradient(to right, @rod-color, lighten(@rod-color, 10%), @rod-color);
-    border-radius: 3px;
-    position: relative;
-    z-index: 1;
-  }
-
-  &__line {
-    width: 2px;
-    height: 150px;
-    background: linear-gradient(to bottom,
-      rgba(255, 255, 255, 0.8) 0%,
-      rgba(255, 255, 255, 0.6) 50%,
-      rgba(255, 255, 255, 0.4) 100%);
-    margin: 0 auto;
-    position: relative;
-    top: -5px;
-  }
-
-  &__hook {
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 12px;
-    height: 12px;
-    border: 2px solid @hook-color;
-    border-top: none;
-    border-right: none;
-    border-radius: 0 0 0 50%;
-    transform-origin: top left;
-    transform: translateX(-50%) rotate(-45deg);
-    transition: all 0.3s ease;
-
-    &--biting {
-      animation: biteHook 0.5s infinite alternate;
+    &:hover {
+      background: #45a049;
     }
   }
+
+  &__groundbait-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+
+  &__groundbait-panel-content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
 }
 
-@keyframes breakRod {
-  0% {
-    transform: translateX(-50%) rotate(0deg);
-  }
-  25% {
-    transform: translateX(-50%) rotate(15deg);
-  }
-  50% {
-    transform: translateX(-50%) rotate(-10deg);
-  }
-  75% {
-    transform: translateX(-50%) rotate(5deg);
-  }
-  100% {
-    transform: translateX(-50%) rotate(0deg) scale(0.8);
-    opacity: 0.5;
-    filter: grayscale(100%);
-  }
+@keyframes rodFloat {
+  0% { transform: translate(-50%, -50%) rotate(-2deg); }
+  100% { transform: translate(-50%, -50%) rotate(2deg); }
 }
 
-@keyframes warningPulse {
+@keyframes biteFloat {
+  0% { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(-50%, -60%) scale(1.1); }
+}
+
+@keyframes fishStruggle {
+  0% { transform: translate(-50%, -50%) rotate(-15deg); }
+  100% { transform: translate(-50%, -50%) rotate(15deg); }
+}
+
+@keyframes groundbaitPulse {
   0%, 100% {
-    opacity: 1;
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
   }
   50% {
     opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.02);
   }
 }
 
-@keyframes floatBob {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-5px) rotate(5deg);
-  }
+@keyframes groundbaitInnerPulse {
+  0%, 100% { opacity: 0.05; }
+  50% { opacity: 0.15; }
 }
 
-@keyframes biteAnimation {
-  0% {
-    transform: translateY(0px) scale(1);
-  }
-  100% {
-    transform: translateY(-8px) scale(1.1);
-    filter: drop-shadow(0 0 8px #FFD700);
-  }
+@keyframes pulseEffect {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.02); }
 }
 
-@keyframes ripple {
-  0% {
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-  100% {
-    width: 100px;
-    height: 100px;
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes slideInDown {
+  from {
     opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 
-@keyframes hotSpotPulse {
+@keyframes reelPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes netPulseActive {
   0%, 100% {
     transform: scale(1);
-    opacity: 0.7;
+    border-color: #9C27B0;
+    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.5);
   }
   50% {
-    transform: scale(1.1);
-    opacity: 1;
+    transform: scale(1.05);
+    border-color: #BA68C8;
+    box-shadow: 0 4px 16px rgba(186, 104, 200, 0.7);
   }
 }
 
-@keyframes glow {
-  0% { box-shadow: 0 0 5px #FFD700; }
-  100% { box-shadow: 0 0 20px #FFA000; }
+@keyframes pulseActive {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
-@keyframes castRod {
-  0% {
-    transform: translateX(-50%) rotate(0deg);
-    bottom: 20px;
+@keyframes pulseHint {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes netHintPulse {
+  0%, 100% {
+    background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
+    border-left: 4px solid #9C27B0;
   }
   50% {
-    transform: translateX(-50%) rotate(-60deg);
-    bottom: 30px;
+    background: linear-gradient(135deg, #E1BEE7, #CE93D8);
+    border-left: 4px solid #7B1FA2;
   }
-  100% {
-    transform: translateX(-50%) rotate(0deg);
-    bottom: 20px;
-  }
-}
-
-@keyframes waitRod {
-  0% { transform: translateX(-50%) rotate(0deg); }
-  50% { transform: translateX(-50%) rotate(5deg); }
-  100% { transform: translateX(-50%) rotate(0deg); }
-}
-
-@keyframes reelRod {
-  0% { bottom: 20px; }
-  100% { bottom: 25px; }
-}
-
-@keyframes fightRod {
-  0% { transform: translateX(-50%) rotate(-5deg); }
-  100% { transform: translateX(-50%) rotate(5deg); }
-}
-
-@keyframes biteHook {
-  0% { transform: translateX(-50%) rotate(-45deg); }
-  100% { transform: translateX(-50%) rotate(-35deg); }
-}
-
-@keyframes bite {
-  0% { transform: translateX(-50%) translateY(0); }
-  100% { transform: translateX(-50%) translateY(-10px); }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+  10% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  90% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes popIn {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-  70% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes castingDots {
-  0%, 80%, 100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
+@keyframes dangerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 @media (max-width: 768px) {
-  .fishing-area {
-    height: 500px;
+  .fishing-area__controls {
+    bottom: 10px;
+    right: 10px;
+  }
 
-    &__result-container {
-      .result-message {
-        min-width: 250px;
-        padding: 20px;
-      }
-    }
+  .fishing-area__indicators {
+    bottom: 10px;
+    left: 10px;
+    width: 250px;
+  }
 
-    &__rod-container {
-      .fishing-rod__line {
-        height: 120px;
-      }
+  .fishing-area__cast-button,
+  .fishing-area__reel-button,
+  .fishing-area__net-button {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+  }
 
-      .fishing-area__biting-fish {
-        bottom: 100px;
-      }
-    }
+  .fishing-area__groundbait {
+    width: 45px;
+    height: 45px;
+    font-size: 20px;
+  }
+
+  .fishing-area__groundbait-effect {
+    top: 60px;
+    padding: 10px 15px;
+    font-size: 0.9em;
+  }
+
+  .fishing-area__net-broken {
+    min-width: 250px;
+    padding: 15px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fishing-area__indicators {
+    width: 220px;
+  }
+
+  .fishing-area__result-modal {
+    padding: 20px;
+  }
+
+  .fishing-area__result-row {
+    flex-direction: column;
+    gap: 5px;
   }
 }
 </style>

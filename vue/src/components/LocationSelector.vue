@@ -35,7 +35,6 @@ defineProps<{
 }>()
 
 const goToLocation = (location: Location) => {
-  console.log('Navigating to location:', location.id, location.name)
   router.push(`/location/${location.id}`)
 }
 </script>

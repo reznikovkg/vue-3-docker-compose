@@ -77,6 +77,129 @@
       </div>
 
       <div class="shop-section">
+        <h2 class="shop-section__title">🍚 Прикормки</h2>
+        <div class="shop-section__info">
+          <p class="shop-section__description">
+            🎯 Прикормки приманивают определенные виды рыбы и действуют 3 заброса.
+            🎯 Забрасывайте в одно место для усиления эффекта.
+            🎯 Разные прикормки заменяют друг друга на том же месте.
+            🎯 Эффект: Увеличивает шанс поклевки указанных рыб в зоне действия.
+          </p>
+        </div>
+        <div class="shop-section__items">
+          <div
+            v-for="item in groundbaitItems"
+            :key="item.id"
+            class="shop-item"
+            :class="{'shop-item--affordable': money >= item.price}"
+          >
+            <div class="shop-item__info">
+              <h3 class="shop-item__name">
+                <span class="shop-item__emoji">{{ getGroundbaitEmoji(item.id) }}</span>
+                {{ item.name }}
+              </h3>
+              <p class="shop-item__description">{{ item.description }}</p>
+              <div class="shop-item__properties" v-if="item.properties">
+                <div class="property-list">
+                  <div class="property-item" v-for="attraction in item.properties.fishAttraction" :key="attraction.fishName">
+                    <span class="property-item__fish">{{ attraction.fishName }}</span>
+                    <span class="property-item__multiplier">×{{ attraction.attractionMultiplier.toFixed(1) }}</span>
+                  </div>
+                </div>
+                <div class="shop-item__stats">
+                  <span class="stat-badge">
+                    Радиус: {{ item.properties.radius }}%
+                  </span>
+                  <span class="stat-badge">
+                    Использований: {{ item.properties.uses }}
+                  </span>
+                  <span class="stat-badge stat-badge--level">
+                    Уровень: {{ item.properties.level }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="shop-item__actions">
+              <div class="shop-item__price">{{ item.price }} ₽</div>
+              <button
+                @click="handleBuyGroundbait(item.id)"
+                :disabled="money < item.price"
+                class="shop-item__buy-button"
+              >
+                Купить
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shop-section">
+        <h2 class="shop-section__title">🎯 Сачки</h2>
+        <div class="shop-section__info">
+          <p class="shop-section__description">
+            🎯 Сачок позволяет выловить рыбу раньше, когда она близко к берегу.
+            🎯 Нажмите N или пробел во время борьбы для использования сачка.
+            🎯 Внимание! Если рыба тяжелее максимального веса сачка, сачок ломается!
+            🎯 Использования: Каждый сачок имеет ограниченное количество использований.
+          </p>
+        </div>
+        <div class="shop-section__items">
+          <div
+            v-for="item in netItems"
+            :key="item.id"
+            class="shop-item shop-item--net"
+            :class="{'shop-item--affordable': money >= item.price}"
+          >
+            <div class="shop-item__info">
+              <h3 class="shop-item__name">
+                <span class="shop-item__emoji">🎯</span>
+                {{ item.name }}
+              </h3>
+              <p class="shop-item__description">{{ item.description }}</p>
+              <div class="shop-item__properties" v-if="item.properties">
+                <div class="property-grid">
+                  <div class="property-grid__item">
+                    <div class="property-grid__label">Макс. вес:</div>
+                    <div class="property-grid__value">{{ item.properties.maxWeight }} кг</div>
+                  </div>
+                  <div class="property-grid__item">
+                    <div class="property-grid__label">Использований:</div>
+                    <div class="property-grid__value">{{ item.properties.uses }}</div>
+                  </div>
+                  <div class="property-grid__item">
+                    <div class="property-grid__label">Прочность:</div>
+                    <div class="property-grid__value">{{ item.properties.durability }}%</div>
+                  </div>
+                  <div class="property-grid__item">
+                    <div class="property-grid__label">Уровень:</div>
+                    <div class="property-grid__value">{{ item.properties.level || 1 }}</div>
+                  </div>
+                </div>
+                <div class="shop-item__stats">
+                  <span v-if="item.properties.strengthBonus" class="stat-badge stat-badge--strength">
+                    +{{ item.properties.strengthBonus }} сила
+                  </span>
+                  <span class="stat-badge stat-badge--net">
+                    🎯 Использований: {{ item.properties.uses }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="shop-item__actions">
+              <div class="shop-item__price">{{ item.price }} ₽</div>
+              <button
+                @click="handleBuyNet(item.id)"
+                :disabled="money < item.price"
+                class="shop-item__buy-button shop-item__buy-button--net"
+              >
+                Купить сачок
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="shop-section">
         <h2 class="shop-section__title">⚡ Улучшения снастей</h2>
         <div class="upgrade-info">
           <p class="upgrade-info__text">Улучшайте свои снасти для повышения шансов на успешную рыбалку!</p>
@@ -128,18 +251,43 @@ const baitItems = computed(() => store.getters['shop/baitItems'])
 const tackleUpgrades = computed(() => store.getters['shop/tackleUpgrades'])
 const money = computed(() => store.getters['fishing/money'])
 
-const handleBuyItem = (itemId: string) => {
+const shopItems = computed(() => store.state.shop.shopItems)
+
+const groundbaitItems = computed(() => {
+  return shopItems.value.filter((item) => item.type === 'groundbait')
+})
+
+const netItems = computed(() => {
+  return shopItems.value.filter((item) => item.type === 'net')
+})
+
+const getGroundbaitEmoji = (groundbaitId) => {
+  const emojis = {
+    'groundbait_basic': '🍚',
+    'groundbait_advanced': '🥣',
+    'groundbait_pro': '🎯',
+    'groundbait_special': '🌊'
+  }
+  return emojis[groundbaitId] || '🍚'
+}
+
+const handleBuyItem = (itemId) => {
   store.dispatch('shop/buyItem', { itemId, quantity: 1 })
-    .then((result: any) => {
+    .then((result) => {
       if (result.success) {
-        console.log('✅ Товар куплен:', result.message)
-      } else {
-        console.log('❌ Ошибка покупки:', result.message)
+        const inventory = store.getters['fishing/inventory']
+        const groundbait = store.getters['fishing/groundbaitInventory']
+        const nets = store.getters['fishing/netInventory']
       }
     })
-    .catch((error: any) => {
-      console.log('❌ Ошибка покупки:', error.message)
-    })
+}
+
+const handleBuyGroundbait = (itemId) => {
+  handleBuyItem(itemId)
+}
+
+const handleBuyNet = (itemId) => {
+  handleBuyItem(itemId)
 }
 </script>
 
@@ -208,9 +356,24 @@ const handleBuyItem = (itemId: string) => {
     border-bottom: 2px solid #4CAF50;
   }
 
+  &__info {
+    background: #FFF3E0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #FF9800;
+  }
+
+  &__description {
+    margin: 0;
+    color: #E65100;
+    font-size: 0.9em;
+    line-height: 1.5;
+  }
+
   &__items {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
   }
 }
@@ -229,6 +392,16 @@ const handleBuyItem = (itemId: string) => {
     background: #f8fff8;
   }
 
+  &--net {
+    border-color: #9C27B0;
+    background: #f8f4ff;
+
+    &.shop-item--affordable {
+      border-color: #7B1FA2;
+      background: #F3E5F5;
+    }
+  }
+
   &__info {
     h3 {
       margin: 0 0 10px 0;
@@ -237,23 +410,35 @@ const handleBuyItem = (itemId: string) => {
     }
   }
 
+  &__emoji {
+    margin-right: 8px;
+    font-size: 1.2em;
+  }
+
   &__name {
     margin: 0 0 10px 0;
     color: #333;
     font-size: 1.2em;
+    display: flex;
+    align-items: center;
   }
 
   &__description {
     color: #666;
     margin: 0 0 15px 0;
     line-height: 1.4;
+    font-size: 0.95em;
   }
 
   &__properties {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
     margin-bottom: 15px;
+  }
+
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
   }
 
   &__actions {
@@ -277,15 +462,27 @@ const handleBuyItem = (itemId: string) => {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
 
     &:hover:not(:disabled) {
       background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
 
     &:disabled {
       background: #ccc;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    &--net {
+      background: #9C27B0;
+
+      &:hover:not(:disabled) {
+        background: #7B1FA2;
+      }
     }
   }
 }
@@ -297,6 +494,9 @@ const handleBuyItem = (itemId: string) => {
   border-radius: 12px;
   font-size: 0.8em;
   font-weight: bold;
+  display: inline-block;
+  margin-right: 8px;
+  margin-bottom: 8px;
 
   &--strength {
     background: #E8F5E8;
@@ -306,6 +506,87 @@ const handleBuyItem = (itemId: string) => {
   &--level {
     background: #FFF3E0;
     color: #EF6C00;
+  }
+}
+
+.property-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.property-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #FFF3E0;
+  border-radius: 12px;
+  font-size: 0.8em;
+  white-space: nowrap;
+
+  &__fish {
+    color: #EF6C00;
+    font-weight: 500;
+  }
+
+  &__multiplier {
+    color: #2E7D32;
+    font-weight: bold;
+    background: #E8F5E8;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+}
+
+.property-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__label {
+    color: #666;
+    font-size: 0.8em;
+    font-weight: 500;
+  }
+
+  &__value {
+    color: #333;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+}
+
+.stat-badge {
+  background: #E3F2FD;
+  color: #1976D2;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+
+  &--strength {
+    background: #E8F5E8;
+    color: #2E7D32;
+  }
+
+  &--level {
+    background: #FFF3E0;
+    color: #EF6C00;
+  }
+
+  &--net {
+    background: #F3E5F5;
+    color: #7B1FA2;
   }
 }
 
@@ -338,16 +619,26 @@ const handleBuyItem = (itemId: string) => {
     }
   }
 
-  .shop-item {
-    &__actions {
-      flex-direction: column;
-      gap: 10px;
-      align-items: stretch;
-    }
+  .property-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
-    &__buy-button {
-      width: 100%;
+@media (max-width: 480px) {
+  .shop-page {
+    padding: 10px;
+
+    &__header {
+      padding: 15px;
     }
+  }
+
+  .shop-section {
+    padding: 15px;
+  }
+
+  .shop-item {
+    padding: 15px;
   }
 }
 </style>

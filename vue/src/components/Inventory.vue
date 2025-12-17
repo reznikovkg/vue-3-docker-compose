@@ -3,29 +3,29 @@
     <h2 class="inventory__title">📊 Статистика улова</h2>
 
     <div class="inventory__stats">
-      <div class="inventory__stat-item">
+      <div class="inventory__stat">
         <span class="inventory__stat-label">Всего поймано:</span>
         <span class="inventory__stat-value">{{ totalFishCaught }}</span>
       </div>
     </div>
 
-    <div class="inventory__fish-list">
+    <div class="inventory__list">
       <div
         v-for="fish in caughtFish"
         :key="fish.timestamp"
-        class="inventory__fish-card"
+        class="inventory__item"
         :class="getSizeClass(fish)"
       >
-        <div class="inventory__fish-emoji">{{ getFishEmoji(fish) }}</div>
-        <div class="inventory__fish-info">
-          <div class="inventory__fish-name">{{ fish.name }}</div>
-          <div class="inventory__fish-details">
+        <div class="inventory__item-emoji">{{ getFishEmoji(fish) }}</div>
+        <div class="inventory__item-info">
+          <div class="inventory__item-name">{{ fish.name }}</div>
+          <div class="inventory__item-details">
             {{ fish.location }} • {{ formatDate(fish.timestamp) }}
           </div>
-          <div class="inventory__fish-size" v-if="fish.caughtSize">
+          <div class="inventory__item-size" v-if="fish.caughtSize">
             Размер: {{ fish.caughtSize.name }}
           </div>
-          <div class="inventory__fish-weight" v-if="fish.weight">
+          <div class="inventory__item-weight" v-if="fish.weight">
             Вес: {{ fish.weight }}г
           </div>
         </div>
@@ -60,7 +60,7 @@ const getSizeClass = (fish: CaughtFish) => {
   if (!fish.caughtSize) return ''
 
   const sizeName = fish.caughtSize.name.toLowerCase()
-  return `inventory__fish-card--${sizeName}`
+  return `inventory__item--${sizeName}`
 }
 
 const formatDate = (timestamp: string) => {
@@ -86,7 +86,7 @@ const formatDate = (timestamp: string) => {
     margin-bottom: 20px;
   }
 
-  &__stat-item {
+  &__stat {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -104,7 +104,7 @@ const formatDate = (timestamp: string) => {
     color: #2E7D32;
   }
 
-  &__fish-list {
+  &__list {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -119,7 +119,7 @@ const formatDate = (timestamp: string) => {
     padding: 40px 20px;
   }
 
-  &__fish-card {
+  &__item {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -151,33 +151,33 @@ const formatDate = (timestamp: string) => {
     }
   }
 
-  &__fish-emoji {
+  &__item-emoji {
     font-size: 2em;
   }
 
-  &__fish-info {
+  &__item-info {
     flex: 1;
   }
 
-  &__fish-name {
+  &__item-name {
     font-weight: bold;
     color: #333;
     margin-bottom: 5px;
   }
 
-  &__fish-details {
+  &__item-details {
     color: #666;
     font-size: 0.9em;
     margin-bottom: 5px;
   }
 
-  &__fish-size {
+  &__item-size {
     color: #1976D2;
     font-weight: bold;
     font-size: 0.9em;
   }
 
-  &__fish-weight {
+  &__item-weight {
     color: #2E7D32;
     font-weight: bold;
     font-size: 0.9em;
@@ -185,20 +185,18 @@ const formatDate = (timestamp: string) => {
 }
 
 @media (max-width: 768px) {
-  .inventory {
-    &__fish-list {
-      max-height: 300px;
-    }
+  .inventory__list {
+    max-height: 300px;
+  }
 
-    &__fish-card {
-      flex-direction: column;
-      text-align: center;
-      gap: 10px;
-    }
+  .inventory__item {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
 
-    &__fish-info {
-      width: 100%;
-    }
+  .inventory__item-info {
+    width: 100%;
   }
 }
 </style>

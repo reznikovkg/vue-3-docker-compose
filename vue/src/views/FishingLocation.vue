@@ -1,10 +1,10 @@
 <template>
   <div class="fishing-location">
-    <div class="location-header">
-      <button class="back-button" @click="$router.push('/')">
+    <div class="fishing-location__header">
+      <button class="fishing-location__back-button" @click="$router.push('/')">
         ← Назад к выбору
       </button>
-      <h1>{{ location.name }}</h1>
+      <h1 class="fishing-location__title">{{ location.name }}</h1>
     </div>
 
     <FishingArea
@@ -19,7 +19,6 @@ import FishingArea from '../components/FishingArea.vue'
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import type { Location, Fish, CaughtFish } from '@/types'
 
 const props = defineProps<{
   id: string | number
@@ -28,13 +27,13 @@ const props = defineProps<{
 const store = useStore()
 const router = useRouter()
 
-const location = computed((): Location => {
+const location = computed(() => {
   const loc = store.getters['fishing/getLocationById'](parseInt(String(props.id)))
   return loc || store.getters['fishing/getLocationById'](1)
 })
 
-const handleCatchFish = (fishData: Fish & { location: string }) => {
-  const caughtFish: CaughtFish = {
+const handleCatchFish = (fishData) => {
+  const caughtFish = {
     ...fishData,
     timestamp: new Date().toLocaleTimeString()
   }
@@ -52,7 +51,7 @@ const handleCatchFish = (fishData: Fish & { location: string }) => {
 .fishing-location {
   min-height: 100vh;
 
-  .location-header {
+  &__header {
     display: flex;
     align-items: center;
     gap: 20px;
@@ -61,31 +60,31 @@ const handleCatchFish = (fishData: Fish & { location: string }) => {
     background: white;
     border-radius: 8px;
     border: 1px solid @border-color;
+  }
 
-    .back-button {
-      background: @button-bg;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+  &__back-button {
+    background: @button-bg;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 
-      &:hover {
-        background: @button-hover-bg;
-      }
+    &:hover {
+      background: @button-hover-bg;
     }
+  }
 
-    h1 {
-      color: @text-color;
-      margin: 0;
-    }
+  &__title {
+    color: @text-color;
+    margin: 0;
   }
 }
 
 @media (max-width: 768px) {
   .fishing-location {
-    .location-header {
+    &__header {
       flex-direction: column;
       gap: 10px;
       text-align: center;

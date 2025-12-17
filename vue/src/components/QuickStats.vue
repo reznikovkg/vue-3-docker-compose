@@ -2,21 +2,21 @@
   <div class="quick-stats">
     <h2 class="quick-stats__title">📊 Статистика</h2>
     <div class="quick-stats__grid">
-      <div class="stat-item">
-        <div class="stat-item__label">Всего поймано</div>
-        <div class="stat-item__value">{{ totalFishCaught }}</div>
+      <div class="quick-stats__stat-item">
+        <div class="quick-stats__stat-label">Всего поймано</div>
+        <div class="quick-stats__stat-value">{{ totalFishCaught }}</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-item__label">Уникальных видов</div>
-        <div class="stat-item__value">{{ uniqueFishTypes }}</div>
+      <div class="quick-stats__stat-item">
+        <div class="quick-stats__stat-label">Уникальных видов</div>
+        <div class="quick-stats__stat-value">{{ uniqueFishTypes }}</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-item__label">Бонус силы</div>
-        <div class="stat-item__value">+{{ totalStrengthBonus }}</div>
+      <div class="quick-stats__stat-item">
+        <div class="quick-stats__stat-label">Бонус силы</div>
+        <div class="quick-stats__stat-value">+{{ totalStrengthBonus }}</div>
       </div>
-      <div class="stat-item">
-        <div class="stat-item__label">Наживка</div>
-        <div class="stat-item__value" :class="{ 'stat-item__value--warning': !hasBait }">
+      <div class="quick-stats__stat-item">
+        <div class="quick-stats__stat-label">Наживка</div>
+        <div class="quick-stats__stat-value" :class="{ 'quick-stats__stat-value--warning': !hasBait }">
           {{ hasBait ? 'Есть' : 'Нет' }}
         </div>
       </div>
@@ -60,22 +60,22 @@ const uniqueFishTypes = computed(() => {
     grid-template-columns: 1fr 1fr;
     gap: 15px;
   }
-}
 
-.stat-item {
-  text-align: center;
-  padding: 10px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
+  &__stat-item {
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+  }
 
-  &__label {
+  &__stat-label {
     font-size: 0.8em;
     color: #666;
     margin-bottom: 5px;
   }
 
-  &__value {
+  &__stat-value {
     font-size: 1.2em;
     font-weight: bold;
     color: #2E7D32;
