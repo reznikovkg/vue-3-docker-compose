@@ -8,10 +8,6 @@
 </script>
 
 <style lang="less">
-@background-color: #f0f2f5;
-@border-color: #ccc;
-@disabled-bg: #e0e0e0;
-
 * {
   margin: 0;
   padding: 0;
@@ -20,7 +16,7 @@
 
 body {
   font-family: 'Arial', sans-serif;
-  background: @background-color;
+  background: #f0f2f5;
   min-height: 100vh;
   padding: 20px;
 }
@@ -32,7 +28,7 @@ body {
 
 button {
   padding: 10px 20px;
-  border: 1px solid @border-color;
+  border: 1px solid #ccc;
   border-radius: 4px;
   background: white;
   cursor: pointer;
@@ -40,15 +36,15 @@ button {
   transition: background-color 0.3s ease;
 
   &:hover {
-    background: darken(white, 5%);
+    background: #f5f5f5;
   }
 
   &:disabled {
-    background: @disabled-bg;
+    background: #e0e0e0;
     cursor: not-allowed;
 
     &:hover {
-      background: @disabled-bg;
+      background: #e0e0e0;
     }
   }
 }

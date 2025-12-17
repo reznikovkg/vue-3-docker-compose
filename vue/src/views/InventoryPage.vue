@@ -32,6 +32,26 @@
               </div>
             </div>
           </div>
+
+          <div class="tackle-slot" v-if="equippedNet">
+            <div class="tackle-slot__label">Сачок</div>
+            <div class="tackle-slot__content">
+              <div class="equipped-item">
+                <div class="equipped-item__name">{{ equippedNet.name }}</div>
+                <div class="equipped-item__bonus">
+                  Макс. вес: {{ equippedNet.maxWeight }} кг
+                  • Использований: {{ equippedNet.usesLeft }} из {{ equippedNet.maxUses || 10 }}
+                  <span v-if="isNetBroken(equippedNet)" class="equipped-item__broken-indicator">🚫 СЛОМАН</span>
+                </div>
+                <button
+                  @click="unequipNet"
+                  class="equipped-item__unequip-button"
+                >
+                  Снять
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="total-bonus">
           Общий бонус силы: +{{ totalStrengthBonus }}
@@ -131,6 +151,83 @@
         </div>
       </div>
 
+      <div class="inventory-section" v-if="netInventory.length > 0">
+        <h2 class="inventory-section__title">🎯 Сачки ({{ netInventory.length }})</h2>
+
+        <div v-if="brokenNets.length > 0" class="broken-nets-actions">
+          <button @click="removeAllBrokenNets" class="broken-nets-button">
+            🗑️ Удалить все сломанные сачки ({{ brokenNets.length }})
+          </button>
+        </div>
+
+        <div class="inventory-items">
+          <div
+            v-for="item in netInventory"
+            :key="item.id"
+            class="inventory-item"
+            :class="{
+              'inventory-item--broken': isNetBroken(item),
+              'inventory-item--equipped': isNetEquipped(item.id)
+            }"
+          >
+            <div class="inventory-item__emoji">🎯</div>
+            <div class="inventory-item__details">
+              <div class="inventory-item__name">
+                {{ item.name }}
+                <span v-if="isNetEquipped(item.id)" class="equipped-badge">✓</span>
+              </div>
+              <div class="inventory-item__info">
+                Макс. вес: {{ item.properties?.maxWeight || 3 }} кг
+                • Использований: {{ getNetUsesLeft(item) }} из {{ item.properties?.uses || 10 }}
+                <span v-if="item.properties?.strengthBonus" class="inventory-item__bonus-text">
+                  • +{{ item.properties.strengthBonus }} сила
+                </span>
+                <span class="inventory-item__level-text">
+                  • Уровень {{ item.properties?.level || 1 }}
+                </span>
+                <span v-if="isNetBroken(item)" class="inventory-item__broken-text">
+                  • 🚫 СЛОМАН
+                </span>
+              </div>
+            </div>
+            <div class="inventory-item__actions">
+              <div class="inventory-item__price">{{ Math.floor(item.price * 0.6) }} ₽</div>
+              <div class="inventory-item__action-buttons">
+                <button
+                  @click="equipNet(item.id)"
+                  class="inventory-item__equip-button"
+                  :class="{
+                    'inventory-item__equip-button--equipped': isNetEquipped(item.id),
+                    'inventory-item__equip-button--broken': isNetBroken(item)
+                  }"
+                  :disabled="isNetBroken(item)"
+                >
+                  {{ isNetEquipped(item.id) ? 'Экипирован' :
+                     isNetBroken(item) ? 'Сломан' : 'Экипировать' }}
+                </button>
+
+                <button
+                  v-if="!isNetBroken(item)"
+                  @click="sellNet(item.id)"
+                  class="inventory-item__sell-button"
+                  :disabled="isNetEquipped(item.id)"
+                >
+                  Продать
+                </button>
+
+                <button
+                  v-if="isNetBroken(item)"
+                  @click="removeBrokenNet(item.id)"
+                  class="inventory-item__remove-button"
+                >
+                  Удалить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="inventory-section">
         <h2 class="inventory-section__title">🪱 Наживки ({{ availableBait.length }})</h2>
         <div class="inventory-items">
@@ -191,6 +288,15 @@ const tackleInventory = computed(() => store.getters['fishing/tackleInventory'])
 const availableBait = computed(() => store.getters['fishing/availableBait'])
 const equippedTackle = computed(() => store.getters['fishing/equippedTackle'])
 const totalStrengthBonus = computed(() => store.getters['fishing/totalStrengthBonus'])
+const equippedNet = computed(() => store.getters['fishing/equippedNet'])
+
+const netInventory = computed(() => {
+  return store.getters['fishing/netInventory'] || []
+})
+
+const brokenNets = computed(() => {
+  return store.getters['fishing/getBrokenNets'] || []
+})
 
 const tackleSlots = [
   { type: 'rod', label: 'Удочка', emptyText: 'Не экипирована' },
@@ -199,26 +305,43 @@ const tackleSlots = [
   { type: 'bait', label: 'Наживка', emptyText: 'Не экипирована' }
 ]
 
-const getEquippedItem = (slotType: string) => {
-  return equippedTackle.value[slotType as keyof typeof equippedTackle.value]
+const getEquippedItem = (slotType) => {
+  return equippedTackle.value[slotType]
 }
 
-const getItemType = (itemId: string) => {
-  const item = tackleInventory.value.find((item: any) => item.id === itemId) ||
-               availableBait.value.find((item: any) => item.id === itemId)
+const getItemType = (itemId) => {
+  const item = tackleInventory.value.find((item) => item.id === itemId) ||
+               availableBait.value.find((item) => item.id === itemId) ||
+               netInventory.value.find((item) => item.id === itemId)
   if (!item) return null
   if (item.id.includes('rod')) return 'rod'
   if (item.id.includes('reel')) return 'reel'
   if (item.id.includes('line')) return 'line'
   if (item.type === 'bait') return 'bait'
+  if (item.type === 'net') return 'net'
   return item.type
 }
 
-const isBaitEquipped = (itemId: string) => {
+const isBaitEquipped = (itemId) => {
   return equippedTackle.value.bait?.id === itemId
 }
 
-const equipTackle = (itemId: string) => {
+const isNetEquipped = (itemId) => {
+  return equippedNet.value?.id === itemId
+}
+
+const getNetUsesLeft = (item) => {
+  return item.properties?.usesLeft || item.properties?.uses || 0
+}
+
+const isNetBroken = (item) => {
+  if (!item || !item.properties) return false
+  const usesLeft = getNetUsesLeft(item)
+  const durability = item.properties?.durability || 100
+  return usesLeft <= 0 || durability <= 0 || item.properties?.isBroken
+}
+
+const equipTackle = (itemId) => {
   const itemType = getItemType(itemId)
   if (itemType) {
     store.dispatch('fishing/equipTackle', {
@@ -228,27 +351,61 @@ const equipTackle = (itemId: string) => {
   }
 }
 
-const equipBait = (itemId: string) => {
+const equipBait = (itemId) => {
   store.dispatch('fishing/equipTackle', {
     type: 'bait',
     itemId
   })
 }
 
-const unequipTackle = (slotType: string) => {
+const equipNet = (itemId) => {
+  store.dispatch('fishing/equipNet', itemId)
+}
+
+const unequipTackle = (slotType) => {
   store.dispatch('fishing/unequipTackle', slotType)
+}
+
+const unequipNet = () => {
+  store.dispatch('fishing/unequipNet')
 }
 
 const sellAllFish = () => {
   store.dispatch('fishing/sellAllFish')
 }
 
-const sellSingleFish = (inventoryId: string) => {
+const sellSingleFish = (inventoryId) => {
   store.dispatch('shop/sellFish', { fishId: inventoryId, quantity: 1 })
 }
 
-const sellTackle = (itemId: string) => {
+const sellTackle = (itemId) => {
   store.dispatch('shop/sellTackle', { itemId, quantity: 1 })
+}
+
+const sellNet = (itemId) => {
+  store.dispatch('shop/sellTackle', { itemId, quantity: 1 })
+}
+
+const removeBrokenNet = (netId) => {
+  if (confirm('Удалить сломанный сачок из инвентаря?')) {
+    store.dispatch('fishing/removeBrokenNetFromInventory', netId)
+      .then((result) => {
+        if (result.success) {
+          alert('Сломанный сачок удален!')
+        }
+      })
+  }
+}
+
+const removeAllBrokenNets = () => {
+  if (brokenNets.value.length === 0) return
+
+  if (confirm(`Удалить все сломанные сачки (${brokenNets.value.length} шт.)?`)) {
+    brokenNets.value.forEach((net) => {
+      store.dispatch('fishing/removeBrokenNetFromInventory', net.id)
+    })
+    alert('Все сломанные сачки удалены!')
+  }
 }
 </script>
 
@@ -376,6 +533,12 @@ const sellTackle = (itemId: string) => {
     margin-bottom: 10px;
   }
 
+  &__broken-indicator {
+    color: #f44336;
+    font-weight: bold;
+    margin-left: 5px;
+  }
+
   &__unequip-button {
     background: #ff6b6b;
     color: white;
@@ -385,8 +548,13 @@ const sellTackle = (itemId: string) => {
     cursor: pointer;
     font-size: 0.8em;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: #ff5252;
+    }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
     }
   }
 }
@@ -461,6 +629,17 @@ const sellTackle = (itemId: string) => {
     transform: translateX(5px);
   }
 
+  &--broken {
+    opacity: 0.7;
+    background: #ffebee;
+    border-color: #ffcdd2;
+  }
+
+  &--equipped {
+    border: 2px solid #4CAF50;
+    background: #f8fff8;
+  }
+
   &__emoji {
     font-size: 1.5em;
   }
@@ -472,6 +651,8 @@ const sellTackle = (itemId: string) => {
       font-weight: bold;
       color: #333;
       margin-bottom: 5px;
+      display: flex;
+      align-items: center;
     }
 
     .inventory-item__info {
@@ -485,6 +666,11 @@ const sellTackle = (itemId: string) => {
 
       .inventory-item__level-text {
         color: #1976D2;
+        font-weight: bold;
+      }
+
+      .inventory-item__broken-text {
+        color: #f44336;
         font-weight: bold;
       }
     }
@@ -516,14 +702,29 @@ const sellTackle = (itemId: string) => {
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.8em;
+    min-width: 90px;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: #45a049;
     }
 
     &--equipped {
       background: #666;
       cursor: default;
+    }
+
+    &--broken {
+      background: #9e9e9e;
+      cursor: not-allowed;
+
+      &:hover {
+        background: #9e9e9e;
+      }
+    }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
     }
   }
 
@@ -536,10 +737,66 @@ const sellTackle = (itemId: string) => {
     cursor: pointer;
     font-size: 0.8em;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: #ff5252;
     }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
   }
+
+  &__remove-button {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+
+    &:hover {
+      background: #c82333;
+    }
+  }
+}
+
+.broken-nets-actions {
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #ffebee;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.broken-nets-button {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+
+  &:hover {
+    background: #c82333;
+  }
+}
+
+.equipped-badge {
+  display: inline-block;
+  background: #4CAF50;
+  color: white;
+  font-size: 0.7em;
+  padding: 2px 6px;
+  border-radius: 50%;
+  margin-left: 5px;
+}
+
+.empty-slot {
+  color: #999;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

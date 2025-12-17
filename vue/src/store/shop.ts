@@ -1,9 +1,10 @@
-import type { ShopItem, InventoryItem, TackleItem } from '@/types'
+import type { ShopItem, InventoryItem, TackleItem, GroundbaitType, NetItem } from '@/types'
 import { shopItems, tackleItems, tackleUpgrades } from '@/data/tackle'
 
 const SELL_PRICE_MULTIPLIER = 0.7
 const TACKLE_SELL_PRICE_MULTIPLIER = 0.5
 const BAIT_BULK_QUANTITY = 10
+const NET_SELL_PRICE_MULTIPLIER = 0.6
 
 interface ShopError extends Error {
   code?: string
@@ -17,13 +18,29 @@ const createShopError = (message: string, code?: string, details?: unknown): Sho
   return error
 }
 
+const getGroundbaitEmoji = (groundbaitId: string): string => {
+  const emojis: Record<string, string> = {
+    'groundbait_basic': '🍚',
+    'groundbait_advanced': '🥣',
+    'groundbait_pro': '🎯',
+    'groundbait_special': '🌊'
+  }
+  return emojis[groundbaitId] || '🍚'
+}
+
+const getNetEmoji = (): string => {
+  return '🎯'
+}
+
 export const shopModule = {
   namespaced: true,
 
   state: () => ({
     shopItems: shopItems,
     tackleItems: tackleItems,
-    tackleUpgrades: tackleUpgrades
+    tackleUpgrades: tackleUpgrades,
+    inventory: [],
+    money: 1000
   }),
 
   getters: {
@@ -31,6 +48,7 @@ export const shopModule = {
     baitItems: (state: any) => state.shopItems.filter((item: ShopItem) => item.type === 'bait'),
     tackleUpgrades: (state: any) => state.tackleUpgrades,
     tackleItems: (state: any) => state.tackleItems,
+    netItems: (state: any) => state.shopItems.filter((item: ShopItem) => item.type === 'net'),
 
     getItemById: (state: any) => (id: string) => {
       return state.shopItems.find((item: ShopItem) => item.id === id) ||
@@ -46,7 +64,9 @@ export const shopModule = {
       return state.tackleUpgrades.filter((upgrade: ShopItem) =>
         upgrade.id.includes(type)
       )
-    }
+    },
+
+    groundbaitItems: (state: any) => state.shopItems.filter((item: ShopItem) => item.type === 'groundbait'),
   },
 
   mutations: {
@@ -104,29 +124,105 @@ export const shopModule = {
   actions: {
     buyItem({ commit, dispatch, rootGetters }: any, { itemId, quantity = 1 }: { itemId: string; quantity: number }) {
       return new Promise((resolve) => {
-        try {
-          const item = rootGetters['shop/getItemById'](itemId)
-          if (!item) {
-            throw createShopError('Товар не найден', 'ITEM_NOT_FOUND', { itemId })
-          }
+        const item = rootGetters['shop/getItemById'](itemId)
+        if (!item) {
+          resolve({ success: false, message: 'Товар не найден' })
+          return
+        }
 
-          const currentMoney = rootGetters['fishing/money']
-          const totalPrice = item.price * quantity
+        const currentMoney = rootGetters['fishing/money']
+        const totalPrice = item.price * quantity
 
-          if (itemId !== 'rod_basic' && currentMoney < totalPrice) {
-            throw createShopError('Недостаточно денег', 'INSUFFICIENT_FUNDS', {
-              currentMoney,
-              required: totalPrice,
-              difference: totalPrice - currentMoney
-            })
-          }
+        if (itemId !== 'rod_basic' && currentMoney < totalPrice) {
+          resolve({ success: false, message: 'Недостаточно денег' })
+          return
+        }
 
-          if (itemId !== 'rod_basic') {
-            dispatch('fishing/updateMoney', -totalPrice, { root: true }).then(() => {
-              const inventoryItem: InventoryItem = {
+        if (itemId !== 'rod_basic') {
+          dispatch('fishing/updateMoney', -totalPrice, { root: true }).then(() => {
+            let inventoryItem: InventoryItem
+
+            if (item.type === 'groundbait') {
+              inventoryItem = {
                 id: item.id,
                 name: item.name,
-                type: item.type === 'bait' ? 'bait' : 'tackle',
+                type: 'groundbait',
+                quantity,
+                price: item.price,
+                emoji: getGroundbaitEmoji(item.id),
+                properties: {
+                  ...item.properties,
+                  level: item.properties?.level || 1,
+                  maxLevel: 5,
+                  radius: item.properties?.radius || 15,
+                  uses: item.properties?.uses || 3,
+                  maxUses: item.properties?.uses || 3,
+                  fishAttraction: item.properties?.fishAttraction || [],
+                  color: item.properties?.color || '#8BC34A'
+                }
+              }
+
+              const groundbaitType: GroundbaitType = {
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                level: item.properties?.level || 1,
+                maxLevel: 5,
+                price: item.price,
+                radius: item.properties?.radius || 15,
+                uses: item.properties?.uses || 3,
+                maxUses: item.properties?.uses || 3,
+                fishAttraction: item.properties?.fishAttraction || [],
+                color: item.properties?.color || '#8BC34A',
+                emoji: getGroundbaitEmoji(item.id)
+              }
+
+              dispatch('fishing/addToInventory', inventoryItem, { root: true }).then(() => {
+                return dispatch('fishing/addAvailableGroundbait', groundbaitType, { root: true })
+              }).then(() => {
+                resolve({
+                  success: true,
+                  message: 'Прикормка куплена!',
+                  item: inventoryItem
+                })
+              })
+            } else if (item.type === 'net') {
+              inventoryItem = {
+                id: item.id,
+                name: item.name,
+                type: 'net',
+                quantity,
+                price: item.price,
+                emoji: getNetEmoji(),
+                properties: {
+                  strengthBonus: item.properties?.strengthBonus || 0,
+                  level: item.properties?.level || 1,
+                  maxWeight: item.properties?.maxWeight || 3,
+                  durability: item.properties?.durability || 100,
+                  uses: item.properties?.uses || 10,
+                  usesLeft: item.properties?.uses || 10,
+                  maxUses: item.properties?.uses || 10
+                }
+              }
+
+              dispatch('fishing/addToInventory', inventoryItem, { root: true }).then(() => {
+                const equippedNet = rootGetters['fishing/equippedNet']
+                if (!equippedNet || equippedNet.usesLeft <= 0) {
+                  return dispatch('fishing/equipNet', item.id, { root: true })
+                }
+                return Promise.resolve()
+              }).then(() => {
+                resolve({
+                  success: true,
+                  message: `Сачок "${item.name}" куплен!`,
+                  item: inventoryItem
+                })
+              })
+            } else {
+              inventoryItem = {
+                id: item.id,
+                name: item.name,
+                type: item.type,
                 quantity,
                 price: item.price,
                 emoji: item.type === 'bait' ? '🪱' : '🎣',
@@ -134,162 +230,159 @@ export const shopModule = {
               }
 
               dispatch('fishing/addToInventory', inventoryItem, { root: true }).then(() => {
-                resolve({ success: true, message: 'Товар успешно куплен!' })
+                resolve({
+                  success: true,
+                  message: 'Товар успешно куплен!',
+                  item: inventoryItem
+                })
               })
-            })
-          } else {
-            const inventoryItem: InventoryItem = {
-              id: item.id,
-              name: item.name,
-              type: 'tackle',
-              quantity,
-              price: item.price,
-              emoji: '🎣',
-              properties: item.properties || {}
             }
-
-            dispatch('fishing/addToInventory', inventoryItem, { root: true }).then(() => {
-              resolve({ success: true, message: 'Товар успешно куплен!' })
-            })
+          })
+        } else {
+          const inventoryItem: InventoryItem = {
+            id: item.id,
+            name: item.name,
+            type: 'tackle',
+            quantity,
+            price: item.price,
+            emoji: '🎣',
+            properties: item.properties || {}
           }
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при покупке'
-          resolve({ success: false, message: errorMessage })
+
+          dispatch('fishing/addToInventory', inventoryItem, { root: true }).then(() => {
+            resolve({
+              success: true,
+              message: 'Товар успешно куплен!',
+              item: inventoryItem
+            })
+          })
         }
       })
     },
 
     sellFish({ commit, dispatch, rootGetters }: any, { fishId, quantity = 1 }: { fishId: string; quantity?: number }) {
       return new Promise((resolve) => {
-        try {
-          const fishForSale = rootGetters['fishing/availableFishForSale']
-          const fish = fishForSale.find((f: any) => f.inventoryId === fishId)
+        const fishForSale = rootGetters['fishing/availableFishForSale']
+        const fish = fishForSale.find((f: any) => f.inventoryId === fishId)
 
-          if (!fish) {
-            throw createShopError('Рыба не найдена в инвентаре', 'FISH_NOT_FOUND', { fishId })
-          }
+        if (!fish) {
+          resolve({ success: false, message: 'Рыба не найдена в инвентаре' })
+          return
+        }
 
-          const sellPrice = Math.floor(fish.price * SELL_PRICE_MULTIPLIER * quantity)
+        const sellPrice = Math.floor(fish.price * SELL_PRICE_MULTIPLIER * quantity)
 
-          dispatch('fishing/removeFishFromSale', fishId, { root: true }).then(() => {
-            dispatch('fishing/updateMoney', sellPrice, { root: true }).then(() => {
-              resolve({
-                success: true,
-                message: `Продано ${quantity} шт. за ${sellPrice} ₽`,
-                amount: sellPrice
-              })
+        dispatch('fishing/removeFishFromSale', fishId, { root: true }).then(() => {
+          dispatch('fishing/updateMoney', sellPrice, { root: true }).then(() => {
+            resolve({
+              success: true,
+              message: `Продано ${quantity} шт. за ${sellPrice} ₽`,
+              amount: sellPrice
             })
           })
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при продаже рыбы'
-          resolve({ success: false, message: errorMessage })
-        }
+        })
       })
     },
 
     sellAllFish({ commit, dispatch, rootGetters }: any) {
       return new Promise((resolve) => {
-        try {
-          const fishForSale = rootGetters['fishing/availableFishForSale']
+        const fishForSale = rootGetters['fishing/availableFishForSale']
 
-          if (fishForSale.length === 0) {
-            resolve({ success: false, message: 'Нет рыбы для продажи' })
-            return
-          }
-
-          let totalAmount = 0
-          const soldItems: Array<{name: string, quantity: number, amount: number}> = []
-
-          const removePromises = fishForSale.map((fish: any) => {
-            return new Promise((resolveRemove) => {
-              const sellPrice = Math.floor(fish.price * SELL_PRICE_MULTIPLIER)
-              totalAmount += sellPrice
-              soldItems.push({
-                name: fish.name,
-                quantity: 1,
-                amount: sellPrice
-              })
-
-              dispatch('fishing/removeFishFromSale', fish.inventoryId, { root: true }).then(() => {
-                resolveRemove(true)
-              })
-            })
-          })
-
-          Promise.all(removePromises).then(() => {
-            dispatch('fishing/updateMoney', totalAmount, { root: true }).then(() => {
-              resolve({
-                success: true,
-                message: `Продана вся рыба за ${totalAmount} ₽`,
-                amount: totalAmount,
-                soldItems
-              })
-            })
-          })
-
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при продаже всей рыбы'
-          resolve({ success: false, message: errorMessage })
+        if (fishForSale.length === 0) {
+          resolve({ success: false, message: 'Нет рыбы для продажи' })
+          return
         }
+
+        let totalAmount = 0
+        const soldItems: Array<{name: string, quantity: number, amount: number}> = []
+
+        const removePromises = fishForSale.map((fish: any) => {
+          return new Promise((resolveRemove) => {
+            const sellPrice = Math.floor(fish.price * SELL_PRICE_MULTIPLIER)
+            totalAmount += sellPrice
+            soldItems.push({
+              name: fish.name,
+              quantity: 1,
+              amount: sellPrice
+            })
+
+            dispatch('fishing/removeFishFromSale', fish.inventoryId, { root: true }).then(() => {
+              resolveRemove(true)
+            })
+          })
+        })
+
+        Promise.all(removePromises).then(() => {
+          dispatch('fishing/updateMoney', totalAmount, { root: true }).then(() => {
+            resolve({
+              success: true,
+              message: `Продана вся рыба за ${totalAmount} ₽`,
+              amount: totalAmount,
+              soldItems
+            })
+          })
+        })
       })
     },
 
     sellTackle({ commit, dispatch, rootGetters }: any, { itemId, quantity = 1 }: { itemId: string; quantity?: number }) {
       return new Promise((resolve) => {
-        try {
-          const inventory = rootGetters['fishing/inventory']
-          const tackle = inventory.find((item: InventoryItem) => item.id === itemId && (item.type === 'tackle' || item.type === 'bait'))
+        const inventory = rootGetters['fishing/inventory']
+        const tackle = inventory.find((item: InventoryItem) =>
+          item.id === itemId && (item.type === 'tackle' || item.type === 'bait' || item.type === 'net')
+        )
 
-          if (!tackle) {
-            throw createShopError('Снасть не найдена в инвентаре', 'TACKLE_NOT_FOUND', { itemId })
-          }
+        if (!tackle) {
+          resolve({ success: false, message: 'Снасть не найдена в инвентаре' })
+          return
+        }
 
-          if (tackle.quantity < quantity) {
-            throw createShopError('Недостаточно снастей для продажи', 'INSUFFICIENT_QUANTITY', {
-              available: tackle.quantity,
-              requested: quantity
-            })
-          }
+        if (tackle.quantity < quantity) {
+          resolve({ success: false, message: 'Недостаточно снастей для продажи' })
+          return
+        }
 
-          if (itemId === 'rod_basic') {
-            throw createShopError('Базовую удочку нельзя продать', 'ROD_BASIC_UNSELLABLE')
-          }
+        if (itemId === 'rod_basic') {
+          resolve({ success: false, message: 'Базовую удочку нельзя продать' })
+          return
+        }
 
-          const sellPrice = Math.floor(tackle.price * TACKLE_SELL_PRICE_MULTIPLIER * quantity)
+        let sellMultiplier = TACKLE_SELL_PRICE_MULTIPLIER
+        if (tackle.type === 'net') {
+          sellMultiplier = NET_SELL_PRICE_MULTIPLIER
+        }
 
-          dispatch('fishing/removeFromInventory', { itemId, quantity }, { root: true }).then(() => {
-            dispatch('fishing/updateMoney', sellPrice, { root: true }).then(() => {
-              resolve({
-                success: true,
-                message: `Снасть продана за ${sellPrice} ₽`,
-                amount: sellPrice
-              })
+        const sellPrice = Math.floor(tackle.price * sellMultiplier * quantity)
+
+        dispatch('fishing/removeFromInventory', { itemId, quantity }, { root: true }).then(() => {
+          dispatch('fishing/updateMoney', sellPrice, { root: true }).then(() => {
+            resolve({
+              success: true,
+              message: `Снасть продана за ${sellPrice} ₽`,
+              amount: sellPrice
             })
           })
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при продаже снасти'
-          resolve({ success: false, message: errorMessage })
-        }
+        })
       })
+    },
+
+    sellNet({ dispatch }: any, { netId, quantity = 1 }: { netId: string; quantity?: number }) {
+      return dispatch('sellTackle', { itemId: netId, quantity })
     },
 
     useBait({ commit, dispatch, rootGetters }: any, baitId: string) {
       return new Promise((resolve) => {
-        try {
-          const inventory = rootGetters['fishing/inventory']
-          const bait = inventory.find((item: InventoryItem) => item.id === baitId && item.type === 'bait')
+        const inventory = rootGetters['fishing/inventory']
+        const bait = inventory.find((item: InventoryItem) => item.id === baitId && item.type === 'bait')
 
-          if (!bait || bait.quantity === 0) {
-            throw createShopError('Наживка не найдена', 'BAIT_NOT_FOUND')
-          }
-
-          dispatch('fishing/removeFromInventory', { itemId: baitId, quantity: 1 }, { root: true }).then(() => {
-            resolve({ success: true, message: 'Наживка использована' })
-          })
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при использовании наживки'
-          resolve({ success: false, message: errorMessage })
+        if (!bait || bait.quantity === 0) {
+          resolve({ success: false, message: 'Наживка не найдена' })
+          return
         }
+
+        dispatch('fishing/removeFromInventory', { itemId: baitId, quantity: 1 }, { root: true }).then(() => {
+          resolve({ success: true, message: 'Наживка использована' })
+        })
       })
     },
 
@@ -308,46 +401,60 @@ export const shopModule = {
       })
     },
 
+    buyAndEquipNet({ dispatch }: any, netId: string) {
+      return new Promise((resolve) => {
+        dispatch('buyItem', { itemId: netId, quantity: 1 }).then((purchaseResult: any) => {
+          if (!purchaseResult.success) {
+            resolve({ success: false, message: purchaseResult.message })
+            return
+          }
+
+          dispatch('fishing/equipNet', netId, { root: true }).then(() => {
+            resolve({ success: true, message: 'Сачок куплен и экипирован!' })
+          })
+        })
+      })
+    },
+
     upgradeTackle({ commit, dispatch, rootGetters }: any, { itemId, upgradeId }: { itemId: string; upgradeId: string }) {
       return new Promise((resolve) => {
-        try {
-          const upgrade = rootGetters['shop/getItemById'](upgradeId)
-          if (!upgrade) {
-            throw createShopError('Улучшение не найдено', 'UPGRADE_NOT_FOUND')
-          }
+        const upgrade = rootGetters['shop/getItemById'](upgradeId)
+        if (!upgrade) {
+          resolve({ success: false, message: 'Улучшение не найдено' })
+          return
+        }
 
-          const currentMoney = rootGetters['fishing/money']
-          if (currentMoney < upgrade.price) {
-            throw createShopError('Недостаточно денег для улучшения', 'INSUFFICIENT_FUNDS')
-          }
+        const currentMoney = rootGetters['fishing/money']
+        if (currentMoney < upgrade.price) {
+          resolve({ success: false, message: 'Недостаточно денег для улучшения' })
+          return
+        }
 
-          const inventory = rootGetters['fishing/inventory']
-          const itemToUpgrade = inventory.find((item: InventoryItem) => item.id === itemId)
-          if (!itemToUpgrade) {
-            throw createShopError('Снасть для улучшения не найдена', 'ITEM_NOT_FOUND')
-          }
+        const inventory = rootGetters['fishing/inventory']
+        const itemToUpgrade = inventory.find((item: InventoryItem) => item.id === itemId)
+        if (!itemToUpgrade) {
+          resolve({ success: false, message: 'Снасть для улучшения не найдена' })
+          return
+        }
 
-          const currentLevel = itemToUpgrade.properties?.level || 1
-          const upgradeLevel = upgrade.properties?.level || 2
+        const currentLevel = itemToUpgrade.properties?.level || 1
+        const upgradeLevel = upgrade.properties?.level || 2
 
-          if (upgradeLevel <= currentLevel) {
-            throw createShopError('Снасть уже имеет этот уровень или выше', 'ALREADY_UPGRADED')
-          }
+        if (upgradeLevel <= currentLevel) {
+          resolve({ success: false, message: 'Снасть уже имеет этот уровень или выше' })
+          return
+        }
 
-          dispatch('fishing/updateMoney', -upgrade.price, { root: true }).then(() => {
-            commit('UPGRADE_TACKLE', { itemId, upgrade })
+        dispatch('fishing/updateMoney', -upgrade.price, { root: true }).then(() => {
+          commit('UPGRADE_TACKLE', { itemId, upgrade })
 
-            dispatch('fishing/saveGameState', null, { root: true }).then(() => {
-              resolve({
-                success: true,
-                message: `Снасть улучшена до уровня ${upgradeLevel}!`
-              })
+          dispatch('fishing/saveGameState', null, { root: true }).then(() => {
+            resolve({
+              success: true,
+              message: `Снасть улучшена до уровня ${upgradeLevel}!`
             })
           })
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при улучшении снасти'
-          resolve({ success: false, message: errorMessage })
-        }
+        })
       })
     },
 
@@ -357,52 +464,48 @@ export const shopModule = {
 
     sellAllTackleByType({ dispatch, rootGetters }: any, type: string) {
       return new Promise((resolve) => {
-        try {
-          const inventory = rootGetters['fishing/inventory']
-          const tackleToSell = inventory.filter((item: InventoryItem) =>
-            item.type === 'tackle' && item.id.includes(type) && item.id !== 'rod_basic'
-          )
+        const inventory = rootGetters['fishing/inventory']
+        const tackleToSell = inventory.filter((item: InventoryItem) =>
+          item.type === 'tackle' && item.id.includes(type) && item.id !== 'rod_basic'
+        )
 
-          if (tackleToSell.length === 0) {
-            throw createShopError(`Нет снастей типа ${type} для продажи`, 'NO_TACKLE_FOR_TYPE')
-          }
-
-          let totalAmount = 0
-          const soldItems: Array<{name: string, quantity: number, amount: number}> = []
-
-          const sellPromises = tackleToSell.map((tackle: InventoryItem) => {
-            return new Promise((resolveSell) => {
-              const sellPrice = Math.floor(tackle.price * TACKLE_SELL_PRICE_MULTIPLIER * tackle.quantity)
-              totalAmount += sellPrice
-              soldItems.push({
-                name: tackle.name,
-                quantity: tackle.quantity,
-                amount: sellPrice
-              })
-
-              dispatch('fishing/removeFromInventory', {
-                itemId: tackle.id,
-                quantity: tackle.quantity
-              }, { root: true }).then(() => {
-                resolveSell(true)
-              })
-            })
-          })
-
-          Promise.all(sellPromises).then(() => {
-            dispatch('fishing/updateMoney', totalAmount, { root: true }).then(() => {
-              resolve({
-                success: true,
-                message: `Проданы все снасти типа ${type} за ${totalAmount} ₽`,
-                amount: totalAmount,
-                soldItems
-              })
-            })
-          })
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при продаже снастей по типу'
-          resolve({ success: false, message: errorMessage })
+        if (tackleToSell.length === 0) {
+          resolve({ success: false, message: `Нет снастей типа ${type} для продажи` })
+          return
         }
+
+        let totalAmount = 0
+        const soldItems: Array<{name: string, quantity: number, amount: number}> = []
+
+        const sellPromises = tackleToSell.map((tackle: InventoryItem) => {
+          return new Promise((resolveSell) => {
+            const sellPrice = Math.floor(tackle.price * TACKLE_SELL_PRICE_MULTIPLIER * tackle.quantity)
+            totalAmount += sellPrice
+            soldItems.push({
+              name: tackle.name,
+              quantity: tackle.quantity,
+              amount: sellPrice
+            })
+
+            dispatch('fishing/removeFromInventory', {
+              itemId: tackle.id,
+              quantity: tackle.quantity
+            }, { root: true }).then(() => {
+              resolveSell(true)
+            })
+          })
+        })
+
+        Promise.all(sellPromises).then(() => {
+          dispatch('fishing/updateMoney', totalAmount, { root: true }).then(() => {
+            resolve({
+              success: true,
+              message: `Проданы все снасти типа ${type} за ${totalAmount} ₽`,
+              amount: totalAmount,
+              soldItems
+            })
+          })
+        })
       })
     },
 
@@ -425,48 +528,45 @@ export const shopModule = {
 
     buyBestAvailableTackle({ dispatch, rootGetters }: any, type: string) {
       return new Promise((resolve) => {
-        try {
-          const availableItems = rootGetters['shop/availableItems']
-          const baitItems = rootGetters['shop/baitItems']
-          const allItems = [...availableItems, ...baitItems]
+        const availableItems = rootGetters['shop/availableItems']
+        const baitItems = rootGetters['shop/baitItems']
+        const netItems = rootGetters['shop/netItems']
+        const allItems = [...availableItems, ...baitItems, ...netItems]
 
-          const itemsOfType = allItems.filter((item: ShopItem) =>
-            item.id.includes(type)
-          ).sort((a: ShopItem, b: ShopItem) => b.price - a.price)
+        const itemsOfType = allItems.filter((item: ShopItem) =>
+          item.id.includes(type)
+        ).sort((a: ShopItem, b: ShopItem) => b.price - a.price)
 
-          let purchasedItem = null
+        let purchasedItem = null
 
-          const tryPurchase = (index: number) => {
-            if (index >= itemsOfType.length) {
-              resolve({ success: false, message: 'Не удалось купить ни одну снасть этого типа' })
-              return
-            }
-
-            const item = itemsOfType[index]
-            dispatch('buyItem', { itemId: item.id, quantity: 1 }).then((result: any) => {
-              if (result.success) {
-                purchasedItem = item
-                const itemType = purchasedItem.type === 'bait' ? 'bait' : type
-                dispatch('fishing/equipTackle', {
-                  type: itemType,
-                  itemId: purchasedItem.id
-                }, { root: true }).then(() => {
-                  resolve({
-                    success: true,
-                    message: `Куплена и экипирована ${purchasedItem.name}!`
-                  })
-                })
-              } else {
-                tryPurchase(index + 1)
-              }
-            })
+        const tryPurchase = (index: number) => {
+          if (index >= itemsOfType.length) {
+            resolve({ success: false, message: 'Не удалось купить ни одну снасть этого типа' })
+            return
           }
 
-          tryPurchase(0)
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка при покупке лучшей снасти'
-          resolve({ success: false, message: errorMessage })
+          const item = itemsOfType[index]
+          dispatch('buyItem', { itemId: item.id, quantity: 1 }).then((result: any) => {
+            if (result.success) {
+              purchasedItem = item
+              const itemType = purchasedItem.type === 'bait' ? 'bait' :
+                             purchasedItem.type === 'net' ? 'net' : type
+              dispatch('fishing/equipTackle', {
+                type: itemType,
+                itemId: purchasedItem.id
+              }, { root: true }).then(() => {
+                resolve({
+                  success: true,
+                  message: `Куплена и экипирована ${purchasedItem.name}!`
+                })
+              })
+            } else {
+              tryPurchase(index + 1)
+            }
+          })
         }
+
+        tryPurchase(0)
       })
     }
   }
