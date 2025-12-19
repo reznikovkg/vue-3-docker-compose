@@ -1,23 +1,23 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
 import IndexPage from './../components/pages/IndexPage.vue'
-import ExamplePage from './../components/pages/ExamplePage.vue'
+import BubbleGamePage from '../components/pages/BubbleGamePage.vue'
 
 export const ROUTES = {
-  EXAMPLE: 'EXAMPLE',
   INDEX: 'INDEX',
+  BUBBLE_GAME: 'BUBBLE_GAME',
 }
 
 const routes = [
   {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
-  },
-  {
     name: ROUTES.INDEX,
     path: '/',
     component: IndexPage
+  },
+  {
+    name: ROUTES.BUBBLE_GAME,
+    path: '/bubble-game',
+    component: BubbleGamePage
   },
 ]
 
