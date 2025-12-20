@@ -4,6 +4,9 @@
       <RouterLink :to="{ name: $routes.DICTOPHONE }">
      To Dictophone
     </RouterLink>
+    <RouterLink :to="{ name: $routes.GAME_PAGE }">
+     To Game
+    </RouterLink>
   </div>
 </template>
 
