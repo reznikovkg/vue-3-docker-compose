@@ -5,9 +5,14 @@
       <p class="landing__text">
         Перейдите к разделу диктофона, чтобы записывать голосовые заметки и управлять ими.
       </p>
-      <RouterLink :to="{ name: $routes.RECORDER }" class="landing__action">
-        Открыть диктофон
-      </RouterLink>
+      <div class="landing__actions">
+        <RouterLink :to="{ name: $routes.RECORDER }" class="landing__action">
+          Открыть диктофон
+        </RouterLink>
+        <RouterLink :to="{ name: $routes.GAME }" class="landing__action landing__action--ghost">
+          Запустить игру
+        </RouterLink>
+      </div>
     </header>
   </section>
 </template>
@@ -43,9 +48,14 @@
     color: rgba(15, 23, 42, 0.7);
   }
 
-  &__action {
-    align-self: center;
+  &__actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
     margin-top: 12px;
+  }
+
+  &__action {
     padding: 12px 24px;
     border-radius: 999px;
     background: linear-gradient(135deg, #22d3ee, #6366f1);
@@ -53,11 +63,17 @@
     text-decoration: none;
     font-weight: 600;
     box-shadow: 0 12px 24px rgba(79, 70, 229, 0.28);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 14px 28px rgba(79, 70, 229, 0.32);
+    }
+
+    &--ghost {
+      background: linear-gradient(135deg, #0ea5e9, #34d399);
+      color: #052e16;
+      box-shadow: 0 12px 24px rgba(16, 185, 129, 0.26);
     }
   }
 
