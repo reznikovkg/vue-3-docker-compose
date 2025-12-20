@@ -4,12 +4,14 @@ import IndexPage from './../components/pages/IndexPage.vue'
 import RecorderPage from './../components/pages/RecorderPage.vue'
 import ExamplePage from './../components/pages/ExamplePage.vue'
 import EditorPage from './../components/pages/EditorPage.vue'
+import GamePage from './../components/pages/GamePage.vue'
 
 export const ROUTES = {
   EXAMPLE: 'EXAMPLE',
   INDEX: 'INDEX',
   RECORDER: 'RECORDER',
   EDITOR: 'EDITOR',
+  GAME: 'GAME',
 }
 
 const routes = [
@@ -27,6 +29,11 @@ const routes = [
     name: ROUTES.EXAMPLE,
     path: '/example',
     component: ExamplePage
+  },
+  {
+    name: ROUTES.GAME,
+    path: '/game',
+    component: GamePage
   },
   {
     name: ROUTES.EDITOR,
