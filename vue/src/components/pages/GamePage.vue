@@ -18,25 +18,27 @@
           <button
             @click="() => ResetGame()"
             :disabled="isEmptyGrid"
-            class="btn btn--primary"
+            class="merge-game__button merge-game__button--secondary"
           >
             Reset Game
           </button>
           <button
             @click="() => addRandomItem()"
             :disabled="emptyCellsCount === 0"
-            class="btn btn--primary"
+            class="merge-game__button merge-game__button--primary"
           >
             Add Random Item
           </button>
         </div>
 
-        <div class="merge-game__board merge-game__board--expanded">
-          <div class="merge-game__moves">
+        <div class="merge-game__status">
+          <div class="merge-game__indicator">
             Moves: <span class="merge-game__moves-count">{{ moves }}</span>
           </div>
+        </div>
 
-          <div class="grid grid--expanded">
+        <div class="merge-game__board">
+          <div class="grid">
             <div
               v-for="(cell, index) in gridCells"
               :key="index"
@@ -59,7 +61,7 @@
             >
               <div
                 v-if="cell.item"
-                class="grid__item grid__item--expanded"
+                class="grid__item"
                 :class="[
                   `grid__item--level-${cell.item.id}`,
                   { 'grid__item--dragging': draggedItem?.row === cell.row && draggedItem?.col === cell.col }
@@ -166,14 +168,14 @@ const touchStart = ref<{
 const hoveredCell = ref<CellPosition | null>(null)
 
 const items: GameItem[] = [
-  { id: 1, name: "Seed",color: "#8B4513", points: 10},
+  { id: 1, name: "Seed", color: "#8B4513", points: 10 },
   { id: 2, name: "Sapling", color: "#228B22", points: 25 },
-  { id: 3, name: "Tree", color: "#006400", points: 50},
+  { id: 3, name: "Tree", color: "#006400", points: 50 },
   { id: 4, name: "Ancient Tree", color: "#004d00", points: 100 },
-  { id: 5, name: "Forest", color: "#003300", points: 200},
+  { id: 5, name: "Forest", color: "#003300", points: 200 },
   { id: 6, name: "Mystical Forest", color: "#001a00", points: 500 },
   { id: 7, name: "World Tree", color: "#000000", points: 1000 },
-  { id: 8, name: "Cosmic Tree", color: "#4B0082", points: 2500}
+  { id: 8, name: "Cosmic Tree", color: "#4B0082", points: 2500 }
 ]
 
 const handleDragStart = (event: DragEvent, cell: GridCell): void => {
@@ -261,7 +263,7 @@ const handleTouchEnd = (event: TouchEvent, cell: GridCell): void => {
     const targetCellElement = element?.closest('.grid__cell')
 
     if (targetCellElement &&
-        !(dragStartCell.value.row === cell.row && dragStartCell.value.col === cell.col)) {
+      !(dragStartCell.value.row === cell.row && dragStartCell.value.col === cell.col)) {
       const targetRow = parseInt(targetCellElement.dataset.row!)
       const targetCol = parseInt(targetCellElement.dataset.col!)
 
@@ -295,466 +297,404 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .merge-game {
+  $self: &;
   max-width: 1800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
 
-.merge-game__header {
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  color: white;
-  padding: 25px 30px;
-  text-align: center;
-}
+  &__container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
 
-.merge-game__title {
-  font-size: 2.8em;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
+  &__header {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+  }
 
-.merge-game__info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-top: 20px;
-}
+  &__title {
+    color: white;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
 
-.merge-game__score-container {
-  display: flex;
-  gap: 20px;
+  &__info {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__score-container {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  &__main {
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    gap: 2rem;
+    min-height: 800px;
+    align-items: start;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    &--primary {
+      background-color: #42b883;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: #369870;
+      }
+    }
+
+    &--secondary {
+      background-color: #3498db;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: #2980b9;
+      }
+    }
+
+    &--danger {
+      background-color: #e74c3c;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background-color: #c0392b;
+      }
+    }
+  }
+
+  &__status {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  &__indicator {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #2c3e50;
+  }
+
+  &__board {
+    background: #f0f0f0;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    min-height: 700px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__reference {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-height: 700px;
+    overflow-y: auto;
+  }
+
+  &__reference-title {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
 }
 
 .score-box {
   background: rgba(255, 255, 255, 0.2);
-  padding: 15px 25px;
-  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  border-radius: 0.5rem;
   min-width: 150px;
   backdrop-filter: blur(10px);
-}
 
-.score-box__label {
-  display: block;
-  font-size: 0.9em;
-  opacity: 0.9;
-  margin-bottom: 5px;
-}
+  &__label {
+    display: block;
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+  }
 
-.score-box__value {
-  display: block;
-  font-size: 2em;
-  font-weight: bold;
-}
-
-.merge-game__main {
-  padding: 30px;
-  display: grid;
-  grid-template-columns: 1fr 3fr 1.1fr;
-  gap: 25px;
-  min-height: 800px;
-  align-items: start;
-}
-
-@media (max-width: 1200px) {
-  .merge-game__main {
-    grid-template-columns: 1fr;
+  &__value {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: bold;
   }
 }
 
-.merge-game__controls {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.btn {
-  padding: 18px 25px;
-  font-size: 1.1em;
-  font-weight: bold;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.btn:active {
-  transform: translateY(-1px);
-}
-
-.btn--primary {
-  background: linear-gradient(45deg, #4CAF50, #2E7D32);
-  color: white;
-}
-
-.merge-game__board--expanded {
-  background: #f0f0f0;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
-  min-height: 700px;
-  display: flex;
-  flex-direction: column;
-}
-
-.merge-game__moves {
-  font-size: 0.9em;
-  color: #666;
-  margin-bottom: 15px;
-  text-align: right;
-  padding: 0 10px;
-}
-
-.merge-game__moves-count {
-  font-weight: bold;
-  color: #667eea;
-  font-size: 1.1em;
-}
-
-.grid--expanded {
+.grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  gap: 12px;
+  gap: 0.75rem;
   aspect-ratio: 1 / 1;
   background: #bbada0;
-  padding: 15px;
-  border-radius: 10px;
+  padding: 1rem;
+  border-radius: 0.5rem;
   touch-action: none;
   flex: 1;
   min-height: 600px;
-}
 
-.grid__cell {
-  background: #eee4da;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+  &__cell {
+    background: #eee4da;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
 
-.grid__cell--empty {
-  background: rgba(238, 228, 218, 0.35);
-}
+    &--empty {
+      background: rgba(238, 228, 218, 0.35);
 
-.grid__cell--empty::after {
-  content: '';
-  position: absolute;
-  width: 20%;
-  height: 20%;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-}
+      &::after {
+        content: '';
+        position: absolute;
+        width: 20%;
+        height: 20%;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+      }
+    }
 
-.grid__cell--hovered {
-  transform: scale(1.08);
-  z-index: 1;
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
-}
+    &--hovered {
+      transform: scale(1.08);
+      z-index: 1;
+      box-shadow: 0 0 25px rgba(255, 255, 255, 0.6);
+    }
+  }
 
-.grid__item--expanded {
-  width: 95%;
-  height: 95%;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
-  user-select: none;
-  cursor: grab;
-  position: relative;
-  overflow: hidden;
-}
+  &__item {
+    width: 95%;
+    height: 95%;
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+    user-select: none;
+    cursor: grab;
+    position: relative;
+    overflow: hidden;
 
-.grid__item--expanded:active {
-  cursor: grabbing;
-}
+    &:active {
+      cursor: grabbing;
+    }
 
-.grid__item--dragging {
-  opacity: 0.7;
-  transform: scale(1.2) rotate(5deg);
-  z-index: 1000;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-}
+    &--dragging {
+      opacity: 0.7;
+      transform: scale(1.2) rotate(5deg);
+      z-index: 1000;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    }
 
-.grid__item-name {
-  font-size: 0.5em;
-  opacity: 0.9;
-  margin-top: 1px;
-  padding: 0 3px;
-  text-align: center;
-  line-height: 1.1;
-  max-width: 90%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+    &-name {
+      font-size: 0.5rem;
+      opacity: 0.9;
+      margin-top: 0.25rem;
+      padding: 0 0.25rem;
+      text-align: center;
+      line-height: 1.1;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-.grid__item-level {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
-  font-size: 0.5em;
-  padding: 1px 4px;
-  border-radius: 8px;
-  font-weight: bold;
-  min-width: 14px;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.merge-game__reference {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  min-width: 250px;
-  max-height: 700px;
-  overflow: hidden;
-}
-
-.merge-game__reference-title {
-  margin-bottom: 12px;
-  color: #333;
-  text-align: center;
-  font-size: 1.1em;
-  font-weight: 600;
+    &-level {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      background: rgba(0, 0, 0, 0.4);
+      color: white;
+      font-size: 0.5rem;
+      padding: 0.125rem 0.375rem;
+      border-radius: 0.5rem;
+      font-weight: bold;
+      min-width: 1rem;
+      text-align: center;
+      line-height: 1.2;
+    }
+  }
 }
 
 .merge-chain {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
+  gap: 0.75rem;
 
-.merge-chain__step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.merge-chain__step:last-child {
-  margin-bottom: 0;
-}
-
-.merge-chain__items {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  flex-wrap: nowrap;
-  width: 100%;
-}
-
-.merge-chain__source {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.merge-chain__source-item {
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  color: white;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
-  cursor: help;
-}
-
-.merge-chain__source-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-}
-
-.merge-chain__item-level {
-  font-size: 0.9em;
-  font-weight: bold;
-}
-
-.merge-chain__plus {
-  font-size: 0.9em;
-  font-weight: bold;
-  color: #667eea;
-  min-width: 10px;
-  text-align: center;
-}
-
-.merge-chain__equals {
-  font-size: 0.9em;
-  font-weight: bold;
-  color: #4CAF50;
-  min-width: 10px;
-  text-align: center;
-}
-
-.merge-chain__result {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
-  color: white;
-  font-weight: bold;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s ease;
-  cursor: help;
-}
-
-.merge-chain__result:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
-}
-
-.merge-chain__points {
-  font-size: 0.6em;
-  background: rgba(255, 255, 255, 0.25);
-  padding: 1px 4px;
-  border-radius: 8px;
-  margin-top: 2px;
-  line-height: 1.2;
-}
-
-@media (max-width: 1200px) {
-  .merge-game__main {
-    grid-template-columns: 1fr;
+  &__step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
 
-  .merge-game__reference {
-    min-width: auto;
-    max-height: none;
-    overflow: visible;
+  &__items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    flex-wrap: nowrap;
+    width: 100%;
   }
 
-  .merge-chain__items {
-    flex-wrap: wrap;
+  &__source {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  &__source-item {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.375rem;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    cursor: help;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  &__item-level {
+    font-size: 0.875rem;
+    font-weight: bold;
+  }
+
+  &__plus {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: #667eea;
+    min-width: 0.75rem;
+    text-align: center;
+  }
+
+  &__equals {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: #42b883;
+    min-width: 0.75rem;
+    text-align: center;
+  }
+
+  &__result {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.375rem;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+    cursor: help;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  &__points {
+    font-size: 0.5rem;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.5rem;
+    margin-top: 0.125rem;
+    line-height: 1.2;
   }
 }
 
 @media (max-width: 768px) {
-  .merge-game__title {
-    font-size: 2em;
+  .merge-game {
+    padding: 1rem;
+
+    &__title {
+      font-size: 2rem;
+    }
+
+    &__main {
+      padding: 1rem;
+      gap: 1rem;
+    }
+
+    &__board {
+      min-height: 400px;
+      padding: 1rem;
+    }
   }
 
-  .merge-game__info {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .score-box {
-    min-width: 120px;
-    padding: 10px 15px;
-  }
-
-  .grid--expanded {
-    gap: 6px;
-    padding: 8px;
+  .grid {
+    gap: 0.375rem;
+    padding: 0.5rem;
     min-height: 400px;
-  }
 
-  .merge-game__moves {
-    font-size: 0.85em;
-    margin-bottom: 10px;
-  }
+    &__item-name {
+      display: none;
+    }
 
-  .grid__item-name {
-    display: none;
-  }
-
-  .grid__item-level {
-    font-size: 0.4em;
-    top: 3px;
-    right: 3px;
-    padding: 1px 3px;
-  }
-
-  .btn {
-    padding: 15px;
-    font-size: 1em;
-  }
-
-  .merge-game__main {
-    padding: 20px;
-    gap: 20px;
-  }
-
-  .merge-chain {
-    gap: 8px;
-  }
-
-  .merge-chain__step {
-    gap: 6px;
-  }
-
-  .merge-chain__items {
-    gap: 4px;
-  }
-
-  .merge-chain__source {
-    flex-direction: row;
-    gap: 2px;
-  }
-
-  .merge-chain__source-item {
-    width: 35px;
-    height: 35px;
-  }
-
-  .merge-chain__result {
-    width: 42px;
-    height: 42px;
-  }
-
-  .merge-chain__plus,
-  .merge-chain__equals {
-    font-size: 0.8em;
-  }
-
-  .merge-chain__item-level {
-    font-size: 0.8em;
-  }
-
-  .merge-chain__points {
-    font-size: 0.55em;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid--expanded {
-    aspect-ratio: 1 / 1;
-    min-height: 350px;
+    &__item-level {
+      font-size: 0.4rem;
+      top: 0.2rem;
+      right: 0.2rem;
+    }
   }
 
   .merge-game__controls {
@@ -762,31 +702,44 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
-  .btn {
+  .merge-game__button {
     flex: 1;
     min-width: 120px;
   }
 
-  .merge-chain__items {
-    flex-direction: row;
+  .merge-chain {
+    gap: 0.5rem;
+
+    &__items {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    &__source-item {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    &__result {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    aspect-ratio: 1 / 1;
+    min-height: 350px;
   }
 
-  .merge-chain__source {
-    flex-direction: row;
-  }
+  .score-box {
+    min-width: 120px;
+    padding: 0.75rem 1rem;
 
-  .merge-chain__source-item {
-    width: 30px;
-    height: 30px;
-  }
-
-  .merge-chain__result {
-    width: 36px;
-    height: 36px;
-  }
-
-  .grid__item-level {
-    font-size: 0.35em;
+    &__value {
+      font-size: 1.5rem;
+    }
   }
 }
 </style>
