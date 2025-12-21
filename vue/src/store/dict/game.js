@@ -19,15 +19,8 @@ export const GameModule = {
   },
 
   getters: {
-    getGrid: (state) => state.grid,
     getScore: (state) => state.score,
-    getHighScore: (state) => state.highScore,
     getMoves: (state) => state.moves,
-    getMergedCount: (state) => state.mergedCount,
-    getPlayTime: (state) => state.playTime,
-    getMaxLevelReached: (state) => state.maxLevelReached,
-    getShowGameOver: (state) => state.showGameOver,
-    getNotification: (state) => state.notification,
     getGridCells: (state) => {
     const GRID_SIZE = 8;
     const cells = [];
@@ -65,19 +58,6 @@ export const GameModule = {
       }
       return true;
     },
-    getFormattedPlayTime: (state) => {
-      const hours = Math.floor(state.playTime / 3600);
-      const minutes = Math.floor((state.playTime % 3600) / 60);
-      const seconds = state.playTime % 60;
-
-      if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`;
-      } else if (minutes > 0) {
-        return `${minutes}m ${seconds}s`;
-      } else {
-        return `${seconds}s`;
-      }
-    }
   },
 
   mutations: {
@@ -199,14 +179,14 @@ export const GameModule = {
     addRandomItem({ commit, state, dispatch }) {
   const GRID_SIZE = 8;
   const items = [
-          { id: 1, name: "Seed", color: "#8B4513", points: 10, emoji: "🌱" },
-          { id: 2, name: "Sapling", color: "#228B22", points: 25, emoji: "🌿" },
-          { id: 3, name: "Tree", color: "#006400", points: 50, emoji: "🌳" },
-          { id: 4, name: "Ancient Tree", color: "#004d00", points: 100, emoji: "🪵" },
-          { id: 5, name: "Forest", color: "#003300", points: 200, emoji: "🌲" },
-          { id: 6, name: "Mystical Forest", color: "#001a00", points: 500, emoji: "🧚" },
-          { id: 7, name: "World Tree", color: "#000000", points: 1000, emoji: "🌍" },
-          { id: 8, name: "Cosmic Tree", color: "#4B0082", points: 2500, emoji: "✨" }
+          { id: 1, name: "Seed", color: "#8B4513", points: 10},
+          { id: 2, name: "Sapling", color: "#228B22", points: 25 },
+          { id: 3, name: "Tree", color: "#006400", points: 50},
+          { id: 4, name: "Ancient Tree", color: "#004d00", points: 100},
+          { id: 5, name: "Forest", color: "#003300", points: 200 },
+          { id: 6, name: "Mystical Forest", color: "#001a00", points: 500 },
+          { id: 7, name: "World Tree", color: "#000000", points: 1000 },
+          { id: 8, name: "Cosmic Tree", color: "#4B0082", points: 2500 }
         ];
 
 
@@ -273,35 +253,36 @@ export const GameModule = {
       }
     },
 
-
     moveItem({ commit, dispatch, state }, { fromRow, fromCol, toRow, toCol }) {
-      if (fromRow === toRow && fromCol === toCol) return;
+  if (fromRow === toRow && fromCol === toCol) return;
 
-      const fromItem = state.grid[fromRow]?.[fromCol]?.item;
-      const toItem = state.grid[toRow]?.[toCol]?.item;
+  const fromItem = state.grid[fromRow]?.[fromCol]?.item;
+  const toItem = state.grid[toRow]?.[toCol]?.item;
 
-      if (!fromItem) return;
+  if (!fromItem) return;
 
-      commit('INCREMENT_MOVES');
+  commit('INCREMENT_MOVES');
 
-      if (!toItem) {
-        commit('MOVE_CELL', { fromRow, fromCol, toRow, toCol });
-      } else if (fromItem.id === toItem.id) {
-        const items = [
-          { id: 1, name: "Seed", color: "#8B4513", points: 10, emoji: "🌱" },
-          { id: 2, name: "Sapling", color: "#228B22", points: 25, emoji: "🌿" },
-          { id: 3, name: "Tree", color: "#006400", points: 50, emoji: "🌳" },
-          { id: 4, name: "Ancient Tree", color: "#004d00", points: 100, emoji: "🪵" },
-          { id: 5, name: "Forest", color: "#003300", points: 200, emoji: "🌲" },
-          { id: 6, name: "Mystical Forest", color: "#001a00", points: 500, emoji: "🧚" },
-          { id: 7, name: "World Tree", color: "#000000", points: 1000, emoji: "🌍" },
-          { id: 8, name: "Cosmic Tree", color: "#4B0082", points: 2500, emoji: "✨" }
+  if (!toItem) {
+    commit('MOVE_CELL', { fromRow, fromCol, toRow, toCol });
+  } else if (fromItem.id === toItem.id) {
+
+      const items = [
+          { id: 1, name: "Seed", color: "#8B4513", points: 10 },
+          { id: 2, name: "Sapling", color: "#228B22", points: 25 },
+          { id: 3, name: "Tree", color: "#006400", points: 50 },
+          { id: 4, name: "Ancient Tree", color: "#004d00", points: 100},
+          { id: 5, name: "Forest", color: "#003300", points: 200 },
+          { id: 6, name: "Mystical Forest", color: "#001a00", points: 500 },
+          { id: 7, name: "World Tree", color: "#000000", points: 1000 },
+          { id: 8, name: "Cosmic Tree", color: "#4B0082", points: 2500}
         ];
 
-        const nextLevelItem = items.find(i => i.id === fromItem.id + 1);
 
-        if (nextLevelItem) {
-          commit('SET_CELL_ITEM', {
+    const nextLevelItem = items.find(i => i.id === fromItem.id + 1);
+
+    if (nextLevelItem) {
+            commit('SET_CELL_ITEM', {
             row: toRow,
             col: toCol,
             item: nextLevelItem
@@ -320,13 +301,20 @@ export const GameModule = {
               commit('SET_SHOW_GAME_OVER', true);
             }, 500);
           }
-        }
-      } else {
-        commit('SWAP_CELLS', { fromRow, fromCol, toRow, toCol });
-      }
+    }
+  } else {
+    commit('SWAP_CELLS', { fromRow, fromCol, toRow, toCol });
+  }
 
-      dispatch('saveToStorage');
-    },
+
+  if (state.moves > 0) {
+    setTimeout(() => {
+      dispatch('addRandomItem');
+    }, 300);
+  }
+
+  dispatch('saveToStorage');
+},
 
     saveToStorage({ state }) {
       const gameState = {
@@ -380,11 +368,6 @@ export const GameModule = {
         });
         dispatch('saveToStorage');
       }
-    },
-
-    newGame({ dispatch }) {
-      dispatch('resetGame');
-      dispatch('hideGameOver');
     },
 
     hideGameOver({ commit }) {
