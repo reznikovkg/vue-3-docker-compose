@@ -94,10 +94,12 @@ export const MAPS = [
       enemies: [
         { health: 100, reward: 8, type: 'common' },
         { health: 100, reward: 8, type: 'common' },
-        { health: 100, reward: 8, type: 'common' },
+        { health: 150, speed: 60, reward: 15, type: 'shooter_light' },
         { health: 100, reward: 8, type: 'common' },
         { health: 200, speed: 80, reward: 12, type: 'medium' },
+        { health: 200, speed: 55, reward: 20, type: 'shooter_medium' },
         { health: 500, speed: 70, reward: 20, type: 'hard' },
+        { health: 300, speed: 50, reward: 30, type: 'shooter_heavy' },
       ],
     },
   },
@@ -110,5 +112,4 @@ export const MOVEMENT_KEY_OFFSETS = {
   ArrowRight: { dx: +1, dy: 0 },
 };
 
-// Время до удаления (в мс)
 export const LONG_PRESS_DURATION = 500;

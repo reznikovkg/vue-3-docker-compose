@@ -10,15 +10,11 @@
         {{ item.label }}
       </Link>
     </div>
-    <div class="menu__game-info">
-      <div class="menu__game-money">${{ money || 0 }}</div>
-    </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useStore } from 'vuex';
+import { ref } from 'vue';
 
 import Link from '@/components/Link.vue';
 import { ROUTES } from '@/router';
@@ -28,9 +24,6 @@ const items = ref([
   { label: 'Rules', to: { name: ROUTES.RULES } },
   { label: 'Levels', to: { name: ROUTES.LEVELS } },
 ]);
-
-const store = useStore();
-const money = computed(() => store.state.money);
 </script>
 
 <style scoped lang="scss">
@@ -43,11 +36,6 @@ const money = computed(() => store.state.money);
   font-size: 20px;
 
   &__links {
-    display: flex;
-    gap: 15px;
-  }
-
-  &__game-info {
     display: flex;
     gap: 15px;
   }

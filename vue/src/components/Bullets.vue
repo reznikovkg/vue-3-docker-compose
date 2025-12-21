@@ -2,6 +2,7 @@
   <svg class="bullets">
     <line
       class="bullets__line"
+      :style="lineStyle"
       :x1="start.x"
       :y1="start.y"
       :x2="end.x"
@@ -11,16 +12,24 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { computed } from 'vue';
 
 import { Point } from '@/shared/models';
+
+type Colors = 'enemy' | 'ally';
 
 export interface BulletsProps {
   start: Point;
   end: Point;
+  color?: Colors;
 }
+const props = withDefaults(defineProps<BulletsProps>(), {
+  color: 'ally',
+});
 
-defineProps<BulletsProps>();
+const lineStyle = computed(() => ({
+  stroke: props.color === 'enemy' ? '#f71042' : '#fbf9f9',
+}));
 </script>
 
 <style lang="scss">
@@ -35,7 +44,6 @@ defineProps<BulletsProps>();
   border-radius: 50%;
 
   &__line {
-    stroke: #fbf9f9;
     stroke-width: 3px;
     stroke-opacity: 0.8;
     stroke-dasharray: 3 7;

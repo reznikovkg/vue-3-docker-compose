@@ -1,6 +1,15 @@
 import { ActionContext } from 'vuex/types';
 
-import { Point, ZoneModel, TowerModel, EnemyModel } from '@/shared/models';
+import {
+  Point,
+  ZoneModel,
+  TowerModel,
+  EnemyModel,
+  ShooterEnemyModel,
+  AllyModel,
+  BarricadeModel,
+  ArtilleryStrikeModel,
+} from '@/shared/models';
 import { EnemyType } from '@/shared/types';
 
 export interface ZoneSize {
@@ -12,7 +21,7 @@ export interface SpawnEnemyItem {
   health?: number;
   speed?: number;
   reward?: number;
-  type?: EnemyType;
+  type?: EnemyType | 'shooter_light' | 'shooter_medium' | 'shooter_heavy';
 }
 
 export interface SpawnConfig {
@@ -46,9 +55,15 @@ export interface State {
   buildZones: ZoneModel[];
   path: Point[];
   pathPixel: Point[];
+  reversePath: Point[]; // обратный путь для союзников
+  reversePathPixel: Point[];
 
   towers: TowerModel[];
   enemies: EnemyModel[];
+  shooterEnemies: ShooterEnemyModel[];
+  allies: AllyModel[];
+  barricades: BarricadeModel[];
+  artilleryStrikes: ArtilleryStrikeModel[];
   selectedEnemyIndex: number | null;
 
   spawnConfig: SpawnConfig | null;
@@ -82,9 +97,15 @@ export interface Mutations {
   SET_BUILD_ZONES: Mutation<ZoneModel[]>;
   SET_PATH: Mutation<Point[]>;
   SET_PATH_PIXEL: Mutation<Point[]>;
+  SET_REVERSE_PATH: Mutation<Point[]>;
+  SET_REVERSE_PATH_PIXEL: Mutation<Point[]>;
 
   SET_TOWERS: Mutation<TowerModel[]>;
   SET_ENEMIES: Mutation<EnemyModel[]>;
+  SET_SHOOTER_ENEMIES: Mutation<ShooterEnemyModel[]>;
+  SET_ALLIES: Mutation<AllyModel[]>;
+  SET_BARRICADES: Mutation<BarricadeModel[]>;
+  SET_ARTILLERY_STRIKES: Mutation<ArtilleryStrikeModel[]>;
   SET_SELECTED_ENEMY_INDEX: Mutation<number | null>;
 
   SET_SPAWN_CONFIG: Mutation<SpawnConfig | null>;
@@ -98,11 +119,47 @@ export interface Mutations {
   }>;
 }
 
+export interface Getters {
+  money: (state: State) => number;
+  isPlaying: (state: State) => boolean;
+  gameOver: (state: State) => boolean;
+  gameResult: (state: State) => GameResult | null;
+  currentLevelId: (state: State) => number;
+
+  zoneSize: (state: State) => ZoneSize | null;
+  buildZones: (state: State) => ZoneModel[];
+  path: (state: State) => Point[];
+  pathPixel: (state: State) => Point[];
+  reversePath: (state: State) => Point[];
+  reversePathPixel: (state: State) => Point[];
+
+  towers: (state: State) => TowerModel[];
+  enemies: (state: State) => EnemyModel[];
+  shooterEnemies: (state: State) => ShooterEnemyModel[];
+  allies: (state: State) => AllyModel[];
+  barricades: (state: State) => BarricadeModel[];
+  artilleryStrikes: (state: State) => ArtilleryStrikeModel[];
+  selectedEnemyIndex: (state: State) => number | null;
+
+  spawnConfig: (state: State) => SpawnConfig | null;
+  spawnState: (state: State) => SpawnState;
+}
+
 export interface Actions {
   initLevel: Action<number | undefined, void>;
   setZoneSize: Action<ZoneSize, void>;
   recomputePathPixel: Action<void, void>;
   placeTowerAt: Action<Point, boolean>;
+  placeBarricadeAt: Action<
+    {
+      startPoint: Point;
+      endPoint: Point;
+      barricadeType: 'wooden' | 'stone' | 'metal';
+    },
+    boolean
+  >;
+  callArtilleryStrike: Action<Point, boolean>;
+  spawnAlly: Action<void, void>;
   deleteObjectAt: Action<Point, void>;
   spawnEnemy: Action<void, void>;
   updateGame: Action<number, void>;

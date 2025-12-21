@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from 'vue';
+import { computed } from 'vue';
 
 import { Point } from '@/shared/models';
 import { EnemyType } from '@/shared/types';

@@ -46,12 +46,12 @@ defineProps<LevelTileProps>();
   &:active {
     transform: scale(0.98);
   }
-}
 
-.level-tile_locked {
-  background: rgba(17, 17, 17, 0.3);
-  border: 2px solid #757575;
-  opacity: 0.6;
-  pointer-events: none;
+  &_locked {
+    background: rgba(17, 17, 17, 0.3);
+    border: 2px solid #757575;
+    opacity: 0.6;
+    pointer-events: none;
+  }
 }
 </style>
