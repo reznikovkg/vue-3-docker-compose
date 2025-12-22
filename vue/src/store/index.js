@@ -80,20 +80,16 @@ export default createStore({
       const baseMax = 5 * getters.hasBuildings.length;
       const roadLevel = getters.getRoadLevel;
       const roadCount = getters.getRoadCount;
-    
-      if (roadLevel === 1)
-      {
-        return baseMax;
+      switch (roadLevel) {
+        case 1:
+          return baseMax;
+        case 2:
+          return baseMax + roadCount; 
+        case 3:
+          return baseMax + (roadCount * 2); 
+        default:
+          return baseMax;
       }
-      if (roadLevel === 2)
-      {
-        return baseMax + roadCount; 
-      }
-      if (roadLevel === 3)
-      {
-        return baseMax + (roadCount * 2); 
-      }
-      return baseMax;
     },
     getRoads: (state) => {
       return state.allPlacedObjects.filter(obj => obj && obj.type === 'road');
