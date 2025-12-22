@@ -61,9 +61,13 @@
     <div
       v-if="activeTooltip"
       class="custom-tooltip"
-      :class="tooltipClass"
-      :style="tooltipStyle"
-      ref="tooltipRef">
+      :class="`custom-tooltip--${activeTooltip.type}`"
+      :style="{
+        left: `${tooltipPosition.x}px`,
+        top: `${tooltipPosition.y}px`,
+        display: 'block'
+      }"
+    >
       <div class="custom-tooltip__content">
         <div v-if="activeTooltip.type === 'visitor'" class="custom-tooltip__visitor-info">
           <div class="custom-tooltip__row">
@@ -76,28 +80,17 @@
               ></div>
             </div>
           </div>
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Усталость:</span>
-            <span class="custom-tooltip__value" :class="{ 'custom-tooltip__value--critical': activeTooltip.data.fatigue < 3 }">
-              {{ activeTooltip.data.fatigue }}
-            </span>
-          </div>
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Голод:</span>
-            <span class="custom-tooltip__value" :class="{ 'custom-tooltip__value--critical': activeTooltip.data.hunger < 3 }">
-              {{ activeTooltip.data.hunger }}
-            </span>
-          </div>
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Скука:</span>
-            <span class="custom-tooltip__value" :class="{ 'custom-tooltip__value--critical': activeTooltip.data.boredom < 3 }">
-              {{ activeTooltip.data.boredom }}
-            </span>
-          </div>
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Нужда:</span>
-            <span class="custom-tooltip__value" :class="{ 'custom-tooltip__value--critical': activeTooltip.data.need < 3 }">
-              {{ activeTooltip.data.need }}
+          <div 
+            v-for="stat in visitorStatsConfig" 
+            :key="stat.key"
+            class="custom-tooltip__row"
+          >
+            <span class="custom-tooltip__label">{{ stat.label }}:</span>
+            <span 
+              class="custom-tooltip__value" 
+              :class="{ 'custom-tooltip__value--critical': (activeTooltip.data[stat.key] || 0) < 3 }"
+            >
+              {{ activeTooltip.data[stat.key] || 0 }}
             </span>
           </div>
           <div class="custom-tooltip__row">
@@ -109,18 +102,14 @@
             <span class="custom-tooltip__value">позиция {{ activeTooltip.data.queuePosition }}</span>
           </div>
         </div>
-        <div v-if="activeTooltip.type === 'queue'" class="custom-tooltip__queue-info">
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Очередь:</span>
-            <span class="custom-tooltip__value">{{ activeTooltip.data.length }} человек</span>
-          </div>
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Занято:</span>
-            <span class="custom-tooltip__value">{{ activeTooltip.data.occupied }}/{{ activeTooltip.data.capacity }}</span>
-          </div>
-          <div class="custom-tooltip__row">
-            <span class="custom-tooltip__label">Здание:</span>
-            <span class="custom-tooltip__value">{{ activeTooltip.data.buildingName }}</span>
+       <div v-if="activeTooltip.type === 'queue'" class="custom-tooltip__queue-info">
+          <div 
+            v-for="row in queueInfoRows" 
+            :key="row.key"
+            class="custom-tooltip__row"
+          >
+            <span class="custom-tooltip__label">{{ row.label }}:</span>
+            <span class="custom-tooltip__value">{{ row.value }}</span>
           </div>
         </div>
       </div>
@@ -149,7 +138,13 @@ const hoveredCell = ref({ row: -1, col: -1 });
 const isPlacementPossible = ref(true);
 const activeTooltip = ref(null);
 const tooltipPosition = ref({ x: 0, y: 0 });
-const tooltipRef = ref(null);
+
+const visitorStatsConfig = [
+  { key: 'fatigue', label: 'Усталость' },
+  { key: 'hunger', label: 'Голод' },
+  { key: 'boredom', label: 'Скука' },
+  { key: 'need', label: 'Нужда' }
+];
 
 const componentContext = {
     highlightedCells,
@@ -216,23 +211,30 @@ const getBuildingOccupancy = (buildingId) => {
   return store.getters.getBuildingOccupancy(buildingId);
 };
 
-const tooltipClass = computed(() => {
-  if (!activeTooltip.value) return '';
-  return `custom-tooltip--${activeTooltip.value.type}`;
+const queueInfoRows = computed(() => {
+  if (!activeTooltip.value || activeTooltip.value.type !== 'queue') return [];
+  
+  const data = activeTooltip.value.data;
+  return [
+    { key: 'length', label: 'Очередь', value: `${data.length} человек` },
+    { key: 'occupied', label: 'Занято', value: `${data.occupied}/${data.capacity}` },
+    { key: 'building', label: 'Здание', value: data.buildingName }
+  ];
 });
 
-const visitorStyle = (visitor) => {
-  return {
-    '--visitor-x': visitor.x,
-    '--visitor-y': visitor.y,
-    '--mood-color': getMoodColor(visitor.mood),
-    left: `calc(${visitor.x} * var(--cell-size))`,
-    top: `calc(${visitor.y} * var(--cell-size))`,
-  };
-};
+const visitorStyle = (visitor) => ({
+  '--visitor-x': visitor.x,
+  '--visitor-y': visitor.y,
+  '--mood-color': getMoodColor(visitor.mood),
+  left: `calc(${visitor.x} * var(--cell-size))`,
+  top: `calc(${visitor.y} * var(--cell-size))`,
+});
 
 const queueIndicatorStyle = (building) => {
-  if (!building.buildingEntrance) return {};
+  if (!building.buildingEntrance)
+  {
+    return {};
+  }
   return {
     left: `calc(${building.buildingEntrance.col} * var(--cell-size))`,
     top: `calc(${building.buildingEntrance.row} * var(--cell-size))`,
@@ -299,34 +301,28 @@ const updateTooltipPosition = (event) => {
   x += 10;
   y += 10;
   
-  if (tooltipRef.value) {
-    const tooltipRect = tooltipRef.value.getBoundingClientRect();
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    if (x + tooltipRect.width > windowWidth) {
-      x = event.clientX - tooltipRect.width - 10;
-    }
-    
-    if (y + tooltipRect.height > windowHeight) {
-      y = event.clientY - tooltipRect.height - 10;
-    }
-    
-    x = Math.max(5, x);
-    y = Math.max(5, y);
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  const tooltipWidth = 250;
+  const tooltipHeight = 200;
+
+   if (x + tooltipWidth > windowWidth) {
+    x = event.clientX - tooltipWidth - 10;
   }
   
+  if (y + tooltipHeight > windowHeight) {
+    y = event.clientY - tooltipHeight - 10;
+  }
+
+  x = Math.max(5, x);
+  y = Math.max(5, y);
+
   tooltipPosition.value = { 
     x: Math.round(x),
     y: Math.round(y)
   };
 };
 
-const tooltipStyle = computed(() => ({
-  left: `${tooltipPosition.value.x}px`,
-  top: `${tooltipPosition.value.y}px`,
-  display: activeTooltip.value ? 'block' : 'none'
-}));
 
 const handleVisitorClick = (visitorId) => {
   emit('visitor-clicked', visitorId);
@@ -594,11 +590,6 @@ onUnmounted(() => {
     color: white;
     font-weight: 600;
     text-align: right;
-    
-    &--critical {
-      color: #ff6b6b;
-      font-weight: bold;
-    }
   }
   
   &__value-container {

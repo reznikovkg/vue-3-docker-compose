@@ -23,7 +23,6 @@
         <Toolbar @set-mode="(mode) => setGameModeHandler(mode)" :current-mode="gameMode" />
         <ObjectSelector @select-object="(object) => setSelectedObjectHandler(object)" />
         <UpgradesPanel />  
-        <VisitorStats v-if="selectedVisitorId" :visitor-id="selectedVisitorId" />
       </div>
     </div>
   </div>
@@ -36,7 +35,6 @@ import GameBoard from './components/GameBoard.vue';
 import ObjectSelector from './components/ObjectSelector.vue';
 import Toolbar from './components/Toolbar.vue';
 import UpgradesPanel from './components/UpgradesPanel.vue';
-import VisitorStats from './components/VisitorStats.vue';
 
 const store = useStore();
 
