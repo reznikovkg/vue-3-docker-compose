@@ -175,6 +175,62 @@ onBeforeUnmount(() => {
 defineExpose({ start, stop });
 </script>
 
-<style>
-@import "@/assets/bubble-game.css";
+<style scoped>
+/* Фон */
+.gradient-bg {
+    background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
+}
+
+.bubble-game {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.game-info {
+    position: fixed;
+    top: 30px;
+    left: 40px;
+    right: 200px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 1000;
+    max-width: calc(100% - 280px);
+    pointer-events: none;
+}
+
+.info-badge {
+    pointer-events: auto;
+}
+
+.score {
+    color: #FF4757;
+    font-size: 32px;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.badge {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 18px 35px;
+    border-radius: 50px;
+    font-size: 24px;
+    font-weight: 900;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #333;
+}
+
+/* Выбранный цвет */
+.color-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
 </style>
