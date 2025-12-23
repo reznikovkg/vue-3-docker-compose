@@ -1,18 +1,18 @@
 <template>
-  <div class="tower-container">
-    <div class="tower-radius" :style="radiusStyle"></div>
-
-    <div
-      class="tower"
-      :style="towerStyle"
-      :class="{ tower_attacking: isAttacking }"
-    >
-      <div class="tower__main"></div>
-      <div class="tower__level">{{ level }}</div>
+  <div class="tower-radius" :style="radiusStyle"></div>
+  <div
+    class="tower"
+    :style="towerStyle"
+    :class="{ tower_attacking: isAttacking }"
+  >
+    <div class="tower__health-bar-container">
+      <div class="tower__health-bar" :style="healthBarStyle"></div>
     </div>
-
-    <Bullets v-if="target" :start="position" :end="target" />
+    <div class="tower__main"></div>
+    <div class="tower__level">{{ level }}</div>
   </div>
+
+  <Bullets v-if="target" :start="position" :end="target" />
 </template>
 
 <script setup lang="ts">
@@ -30,11 +30,21 @@ export interface TowerProps {
   radius: number;
   level: number;
   target?: Point | null;
+  health: number;
+  maxHealth: number;
 }
 
 const props = withDefaults(defineProps<TowerProps>(), {
   target: null,
 });
+
+const healthRatio = computed(() =>
+  Math.max(0, Math.min(1, props.health / props.maxHealth))
+);
+
+const healthBarStyle = computed(() => ({
+  width: `${Math.round(healthRatio.value * 100)}%`,
+}));
 
 const towerStyle = computed(() => ({
   blockSize: `${TOWER_SIZE}px`,
@@ -58,12 +68,6 @@ $tower-main-color: rgba(117, 115, 119, 0.5);
 $tower-level-bg: rgba(0, 0, 0, 0.7);
 $tower-radius-color: rgba(66, 185, 131, 0.5);
 
-.tower-container {
-  position: absolute;
-  block-size: 100%;
-  inline-size: 100%;
-}
-
 .tower {
   position: absolute;
   z-index: $z-tower;
@@ -77,31 +81,49 @@ $tower-radius-color: rgba(66, 185, 131, 0.5);
   &_attacking {
     animation: pulse 0.5s ease-in-out infinite;
   }
-}
 
-.tower__main {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  background-color: $tower-main-color;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
+  &__health-bar-container {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
 
-.tower__level {
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  font-weight: $fw-bold;
-  color: white;
-  background-color: $tower-level-bg;
-  padding: 2px 4px;
-  border-radius: 3px;
-  white-space: nowrap;
+  &__health-bar {
+    height: 100%;
+    background-color: #42b983;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  &__main {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: $tower-main-color;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  &__level {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    font-weight: $fw-bold;
+    color: white;
+    background-color: $tower-level-bg;
+    padding: 2px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
 }
 
 .tower-radius {

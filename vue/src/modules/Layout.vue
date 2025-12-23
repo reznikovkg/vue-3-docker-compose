@@ -17,15 +17,15 @@ import { ROUTES } from '@/router';
   display: flex;
   flex-direction: column;
   block-size: 100vh;
-}
 
-.layout__main {
-  flex-grow: 1;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(0, 30, 50, 0.6) 0%,
-    rgba(0, 0, 20, 0.9) 60%,
-    #000 100%
-  );
+  &__main {
+    flex-grow: 1;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 30, 50, 0.6) 0%,
+      rgba(0, 0, 20, 0.9) 60%,
+      #000 100%
+    );
+  }
 }
 </style>

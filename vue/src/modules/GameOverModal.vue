@@ -17,7 +17,7 @@ import { ROUTES } from '@/router';
 
 const store = useStore();
 
-const gameResult = computed(() => store.state.gameResult);
+const gameResult = computed(() => store.getters.gameResult);
 </script>
 
 <style scoped lang="scss">

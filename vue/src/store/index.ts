@@ -1,19 +1,27 @@
 import { createStore } from 'vuex';
-import { MutationTree, ActionTree } from 'vuex/types';
+import { MutationTree, ActionTree, GetterTree } from 'vuex/types';
 
 import { LEVELS, MAPS } from '@/shared/constants';
-import { Point, ZoneModel } from '@/shared/models';
+import { Point, ZoneModel, AllyModel } from '@/shared/models';
 import { createGameLoop } from '@/shared/utils';
-import { TOWER_BASE_COST } from '@/store/constants';
+import {
+  TOWER_BASE_COST,
+  BARRICADE_COSTS,
+  ARTILLERY_STRIKE_COST,
+  ALLY_SOLDIER_COST,
+} from '@/store/constants';
 import {
   computePathPixel,
+  computeReversePathPixel,
   placeTowerIfAllowed,
+  placeBarricadeIfAllowed,
+  createArtilleryStrike,
   deleteObjectAt as engineDeleteObjectAt,
   spawnOneEnemy,
   computeNextTick,
   upgradeTowerAt,
 } from '@/store/gameEngine';
-import { Actions, Mutations, SpawnConfig, State } from '@/store/types';
+import { Actions, Mutations, SpawnConfig, State, Getters } from '@/store/types';
 
 let gameLoop: ReturnType<typeof createGameLoop> | null = null;
 
@@ -30,9 +38,15 @@ const initialState: State = {
   buildZones: [],
   path: [],
   pathPixel: [],
+  reversePath: [],
+  reversePathPixel: [],
 
   towers: [],
   enemies: [],
+  shooterEnemies: [],
+  allies: [],
+  barricades: [],
+  artilleryStrikes: [],
   selectedEnemyIndex: null,
 
   spawnConfig: null,
@@ -74,12 +88,30 @@ const mutations: MutationTree<State> & Mutations = {
   SET_PATH_PIXEL(state, path) {
     state.pathPixel = path;
   },
+  SET_REVERSE_PATH(state, path) {
+    state.reversePath = path;
+  },
+  SET_REVERSE_PATH_PIXEL(state, path) {
+    state.reversePathPixel = path;
+  },
 
   SET_TOWERS(state, towers) {
     state.towers = towers;
   },
   SET_ENEMIES(state, enemies) {
     state.enemies = enemies;
+  },
+  SET_SHOOTER_ENEMIES(state, shooterEnemies) {
+    state.shooterEnemies = shooterEnemies;
+  },
+  SET_ALLIES(state, allies) {
+    state.allies = allies;
+  },
+  SET_BARRICADES(state, barricades) {
+    state.barricades = barricades;
+  },
+  SET_ARTILLERY_STRIKES(state, strikes) {
+    state.artilleryStrikes = strikes;
   },
   SET_SELECTED_ENEMY_INDEX(state, index) {
     state.selectedEnemyIndex = index;
@@ -101,9 +133,15 @@ const mutations: MutationTree<State> & Mutations = {
     state.buildZones = payload.buildZones;
     state.path = payload.path;
     state.pathPixel = [];
+    state.reversePath = [];
+    state.reversePathPixel = [];
 
     state.towers = [];
     state.enemies = [];
+    state.shooterEnemies = [];
+    state.allies = [];
+    state.barricades = [];
+    state.artilleryStrikes = [];
     state.selectedEnemyIndex = null;
 
     state.spawnConfig = payload.spawnConfig;
@@ -148,6 +186,9 @@ const actions: ActionTree<State, State> & Actions = {
   recomputePathPixel({ state, commit }) {
     const px = computePathPixel(state.zoneSize, state.path);
     commit('SET_PATH_PIXEL', px);
+
+    const reversePx = computeReversePathPixel(state.zoneSize, state.path);
+    commit('SET_REVERSE_PATH_PIXEL', reversePx);
   },
 
   placeTowerAt({ state, commit }, point) {
@@ -198,15 +239,68 @@ const actions: ActionTree<State, State> & Actions = {
     }
   },
 
+  placeBarricadeAt(
+    { state, commit },
+    payload: {
+      startPoint: Point;
+      endPoint: Point;
+      barricadeType: 'wooden' | 'stone' | 'metal';
+    }
+  ) {
+    const { startPoint, endPoint, barricadeType } = payload;
+    const cost = BARRICADE_COSTS[barricadeType];
+
+    if (state.money < cost) return false;
+
+    const barricades = placeBarricadeIfAllowed({
+      barricades: state.barricades,
+      enemies: state.enemies,
+      pathPixel: state.pathPixel,
+      startPoint,
+      endPoint,
+      barricadeType,
+    });
+    if (!barricades) return false;
+
+    commit('SET_BARRICADES', barricades);
+    commit('REDUCE_MONEY', cost);
+    return true;
+  },
+
+  callArtilleryStrike({ state, commit }, point) {
+    if (state.money < ARTILLERY_STRIKE_COST) return false;
+
+    const strike = createArtilleryStrike(point);
+    if (!strike) return false;
+
+    commit('SET_ARTILLERY_STRIKES', [...state.artilleryStrikes, strike]);
+    commit('REDUCE_MONEY', ARTILLERY_STRIKE_COST);
+    return true;
+  },
+
+  spawnAlly({ state, commit }) {
+    if (state.money < ALLY_SOLDIER_COST) return;
+    if (!state.reversePathPixel.length) return;
+
+    const start = state.reversePathPixel[0];
+    const ally = new AllyModel(new Point(start.x, start.y), 'soldier');
+    ally.setPath(state.reversePathPixel);
+
+    commit('SET_ALLIES', [...state.allies, ally]);
+    commit('REDUCE_MONEY', ALLY_SOLDIER_COST);
+  },
+
   spawnEnemy({ state, commit }) {
     const next = spawnOneEnemy({
       pathPixel: state.pathPixel,
       spawnConfig: state.spawnConfig,
       spawnState: state.spawnState,
       enemies: state.enemies,
+      shooterEnemies: state.shooterEnemies,
     });
     if (!next) return;
     commit('SET_ENEMIES', next.enemies);
+    commit('SET_SHOOTER_ENEMIES', next.shooterEnemies);
     commit('SET_SPAWN_STATE', next.spawnState);
   },
 
@@ -235,6 +329,18 @@ const actions: ActionTree<State, State> & Actions = {
     }
     if (next.enemies !== state.enemies) {
       commit('SET_ENEMIES', next.enemies);
+    }
+    if (next.shooterEnemies !== state.shooterEnemies) {
+      commit('SET_SHOOTER_ENEMIES', next.shooterEnemies);
+    }
+    if (next.allies !== state.allies) {
+      commit('SET_ALLIES', next.allies);
+    }
+    if (next.barricades !== state.barricades) {
+      commit('SET_BARRICADES', next.barricades);
+    }
+    if (next.artilleryStrikes !== state.artilleryStrikes) {
+      commit('SET_ARTILLERY_STRIKES', next.artilleryStrikes);
     }
     if ((next.selectedEnemyIndex ?? null) !== state.selectedEnemyIndex) {
       commit('SET_SELECTED_ENEMY_INDEX', next.selectedEnemyIndex);
@@ -291,10 +397,37 @@ const actions: ActionTree<State, State> & Actions = {
   },
 };
 
+const getters: GetterTree<State, State> & Getters = {
+  money: (state: State) => state.money,
+  isPlaying: (state: State) => state.isPlaying,
+  gameOver: (state: State) => state.gameOver,
+  gameResult: (state: State) => state.gameResult,
+  currentLevelId: (state: State) => state.currentLevelId,
+
+  zoneSize: (state: State) => state.zoneSize,
+  buildZones: (state: State) => state.buildZones,
+  path: (state: State) => state.path,
+  pathPixel: (state: State) => state.pathPixel,
+  reversePath: (state: State) => state.reversePath,
+  reversePathPixel: (state: State) => state.reversePathPixel,
+
+  towers: (state: State) => state.towers,
+  enemies: (state: State) => state.enemies,
+  shooterEnemies: (state: State) => state.shooterEnemies,
+  allies: (state: State) => state.allies,
+  barricades: (state: State) => state.barricades,
+  artilleryStrikes: (state: State) => state.artilleryStrikes,
+  selectedEnemyIndex: (state: State) => state.selectedEnemyIndex,
+
+  spawnConfig: (state: State) => state.spawnConfig,
+  spawnState: (state: State) => state.spawnState,
+};
+
 export default createStore<State>({
   state() {
     return initialState;
   },
   mutations,
   actions,
+  getters,
 });

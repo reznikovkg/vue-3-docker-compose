@@ -5,8 +5,6 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
-
 import type { RouterLinkProps } from 'vue-router';
 
 export type LinkProps = RouterLinkProps;

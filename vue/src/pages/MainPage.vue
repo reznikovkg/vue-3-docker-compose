@@ -21,19 +21,19 @@ import PageWrapper from '@/components/PageWrapper.vue';
 <style scoped lang="scss">
 .menu {
   margin: auto;
-}
 
-.menu__list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  list-style: none;
-}
+  &__list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    list-style: none;
+  }
 
-.menu__link {
-  color: $text-color;
-  font-weight: $fw-medium;
-  font-size: 45px;
+  &__link {
+    color: $text-color;
+    font-weight: $fw-medium;
+    font-size: 45px;
+  }
 }
 </style>
