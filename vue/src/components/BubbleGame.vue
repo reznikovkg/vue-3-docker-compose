@@ -50,6 +50,13 @@ const COLORS = [
   "#1E90FF",
   "#00D9FF",
 ];
+
+const BUBBLE_SIZES = [
+  { size: 60, wrongScore: -1, missedScore: -3 },
+  { size: 100, wrongScore: -3, missedScore: -6 },
+  { size: 140, wrongScore: -5, missedScore: -10 }
+];
+
 const colors = ref([]);
 
 const start = () => {
@@ -82,12 +89,15 @@ const updateSize = () => {
 };
 
 const spawn = () => {
-  const s = 100;
+  const bubbleConfig = BUBBLE_SIZES[Math.floor(Math.random() * BUBBLE_SIZES.length)];
+  
   bubbles.value.push({
     id: nextId.value++,
-    x: Math.random() * (size.value.w - s),
-    y: -s,
-    size: s,
+    x: Math.random() * (size.value.w - bubbleConfig.size),
+    y: -bubbleConfig.size,
+    size: bubbleConfig.size,
+    wrongScore: bubbleConfig.wrongScore,
+    missedScore: bubbleConfig.missedScore,
     color: colors.value[Math.floor(Math.random() * colors.value.length)],
     vy: 0.8,
     vx: (Math.random() - 0.5) * 1,
@@ -114,7 +124,14 @@ const update = () => {
       b.vx = -Math.abs(b.vx);
     }
 
-    return b.y < size.value.h + b.size;
+    const fellDown = b.y >= size.value.h;
+    
+    if (fellDown && b.color === props.targetColor) {
+      score.value += b.missedScore;
+      emit("score", { score: score.value, correct: false, missed: true });
+    }
+
+    return !fellDown;
   });
 };
 
@@ -154,7 +171,7 @@ const pop = (bubble) => {
   if (idx === -1) return;
 
   const correct = bubble.color === props.targetColor;
-  const points = correct ? props.correctScore : props.wrongScore;
+  const points = correct ? props.correctScore : bubble.wrongScore;
 
   score.value += points;
   bubbles.value.splice(idx, 1);
