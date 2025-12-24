@@ -5,7 +5,7 @@ export default {
       config: {
         colorCount: 5,
         targetColor: "#FF4757",
-        intensity: 0.8,
+        intensity: 1,
         correctScore: 1,
         wrongScore: -5,
       },
