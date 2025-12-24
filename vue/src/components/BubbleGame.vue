@@ -218,7 +218,6 @@ const pop = (bubble) => {
 };
 
 const spawnChildren = (parentBubble, count, childSize) => {
-  const parentConfig = BUBBLE_SIZES.find(b => b.size === parentBubble.size);
   const childConfig = BUBBLE_SIZES.find(b => b.size === childSize);
   
   if (!childConfig) return;
