@@ -1,6 +1,6 @@
 import { createStore } from 'vuex'
 import list from './list'
-import game from './game'
+import game from './modules/game'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',

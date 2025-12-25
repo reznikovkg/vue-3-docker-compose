@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted  } from 'vue'
 import { useStore } from 'vuex'
 import GameControls from '@/components/game/GameControls.vue'
 import GameBoard from '@/components/game/GameBoard.vue'
@@ -34,11 +34,33 @@ const forceRerender = () => {
   componentKey.value += 1
 }
 
+// onMounted(() => {
+//   store.dispatch('game/initializeGame').then(() => {
+//     forceRerender()
+//   })
+// })
+
 onMounted(() => {
-  store.dispatch('game/initializeGame').then(() => {
-    forceRerender()
-  })
+  // Инициализируем игру
+  store.dispatch('game/initializeGame')
+  
+  // Запускаем таймер
+  const timer = setInterval(() => {
+    if (store.getters['game/isGameActive']) {
+      store.commit('game/DECREMENT_TIME')
+    }
+  }, 1000)
+  
+  // Сохраняем ID таймера для очистки
+  window.gameTimer = timer
 })
+
+onUnmounted(() => {
+  if (window.gameTimer) {
+    clearInterval(window.gameTimer)
+  }
+})
+
 </script>
 
 <style scoped lang="scss">
