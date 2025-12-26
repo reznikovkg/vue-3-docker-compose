@@ -464,7 +464,27 @@ export default createStore({
 
       if (canPlace)
       {
+        const getBottommostCell = (shape, originRow, originCol) => {
+          let maxRowPlusCol = null;
+          let bottomCell = { row: originRow, col: originCol };
+          
+          shape.forEach(shapePart => {
+            const cellRow = originRow + shapePart.y;
+            const cellCol = originCol + shapePart.x;
+            const rowPlusCol = cellRow + cellCol;
+            
+            if (maxRowPlusCol === null || rowPlusCol > maxRowPlusCol) {
+              maxRowPlusCol = rowPlusCol;
+              bottomCell = { row: cellRow, col: cellCol };
+            }
+          });
+          
+          return bottomCell;
+        };
+
         const newObjectId = state.nextObjectId++;
+        const entranceCell = getBottommostCell(objectShape, originRow, originCol);
+
         const placedObjectData = {
           id: newObjectId,
           name: state.selectedObject.name,
@@ -477,7 +497,7 @@ export default createStore({
           visitors: state.selectedObject.visitors,
           cost: state.selectedObject.cost,
           price_for_visitor: state.selectedObject.price_for_visitor,
-          buildingEntrance: {row: originRow + state.selectedObject.height - 1, col: originCol},
+          buildingEntrance: { row: entranceCell.row, col: entranceCell.col }, 
           type: state.selectedObject.type,
           statBonusByLevel: state.selectedObject.statBonusByLevel,
           statBonus: state.selectedObject.statBonus
@@ -485,8 +505,8 @@ export default createStore({
 
         commit(MUTATIONS.OCCUPY_CELLS, { cells: cellsToOccupy, objectData: placedObjectData });
         commit(MUTATIONS.ADD_PLACED_OBJECT, placedObjectData);
-        commit(MUTATIONS.SET_SELECTED_OBJECT, placedObjectData); 
         commit(MUTATIONS.SET_PARK_BALANCE, state.parkBalance - state.selectedObject.cost);
+        commit(MUTATIONS.SET_SELECTED_OBJECT, null); 
       }
     },
 

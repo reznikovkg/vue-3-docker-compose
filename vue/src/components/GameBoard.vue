@@ -1,63 +1,74 @@
 <template>
   <div class="game-board-container">
-    <div
+    <svg
       class="game-board"
+      :viewBox="viewBox"
       :style="boardStyle"
-      @click="(event) => handleClick(event)"
+      @click="(event) => handleSvgClick(event)"
     >
-      <div
-        v-for="(rowArray, rowIndex) in grid"
-        :key="rowIndex"
-        class="game-board__row"
-      >
-        <div
-          v-for="(cellData, colIndex) in rowArray"
-          :key="colIndex"
-          class="game-board__cell"
-          :class="{
-            'game-board__cell--occupied': cellData.isOccupied,
-          }"
-          :style="{
-            '--row': rowIndex,
-            '--col': colIndex,
-            backgroundColor: getCellBackgroundColor(rowIndex, colIndex, grid, gridWidth, gridHeight, cellData),
-            borderColor: getCellBorderColor(rowIndex, colIndex, grid, gridWidth, gridHeight, cellData)
-          }"
-          @mouseover="() => hoverCell(rowIndex, colIndex)"
+      <g v-for="(rowArray, rowIndex) in grid" :key="rowIndex">
+        <g v-for="(cellData, colIndex) in rowArray" :key="colIndex">
+          <polygon
+            :points="getCellPoints(rowIndex, colIndex)"
+            :class="getCellClasses(rowIndex, colIndex, cellData)"
+            :style="getCellStyle(rowIndex, colIndex, cellData)"
+            @mouseover="() => hoverCell(rowIndex, colIndex)"
+            :data-row="rowIndex"
+            :data-col="colIndex"
+          />
+        </g>
+      </g>
+      <polygon
+        v-if="entrance.row !== -1 && entrance.col !== -1"
+        :points="getEntrancePoints()"
+        class="game-board__entrance"
+        :style="{
+          fill: getCellBackgroundColor(entrance.row, entrance.col, grid, gridWidth, gridHeight, null),
+          stroke: getCellBorderColor(entrance.row, entrance.col, grid, gridWidth, gridHeight, null),
+        }"
+      />
+      <g v-for="visitor in visitors" :key="visitor.id">
+        <circle
+          :cx="getVisitorX(visitor)"
+          :cy="getVisitorY(visitor)"
+          :r="CELL_SIZE / 4"
+          class="visitor"
+          :style="{ fill: getMoodColor(visitor.mood) }"
+          @mouseenter="(event) => showVisitorTooltip(visitor, event)"
+          @mouseleave="() => activeTooltip?.type === 'visitor' && (activeTooltip = null)"
+          @mousemove="(event) => updateTooltipPosition(event)"
+          @click="() => { emit('visitor-clicked', visitor.id); activeTooltip = null; }"
+        />
+        <text
+          :x="getVisitorX(visitor)"
+          :y="getVisitorY(visitor) - CELL_SIZE / 3"
+          text-anchor="middle"
+          class="visitor__balance"
         >
-        </div>
-      </div>
-      <div v-if="entrance.row !== -1 && entrance.col !== -1"
-          class="game-board__entrance"
-          :style="{
-            '--row': entrance.row,
-            '--col': entrance.col,
-            backgroundColor: getCellBackgroundColor(entrance.row, entrance.col, grid, gridWidth, gridHeight, null),
-            borderColor: getCellBorderColor(entrance.row, entrance.col, grid, gridWidth, gridHeight, null),
-            left: `calc(${entrance.col} * var(--cell-size))`,
-            top: `calc(${entrance.row} * var(--cell-size))`,
-            width: 'var(--cell-size)',
-            height: 'var(--cell-size)',
-          }">
-      </div>
-      <div v-for="visitor in visitors" :key="visitor.id"
-        class="visitor"
-        :style="visitorStyle(visitor)"
-        @mouseenter="(event) => showVisitorTooltip(visitor, event)"
-        @mouseleave="() => hideVisitorTooltip()"
-        @mousemove="(event) => updateTooltipPosition(event)"
-        @click="() => handleVisitorClick(visitor.id)">
-        <div class="visitor__balance">{{ visitor.balance }}</div>
-      </div>
-      <div v-for="building in buildingsWithQueue" :key="`queue-${building.id}`"
-           class="queue-indicator"
-           :style="queueIndicatorStyle(building)"
-           @mouseenter="(event) => showQueueTooltip(building, event)"
-           @mouseleave="() => hideQueueTooltip()"
-           @mousemove="(event) => updateTooltipPosition(event)">
-        <div class="queue-indicator__count">{{ getQueueLength(building.id) }}</div>
-      </div>
-    </div>
+          {{ visitor.balance }}
+        </text>
+      </g>
+      <g v-for="building in buildingsWithQueue" :key="`queue-${building.id}`">
+        <circle
+          :cx="getQueueX(building)"
+          :cy="getQueueY(building)"
+          :r="CELL_SIZE / 3"
+          class="queue-indicator"
+          @mouseenter="(event) => showQueueTooltip(building, event)"
+          @mouseleave="() => activeTooltip?.type === 'queue' && (activeTooltip = null)"
+          @mousemove="(event) => updateTooltipPosition(event)"
+        />
+        <text
+          :x="getQueueX(building)"
+          :y="getQueueY(building)"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          class="queue-indicator__count"
+        >
+          {{ getQueueLength(building.id) }}
+        </text>
+      </g>
+    </svg>
     <div
       v-if="activeTooltip"
       class="custom-tooltip"
@@ -159,11 +170,152 @@ const {
   isCellOccupied
 } = getCellLogic(store, componentContext);
 
+const CELL_HALF = CELL_SIZE / 2;
+
+const calculateCellCenter = (row, col) => {
+  const x = CELL_HALF * (col - row);
+  const y = CELL_HALF * (col + row);
+  return { x, y };
+};
+
+const getCellPoints = (row, col) => {
+  const center = calculateCellCenter(row, col);
+  const halfSize = CELL_SIZE / 2;
+  
+  const points = [
+    [center.x, center.y - halfSize],          
+    [center.x + halfSize, center.y],           
+    [center.x, center.y + halfSize],           
+    [center.x - halfSize, center.y]            
+  ];
+  
+  return points.map(p => p.join(',')).join(' ');
+};
+
+const getEntrancePoints = () => {
+  if (entrance.value.row === -1 || entrance.value.col === -1) 
+  {
+    return;
+  }
+  return getCellPoints(entrance.value.row, entrance.value.col);
+};
+
+const getVisitorX = (visitor) => {
+  const center = calculateCellCenter(visitor.y, visitor.x);
+  return center.x;
+};
+
+const getVisitorY = (visitor) => {
+  const center = calculateCellCenter(visitor.y, visitor.x);
+  return center.y;
+};
+
+const getQueueX = (building) => {
+  if (!building.buildingEntrance) 
+  {
+    return 0;
+  }
+  const center = calculateCellCenter(building.buildingEntrance.row, building.buildingEntrance.col);
+  return center.x;
+};
+
+const getQueueY = (building) => {
+  if (!building.buildingEntrance) 
+  {
+    return 0;
+  }
+  const center = calculateCellCenter(building.buildingEntrance.row, building.buildingEntrance.col);
+  return center.y;
+};
+
+const viewBox = computed(() => {
+  let minX, minY, maxX, maxY;
+  let initialized = false;
+  
+  for (let row = 0; row < gridHeight.value; row++) {
+    for (let col = 0; col < gridWidth.value; col++) {
+      const center = calculateCellCenter(row, col);
+      const halfSize = CELL_SIZE / 2;
+      
+      const vertices = [
+        { x: center.x, y: center.y - halfSize },         
+        { x: center.x + halfSize, y: center.y },          
+        { x: center.x, y: center.y + halfSize },          
+        { x: center.x - halfSize, y: center.y }           
+      ];
+
+      if (!initialized) {
+        minX = vertices[0].x;
+        maxX = vertices[0].x;
+        minY = vertices[0].y;
+        maxY = vertices[0].y;
+        initialized = true;
+      }
+      
+      vertices.forEach(vertex => {
+        minX = Math.min(minX, vertex.x);
+        maxX = Math.max(maxX, vertex.x);
+        minY = Math.min(minY, vertex.y);
+        maxY = Math.max(maxY, vertex.y);
+      });
+    }
+  }
+  
+  if (entrance.value && entrance.value.row !== -1 && entrance.value.col !== -1) {
+    const center = calculateCellCenter(entrance.value.row, entrance.value.col);
+    const halfSize = CELL_SIZE / 2;
+    
+    const entranceVertices = [
+      { x: center.x, y: center.y - halfSize },
+      { x: center.x + halfSize, y: center.y },
+      { x: center.x, y: center.y + halfSize },
+      { x: center.x - halfSize, y: center.y }
+    ];
+    
+    entranceVertices.forEach(vertex => {
+      minX = Math.min(minX, vertex.x);
+      maxX = Math.max(maxX, vertex.x);
+      minY = Math.min(minY, vertex.y);
+      maxY = Math.max(maxY, vertex.y);
+    });
+  }
+  
+  if (!isFinite(minX)) {
+    minX = 0;
+    maxX = 600;
+    minY = 0;
+    maxY = 600;
+  }
+  
+  const padding = CELL_SIZE;
+  minX = minX - padding;
+  maxX = maxX + padding;
+  minY = minY - padding;
+  maxY = maxY + padding;
+  
+  const width = maxX - minX;
+  const height = maxY - minY;
+  
+  return `${minX} ${minY} ${width} ${height}`;
+});
+
 const boardStyle = computed(() => ({
   '--cell-size': `${CELL_SIZE}px`,
-  '--grid-width': gridWidth.value,
-  '--grid-height': gridHeight.value
+  width: '100%',
+  height: '100%',
+  minHeight: '600px'
 }));
+
+const getCellStyle = (row, col, cellData) => ({
+  fill: getCellBackgroundColor(row, col, grid.value, gridWidth.value, gridHeight.value, cellData),
+  stroke: getCellBorderColor(row, col, grid.value, gridWidth.value, gridHeight.value, cellData)
+});
+
+const getCellClasses = (row, col, cellData) => ({
+  'game-board__cell': true,
+  'game-board__cell--occupied': cellData?.isOccupied,
+  'game-board__cell--highlighted': highlightedCells.value.some(h => h.row === row && h.col === col)
+});
 
 const getMoodColor = (mood) => {
   if (mood >= 8) 
@@ -212,7 +364,10 @@ const getBuildingOccupancy = (buildingId) => {
 };
 
 const queueInfoRows = computed(() => {
-  if (!activeTooltip.value || activeTooltip.value.type !== 'queue') return [];
+  if (!activeTooltip.value || activeTooltip.value.type !== 'queue') 
+  {
+    return [];
+  }
   
   const data = activeTooltip.value.data;
   return [
@@ -221,25 +376,6 @@ const queueInfoRows = computed(() => {
     { key: 'building', label: 'Здание', value: data.buildingName }
   ];
 });
-
-const visitorStyle = (visitor) => ({
-  '--visitor-x': visitor.x,
-  '--visitor-y': visitor.y,
-  '--mood-color': getMoodColor(visitor.mood),
-  left: `calc(${visitor.x} * var(--cell-size))`,
-  top: `calc(${visitor.y} * var(--cell-size))`,
-});
-
-const queueIndicatorStyle = (building) => {
-  if (!building.buildingEntrance)
-  {
-    return {};
-  }
-  return {
-    left: `calc(${building.buildingEntrance.col} * var(--cell-size))`,
-    top: `calc(${building.buildingEntrance.row} * var(--cell-size))`,
-  };
-};
 
 const showVisitorTooltip = (visitor, event) => {
   if (!visitor) 
@@ -262,6 +398,7 @@ const showVisitorTooltip = (visitor, event) => {
   
   updateTooltipPosition(event);
 };
+
 const showQueueTooltip = (building, event) => {
   if (!building)
   {
@@ -279,14 +416,6 @@ const showQueueTooltip = (building, event) => {
   };
   
   updateTooltipPosition(event);
-};
-
-const hideVisitorTooltip = () => {
-  activeTooltip.value = null;
-};
-
-const hideQueueTooltip = () => {
-  activeTooltip.value = null;
 };
 
 const updateTooltipPosition = (event) => {
@@ -323,27 +452,26 @@ const updateTooltipPosition = (event) => {
   };
 };
 
-
-const handleVisitorClick = (visitorId) => {
-  emit('visitor-clicked', visitorId);
-  activeTooltip.value = null;
+const hoverCell = (row, col) => {
+  hoveredCell.value = { row, col };
+  updatePreviewPlacement();
 };
 
-const handleClick = (event) => {
-  if (event.target.closest('.visitor') || event.target.closest('.queue-indicator')) 
+const handleSvgClick = (event) => {
+  const target = event.target;
+  if (target.classList.contains('visitor') || target.classList.contains('queue-indicator')) 
   {
     return;
   }
     
   activeTooltip.value = null;
 
-  const targetCell = event.target.closest('.game-board__cell');
-  if (!targetCell) 
+  if (!target.classList.contains('game-board__cell')) 
   {
     return;
   }
-  const row = parseInt(targetCell.style.getPropertyValue('--row'));
-  const col = parseInt(targetCell.style.getPropertyValue('--col'));
+  const row = parseInt(target.getAttribute('data-row'));
+  const col = parseInt(target.getAttribute('data-col'));
   const currentMode = gameMode.value;
   emit('cell-clicked', { row, col, gameMode: currentMode });
   if (currentMode === 'place' && isPlacementPossible.value) {
@@ -351,9 +479,9 @@ const handleClick = (event) => {
       updatePreviewPlacement();  
   } else if (currentMode === 'place' && !isPlacementPossible.value) {
       if (highlightedCells.value.some(cell => !isValidCell(cell.row, cell.col, gridWidth.value, gridHeight.value))) {
-          alert("Невозможно разместить: выходит за границы поля");
+        alert("Невозможно разместить: выходит за границы поля");
       } else if (highlightedCells.value.some(cell => isCellOccupied(cell.row, cell.col, grid.value, gridWidth.value, gridHeight.value))) {
-          alert("Невозможно разместить: ячейки заняты");
+        alert("Невозможно разместить: ячейки заняты");
       }
   }
   else if (currentMode === 'delete') {
@@ -380,8 +508,7 @@ const updatePreviewPlacement = () => {
   const objectShape = selectedObject.value.shape;
   const previewCells = [];
   let canPlace = true;
-  let outOfBounds = false;
-  let cellOccupied = false;
+ 
   for (const shapePart of objectShape) 
   {
     const targetRow = originRow + shapePart.y;
@@ -391,23 +518,18 @@ const updatePreviewPlacement = () => {
     {
       canPlace = false;
       isCurrentCellError = true;
-      outOfBounds = true;
     } 
     else if (isCellOccupied(targetRow, targetCol, grid.value, gridWidth.value, gridHeight.value)) 
     {
       canPlace = false;
       isCurrentCellError = true;
-      cellOccupied = true;
     }
     previewCells.push({ row: targetRow, col: targetCol, isError: isCurrentCellError });
   }
   isPlacementPossible.value = canPlace;
   highlightedCells.value = previewCells;
 };
-const hoverCell = (row, col) => {
-  hoveredCell.value = { row, col };
-  updatePreviewPlacement();
-};
+
 onMounted(() => {
   store.dispatch('initializeGrid');
   store.dispatch('startVisitorSpawning');
@@ -429,124 +551,79 @@ onUnmounted(() => {
 .game-board-container {
   position: relative;
   display: inline-block;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
 }
 .game-board {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 auto;
-  width: auto;
-  height: auto;
-  transform: rotate(-60deg) skewY(30deg);
+  width: 100%;
+  height: 100%;
+  background: #f0f0f0; 
   border: 2px solid #000000;
-  
-  &__row {
-    display: flex;
-    transform: skewY(0deg); 
-  }
+  border-radius: 4px;
   
   &__cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-    border: 1px solid;
-    box-sizing: border-box;
-    position: relative;
-    margin: 0;
+    stroke-width: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      stroke-width: 2;
+      filter: brightness(0.9);
+    }
+    
+    &--occupied {
+      stroke-width: 2;
+    }
+    
+    &--highlighted {
+      stroke-dasharray: 4;
+      stroke-width: 2;
+    }
   }
   &__entrance {
-    width: var(--cell-size);
-    height: var(--cell-size);
-    box-sizing: border-box;
-    position: absolute; 
-    z-index: 2; 
-    border-width: 2px; 
-    left: calc(var(--cell-size) * var(--col));
-    top: calc(var(--cell-size) * var(--row));
+    stroke-width: 2;
+    stroke-dasharray: 4;
   }
 }
 .visitor {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: var(--mood-color, blue);
-  position: absolute;
-  z-index: 3;
-  left: calc(var(--cell-size) * var(--visitor-x));
-  top: calc(var(--cell-size) * var(--visitor-y));
-  transform: translate(50%, 50%);
-  transition: left 0.5s, top 0.5s, background-color 0.5s;
-  box-shadow: 0 0 5px rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 10px;
-  font-weight: bold;
   cursor: pointer;
+  transition: all 0.3s ease;
+  stroke: white;
+  stroke-width: 1;
   
   &:hover {
-    transform: translate(50%, 50%) scale(1.2);
-    z-index: 4;
+    r: calc(var(--cell-size) / 3);
+    stroke-width: 2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   }
 
   &__balance {
-    position: absolute;
-    top: -20px; 
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    white-space: nowrap;
-    pointer-events: none; 
-    z-index: 10;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  &__warning {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 10px;
-    height: 10px;
-    background-color: red;
-    border-radius: 50%;
-    color: white;
     font-size: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-weight: bold;
+    fill: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    font-family: Arial, sans-serif;
   }
 }
 
 .queue-indicator {
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  background-color: #ff9800;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
-  z-index: 4;
-  transform: translate(-50%, -50%);
-  border: 2px solid white;
-  box-shadow: 0 0 5px rgba(0,0,0,0.5);
-  cursor: help;
+  fill: #ff9800;
+  stroke: white;
+  stroke-width: 1;
   
   &:hover {
-    transform: translate(-50%, -50%) scale(1.1);
-    z-index: 5;
+    r: calc(var(--cell-size) / 2.5);
+    stroke-width: 2;
   }
   
   &__count {
+    font-size: 10px;
+    font-weight: bold;
+    fill: white;
     pointer-events: none;
+    font-family: Arial, sans-serif;
   }
 }
 
