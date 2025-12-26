@@ -55,9 +55,6 @@
               @dragenter.prevent="handleDragEnter($event, cell)"
               @dragleave.prevent="handleDragLeave($event, cell)"
               @drop.prevent="handleDrop($event, cell)"
-              @touchstart="handleTouchStart($event, cell)"
-              @touchmove.prevent="handleTouchMove"
-              @touchend="handleTouchEnd($event, cell)"
             >
               <div
                 v-if="cell.item"
@@ -236,50 +233,7 @@ const handleDrop = (event: DragEvent, cell: GridCell): void => {
   }
 }
 
-const handleTouchStart = (event: TouchEvent, cell: GridCell): void => {
-  if (!cell.item) return
 
-  touchStart.value = {
-    x: event.touches[0].clientX,
-    y: event.touches[0].clientY,
-    cell: { row: cell.row, col: cell.col },
-    element: event.target as HTMLElement
-  }
-
-  dragStartCell.value = { row: cell.row, col: cell.col }
-  event.target?.classList.add('grid__item--dragging')
-}
-
-const handleTouchMove = (event: TouchEvent): void => {
-  if (touchStart.value) {
-    event.preventDefault()
-  }
-}
-
-const handleTouchEnd = (event: TouchEvent, cell: GridCell): void => {
-  if (touchStart.value && dragStartCell.value) {
-    const touch = event.changedTouches[0]
-    const element = document.elementFromPoint(touch.clientX, touch.clientY)
-    const targetCellElement = element?.closest('.grid__cell')
-
-    if (targetCellElement &&
-      !(dragStartCell.value.row === cell.row && dragStartCell.value.col === cell.col)) {
-      const targetRow = parseInt(targetCellElement.dataset.row!)
-      const targetCol = parseInt(targetCellElement.dataset.col!)
-
-      MoveItem(
-        dragStartCell.value.row,
-        dragStartCell.value.col,
-        targetRow,
-        targetCol
-      )
-    }
-
-    touchStart.value.element.classList.remove('grid__item--dragging')
-    touchStart.value = null
-    dragStartCell.value = null
-  }
-}
 
 onMounted(() => {
   store.dispatch('game/initializeGame')
