@@ -156,12 +156,6 @@ const MoveItem = (fromRow: number, fromCol: number, toRow: number, toCol: number
 
 const draggedItem = ref<CellPosition | null>(null)
 const dragStartCell = ref<CellPosition | null>(null)
-const touchStart = ref<{
-  x: number;
-  y: number;
-  cell: CellPosition;
-  element: HTMLElement;
-} | null>(null)
 const hoveredCell = ref<CellPosition | null>(null)
 
 const items: GameItem[] = [
@@ -301,9 +295,6 @@ onMounted(() => {
     min-height: 800px;
     align-items: start;
 
-    @media (max-width: 1200px) {
-      grid-template-columns: 1fr;
-    }
   }
 
   &__controls {
@@ -613,87 +604,6 @@ onMounted(() => {
     border-radius: 0.5rem;
     margin-top: 0.125rem;
     line-height: 1.2;
-  }
-}
-
-@media (max-width: 768px) {
-  .merge-game {
-    padding: 1rem;
-
-    &__title {
-      font-size: 2rem;
-    }
-
-    &__main {
-      padding: 1rem;
-      gap: 1rem;
-    }
-
-    &__board {
-      min-height: 400px;
-      padding: 1rem;
-    }
-  }
-
-  .grid {
-    gap: 0.375rem;
-    padding: 0.5rem;
-    min-height: 400px;
-
-    &__item-name {
-      display: none;
-    }
-
-    &__item-level {
-      font-size: 0.4rem;
-      top: 0.2rem;
-      right: 0.2rem;
-    }
-  }
-
-  .merge-game__controls {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .merge-game__button {
-    flex: 1;
-    min-width: 120px;
-  }
-
-  .merge-chain {
-    gap: 0.5rem;
-
-    &__items {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-
-    &__source-item {
-      width: 2rem;
-      height: 2rem;
-    }
-
-    &__result {
-      width: 2.25rem;
-      height: 2.25rem;
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .grid {
-    aspect-ratio: 1 / 1;
-    min-height: 350px;
-  }
-
-  .score-box {
-    min-width: 120px;
-    padding: 0.75rem 1rem;
-
-    &__value {
-      font-size: 1.5rem;
-    }
   }
 }
 </style>
