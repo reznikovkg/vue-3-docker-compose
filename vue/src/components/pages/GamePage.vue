@@ -37,43 +37,43 @@
           </div>
         </div>
 
-        <div class="merge-game__board">
-          <div class="grid">
-            <div
-              v-for="(cell, index) in gridCells"
-              :key="index"
-              :class="[
-                'grid__cell',
-                {
-                  'grid__cell--empty': !cell.item,
-                  'grid__cell--hovered': hoveredCell && hoveredCell.row === cell.row && hoveredCell.col === cell.col
-                }
-              ]"
-              :data-row="cell.row"
-              :data-col="cell.col"
-              @dragover.prevent="handleDragOver($event, cell)"
-              @dragenter.prevent="handleDragEnter($event, cell)"
-              @dragleave.prevent="handleDragLeave($event, cell)"
-              @drop.prevent="handleDrop($event, cell)"
-            >
-              <div
-                v-if="cell.item"
-                class="grid__item"
-                :class="[
-                  `grid__item--level-${cell.item.id}`,
-                  { 'grid__item--dragging': draggedItem?.row === cell.row && draggedItem?.col === cell.col }
-                ]"
-                :style="{ backgroundColor: cell.item.color }"
-                draggable="true"
-                @dragstart="handleDragStart($event, cell)"
-                @dragend="handleDragEnd"
-              >
-                <div class="grid__item-name">{{ cell.item.name }}</div>
-                <div class="grid__item-level">{{ cell.item.id }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="merge-game__board">
+        <div class="grid">
+        <div
+        v-for="(cell, index) in gridCells"
+        :key="index"
+        :class="[
+        'grid__cell',
+        {
+          'grid__cell--empty': !cell.item,
+          'grid__cell--hovered': hoveredCell && hoveredCell.row === cell.row && hoveredCell.col === cell.col
+        }
+      ]"
+      :data-row="cell.row"
+      :data-col="cell.col"
+      @dragover.prevent="(event) => handleDragOver(event, cell)"
+      @dragenter.prevent="(event) => handleDragEnter(event, cell)"
+      @dragleave.prevent="(event) => handleDragLeave(event)"
+      @drop.prevent="(event) => handleDrop(event, cell)"
+    >
+      <div
+        v-if="cell.item"
+        class="grid__item"
+        :class="[
+          `grid__item--level-${cell.item.id}`,
+          { 'grid__item--dragging': draggedItem?.row === cell.row && draggedItem?.col === cell.col }
+        ]"
+        :style="{ backgroundColor: cell.item.color }"
+        draggable="true"
+        @dragstart="(event) => handleDragStart(event, cell)"
+        @dragend="handleDragEnd"
+      >
+        <div class="grid__item-name">{{ cell.item.name }}</div>
+        <div class="grid__item-level">{{ cell.item.id }}</div>
+      </div>
+    </div>
+  </div>
+</div>
 
         <div class="merge-game__reference">
           <h3 class="merge-game__reference-title">Merge Hierarchy</h3>
@@ -238,7 +238,6 @@ onMounted(() => {
   }
 
   document.addEventListener('contextmenu', handleContextMenu)
-
   onUnmounted(() => {
     document.removeEventListener('contextmenu', handleContextMenu)
   })
@@ -290,7 +289,7 @@ onMounted(() => {
   &__main {
     padding: 2rem;
     display: grid;
-    grid-template-columns: 1fr 3fr 1fr;
+    grid-template-columns: 1fr 1.5fr 2fr;
     gap: 2rem;
     min-height: 800px;
     align-items: start;
@@ -375,6 +374,7 @@ onMounted(() => {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     max-height: 700px;
     overflow-y: auto;
+    min-width: 300px;
   }
 
   &__reference-title {
