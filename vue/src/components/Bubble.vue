@@ -1,5 +1,7 @@
 <template>
-  <div class="bubble" :style="bubbleStyle" />
+  <div class="bubble" :style="bubbleStyle">
+    <div class="bubble__highlight"></div>
+  </div>
 </template>
 
 <script setup>
@@ -22,26 +24,25 @@ const bubbleStyle = computed(() => ({
 }))
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .bubble {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    box-shadow: inset -8px -8px 20px rgba(0, 0, 0, 0.25),
-        inset 8px 8px 25px rgba(255, 255, 255, 0.6),
-        0 8px 30px rgba(0, 0, 0, 0.3);
-    z-index: 1;
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: inset -8px -8px 20px rgba(0, 0, 0, 0.25),
+    inset 8px 8px 25px rgba(255, 255, 255, 0.6),
+    0 8px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1;
 }
 
-.bubble::before {
-    content: '';
-    position: absolute;
-    top: 15%;
-    left: 25%;
-    width: 35%;
-    height: 35%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.95), transparent 70%);
-    border-radius: 50%;
-    pointer-events: none;
+.bubble__highlight {
+  position: absolute;
+  top: 15%;
+  left: 25%;
+  width: 35%;
+  height: 35%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95), transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 </style>

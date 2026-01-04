@@ -1,29 +1,29 @@
 <template>
   <div class="bubble-game" ref="gameRef" @click="e => handleClick(e)" @mousemove="e => handleMouseMove(e)">
-    <div class="game-info">
-      <div class="badge">
+    <div class="bubble-game__info">
+      <div class="bubble-game__badge">
         Собирай:
-        <span class="color-dot" :style="{ background: targetColor }"></span>
+        <span class="bubble-game__color-dot" :style="{ background: targetColor }"></span>
       </div>
       
-      <div class="mode-selector">
+      <div class="bubble-game__mode-selector">
         <button 
-          class="mode-btn" 
-          :class="{ active: weaponMode === 'click' }"
+          class="bubble-game__mode-btn" 
+          :class="{ 'bubble-game__mode-btn--active': weaponMode === 'click' }"
           @click="() => setWeaponMode('click')"
         >
           👆 Клик
         </button>
         <button 
-          class="mode-btn" 
-          :class="{ active: weaponMode === 'auto' }"
+          class="bubble-game__mode-btn" 
+          :class="{ 'bubble-game__mode-btn--active': weaponMode === 'auto' }"
           @click="() => setWeaponMode('auto')"
         >
           🔫 Автомат
         </button>
         <button 
-          class="mode-btn" 
-          :class="{ active: weaponMode === 'laser' }"
+          class="bubble-game__mode-btn" 
+          :class="{ 'bubble-game__mode-btn--active': weaponMode === 'laser' }"
           @click="() => setWeaponMode('laser')"
         >
           ⚡ Лазер
@@ -31,35 +31,35 @@
       </div>
       
       <div 
-        class="badge correct-combo"
-        :class="{ invisible: correctCombo <= 1 }"
+        class="bubble-game__badge bubble-game__badge--correct-combo"
+        :class="{ 'bubble-game__badge--invisible': correctCombo <= 1 }"
       >
         x{{ correctCombo.toFixed(1) }}
       </div>
       <div 
-        class="badge wrong-combo"
-        :class="{ invisible: wrongCombo <= 1 }"
+        class="bubble-game__badge bubble-game__badge--wrong-combo"
+        :class="{ 'bubble-game__badge--invisible': wrongCombo <= 1 }"
       >
         x{{ wrongCombo.toFixed(1) }}
       </div>
-      <div class="badge">{{ score }}</div>
+      <div class="bubble-game__badge">{{ score }}</div>
       
       <div 
-        class="mode-btn" 
-        :class="{ active: bombMode }"
+        class="bubble-game__mode-btn" 
+        :class="{ 'bubble-game__mode-btn--active': bombMode }"
         @click.stop="() => toggleBombMode()"
       >
         💣 {{ bombCount }}
       </div>
     </div>
 
-    <div v-if="bombMode" class="bomb-indicator">
+    <div v-if="bombMode" class="bubble-game__indicator">
       Выберите точку взрыва
     </div>
 
     <div 
       v-if="weaponMode === 'laser' && laserActive" 
-      class="fire-effect"
+      class="bubble-game__effect"
       :style="{
         left: laserX + 'px',
         top: laserY + 'px'
@@ -69,7 +69,7 @@
     <div
       v-for="shot in autoShots"
       :key="shot.id"
-      class="fire-effect"
+      class="bubble-game__effect"
       :style="{
         left: shot.x + 'px',
         top: shot.y + 'px'
@@ -79,7 +79,7 @@
     <div
       v-for="explosion in explosions"
       :key="explosion.id"
-      class="fire-effect bomb-effect"
+      class="bubble-game__effect bubble-game__effect--bomb"
       :style="{
         left: explosion.x + 'px',
         top: explosion.y + 'px'
@@ -516,7 +516,6 @@ const spawnChildren = (parentBubble, { count, sizeKey, customConfig }) => {
     const x = centerX + Math.cos(angle) * radius - childSize / 2;
     const y = centerY + Math.sin(angle) * radius - childSize / 2;
 
-
     const color = i === 0 
       ? parentBubble.color 
       : colors.value[Math.floor(Math.random() * colors.value.length)];
@@ -596,116 +595,114 @@ defineExpose({ start, stop });
 
 <style scoped lang="scss">
 .bubble-game {
-    position: fixed;
-    inset: 0;
-    overflow: hidden;
-    cursor: crosshair;
-    background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  cursor: crosshair;
+  background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
 }
 
-.game-info {
-    position: fixed;
-    top: 30px;
-    left: 40px;
-    right: 200px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    z-index: 1000;
-    max-width: calc(100% - 280px);
-    pointer-events: none;
+.bubble-game__info {
+  position: fixed;
+  top: 30px;
+  left: 40px;
+  right: 200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  z-index: 1000;
+  max-width: calc(100% - 280px);
+  pointer-events: none;
 }
 
-.info-badge {
-    pointer-events: auto;
+.bubble-game__mode-selector {
+  display: flex;
+  gap: 10px;
 }
 
-.mode-selector {
-    display: flex;
-    gap: 10px;
+.bubble-game__mode-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: 3px solid transparent;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
-.mode-btn {
-    background: rgba(255, 255, 255, 0.9);
-    border: 3px solid transparent;
-    padding: 12px 20px;
-    border-radius: 25px;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    pointer-events: auto;
+.bubble-game__mode-btn--active {
+  background: #667eea;
+  color: white;
+  border-color: white;
 }
 
-.mode-btn.active {
-    background:  #667eea;
-    color: white;
-    border-color: white;
+.bubble-game__badge {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 18px 35px;
+  border-radius: 50px;
+  font-size: 24px;
+  font-weight: 900;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #333;
+  pointer-events: auto;
 }
 
-.badge {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 18px 35px;
-    border-radius: 50px;
-    font-size: 24px;
-    font-weight: 900;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(10px);
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: #333;
+.bubble-game__badge--invisible {
+  opacity: 0;
+  pointer-events: none;
 }
 
-.invisible {
-    opacity: 0;
+.bubble-game__badge--correct-combo {
+  background: rgba(69, 168, 75, 0.95);
+  color: white;
 }
 
-.correct-combo {
-    background: rgba(69, 168, 75, 0.95);
-    color: white;
+.bubble-game__badge--wrong-combo {
+  background: rgba(147, 54, 54, 0.95);
+  color: white;
 }
 
-.wrong-combo {
-    background: rgba(147, 54, 54, 0.95);
-    color: white;
+.bubble-game__indicator {
+  position: fixed;
+  top: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 100, 0, 0.65);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 30px;
+  font-size: 22px;
+  font-weight: 900;
+  z-index: 1001;
 }
 
-.bomb-indicator {
-    position: fixed;
-    top: 150px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 100, 0, 0.65);
-    color: white;
-    padding: 15px 40px;
-    border-radius: 30px;
-    font-size: 22px;
-    font-weight: 900;
-    z-index: 1001;
+.bubble-game__effect {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 0, 0.8), rgba(255, 0, 0, 0.4), transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
-.fire-effect {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 0, 0.8), rgba(255, 0, 0, 0.4), transparent);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
-
-.bomb-effect {
-    width: 300px;
-    height: 300px;
+.bubble-game__effect--bomb {
+  width: 300px;
+  height: 300px;
 }
 
 /* Выбранный цвет */
-.color-dot {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 4px solid white;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+.bubble-game__color-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 </style>
