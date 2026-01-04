@@ -1,5 +1,5 @@
 <template>
-  <div class="gradient-bg">
+  <div>
     <div v-if="!isPlaying" class="overlay">
       <div class="panel">
         <h1>Игра "Мыльные пузыри" 🫧</h1>
@@ -9,7 +9,7 @@
           <input
             type="number"
             :value="config.colorCount"
-            @input="updateConfigField('colorCount', $event.target.value)"
+            @input="e => updateConfigField('colorCount', e.target.value)"
             min="2"
             max="6"
           />
@@ -20,7 +20,7 @@
           <input
             type="color"
             :value="config.targetColor"
-            @input="updateConfigField('targetColor', $event.target.value)"
+             @input="e => updateConfigField('targetColor', e.target.value)"
           />
         </div>
 
@@ -29,7 +29,7 @@
           <input
             type="number"
             :value="config.intensity"
-            @input="updateConfigField('intensity', $event.target.value)"
+            @input="e => updateConfigField('intensity', e.target.value)"
             min="0.1"
             max="3"
             step="0.1"
@@ -41,7 +41,7 @@
           <input
             type="number"
             :value="config.correctScore"
-            @input="updateConfigField('correctScore', $event.target.value)"
+            @input="e => updateConfigField('correctScore', e.target.value)"
           />
         </div>
 
@@ -50,18 +50,18 @@
           <input
             type="number"
             :value="config.wrongScore"
-            @input="updateConfigField('wrongScore', $event.target.value)"
+            @input="e => updateConfigField('wrongScore', e.target.value)"
           />
         </div>
 
-        <button @click="handleStart" class="btn primary">🎮 Начать игру</button>
+        <button @click="() => handleStart()" class="btn primary">🎮 Начать игру</button>
         <RouterLink :to="{ name: $routes.INDEX }" class="btn"
           >← Назад</RouterLink
         >
       </div>
     </div>
 
-    <button v-if="isPlaying" @click="handleStop" class="btn stop">
+    <button v-if="isPlaying" @click="() => handleStop()" class="btn stop">
       ⏸ Стоп
     </button>
 
@@ -70,7 +70,7 @@
         <h2>🎉 Игра окончена!</h2>
         <div class="final-score">{{ finalScore }}</div>
         <p class="label">Финальный счёт</p>
-        <button @click="handleReset" class="btn primary">🔄 Новая игра</button>
+        <button @click="() => handleReset()" class="btn primary">🔄 Новая игра</button>
       </div>
     </div>
 
@@ -78,8 +78,8 @@
       v-if="isPlaying"
       ref="gameRef"
       v-bind="config"
-      @finish="handleFinish"
-      @score="handleScore"
+      @finish="score => handleFinish(score)"
+      @score="data => handleScore(data)"
     />
   </div>
 </template>
@@ -133,12 +133,7 @@ const handleReset = () => {
 };
 </script>
 
-<style scoped>
-/* Фон */
-.gradient-bg {
-    background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
-}
-
+<style scoped lang="scss">
 .wrapper {
     width: 100%;
     height: 100vh;
@@ -152,6 +147,7 @@ const handleReset = () => {
     justify-content: center;
     z-index: 2000;
     padding: 20px;
+    background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
 }
 
 .result {
@@ -189,6 +185,12 @@ const handleReset = () => {
     text-decoration: none;
     display: block;
     text-align: center;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(255, 107, 157, 0.4);
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(255, 107, 157, 0.4);
+    }
 }
 
 .btn.primary {
@@ -210,17 +212,17 @@ const handleReset = () => {
     color: #FF4757;
 }
 
-.btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 30px rgba(255, 107, 157, 0.4);
-}
-
 /* Поля ввода */
 .field {
     margin-bottom: 25px;
     display: flex;
     align-items: center;
     gap: 20px;
+    & focus {
+      outline: none;
+      border-color: #FF6B9D;
+      box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+    }
 }
 
 .field label {
@@ -238,12 +240,6 @@ const handleReset = () => {
     font-size: 16px;
     font-weight: 600;
     transition: all 0.3s;
-}
-
-.field input:focus {
-    outline: none;
-    border-color: #FF6B9D;
-    box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
 
 .field input[type="color"] {

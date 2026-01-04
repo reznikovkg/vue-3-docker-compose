@@ -1,12 +1,90 @@
 <template>
-  <div class="bubble-game gradient-bg" ref="gameRef" @click="handleClick">
+  <div class="bubble-game" ref="gameRef" @click="e => handleClick(e)" @mousemove="e => handleMouseMove(e)">
     <div class="game-info">
-      <div class="badge info-badge">
+      <div class="badge">
         Собирай:
         <span class="color-dot" :style="{ background: targetColor }"></span>
       </div>
-      <div class="badge info-badge score">{{ score }}</div>
+      
+      <div class="mode-selector">
+        <button 
+          class="mode-btn" 
+          :class="{ active: weaponMode === 'click' }"
+          @click="() => setWeaponMode('click')"
+        >
+          👆 Клик
+        </button>
+        <button 
+          class="mode-btn" 
+          :class="{ active: weaponMode === 'auto' }"
+          @click="() => setWeaponMode('auto')"
+        >
+          🔫 Автомат
+        </button>
+        <button 
+          class="mode-btn" 
+          :class="{ active: weaponMode === 'laser' }"
+          @click="() => setWeaponMode('laser')"
+        >
+          ⚡ Лазер
+        </button>
+      </div>
+      
+      <div 
+        class="badge correct-combo"
+        :class="{ invisible: correctCombo <= 1 }"
+      >
+        x{{ correctCombo.toFixed(1) }}
+      </div>
+      <div 
+        class="badge wrong-combo"
+        :class="{ invisible: wrongCombo <= 1 }"
+      >
+        x{{ wrongCombo.toFixed(1) }}
+      </div>
+      <div class="badge">{{ score }}</div>
+      
+      <div 
+        class="mode-btn" 
+        :class="{ active: bombMode }"
+        @click.stop="() => toggleBombMode()"
+      >
+        💣 {{ bombCount }}
+      </div>
     </div>
+
+    <div v-if="bombMode" class="bomb-indicator">
+      Выберите точку взрыва
+    </div>
+
+    <div 
+      v-if="weaponMode === 'laser' && laserActive" 
+      class="fire-effect"
+      :style="{
+        left: laserX + 'px',
+        top: laserY + 'px'
+      }"
+    ></div>
+
+    <div
+      v-for="shot in autoShots"
+      :key="shot.id"
+      class="fire-effect"
+      :style="{
+        left: shot.x + 'px',
+        top: shot.y + 'px'
+      }"
+    ></div>
+
+    <div
+      v-for="explosion in explosions"
+      :key="explosion.id"
+      class="fire-effect bomb-effect"
+      :style="{
+        left: explosion.x + 'px',
+        top: explosion.y + 'px'
+      }"
+    ></div>
 
     <Bubble
       v-for="b in bubbles"
@@ -41,6 +119,31 @@ const frameId = ref(null);
 const lastSpawn = ref(0);
 const size = ref({ w: 0, h: 0 });
 
+// комбо
+const correctCombo = ref(1);
+const wrongCombo = ref(1);
+const comboPulse = ref(false);
+const lastHitCorrect = ref(null);
+
+// Бомбы
+const bombCount = ref(2);
+const bombMode = ref(false);
+const correctHits = ref(0);
+const explosions = ref([]);
+const explosionId = ref(0);
+const BOMB_RADIUS = 150;
+
+// Режимы оружия
+const weaponMode = ref('click'); // click,auto, laser
+const autoShots = ref([]);
+const autoShotId = ref(0);
+const autoInterval = ref(null);
+const laserActive = ref(false);
+const laserX = ref(0);
+const laserY = ref(0);
+const mouseX = ref(0);
+const mouseY = ref(0);
+
 const COLORS = [
   "#FF4757",
   "#FF6B9D",
@@ -52,26 +155,147 @@ const COLORS = [
 
 const BUBBLE_SIZES = [
   { 
+    key: "small",
     size: 60,
     wrongScore: -1, 
     missedScore: -3,
+    pushFactor: { small: 1, medium: 0.5, large: 0.25 },
     children: null
   },
   { 
+    key: "medium",
     size: 100,
     wrongScore: -3, 
     missedScore: -6,
-    children: { count: 5, size: 60 }
+    pushFactor: { small: 1.5, medium: 1, large: 0.5 },
+    children: { count: 5, sizeKey: "small" }
   },
   { 
+    key: "large",
     size: 140,
     wrongScore: -5, 
     missedScore: -10,
-    children: { count: 3, size: 100 }
+    pushFactor: { small: 2, medium: 1.5, large: 1 },
+    children: { count: 3, sizeKey: "medium" }
   }
 ];
 
+const getBubbleConfig = (size) =>
+  BUBBLE_SIZES.find(b => b.size === size);
+
+const getBubbleConfigByKey = (key) =>
+  BUBBLE_SIZES.find(b => b.key === key);
+
 const colors = ref([]);
+
+const toggleBombMode = () => {
+  if (bombCount.value > 0) {
+    bombMode.value = !bombMode.value;
+  }
+};
+
+const useBomb = (x, y) => {
+  if (bombCount.value <= 0) return;
+  
+  bombCount.value--;
+  bombMode.value = false;
+  
+  const expId = explosionId.value++;
+  explosions.value.push({ id: expId, x, y });
+  setTimeout(() => {
+    explosions.value = explosions.value.filter(e => e.id !== expId);
+  }, 1000);
+  
+  const bubblesInRadius = bubbles.value.filter((b) => {
+    const dx = x - (b.x + b.size / 2);
+    const dy = y - (b.y + b.size / 2);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance <= BOMB_RADIUS;
+  });
+  
+  bubblesInRadius.forEach((bubble) => {
+    const config = getBubbleConfig(bubble.size);
+    if (config?.key === "large") {
+      spawnChildren(bubble, {
+        count: 7,
+        customConfig: getBubbleConfigByKey("small")
+      });
+    }
+    const idx = bubbles.value.indexOf(bubble);
+    if (idx !== -1) {
+      bubbles.value.splice(idx, 1);
+    }
+  });
+};
+
+const setWeaponMode = (mode) => {
+  weaponMode.value = mode;
+  
+  if (autoInterval.value) {
+    clearInterval(autoInterval.value);
+    autoInterval.value = null;
+  }
+  
+  if (mode === 'auto' && active.value) {
+    startAutoFire();
+  }
+};
+
+const startAutoFire = () => {
+  if (autoInterval.value) return;
+  
+  autoInterval.value = setInterval(() => {
+    if (!active.value) return;
+    
+    const x = mouseX.value;
+    const y = mouseY.value;
+    
+    checkBubblesAtPosition(x, y);
+    
+    const shotId = autoShotId.value++;
+    autoShots.value.push({ id: shotId, x, y });
+    
+    setTimeout(() => {
+      autoShots.value = autoShots.value.filter(s => s.id !== shotId);
+    }, 2000);
+  }, 500);
+};
+
+const stopAutoFire = () => {
+  if (autoInterval.value) {
+    clearInterval(autoInterval.value);
+    autoInterval.value = null;
+  }
+};
+
+const handleMouseMove = (event) => {
+  if (!active.value) return;
+  
+  const rect = gameRef.value.getBoundingClientRect();
+  mouseX.value = event.clientX - rect.left;
+  mouseY.value = event.clientY - rect.top;
+  
+  if (weaponMode.value === 'laser') {
+    laserX.value = mouseX.value;
+    laserY.value = mouseY.value;
+    laserActive.value = true;
+    
+    checkBubblesAtPosition(mouseX.value, mouseY.value, 20);
+  }
+};
+
+const checkBubblesAtPosition = (x, y, radius = 5) => {
+  const hitBubbles = bubbles.value.filter((b) => {
+    const dx = x - (b.x + b.size / 2);
+    const dy = y - (b.y + b.size / 2);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance <= b.size / 2 + radius;
+  });
+  
+  hitBubbles.forEach((bubble) => {
+    pop(bubble);
+  });
+};
 
 const start = () => {
   if (active.value) return;
@@ -80,6 +304,12 @@ const start = () => {
   score.value = 0;
   bubbles.value = [];
   lastSpawn.value = performance.now();
+  correctCombo.value = 1;
+  wrongCombo.value = 1;
+  lastHitCorrect.value = null;
+  autoShots.value = [];
+  correctHits.value = 0;
+  bombMode.value = false;
 
   colors.value = COLORS.slice(0, props.colorCount);
   if (!colors.value.includes(props.targetColor)) {
@@ -88,11 +318,17 @@ const start = () => {
 
   updateSize();
   loop();
+  
+  if (weaponMode.value === 'auto') {
+    startAutoFire();
+  }
 };
 
 const stop = () => {
   active.value = false;
+  laserActive.value = false;
   if (frameId.value) cancelAnimationFrame(frameId.value);
+  stopAutoFire();
   emit("finish", score.value);
 };
 
@@ -184,6 +420,13 @@ const handleClick = (event) => {
   const clickX = event.clientX - rect.left;
   const clickY = event.clientY - rect.top;
 
+  if (bombMode.value) {
+    useBomb(clickX, clickY);
+    return;
+  }
+
+  if (weaponMode.value !== 'click') return;
+
   const clickedBubbles = bubbles.value.filter((b) => {
     const dx = clickX - (b.x + b.size / 2);
     const dy = clickY - (b.y + b.size / 2);
@@ -196,29 +439,70 @@ const handleClick = (event) => {
   });
 };
 
+const updateCombo = (correct) => {
+  comboPulse.value = true;
+  setTimeout(() => comboPulse.value = false, 200);
+
+  if (correct) {
+    if (lastHitCorrect.value === true) {
+      correctCombo.value = Math.min(5, correctCombo.value + 0.2);
+    } else {
+      correctCombo.value = 1;
+    }
+    wrongCombo.value = 1;
+    lastHitCorrect.value = true;
+  } else {
+    if (lastHitCorrect.value === false) {
+      wrongCombo.value = Math.min(7, wrongCombo.value + 0.3);
+    } else {
+      wrongCombo.value = 1;
+    }
+    correctCombo.value = 1;
+    lastHitCorrect.value = false;
+  }
+};
+
 const pop = (bubble) => {
   const idx = bubbles.value.indexOf(bubble);
   if (idx === -1) return;
 
   const correct = bubble.color === props.targetColor;
-  const points = correct ? props.correctScore : bubble.wrongScore;
+  
+  if (correct) {
+    correctHits.value++;
+    if (correctHits.value % 10 === 0) {
+      bombCount.value++;
+    }
+  }
+  
+  updateCombo(correct);
+  
+  const multiplier = correct ? correctCombo.value : wrongCombo.value;
+  const basePoints = correct ? props.correctScore : bubble.wrongScore;
+  const points = Math.round(basePoints * multiplier);
 
   score.value += points;
   bubbles.value.splice(idx, 1);
 
-  emit("score", { score: score.value, correct });
+  emit("score", { 
+    score: score.value, 
+    correct,
+    correctCombo: correctCombo.value,
+    wrongCombo: wrongCombo.value,
+    points
+  });
 
   pushAwayBubbles(bubble);
 
-  const bubbleConfig = BUBBLE_SIZES.find(config => config.size === bubble.size);
+  const bubbleConfig = getBubbleConfig(bubble.size);
 
-  if (bubbleConfig && bubbleConfig.children) {
-    spawnChildren(bubble, bubbleConfig.children.count, bubbleConfig.children.size);
+  if (bubbleConfig?.children) {
+    spawnChildren(bubble, bubbleConfig.children);
   }
 };
 
-const spawnChildren = (parentBubble, count, childSize) => {
-  const childConfig = BUBBLE_SIZES.find(b => b.size === childSize);
+const spawnChildren = (parentBubble, { count, sizeKey, customConfig }) => {
+  const childConfig = customConfig || getBubbleConfigByKey(sizeKey);
   
   if (!childConfig) return;
 
@@ -228,8 +512,10 @@ const spawnChildren = (parentBubble, count, childSize) => {
 
   for (let i = 0; i < count; i++) {
     const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
+    const childSize = childConfig.size;
     const x = centerX + Math.cos(angle) * radius - childSize / 2;
     const y = centerY + Math.sin(angle) * radius - childSize / 2;
+
 
     const color = i === 0 
       ? parentBubble.color 
@@ -251,16 +537,18 @@ const spawnChildren = (parentBubble, count, childSize) => {
 };
 
 const pushAwayBubbles = (poppedBubble) => {
+  const poppedCfg = getBubbleConfig(poppedBubble.size);
+
+  if (!poppedCfg) return;
+
   const poppedCenterX = poppedBubble.x + poppedBubble.size / 2;
   const poppedCenterY = poppedBubble.y + poppedBubble.size / 2;
-  
-  const pushFactors = {
-    140: { 140: 1, 100: 1.5, 60: 2 },    
-    100: { 140: 0.5, 100: 1, 60: 1.5 },  
-    60: { 140: 0.25, 100: 0.5, 60: 1 }    
-  };
 
   bubbles.value.forEach((bubble) => {
+    const cfg = getBubbleConfig(bubble.size);
+
+    if (!cfg) return;
+
     const bubbleCenterX = bubble.x + bubble.size / 2;
     const bubbleCenterY = bubble.y + bubble.size / 2;
     const dx = bubbleCenterX - poppedCenterX;
@@ -273,7 +561,7 @@ const pushAwayBubbles = (poppedBubble) => {
       const dirX = dx / distance;
       const dirY = dy / distance;
       
-      const factor = pushFactors[poppedBubble.size]?.[bubble.size];
+      const factor = poppedCfg.pushFactor[cfg.key];
       const pushDistance = (poppedBubble.size / 2) * factor;
       
       bubble.startX = bubble.x;
@@ -306,17 +594,13 @@ onBeforeUnmount(() => {
 defineExpose({ start, stop });
 </script>
 
-<style scoped>
-/* Фон */
-.gradient-bg {
-    background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
-}
-
+<style scoped lang="scss">
 .bubble-game {
     position: fixed;
     inset: 0;
     overflow: hidden;
     cursor: crosshair;
+    background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
 }
 
 .game-info {
@@ -326,6 +610,8 @@ defineExpose({ start, stop });
     right: 200px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 20px;
     z-index: 1000;
     max-width: calc(100% - 280px);
     pointer-events: none;
@@ -335,11 +621,26 @@ defineExpose({ start, stop });
     pointer-events: auto;
 }
 
-.score {
-    color: #FF4757;
-    font-size: 32px;
-    min-width: 100px;
-    justify-content: center;
+.mode-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.mode-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 3px solid transparent;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.mode-btn.active {
+    background:  #667eea;
+    color: white;
+    border-color: white;
 }
 
 .badge {
@@ -354,6 +655,49 @@ defineExpose({ start, stop });
     align-items: center;
     gap: 15px;
     color: #333;
+}
+
+.invisible {
+    opacity: 0;
+}
+
+.correct-combo {
+    background: rgba(69, 168, 75, 0.95);
+    color: white;
+}
+
+.wrong-combo {
+    background: rgba(147, 54, 54, 0.95);
+    color: white;
+}
+
+.bomb-indicator {
+    position: fixed;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 100, 0, 0.65);
+    color: white;
+    padding: 15px 40px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: 900;
+    z-index: 1001;
+}
+
+.fire-effect {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 0, 0.8), rgba(255, 0, 0, 0.4), transparent);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.bomb-effect {
+    width: 300px;
+    height: 300px;
 }
 
 /* Выбранный цвет */
