@@ -1,5 +1,10 @@
 <template>
-  <div class="bubble-game" ref="gameRef" @click="e => handleClick(e)" @mousemove="e => handleMouseMove(e)">
+  <div 
+    class="bubble-game" 
+    ref="gameRef" 
+    @click="e => handleClick(e)" 
+    @mousemove="e => handleMouseMove(e)"
+  >
     <div class="bubble-game__info">
       <div class="bubble-game__badge">
         Собирай:
@@ -64,7 +69,8 @@
         left: laserX + 'px',
         top: laserY + 'px'
       }"
-    ></div>
+    >
+    </div>
 
     <div
       v-for="shot in autoShots"
@@ -74,7 +80,8 @@
         left: shot.x + 'px',
         top: shot.y + 'px'
       }"
-    ></div>
+    >
+    </div>
 
     <div
       v-for="explosion in explosions"
@@ -84,7 +91,8 @@
         left: explosion.x + 'px',
         top: explosion.y + 'px'
       }"
-    ></div>
+    >
+    </div>
 
     <Bubble
       v-for="b in bubbles"
@@ -195,7 +203,9 @@ const toggleBombMode = () => {
 };
 
 const useBomb = (x, y) => {
-  if (bombCount.value <= 0) return;
+  if (bombCount.value <= 0) {
+    return;
+  }
   
   bombCount.value--;
   bombMode.value = false;
@@ -242,11 +252,15 @@ const setWeaponMode = (mode) => {
 };
 
 const startAutoFire = () => {
-  if (autoInterval.value) return;
+  if (autoInterval.value) {
+    return;
+  }
   
   autoInterval.value = setInterval(() => {
-    if (!active.value) return;
-    
+    if (!active.value) {
+      return;
+    }
+
     const x = mouseX.value;
     const y = mouseY.value;
     
@@ -269,8 +283,10 @@ const stopAutoFire = () => {
 };
 
 const handleMouseMove = (event) => {
-  if (!active.value) return;
-  
+  if (!active.value) {
+    return;
+  }
+
   const rect = gameRef.value.getBoundingClientRect();
   mouseX.value = event.clientX - rect.left;
   mouseY.value = event.clientY - rect.top;
@@ -298,7 +314,9 @@ const checkBubblesAtPosition = (x, y, radius = 5) => {
 };
 
 const start = () => {
-  if (active.value) return;
+  if (active.value) {
+    return;
+  }
 
   active.value = true;
   score.value = 0;
@@ -327,13 +345,18 @@ const start = () => {
 const stop = () => {
   active.value = false;
   laserActive.value = false;
-  if (frameId.value) cancelAnimationFrame(frameId.value);
+  if (frameId.value) {
+    cancelAnimationFrame(frameId.value);
+  }
   stopAutoFire();
   emit("finish", score.value);
 };
 
 const updateSize = () => {
-  if (!gameRef.value) return;
+  if (!gameRef.value) {
+    return;
+  }
+
   const rect = gameRef.value.getBoundingClientRect();
   size.value = { w: rect.width, h: rect.height };
 };
@@ -402,7 +425,9 @@ const update = () => {
 };
 
 const loop = (time = performance.now()) => {
-  if (!active.value) return;
+  if (!active.value) {
+    return;
+  }
 
   if (time - lastSpawn.value >= 1000 / props.intensity) {
     spawn();
@@ -414,7 +439,9 @@ const loop = (time = performance.now()) => {
 };
 
 const handleClick = (event) => {
-  if (!active.value) return;
+  if (!active.value) {
+    return;
+  }
 
   const rect = gameRef.value.getBoundingClientRect();
   const clickX = event.clientX - rect.left;
@@ -425,7 +452,9 @@ const handleClick = (event) => {
     return;
   }
 
-  if (weaponMode.value !== 'click') return;
+  if (weaponMode.value !== 'click') {
+    return;
+  }
 
   const clickedBubbles = bubbles.value.filter((b) => {
     const dx = clickX - (b.x + b.size / 2);
@@ -464,7 +493,9 @@ const updateCombo = (correct) => {
 
 const pop = (bubble) => {
   const idx = bubbles.value.indexOf(bubble);
-  if (idx === -1) return;
+  if (idx === -1) {
+    return;
+  }
 
   const correct = bubble.color === props.targetColor;
   
@@ -504,7 +535,9 @@ const pop = (bubble) => {
 const spawnChildren = (parentBubble, { count, sizeKey, customConfig }) => {
   const childConfig = customConfig || getBubbleConfigByKey(sizeKey);
   
-  if (!childConfig) return;
+  if (!childConfig) {
+    return;
+  }
 
   const centerX = parentBubble.x + parentBubble.size / 2;
   const centerY = parentBubble.y + parentBubble.size / 2;
@@ -538,7 +571,9 @@ const spawnChildren = (parentBubble, { count, sizeKey, customConfig }) => {
 const pushAwayBubbles = (poppedBubble) => {
   const poppedCfg = getBubbleConfig(poppedBubble.size);
 
-  if (!poppedCfg) return;
+  if (!poppedCfg) {
+    return;
+  }
 
   const poppedCenterX = poppedBubble.x + poppedBubble.size / 2;
   const poppedCenterY = poppedBubble.y + poppedBubble.size / 2;
@@ -546,7 +581,9 @@ const pushAwayBubbles = (poppedBubble) => {
   bubbles.value.forEach((bubble) => {
     const cfg = getBubbleConfig(bubble.size);
 
-    if (!cfg) return;
+    if (!cfg) {
+      return;
+    }
 
     const bubbleCenterX = bubble.x + bubble.size / 2;
     const bubbleCenterY = bubble.y + bubble.size / 2;
@@ -593,116 +630,115 @@ onBeforeUnmount(() => {
 defineExpose({ start, stop });
 </script>
 
-<style scoped lang="scss">
+<style scoped lang="less">
 .bubble-game {
   position: fixed;
   inset: 0;
   overflow: hidden;
   cursor: crosshair;
   background: linear-gradient(135deg, #FFE66D, #FF6B9D, #C44569, #A8E6CF, #FFD93D);
-}
 
-.bubble-game__info {
-  position: fixed;
-  top: 30px;
-  left: 40px;
-  right: 200px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  z-index: 1000;
-  max-width: calc(100% - 280px);
-  pointer-events: none;
-}
+  &__info {
+    position: fixed;
+    top: 30px;
+    left: 40px;
+    right: 200px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    z-index: 1000;
+    max-width: calc(100% - 280px);
+    pointer-events: none;
+  }
 
-.bubble-game__mode-selector {
-  display: flex;
-  gap: 10px;
-}
+  &__mode-selector {
+    display: flex;
+    gap: 10px;
+  }
 
-.bubble-game__mode-btn {
-  background: rgba(255, 255, 255, 0.9);
-  border: 3px solid transparent;
-  padding: 12px 20px;
-  border-radius: 25px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  pointer-events: auto;
-}
+  &__mode-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 3px solid transparent;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    pointer-events: auto;
 
-.bubble-game__mode-btn--active {
-  background: #667eea;
-  color: white;
-  border-color: white;
-}
+    &--active {
+      background: #667eea;
+      color: white;
+      border-color: white;
+    }
+  }
 
-.bubble-game__badge {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 18px 35px;
-  border-radius: 50px;
-  font-size: 24px;
-  font-weight: 900;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  color: #333;
-  pointer-events: auto;
-}
+  &__badge {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 18px 35px;
+    border-radius: 50px;
+    font-size: 24px;
+    font-weight: 900;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #333;
+    pointer-events: auto;
 
-.bubble-game__badge--invisible {
-  opacity: 0;
-  pointer-events: none;
-}
+    &--invisible {
+      opacity: 0;
+      pointer-events: none;
+    }
 
-.bubble-game__badge--correct-combo {
-  background: rgba(69, 168, 75, 0.95);
-  color: white;
-}
+    &--correct-combo {
+      background: rgba(69, 168, 75, 0.95);
+      color: white;
+    }
 
-.bubble-game__badge--wrong-combo {
-  background: rgba(147, 54, 54, 0.95);
-  color: white;
-}
+    &--wrong-combo {
+      background: rgba(147, 54, 54, 0.95);
+      color: white;
+    }
+  }
 
-.bubble-game__indicator {
-  position: fixed;
-  top: 150px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 100, 0, 0.65);
-  color: white;
-  padding: 15px 40px;
-  border-radius: 30px;
-  font-size: 22px;
-  font-weight: 900;
-  z-index: 1001;
-}
+  &__color-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
 
-.bubble-game__effect {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 0, 0.8), rgba(255, 0, 0, 0.4), transparent);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
+  &__indicator {
+    position: fixed;
+    top: 150px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 100, 0, 0.65);
+    color: white;
+    padding: 15px 40px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: 900;
+    z-index: 1001;
+  }
 
-.bubble-game__effect--bomb {
-  width: 300px;
-  height: 300px;
-}
+  &__effect {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 0, 0.8), rgba(255, 0, 0, 0.4), transparent);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 
-/* Выбранный цвет */
-.bubble-game__color-dot {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 4px solid white;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    &--bomb {
+      width: 300px;
+      height: 300px;
+    }
+  }
 }
 </style>
