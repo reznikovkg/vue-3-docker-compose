@@ -8,6 +8,8 @@ COPY package.json ./
 
 RUN npm install
 
+RUN npm install -D less
+
 COPY ./ ./
 
 EXPOSE 5173
