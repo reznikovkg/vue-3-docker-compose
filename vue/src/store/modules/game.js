@@ -1,6 +1,15 @@
 // vue/src/store/modules/game.js
 import { reactive, readonly } from 'vue'
 
+const EFFECT_WEIGHTS = {
+  frozen: 5,
+  buried: 2,
+  spiked: 1,
+  floating: 1
+}
+
+const EFFECTS = Object.keys(EFFECT_WEIGHTS)
+      
 // Цвета для комбо-эффектов
 const COMBO_COLORS = {
   RED: '#FF4444',
@@ -122,6 +131,16 @@ function getRandomColor() {
   return COLORS[Math.floor(Math.random() * COLORS.length)]
 }
 
+function getRandomEffect() {
+  const totalWeight = Object.values(EFFECT_WEIGHTS).reduce((a, b) => a + b, 0)
+  let rand = Math.random() * totalWeight
+  for (const effect of EFFECTS) {
+    rand -= EFFECT_WEIGHTS[effect]
+    if (rand <= 0) return effect
+  }
+  return null
+}
+
 // Создание сетки
 function createGrid(gridSize, crystalsTotal) {
   const grid = []
@@ -140,13 +159,25 @@ function createGrid(gridSize, crystalsTotal) {
         const randomBonus = bonusTypes[Math.floor(Math.random() * bonusTypes.length)]
         bonus = randomBonus.type
       }
-      
+
+      let effect = Math.random() < 0.1 ? getRandomEffect() : null
+
+      let frozen = effect === 'frozen' ? 2 : 0
+      let buried = effect === 'buried'
+      let spiked = effect === 'spiked'
+      let floating = effect === 'floating'
+
       row.push({
         x,
         y,
         color: getRandomColor(),
         crystal: spawnCrystal,
         bonus,
+        frozen,
+        buried,
+        spiked,
+        floating,
+        effect,
         id: `${x}-${y}`
       })
     }
@@ -233,18 +264,32 @@ function applyGravity(grid) {
     let emptySpaces = 0
     
     for (let y = gridSize - 1; y >= 0; y--) {
-      if (!newGrid[y][x].color) {
+      const cell = newGrid[y][x]
+      if (cell.floating) continue
+      if (!newGrid[y][x].color && !cell.floating) {
         emptySpaces++
       } else if (emptySpaces > 0) {
         // Перемещаем клетку вниз
         newGrid[y + emptySpaces][x].color = newGrid[y][x].color
         newGrid[y + emptySpaces][x].crystal = newGrid[y][x].crystal
         newGrid[y + emptySpaces][x].bonus = newGrid[y][x].bonus
+        newGrid[y + emptySpaces][x].effect = newGrid[y][x].effect
+        newGrid[y + emptySpaces][x].frozen = newGrid[y][x].frozen
+        newGrid[y + emptySpaces][x].buried = newGrid[y][x].buried
+        newGrid[y + emptySpaces][x].spiked = newGrid[y][x].spiked
+        newGrid[y + emptySpaces][x].floating = newGrid[y][x].floating
         
         // Очищаем исходную клетку
-        newGrid[y][x].color = null
-        newGrid[y][x].crystal = false
-        newGrid[y][x].bonus = null
+        if (!newGrid[y][x].floating) {
+          newGrid[y][x].color = null
+          newGrid[y][x].crystal = false
+          newGrid[y][x].bonus = null
+          newGrid[y][x].effect = null
+          newGrid[y][x].frozen = 0
+          newGrid[y][x].buried = false
+          newGrid[y][x].spiked = false
+          newGrid[y][x].floating = false
+        }
       }
     }
   }
@@ -259,7 +304,8 @@ function refillEmptyCells(grid) {
   
   for (let y = 0; y < gridSize; y++) {
     for (let x = 0; x < gridSize; x++) {
-      if (!newGrid[y][x].color) {
+      if (newGrid[y][x].floating) continue
+      if (!newGrid[y][x].color && !newGrid[y][x].effect) {
         newGrid[y][x].color = getRandomColor()
       }
     }
@@ -581,7 +627,7 @@ export default {
     },
     
     UPDATE_CELL_COLOR(state, { x, y, color }) {
-      if (state.grid[y] && state.grid[y][x]) {
+      if (state.grid[y] && state.grid[y][x] && !state.grid[y][x].effect) {
         state.grid[y][x].color = color
       }
     },
@@ -596,7 +642,25 @@ export default {
       if (state.grid[y] && state.grid[y][x]) {
         state.grid[y][x].crystal = crystal
       }
-    }
+    },
+
+    UPDATE_CELL_FROZEN(state, { x, y, frozen }) {
+      if (state.grid[y] && state.grid[y][x]) {
+        state.grid[y][x].frozen = frozen
+        if (frozen === 0 && state.grid[y][x].effect === 'frozen') {
+          state.grid[y][x].effect = null;
+        }
+      }
+    },
+
+    UPDATE_CELL_EFFECT(state, { x, y, effect }) {
+      if (!state.grid[y] || !state.grid[y][x]) return
+      state.grid[y][x].effect = effect
+      state.grid[y][x].frozen = effect === 'frozen' ? 2 : 0
+      state.grid[y][x].buried = effect === 'buried'
+      state.grid[y][x].spiked = effect === 'spiked'
+      state.grid[y][x].floating = effect === 'floating'
+    },
   },
   
   actions: {
@@ -643,6 +707,7 @@ export default {
     
     // Выбор клетки
     selectCell({ commit, state, dispatch }, cell) {
+      if (cell.effect) return
       if (state.isProcessing || !state.isGameActive) return
       
       if (!state.selectedCell) {
@@ -715,9 +780,12 @@ export default {
       
       matches.forEach(cell => {
         const color = cell.color
+        const stateCell = state.grid[cell.y][cell.x]
+        if (stateCell.effect) return
+
         if (!colorGroups[color]) colorGroups[color] = []
-        colorGroups[color].push(cell)
-        
+        colorGroups[color].push(cell)        
+
         if (cell.crystal) {
           crystalsFound++
         }
@@ -780,6 +848,8 @@ export default {
       
       // Обработка бонусов в совпадениях
       matches.forEach(cell => {
+        const stateCell = state.grid[cell.y][cell.x]
+        if (stateCell.frozen > 0) return
         if (cell.bonus) {
           const affectedCells = activateBonusEffect(cell.bonus, cell.x, cell.y, state.grid)
           affectedCells.forEach(({ x, y }) => {
@@ -821,6 +891,16 @@ export default {
       
       // Удаляем совпавшие клетки
       matches.forEach(cell => {
+        const stateCell = state.grid[cell.y][cell.x]
+        if (stateCell.floating) return
+        if (stateCell.frozen > 0) {
+          commit('UPDATE_CELL_FROZEN', { x: cell.x, y: cell.y, frozen: stateCell.frozen - 1 })
+          return
+        }
+        if (stateCell.buried) {
+          commit('UPDATE_CELL_EFFECT', { x: cell.x, y: cell.y, effect: null })
+          return
+        }
         commit('UPDATE_CELL_COLOR', { x: cell.x, y: cell.y, color: null })
         commit('UPDATE_CELL_CRYSTAL', { x: cell.x, y: cell.y, crystal: false })
       })

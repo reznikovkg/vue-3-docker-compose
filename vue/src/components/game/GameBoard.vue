@@ -10,6 +10,11 @@
           'game-cell--matched': matchedSet.has(cell.id),
           'game-cell--invalid':
             animatingRevert && revertIds && revertIds.includes(cell.id),
+          'game-cell--frozen-1': cell.effect === 'frozen' && cell.frozen === 1,
+          'game-cell--frozen-2': cell.effect === 'frozen' && cell.frozen === 2,
+          'game-cell--buried': cell.effect === 'buried',
+          'game-cell--spiked': cell.effect === 'spiked',
+          'game-cell--floating': cell.effect === 'floating',
         }"
         @click="onCellClick(cell)"
       >
@@ -116,6 +121,37 @@ const onCellClick = (cell: any) => {
     background: rgba(255, 100, 100, 0.2);
     outline: 2px solid rgba(255, 100, 100, 0.5);
   }
+
+  &--frozen-1 {
+    background-color: rgba(150, 200, 255, 0.6);
+    border: 4px solid #99c2ff;
+    box-shadow: 0 0 8px rgba(150, 200, 255, 0.5);
+  }
+
+  &--frozen-2 {
+    background-color: rgba(221, 232, 249, 0.8);
+    border: 4px solid #99c2ff;
+    box-shadow: 0 0 12px rgba(150, 200, 255, 0.5);
+  }
+
+  &--buried {
+    border: 6px solid #654321;
+    box-shadow:
+      inset 0 0 10px rgba(0, 0, 0, 0.6),
+      0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  &--spiked {
+    border: 3px solid rgba(248, 47, 47, 0.8);
+    box-shadow: 0 0 10px rgba(255, 80, 80, 0.6);
+  }
+
+  &--floating {
+    animation: floating 2.5s ease-in-out infinite;
+    box-shadow:
+      0 8px 14px rgba(150, 150, 255, 0.35);
+    border: 3px solid rgba(229, 208, 229, 0.8);
+  }
 }
 
 .gem {
@@ -149,6 +185,18 @@ const onCellClick = (cell: any) => {
   100% {
     transform: scale(0);
     opacity: 0;
+  }
+}
+
+@keyframes floating {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10%);
+  }
+  100% {
+    transform: translateY(0);
   }
 }
 </style>
