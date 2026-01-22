@@ -142,6 +142,23 @@ function getRandomEffect() {
   return null
 }
 
+function getClosestCellsWithEffect(grid, origin, count) {
+  const cells = []
+
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid.length; x++) {
+      const cell = grid[y][x]
+      if (!cell.effect) continue
+
+      const dist = Math.abs(origin.x - x) + Math.abs(origin.y - y)
+      cells.push({ x, y, dist })
+    }
+  }
+
+  cells.sort((a, b) => a.dist - b.dist)
+  return cells.slice(0, count).map(({ x, y }) => ({ x, y }))
+}
+
 // Создание сетки
 function createGrid(gridSize, crystalsTotal) {
   const grid = []
@@ -860,6 +877,19 @@ export default {
           })
         }
         
+        if (state.combo.count >= 2) {
+          let origin = state.selectedCell
+          if (!origin) {
+            const x = Math.floor(Math.random() * state.gridSize)
+            const y = Math.floor(Math.random() * state.gridSize)
+            origin = { x, y }
+          }
+          const cellsToClear = getClosestCellsWithEffect(state.grid, origin, 2)
+          cellsToClear.forEach(({ x, y }) => {
+            commit('UPDATE_CELL_EFFECT', { x, y, effect: null })
+          })
+        }
+
         // Применяем эффект комбо
         const effect = COMBO_EFFECTS[comboColor]
         const comboResult = effect.apply(state.grid, comboCount, state)
