@@ -118,7 +118,8 @@ const createInitialState = () => ({
   bonuses: [],
   timeLeft: 120,
   targetScore: 10000,
-  isGameActive: true
+  isGameActive: true,
+  timeLastAction: Date.now(),
 })
 
 // Доступные цвета
@@ -617,7 +618,11 @@ export default {
     ADD_TIME(state, seconds) {
       state.timeLeft += seconds
     },
-    
+
+    UPDATE_TIME_LAST_ACTION(state) {
+      state.timeLastAction = Date.now() 
+    },
+
     SET_TARGET_SCORE(state, score) {
       state.targetScore = score
     },
@@ -702,7 +707,42 @@ export default {
         }
         
         processInitialMatches()
+
+        setInterval(() => {
+          if (state.isGameActive) {
+            dispatch('checkInactiveTimer')
+          }
+        }, 1000)
       })
+    },
+
+    registerAction({ commit }) {
+      commit('UPDATE_TIME_LAST_ACTION')
+    },
+
+    checkInactiveTimer({ commit, state }) {
+      if (!state.isGameActive || state.isProcessing) return
+
+      const now = Date.now()
+      const secondsInactive = (now - state.timeLastAction) / 1000
+
+      if (secondsInactive >= 10) {
+        commit('UPDATE_TIME_LAST_ACTION')
+
+        const maxTries = 15
+        let x, y, cell, tries = 0
+
+        do {
+          x = Math.floor(Math.random() * state.gridSize)
+          y = Math.floor(Math.random() * state.gridSize)
+          cell = state.grid[y][x]
+          tries++
+        } while (cell.effect && tries < maxTries)
+
+        if (cell.effect) return
+
+        commit('UPDATE_CELL_EFFECT', { x, y, effect: getRandomEffect() })
+      }
     },
     
     // Выбор клетки
@@ -768,6 +808,7 @@ export default {
     
     // Обработка совпадений
     async processMatches({ commit, state, dispatch }, matches) {
+      dispatch('registerAction')
       if (matches.length === 0) {
         commit('SET_IS_PROCESSING', false)
         return
@@ -936,6 +977,7 @@ export default {
     
     // Активация бонуса из интерфейса
     async activateBonus({ commit, state, dispatch }, bonusIndex) {
+      dispatch('registerAction')
       if (state.isProcessing || !state.isGameActive) return
       
       const bonus = state.bonuses[bonusIndex]
