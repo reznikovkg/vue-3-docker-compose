@@ -337,12 +337,13 @@ function refillEmptyCells(grid) {
 // Случайный взрыв 3x3
 function applyRandomBombEffect(grid, count) {
   const affectedCells = []
+  const radius = 1 + Math.floor(count / 2)
   const bombCount = Math.min(count, 3)
   const gridSize = grid.length
   
   for (let i = 0; i < bombCount; i++) {
-    const centerX = Math.floor(Math.random() * (gridSize - 2)) + 1
-    const centerY = Math.floor(Math.random() * (gridSize - 2)) + 1
+    const centerX = Math.floor(Math.random() * (gridSize - 2 * radius)) + 1
+    const centerY = Math.floor(Math.random() * (gridSize - 2 * radius)) + 1
     
     for (let dx = -1; dx <= 1; dx++) {
       for (let dy = -1; dy <= 1; dy++) {
