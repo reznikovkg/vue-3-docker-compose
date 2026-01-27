@@ -222,274 +222,6 @@ const resetGame = () => {
 </script>
 
 <style scoped lang="scss">
-.game-info {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(129, 140, 248, 0.18));
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  backdrop-filter: blur(12px);
-  min-width: 280px;
-}
-
-.game-info__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-  padding-bottom: 16px;
-}
-
-.game-info__title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--game-text-strong);
-}
-
-.game-info__level {
-  background: linear-gradient(135deg, #22d3ee, #3b82f6);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.game-info__content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.game-info__field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.game-info__label {
-  font-size: 14px;
-  color: var(--game-text-muted);
-  font-weight: 500;
-}
-
-.game-info__value {
-  font-size: 14px;
-  color: var(--game-text-strong);
-  font-weight: 600;
-}
-
-.game-info__value--score {
-  color: #facc15;
-  text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
-  font-size: 16px;
-}
-
-.game-info__value--time {
-  color: #ef4444;
-  font-weight: 700;
-}
-
-.game-info__value--crystal {
-  color: gold;
-}
-
-.combo-display {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  border-radius: 12px;
-  padding: 12px;
-  text-align: center;
-  animation: pulse 1.5s infinite;
-}
-
-.combo-display__title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #a855f7;
-  margin-bottom: 8px;
-}
-
-.combo-display__details {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.combo-display__color {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid white;
-}
-
-.combo-display__count {
-  font-weight: 600;
-  color: var(--game-text-strong);
-}
-
-.combo-display__multiplier {
-  background: #facc15;
-  color: #0f172a;
-  padding: 2px 6px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.combo-display__bonus {
-  font-size: 12px;
-  color: var(--game-text-muted);
-  font-weight: 500;
-}
-
-.bonuses-section__title {
-  font-size: 14px;
-  color: var(--game-text-strong);
-  margin: 0 0 12px 0;
-  font-weight: 600;
-}
-
-.bonuses-section__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.bonus-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-}
-
-.bonus-item:hover:not(.bonus-item--disabled) {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
-  transform: translateY(-1px);
-}
-
-.bonus-item--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.bonus-item__icon {
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.bonus-item__name {
-  font-size: 12px;
-  color: var(--game-text-strong);
-  font-weight: 500;
-}
-
-.processing-indicator {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  background: rgba(59, 130, 246, 0.1);
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--game-text-muted);
-}
-
-.processing-indicator__spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-top: 2px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.game-status {
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  text-align: center;
-}
-
-.game-status__win {
-  font-size: 18px;
-  font-weight: 700;
-  color: #22c55e;
-  margin-bottom: 12px;
-}
-
-.game-status__lose {
-  font-size: 18px;
-  font-weight: 700;
-  color: #ef4444;
-  margin-bottom: 12px;
-}
-
-.game-status__restart {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.game-status__restart:hover {
-  transform: translateY(-2px);
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@media (prefers-color-scheme: dark) {
-  .game-info {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(14, 165, 233, 0.15));
-    border-color: rgba(148, 163, 184, 0.25);
-  }
-}
-
-const GameStatField = {
-  props: {
-    label: { type: String, required: true },
-    value: { type: [String, Number], required: true },
-    variant: { type: String, default: 'default' }
-  },
-  template: `
-    <div class="game-info__field">
-      <span class="game-info__label">{{ label }}</span>
-      <span 
-        class="game-info__value" 
-        :class="'game-info__value--' + variant"
-      >
-        {{ value }}
-      </span>
-    </div>
-  `
-}
-</script>
-
-<style scoped lang="scss">
 :root {
   --game-text-strong: #0f172a;
   --game-text-muted: rgba(15, 23, 42, 0.7);
@@ -527,69 +259,69 @@ const GameStatField = {
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(14, 165, 233, 0.15));
     border-color: rgba(148, 163, 184, 0.25);
   }
-}
 
-.game-info__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-  padding-bottom: 16px;
-}
-
-.game-info__title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--game-text-strong);
-}
-
-.game-info__level {
-  background: linear-gradient(135deg, #22d3ee, #3b82f6);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.game-info__content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.game-info__field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.game-info__label {
-  font-size: 14px;
-  color: var(--game-text-muted);
-  font-weight: 500;
-}
-
-.game-info__value {
-  font-size: 14px;
-  color: var(--game-text-strong);
-  font-weight: 600;
-
-  &--score {
-    color: #facc15;
-    text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
-    font-size: 16px;
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    padding-bottom: 16px;
   }
 
-  &--time {
-    color: #ef4444;
-    font-weight: 700;
+  &__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--game-text-strong);
   }
 
-  &--crystal {
-    color: gold;
+  &__level {
+    background: linear-gradient(135deg, #22d3ee, #3b82f6);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  &__field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__label {
+    font-size: 14px;
+    color: var(--game-text-muted);
+    font-weight: 500;
+  }
+
+  &__value {
+    font-size: 14px;
+    color: var(--game-text-strong);
+    font-weight: 600;
+
+    &--score {
+      color: #facc15;
+      text-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+      font-size: 16px;
+    }
+
+    &--time {
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    &--crystal {
+      color: gold;
+    }
   }
 }
 
@@ -600,61 +332,63 @@ const GameStatField = {
   padding: 12px;
   text-align: center;
   animation: pulse 1.5s infinite;
+
+  &__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #a855f7;
+    margin-bottom: 8px;
+  }
+
+  &__details {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  &__color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+
+  &__count {
+    font-weight: 600;
+    color: var(--game-text-strong);
+  }
+
+  &__multiplier {
+    background: #facc15;
+    color: #0f172a;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  &__bonus {
+    font-size: 12px;
+    color: var(--game-text-muted);
+    font-weight: 500;
+  }
 }
 
-.combo-display__title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #a855f7;
-  margin-bottom: 8px;
-}
+.bonuses-section {
+  &__title {
+    font-size: 14px;
+    color: var(--game-text-strong);
+    margin: 0 0 12px 0;
+    font-weight: 600;
+  }
 
-.combo-display__details {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-
-.combo-display__color {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid white;
-}
-
-.combo-display__count {
-  font-weight: 600;
-  color: var(--game-text-strong);
-}
-
-.combo-display__multiplier {
-  background: #facc15;
-  color: #0f172a;
-  padding: 2px 6px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.combo-display__bonus {
-  font-size: 12px;
-  color: var(--game-text-muted);
-  font-weight: 500;
-}
-
-.bonuses-section__title {
-  font-size: 14px;
-  color: var(--game-text-strong);
-  margin: 0 0 12px 0;
-  font-weight: 600;
-}
-
-.bonuses-section__list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 
 .bonus-item {
@@ -680,17 +414,17 @@ const GameStatField = {
     opacity: 0.5;
     cursor: not-allowed;
   }
-}
 
-.bonus-item__icon {
-  font-size: 16px;
-  font-weight: bold;
-}
+  &__icon {
+    font-size: 16px;
+    font-weight: bold;
+  }
 
-.bonus-item__name {
-  font-size: 12px;
-  color: var(--game-text-strong);
-  font-weight: 500;
+  &__name {
+    font-size: 12px;
+    color: var(--game-text-strong);
+    font-weight: 500;
+  }
 }
 
 .processing-indicator {
@@ -702,14 +436,14 @@ const GameStatField = {
   border-radius: 8px;
   font-size: 13px;
   color: var(--game-text-muted);
-}
 
-.processing-indicator__spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(59, 130, 246, 0.3);
-  border-top: 2px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  &__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
 }
 </style>
