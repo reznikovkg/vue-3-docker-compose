@@ -6,7 +6,7 @@ export default {
     }
   },
   getters: {
-    getList: (state) => state.list,
+    getList: (state) => state.list, 
   },
   mutations: {
     SET_LIST: (state, payload) => {

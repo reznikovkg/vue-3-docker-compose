@@ -55,15 +55,18 @@ const cellSizePx = computed(() => {
 });
 
 const boardStyle = computed(() => {
+  const size = gridSize.value
+  const cellSize = cellSizePx.value
+  
   return {
     display: 'grid',
-    gridTemplateColumns: `repeat(${gridSize.value}, ${cellSizePx.value}px)`,
-    gridTemplateRows: `repeat(${gridSize.value}, ${cellSizePx.value}px)`,
+    gridTemplateColumns: `repeat(${size}, ${cellSize}px)`,
+    gridTemplateRows: `repeat(${size}, ${cellSize}px)`,
     gap: `${GAP_PX}px`,
     width: `${BOARD_PIXELS}px`,
     height: `${BOARD_PIXELS}px`,
     padding: `${BOARD_PADDING}px`,
-    borderRadius: '10px',
+    borderRadius: '12px',
     background: 'linear-gradient(145deg, #1e3c72, #2a5298)',
     boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
     border: '2px solid rgba(255,255,255,0.1)',
@@ -82,7 +85,7 @@ const onCellClick = (cell: any) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 15px;
 }
 
 .game-board {
@@ -105,6 +108,7 @@ const onCellClick = (cell: any) => {
   &:hover {
     background: rgba(255, 255, 255, 0.12);
   }
+}
 
   &--selected {
     outline: 2px solid rgba(255, 255, 255, 0.4);
@@ -154,9 +158,14 @@ const onCellClick = (cell: any) => {
   }
 }
 
+.game-cell--invalid {
+  background: rgba(255,100,100,0.2);
+  outline: 2px solid rgba(255,100,100,0.5);
+}
+
 .gem {
-  width: 80%;
-  height: 80%;
+  width: 85%;
+  height: 85%;
   border-radius: 50%;
   box-shadow:
     0 3px 6px rgba(0, 0, 0, 0.3),
