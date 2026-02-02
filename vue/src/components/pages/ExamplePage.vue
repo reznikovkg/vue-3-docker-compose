@@ -34,12 +34,6 @@ const forceRerender = () => {
   componentKey.value += 1
 }
 
-// onMounted(() => {
-//   store.dispatch('game/initializeGame').then(() => {
-//     forceRerender()
-//   })
-// })
-
 onMounted(() => {
   // Инициализируем игру
   store.dispatch('game/initializeGame')

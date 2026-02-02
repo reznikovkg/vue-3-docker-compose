@@ -1,5 +1,9 @@
 <template>
-  <div class="game-cell" :class="cellClasses" @click="handleClick">
+  <div
+    class="game-cell"
+    :class="cellClasses"
+    @click="handleClick"
+  >
     <div
       v-if="cell.color"
       class="gem"
@@ -10,16 +14,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import { useStore } from 'vuex';
+import { computed } from 'vue'
+import { useStore } from 'vuex'
 
 const props = defineProps({
-  cell: Object,
-});
+  cell: Object
+})
 
-const store = useStore();
-const selectedCell = computed(() => store.getters['game/selectedCell']);
-const matchedSet = computed(() => store.getters['game/matchedSet']);
+const store = useStore()
+const selectedCell = computed(() => store.getters['game/selectedCell'])
+const matchedSet = computed(() => store.getters['game/matchedSet'])
 const cellClasses = computed(() => ({
   'game-cell--selected': isSelected.value,
   'game-cell--matched': isMatched.value,
@@ -28,12 +32,12 @@ const cellClasses = computed(() => ({
   'game-cell--buried': props.cell.effect === 'buried',
   'game-cell--spiked': props.cell.effect === 'spiked',
   'game-cell--floating': props.cell.effect === 'floating',
-}));
-const isSelected = computed(() => selectedCell.value?.id === props.cell.id);
-const isMatched = computed(() => matchedSet.value.has(props.cell.id));
+}))
+const isSelected = computed(() => selectedCell.value?.id === props.cell.id)
+const isMatched = computed(() => matchedSet.value.has(props.cell.id))
 
 const handleClick = () => {
   if (props.cell.effect) return;
-  emit('cell-click', props.cell);
-};
+  emit('cell-click', props.cell)
+}
 </script>
