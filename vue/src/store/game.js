@@ -1,6 +1,3 @@
-// vue/src/store/modules/game.js
-import { reactive, readonly } from 'vue'
-
 const EFFECT_WEIGHTS = {
   frozen: 5,
   buried: 2,
@@ -132,13 +129,15 @@ function getRandomColor() {
   return COLORS[Math.floor(Math.random() * COLORS.length)]
 }
 
-function getRandomEffect() {
+const getRandomEffect = () => {
   const totalWeight = Object.values(EFFECT_WEIGHTS).reduce((a, b) => a + b, 0)
   let rand = Math.random() * totalWeight
+
   for (const effect of EFFECTS) {
     rand -= EFFECT_WEIGHTS[effect]
     if (rand <= 0) return effect
   }
+
   return null
 }
 
