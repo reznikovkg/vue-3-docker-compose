@@ -125,9 +125,8 @@ const COLORS = ['#FF4444', '#4444FF', '#FFFF44', '#FF44FF', '#44FF44', '#FF8844'
 // ============== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==============
 
 // Случайный цвет
-function getRandomColor() {
-  return COLORS[Math.floor(Math.random() * COLORS.length)]
-}
+const getRandomColor = () =>
+  COLORS[Math.floor(Math.random() * COLORS.length)]
 
 const getRandomEffect = () => {
   const totalWeight = Object.values(EFFECT_WEIGHTS).reduce((a, b) => a + b, 0)
@@ -141,7 +140,7 @@ const getRandomEffect = () => {
   return null
 }
 
-function getClosestCellsWithEffect(grid, origin, count) {
+const getClosestCellsWithEffect = (grid, origin, count) => {
   const cells = []
 
   for (let y = 0; y < grid.length; y++) {
@@ -159,7 +158,7 @@ function getClosestCellsWithEffect(grid, origin, count) {
 }
 
 // Создание сетки
-function createGrid(gridSize, crystalsTotal) {
+const createGrid = (gridSize, crystalsTotal) => {
   const grid = []
   let crystalCounter = 0
   
@@ -205,7 +204,7 @@ function createGrid(gridSize, crystalsTotal) {
 }
 
 // Поиск совпадений
-function findMatches(grid) {
+const findMatches = (grid) => {
   const matches = []
   const processed = new Set()
   
@@ -273,7 +272,7 @@ function findMatches(grid) {
 }
 
 // Гравитация
-function applyGravity(grid) {
+const applyGravity = (grid) => {
   const gridSize = grid.length
   const newGrid = JSON.parse(JSON.stringify(grid))
   
@@ -315,7 +314,7 @@ function applyGravity(grid) {
 }
 
 // Заполнение пустых клеток
-function refillEmptyCells(grid) {
+const refillEmptyCells = (grid) => {
   const newGrid = JSON.parse(JSON.stringify(grid))
   const gridSize = newGrid.length
   
@@ -334,7 +333,7 @@ function refillEmptyCells(grid) {
 // ============== КОМБО ЭФФЕКТЫ ==============
 
 // Случайный взрыв 3x3
-function applyRandomBombEffect(grid, count) {
+const applyRandomBombEffect= (grid, count) => {
   const affectedCells = []
   const radius = 1 + Math.floor(count / 2)
   const bombCount = Math.min(count, 3)
@@ -362,7 +361,7 @@ function applyRandomBombEffect(grid, count) {
 }
 
 // Вертикальная полоса
-function applyVerticalStripeEffect(grid, count) {
+const applyVerticalStripeEffect = (grid, count) => {
   const affectedCells = []
   const columns = new Set()
   const gridSize = grid.length
@@ -382,7 +381,7 @@ function applyVerticalStripeEffect(grid, count) {
 }
 
 // Горизонтальная полоса
-function applyHorizontalStripeEffect(grid, count) {
+const applyHorizontalStripeEffect = (grid, count) => {
   const affectedCells = []
   const rows = new Set()
   const gridSize = grid.length
@@ -402,7 +401,7 @@ function applyHorizontalStripeEffect(grid, count) {
 }
 
 // Случайный бонус
-function applyBonusGiftEffect(grid, count, gameState) {
+const applyBonusGiftEffect = (grid, count, gameState) => {
   const bonuses = []
   const bonusTypes = Object.values(BONUS_CONFIG)
   
@@ -419,7 +418,7 @@ function applyBonusGiftEffect(grid, count, gameState) {
 }
 
 // Охота на кристаллы
-function applyCrystalHunterEffect(grid, count) {
+const applyCrystalHunterEffect = (grid, count) => {
   const affectedCells = []
   const gridSize = grid.length
   
@@ -458,7 +457,7 @@ function applyCrystalHunterEffect(grid, count) {
 
 // ============== ОБРАБОТКА БОНУСОВ ==============
 
-function activateBonusEffect(bonusType, x, y, grid) {
+const activateBonusEffect = (bonusType, x, y, grid) => {
   const affectedCells = []
   const gridSize = grid.length
   
