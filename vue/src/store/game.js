@@ -686,7 +686,7 @@ export default {
   
   actions: {
     // Инициализация игры
-    async initializeGame({ commit, dispatch }) {
+    initializeGame({ commit, dispatch }) {
       return new Promise((resolve) => {
         commit('SET_IS_PROCESSING', true)
         
@@ -823,7 +823,7 @@ export default {
     },
     
     // Обработка совпадений
-    async processMatches({ commit, state, dispatch }, matches) {
+    processMatches({ commit, state, dispatch }, matches) {
       dispatch('registerAction')
       if (matches.length === 0) {
         commit('SET_IS_PROCESSING', false)
@@ -1005,7 +1005,7 @@ export default {
     },
     
     // Активация бонуса из интерфейса
-    async activateBonus({ commit, state, dispatch }, bonusIndex) {
+    activateBonus({ commit, state, dispatch }, bonusIndex) {
       dispatch('registerAction')
       if (state.isProcessing || !state.isGameActive) return
       
@@ -1054,8 +1054,8 @@ export default {
     },
     
     // Сброс игры
-    async resetGame({ dispatch }) {
-      await dispatch('initializeGame')
+    resetGame({ dispatch }) {
+      return dispatch('initializeGame')
     }
   }
 }
