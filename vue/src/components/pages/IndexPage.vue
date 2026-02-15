@@ -6,18 +6,24 @@
     <div>
       2PR: {{ c2pr }}
     </div>
+    <div>
+      TEXT: {{ lastText }}
+    </div>
+    <div>
+      LEN: {{ lastLen }}
+    </div>
 
-    <CustomButton :type="'red'" @click="() => addCount(5)">+5</CustomButton>
+    <CustomButton type="red" @click="() => addCount(5)">+5</CustomButton>
 
-    <CustomButton @click="() => addCount(10)" @len="(v) => check(v)">
-      123
+    <CustomButton @click="() => addCount(10)" @len="(v) => onLen(v)" @text="(t) => onText(t)">
+      +10
       <template #count>
         999
       </template>
     </CustomButton>
 
-    <CustomButton @click="() => addCount(10)">Кнопка</CustomButton>
-    <CustomButton @click="() => addCount(10)" />
+    <CustomButton @click="() => addCount(10)" @len="(v) => onLen(v)" @text="(t) => onText(t)">+10</CustomButton>
+    <CustomButton type="disabled" @click="() => addCount(10)" @len="(v) => onLen(v)" @text="(t) => onText(t)">+10</CustomButton>
   </div>
 </template>
 
@@ -31,7 +37,9 @@ export default {
   },
   data () {
     return {
-      count: 10
+      count: 10,
+      lastLen: null,
+      lastText: ''
     }
   },
   computed: {
@@ -43,12 +51,15 @@ export default {
     addCount (v = 10) {
       this.count += v
     },
-    check (v) {
-      alert(v)
+    onLen (v) {
+      this.lastLen = v
+    },
+    onText (t) {
+      this.lastText = t
     }
   }
 }
 </script>
 
-<style scoped>
+<style lang="scss">
 </style>
