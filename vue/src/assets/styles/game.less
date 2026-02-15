@@ -1,0 +1,40 @@
+// Общие стили для игры
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+--primary-color: #3498db;
+--secondary-color: #2ecc71;
+--danger-color: #e74c3c;
+--warning-color: #f39c12;
+--dark-color: #2c3e50;
+--light-color: #ecf0f1;
+}
+
+// Анимации
+@keyframes fadeIn {
+from {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+}
+
+@keyframes pulse {
+0%, 100% {
+    transform: scale(1);
+}
+50% {
+    transform: scale(1.05);
+}
+}
+
+// Утилиты
+.no-select {
+user-select: none;
+-webkit-user-select: none;
+-moz-user-select: none;
+-ms-user-select: none;
+}
