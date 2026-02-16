@@ -15,7 +15,7 @@ echo 'Started coping from '$CONTAINER_ID
 # dist
 sudo rm -rf ./dist
 sudo docker cp $CONTAINER_ID:/vue/dist ./vue/dist
-
+xtsdasdcacv vxzcv zxcv
 # node_modules
 sudo rm -rf ./node_modules
 sudo docker cp $CONTAINER_ID:/vue/node_modules ./vue/node_modules
