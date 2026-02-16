@@ -1,16 +1,16 @@
-import { createStore } from 'vuex'
-import list from './list'
+import { createStore } from 'vuex';
+import list from './list';
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
   SET_COUNT: 'SET_COUNT',
-}
+};
 
 export default createStore({
-  state () {
+  state() {
     return {
-      count: 0
-    }
+      count: 0,
+    };
   },
   getters: {
     getCount: (state) => state.count,
@@ -19,24 +19,24 @@ export default createStore({
   },
   mutations: {
     [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
+      state.count += value;
     },
     [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
+      state.count = value;
     },
   },
   actions: {
     runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
+      store.commit(MUTATIONS.INCREMENT, value);
     },
     setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
+      const { value, timeout = 0 } = payload;
       setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
+        store.commit(MUTATIONS.SET_COUNT, value);
+      }, timeout);
     },
   },
   modules: {
-    list
-  }
-})
+    list,
+  },
+});
