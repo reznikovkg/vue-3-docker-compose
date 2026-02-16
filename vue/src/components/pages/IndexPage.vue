@@ -9,7 +9,7 @@
 
 <script>
 export default {
-  name: "IndexPage",
+  name: 'IndexPage',
   data() {
     return {
       count: 10,

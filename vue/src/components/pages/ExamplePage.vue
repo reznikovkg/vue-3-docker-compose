@@ -12,18 +12,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { useStore } from "vuex";
+import { computed, ref } from 'vue';
+import { useStore } from 'vuex';
 const store = useStore();
 const count = computed(() => store.getters.getCount);
-const list = computed(() => store.getters["list/getList"]);
+const list = computed(() => store.getters['list/getList']);
 
 const value = ref(1);
 const timeout = ref(0);
 
-const inc = () => store.dispatch("runIncrement", value.value);
+const inc = () => store.dispatch('runIncrement', value.value);
 const setValue = () =>
-  store.dispatch("setCount", {
+  store.dispatch('setCount', {
     value: value.value,
     timeout: timeout.value,
   });

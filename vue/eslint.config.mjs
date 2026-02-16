@@ -1,19 +1,19 @@
-import { defineConfig } from "eslint/config";
-import js from "@eslint/js";
-import eslintConfigPrettier from "eslint-config-prettier/flat";
-import vue from "eslint-plugin-vue";
-import tseslint from "typescript-eslint";
-import globals from "globals";
+import { defineConfig } from 'eslint/config';
+import js from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import vue from 'eslint-plugin-vue';
+import tseslint from 'typescript-eslint';
+import globals from 'globals';
 
 export default defineConfig([
   {
-    ignores: ["dist/**", "node_modules/**"],
+    ignores: ['dist/**', 'node_modules/**'],
   },
   {
-    files: ["**/*.{js,mjs,cjs,ts,mts,jsx,tsx,vue}"],
+    files: ['**/*.{js,mjs,cjs,ts,mts,jsx,tsx,vue}'],
     languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module",
+      ecmaVersion: 'latest',
+      sourceType: 'module',
       globals: {
         ...globals.browser,
         ...globals.node,
@@ -22,16 +22,16 @@ export default defineConfig([
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  ...vue.configs["flat/recommended"],
+  ...vue.configs['flat/recommended'],
   {
-    files: ["**/*.vue"],
+    files: ['**/*.vue'],
     languageOptions: {
       parserOptions: {
         parser: tseslint.parser,
       },
     },
     rules: {
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
   },
   eslintConfigPrettier,

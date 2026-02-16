@@ -15,7 +15,7 @@ export default {
   },
   actions: {
     setList: (store, payload) => {
-      store.commit("SET_LIST", payload);
+      store.commit('SET_LIST', payload);
       // store.dispatch('list/setList', null, { root: true })
     },
   },

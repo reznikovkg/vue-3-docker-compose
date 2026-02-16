@@ -1,9 +1,9 @@
-import { createStore } from "vuex";
-import list from "./list";
+import { createStore } from 'vuex';
+import list from './list';
 
 const MUTATIONS = {
-  INCREMENT: "INCREMENT",
-  SET_COUNT: "SET_COUNT",
+  INCREMENT: 'INCREMENT',
+  SET_COUNT: 'SET_COUNT',
 };
 
 export default createStore({
