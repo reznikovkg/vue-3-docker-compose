@@ -10,13 +10,10 @@
   "scripts": {
     "dev": "vite --port 8080",
     "devhost": "vite --host",
-
     "build": "vite build",
     "preview": "vite preview",
-
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-
+    "lint": "eslint . --max-warnings 10",
+    "lint:fix": "eslint . --fix --max-warnings 10",
     "format": "prettier . --write",
     "format:check": "prettier . --check"
   },
