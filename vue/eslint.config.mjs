@@ -5,12 +5,14 @@ import vue from 'eslint-plugin-vue';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
+const tsFiles = ['**/*.{ts,mts,cts,tsx}'];
+
 export default defineConfig([
   {
     ignores: ['dist/**', 'node_modules/**'],
   },
   {
-    files: ['**/*.{js,mjs,cjs,ts,mts,jsx,tsx,vue}'],
+    files: ['**/*.{js,mjs,cjs,jsx,vue}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -21,7 +23,10 @@ export default defineConfig([
     },
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: config.files ?? tsFiles,
+  })),
   ...vue.configs['flat/recommended'],
   {
     files: ['**/*.vue'],
