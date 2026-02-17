@@ -7,18 +7,24 @@
     <div>
       2PR: {{ c2pr }}
     </div>
+    <div>
+    Квадрат R: {{ squaredR }}
+    </div>
+    <div>
+    Кликов: {{ clickCount }}
+    </div>
 
-    <CustomButton :type="'red'" @click="() => addCount(5)">+5</CustomButton>
+    <CustomButton :type="'red'" @click="() =>handleClick(5)">+5</CustomButton>
 
-    <CustomButton @click="() => addCount(10)" @len="(v) => check(v)">
+    <CustomButton @click="() =>handleClick(10)" @len="(v) => check(v)" small>
       123
       <template #count>
         999
       </template>
     </CustomButton>
 
-    <CustomButton @click="() => addCount(10)">Кнопка</CustomButton>
-    <CustomButton @click="() => addCount(10)" />
+    <CustomButton @click="() =>handleClick(10)">Кнопка</CustomButton>
+    <CustomButton @click="() =>handleClick(10)" />
   </div>
 </template>
 
@@ -32,15 +38,23 @@ export default {
   },
   data () {
     return {
-      count: 10
+      count: 10,
+      clickCount: 0
     }
   },
   computed: {
     c2pr () {
       return 2 * Math.PI * this.count
+    },
+    squaredR () {
+         return this.count * this.count
     }
   },
   methods: {
+    handleClick (v) {
+        this.addCount(v)
+        this.clickCount++
+      },
     addCount (v = 10) {
       this.count += v
     },
@@ -49,7 +63,6 @@ export default {
     }
   }
 }
-
 </script>
 
 <style scoped>

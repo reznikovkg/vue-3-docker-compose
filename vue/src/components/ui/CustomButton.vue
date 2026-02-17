@@ -1,5 +1,5 @@
 <template>
-  <button class="c-button" :class="'c-button--' + type">
+  <button class="c-button" :class=" 'c-button--' + type">
     <div class="c-button__icon">
       + {{ text }}
     </div>
@@ -20,8 +20,13 @@ export default {
   props: {
     type: {
       default: 'default',
-      type: String
-    }
+      type: String,
+      validator: (value) => ['default', 'red'].includes(value)
+    },
+    small: {
+          type: Boolean,
+          default: false
+        }
   },
   data () {
     return {
