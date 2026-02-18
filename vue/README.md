@@ -8,3 +8,5 @@ This command will copy next directories and files:
 - dist/
 - node_modules/
 - package-lock.json
+
+test
