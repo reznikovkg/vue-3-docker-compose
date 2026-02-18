@@ -7,7 +7,7 @@
     <template v-if="$slots.count">
       (<slot name="count">0</slot>
     </template>
-    <input v-model="text" type="text" @click.stop @input="() => check()">
+    <input v-if = "showInput" v-model="text" type="text" @click.stop @input="() => check()">
   </button>
 
 </template>
@@ -20,6 +20,10 @@ export default {
     type: {
       default: 'default',
       type: String
+    },
+    showInput: {
+      default: false,
+      type: Boolean
     }
   },
   data () {

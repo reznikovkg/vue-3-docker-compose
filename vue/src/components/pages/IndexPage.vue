@@ -6,12 +6,18 @@
     <div>
       2PR: {{ c2pr }}
     </div>
+    <div>
+      Diameter: {{ diameter }}
+    </div>
+    <div>
+      Square : {{ square }}
+    </div>
 
     <CustomButton :type="'red'" @click="() => addCount(5)">+5</CustomButton>
     <CustomButton @click="() => addCount(10)">+10</CustomButton>
     <CustomButton @click="() => addCount(10)"></CustomButton>
     <CustomButton @click="() => addCount(10)" />
-    <CustomButton @click="() => addCount(10)" @len="(v) => check(v)">
+    <CustomButton :showInput = "true" @click="() => addCount(10)" @len="(v) => check(v)">
       123
       <template #count>
         999
@@ -37,6 +43,12 @@ export default {
   computed: {
     c2pr() {
       return 2 * Math.PI * this.count
+    },
+    diameter() {
+      return 2 * this.count
+    },
+    square() {
+      return Math.PI * this.count * this.count
     }
   },
   methods: {
