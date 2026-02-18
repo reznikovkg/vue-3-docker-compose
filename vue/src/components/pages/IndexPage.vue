@@ -17,6 +17,10 @@
     </CustomButton>
 
     <CustomButton  @click="() => addCount(10)"></CustomButton>
+    
+    <input v-model="text" type="text">
+
+    <button  @click="() => clearText()">X</button>
   </div>
 </template>
 
@@ -30,6 +34,7 @@ export default {
   },
   data (){
     return {
+      text: '',
       count: 10
     }
   },
@@ -44,6 +49,9 @@ export default {
     },
     check (v) {
       alert(123)
+    },
+    clearText () {
+      this.text = ''
     }
   }
 }

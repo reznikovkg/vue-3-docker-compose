@@ -1,14 +1,14 @@
 <template>
     <button class="c-button" :class="'c-button--' + type">  
-        <div class="c-button__icon">
+        <!-- <div class="c-button__icon">
             + {{ text }}
-        </div>
+        </div> -->
         <slot>Кнопка</slot>
         <template v-if="$slots.count">
             (<slot name="count">0</slot>)
         </template>
 
-        <input v-model="text" type="text" @click.stop @input="() => check()"> 
+        <!-- <input v-model="text" type="text" @click.stop @input="() => check()">  -->
     </button>
 </template>
 
