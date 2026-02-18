@@ -15,8 +15,8 @@
 
     <CustomButton :type="'red'" @click="() => addCount(5)">+5</CustomButton>
     <CustomButton @click="() => addCount(10)">+10</CustomButton>
-    <CustomButton @click="() => addCount(10)"></CustomButton>
-    <CustomButton @click="() => addCount(10)" />
+    <CustomButton @click="() => removeCount(5)">-5</CustomButton>
+    <CustomButton @click="() => removeCount(10)">-10</CustomButton>
     <CustomButton :showInput = "true" @click="() => addCount(10)" @len="(v) => check(v)">
       123
       <template #count>
@@ -54,6 +54,13 @@ export default {
   methods: {
     addCount (v = 10) {
       this.count += v
+    },
+    removeCount (v = 10){
+      this.count -= v
+      if (this.count < 0) {
+        alert('Радиус не может быть отрицательным')
+        this.count = 0
+      }
     },
     check (v){
       alert(v)
