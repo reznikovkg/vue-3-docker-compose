@@ -10,3 +10,4 @@ This command will copy next directories and files:
 - package-lock.json
 
 test
+Another test
