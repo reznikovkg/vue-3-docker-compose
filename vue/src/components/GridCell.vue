@@ -2,8 +2,8 @@
 <div
     class="grid-cell"
     :class="{ 
-      'grid-cell--highlight': isHighlighted,
-      'grid-cell--can-merge': canMergeHere
+      'highlight': isHighlighted,
+      'can-merge': canMergeHere
     }"
     @dragover.prevent="onDragOver"
     @dragleave="onDragLeave"

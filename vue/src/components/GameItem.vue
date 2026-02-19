@@ -1,8 +1,8 @@
 <template>
 <div
     v-if="item"
-    class="game-item"
-    :class="{ 'game-item--dragging': isDragging }"
+    class="item"
+    :class="{ 'dragging': isDragging }"
     :style="{ 
       backgroundColor: item.color,
       cursor: 'grab'
@@ -14,8 +14,8 @@
     @touchmove="onTouchMove"
     @touchend="onTouchEnd"
 >
-    <div class="game-item__emoji">{{ item.emoji }}</div>
-    <div class="game-item__level">Ур. {{ item.level }}</div>
+    <div class="emoji">{{ item.emoji }}</div>
+    <div class="level">Ур. {{ item.level }}</div>
 </div>
 </template>
 

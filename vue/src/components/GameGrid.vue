@@ -1,32 +1,32 @@
 <template>
-<div class="game-grid">
-    <div class="game-grid__header">
+<div class="grid">
+    <div class="header">
       <div class="stats">
         <div class="stat">
-          <span class="stat__label">Очки:</span>
-          <span class="stat__value">{{ score }}</span>
+          <span class="label">Очки:</span>
+          <span class="value">{{ score }}</span>
         </div>
         <div class="stat">
-          <span class="stat__label">Ходы:</span>
-          <span class="stat__value">{{ moves }}</span>
+          <span class="label">Ходы:</span>
+          <span class="value">{{ moves }}</span>
         </div>
         <div class="stat">
-          <span class="stat__label">Свободно:</span>
-          <span class="stat__value">{{ emptyCells.length }}</span>
+          <span class="label">Свободно:</span>
+          <span class="value">{{ emptyCells.length }}</span>
         </div>
       </div>
       <div class="controls">
-        <button class="btn btn--primary" @click="addRandomItem">
+        <button class="btn primary" @click="addRandomItem">
           ➕ Добавить предмет
         </button>
-        <button class="btn btn--secondary" @click="newGame">
+        <button class="btn secondary" @click="newGame">
           🔄 Новая игра
         </button>
       </div>
     </div>
 
     <div 
-      class="game-grid__board"
+      class="board"
       :style="{ 
         gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
         gridTemplateRows: `repeat(${gridSize}, 1fr)`
@@ -79,14 +79,9 @@ mergeItems(from.row, from.col, to.row, to.col);
 draggingItem.value = null;
 }
 
-function handleTouchMove(data) {
-// Можно добавить визуальную обратную связь при перетаскивании на тач-устройствах
-}
-
 function handleTouchEnd(data) {
 if (!draggingItem.value) return;
 
-// Определяем целевую ячейку по координатам касания
 const element = document.elementFromPoint(data.x, data.y);
 const cellElement = element?.closest('.grid-cell');
 

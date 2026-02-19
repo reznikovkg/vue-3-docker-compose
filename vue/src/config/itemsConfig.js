@@ -14,7 +14,8 @@ export const INITIAL_ITEMS_COUNT = 5;
 export const MAX_LEVEL = itemsConfig.length;
 
 export function getItemByLevel(level) {
-return itemsConfig.find(item => item.level === level) || itemsConfig[0];
+    const found = itemsConfig.find(item => item.level === level);
+    return found ? found : itemsConfig[0];
 }
 
 export function getRandomLevel(maxLevel = 3) {
