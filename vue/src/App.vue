@@ -2,7 +2,7 @@
   <RouterView />
 </template>
 
-<script setup>
+<script>
 </script>
 
 <style scoped lang="scss">
