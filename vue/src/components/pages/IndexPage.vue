@@ -1,9 +1,10 @@
 <template>
   <div>
     {{ count }}
+    <button @click="() => addCount(10)">Кнопка +5</button>
+    <button @click="() => addCount(20)">Кнопка +10</button>
   </div>
 
-  <button @click="() => addCount()">Кнопка</button>
 </template>
 
 <script>
@@ -15,8 +16,8 @@ export default {
     }
   },
   methods: {
-    addCount() {
-      this.count += 10
+    addCount(v = 10) {
+      this.count += v
     }
   }
 }
