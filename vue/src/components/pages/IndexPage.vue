@@ -1,17 +1,77 @@
 <template>
-  Index
-
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
+    Страница для расчёта параметров окружности
+    <div>R: {{ count }}</div>
+    <div>Диаметр: {{ diameter }}</div>
+    <div>Длина: {{ c2pr }}</div>
+    <div>Площадь: {{ square }}</div>
+
+    <CustomButton :type="'green'" @click="() => addCount(1)">+1</CustomButton>
+    <CustomButton :type="'green'"@click="() => addCount(5)">+5</CustomButton>
+    <CustomButton :type="'red'" @click="() => removeCount(1)">-1</CustomButton>
+    <CustomButton :type="'red'" @click="() => removeCount(5)">-5</CustomButton>
+    <CustomButton
+      :type="'blue'"
+      :showInput="true"
+      @len="(v) => check(v)"
+      @update:modelValue="setRadiusFromInput"
+    >
+      
+      Установить радиус
+    </CustomButton>
   </div>
 </template>
 
-<script setup lang="ts">
+<script>
+import CustomButton from "@/components/ui/CustomButton.vue";
 
+export default {
+  name: "IndexPage",
+  components: {
+    CustomButton,
+  },
+  data() {
+    return {
+      count: 10,
+    };
+  },
+  computed: {
+    c2pr() {
+      return 2 * Math.PI * this.count;
+    },
+    diameter() {
+      return 2 * this.count;
+    },
+    square() {
+      return Math.PI * this.count * this.count;
+    },
+  },
+  methods: {
+    addCount(v = 10) {
+      this.count += v;
+    },
+    removeCount(v = 10) {
+      this.count -= v;
+      if (this.count < 0) {
+        alert("Радиус не может быть отрицательным");
+        this.count = 0;
+      }
+    },
+    check(v) {
+      alert(v);
+    },
+
+    setRadiusFromInput(value) {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && numValue >= 0) {
+        this.count = numValue;
+      } else {
+        alert("Пожалуйста, введите положительное число");
+      }
+   },
+
+  },
+};
 </script>
 
-<style scoped>
-
-</style>
+<style></style>
