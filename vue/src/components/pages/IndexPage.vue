@@ -10,7 +10,7 @@
 
     <CustomButton :type="'red'" @click="() => addCount(5)">+5</CustomButton>
     
-    <CustomButton @click="() => addCount(10)" @len="(v) => vModelCheckbox(v)">
+    <CustomButton @click="() => addCount(10)" @len="(v) => check(v)">
       123
       <template #count>
         999
@@ -19,6 +19,7 @@
 
     <CustomButton @click="() => addCount(10)"></CustomButton>
     <CustomButton @click="() => addCount(10)"/>
+    <CustomButton :type="'purple'" @click="() => addCount(-5)">-5</CustomButton>
   </div>
 </template>
 
@@ -42,6 +43,9 @@ export default{
   methods: {
     addCount(v = 10){
       this.count += v
+    },
+    check (v) {
+      alert('stop')
     }
   }
 }

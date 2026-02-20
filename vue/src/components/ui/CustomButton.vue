@@ -15,7 +15,7 @@
 <script>
 export default {
   name: "CustomButton",
-  emits: ['len'],
+  emits: ['len'],   
   props: {
     type: {
       default: 'default',
@@ -53,8 +53,15 @@ export default {
     background: #eba3a3;
   }
 
+  &--purple {
+    border: 3px solid #ff3493;
+    padding: 10px;
+    margin: 10px;
+    background: #864186;
+  }
+
   &__icon {
-    color: yellow;
+    color: black;
   }
 }
 </style>
