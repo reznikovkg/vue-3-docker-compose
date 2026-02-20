@@ -1,20 +1,21 @@
 <template>
   <div>
+    Страница для расчёта параметров окружности
     <div>R: {{ count }}</div>
-    <div>2PR: {{ c2pr }}</div>
-    <div>Diameter: {{ diameter }}</div>
-    <div>Square : {{ square }}</div>
+    <div>Диаметр: {{ diameter }}</div>
+    <div>Длина: {{ c2pr }}</div>
+    <div>Площадь: {{ square }}</div>
 
-    <CustomButton :type="'red'" @click="() => addCount(5)">+5</CustomButton>
-    <CustomButton @click="() => addCount(10)">+10</CustomButton>
-    <CustomButton @click="() => removeCount(5)">-5</CustomButton>
-    <CustomButton @click="() => removeCount(10)">-10</CustomButton>
+    <CustomButton :type="'green'" @click="() => addCount(1)">+1</CustomButton>
+    <CustomButton :type="'green'"@click="() => addCount(5)">+5</CustomButton>
+    <CustomButton @click="() => removeCount(1)">-1</CustomButton>
+    <CustomButton @click="() => removeCount(1)">-5</CustomButton>
     <CustomButton
       :showInput="true"
       @click="() => addCount(10)"
       @len="(v) => check(v)"
     >
-      123
+      
       <template #count> 999 </template>
     </CustomButton>
   </div>

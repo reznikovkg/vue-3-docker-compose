@@ -1,6 +1,6 @@
 <template>
   <button class="c-button" :class="'c-button--' + type">
-    <div class="c-button__icon">+ {{ text }}</div>
+    <div class="c-button__icon">{{ text }}</div>
     <slot>Кнопка</slot>
     <template v-if="$slots.count"> (<slot name="count">0</slot> </template>
     <input
@@ -45,19 +45,19 @@ export default {
 <style lang="scss">
 .c-button {
   border: none;
-  background: #2c3e50;
+  background: grey;
   color: white;
   font-size: 12px;
   padding: 5px;
   margin: 5px;
   display: flex;
 
-  &--red {
-    background: red;
+  &--green {
+    background: darkgreen;
   }
 
   &__icon {
-    color: yellow;
+    color: white;
   }
 }
 </style>
