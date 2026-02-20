@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import list from './list'
+import list from '@/store/list'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
