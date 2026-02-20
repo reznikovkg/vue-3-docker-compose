@@ -1,8 +1,9 @@
 <template>
   <div>
-    123
+    {{ count }}
   </div>
 
+  <button @click="() => addCount()">Кнопка</button>
 </template>
 
 <script>
@@ -15,7 +16,7 @@ export default {
   },
   methods: {
     addCount() {
-      this.count += 1
+      this.count += 10
     }
   }
 }
