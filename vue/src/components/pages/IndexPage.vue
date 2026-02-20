@@ -8,15 +8,16 @@
 
     <CustomButton :type="'green'" @click="() => addCount(1)">+1</CustomButton>
     <CustomButton :type="'green'"@click="() => addCount(5)">+5</CustomButton>
-    <CustomButton @click="() => removeCount(1)">-1</CustomButton>
-    <CustomButton @click="() => removeCount(1)">-5</CustomButton>
+    <CustomButton :type="'red'" @click="() => removeCount(1)">-1</CustomButton>
+    <CustomButton :type="'red'" @click="() => removeCount(5)">-5</CustomButton>
     <CustomButton
+      :type="'blue'"
       :showInput="true"
-      @click="() => addCount(10)"
       @len="(v) => check(v)"
+      @update:modelValue="setRadiusFromInput"
     >
       
-      <template #count> 999 </template>
+      Установить радиус
     </CustomButton>
   </div>
 </template>
@@ -59,6 +60,16 @@ export default {
     check(v) {
       alert(v);
     },
+
+    setRadiusFromInput(value) {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && numValue >= 0) {
+        this.count = numValue;
+      } else {
+        alert("Пожалуйста, введите положительное число");
+      }
+   },
+
   },
 };
 </script>
