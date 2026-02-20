@@ -1,8 +1,8 @@
 <template>
  <button class="c-button" :class="'c-button--' + type">
-   <div class="c-button__icon">
+   <!--<div class="c-button__icon">
      + {{text}}
-   </div>
+   </div>-->
 
    <slot>Button</slot>
 
@@ -11,6 +11,10 @@
    </template>
 
    <input v-model="text" type="text" @click.stop @input="() => check()">
+
+   <div class="c-button__icon" v-if="text.length>0" @click="() => clear()">
+     -
+   </div>
 
  </button>
 </template>
@@ -35,6 +39,9 @@ export default{
       if (this.text.length > 10) {
         this.$emit('len', this.text.length)
       }
+    },
+    clear() {
+      this.text = ''
     }
   }
 }
@@ -57,6 +64,9 @@ export default{
 
   &__icon{
     color: black;
+    margin: 10px;
+    padding: 5px;
+    border: 1px solid black;
   }
 }
 </style>
