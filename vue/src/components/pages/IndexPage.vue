@@ -1,14 +1,12 @@
 <template>
-  Index
-
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
+    Test page for laboratory on js
+
+    123
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 
 </script>
 
