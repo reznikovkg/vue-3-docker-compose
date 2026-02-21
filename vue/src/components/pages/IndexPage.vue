@@ -2,6 +2,12 @@
   Index
 
   <div>
+    <RouterLink :to="{ name: $routes.COUNTERANDBUTTON }">
+     To CounterAndButton
+    </RouterLink>
+  </div>
+
+  <div>
     <RouterLink :to="{ name: $routes.EXAMPLE }">
      To Example
     </RouterLink>
