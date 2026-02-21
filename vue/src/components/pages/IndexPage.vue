@@ -6,6 +6,11 @@
      To Example
     </RouterLink>
   </div>
+  <div>
+    <RouterLink :to="{ name: $routes.COUNTER }">
+     To Counter
+    </RouterLink>
+  </div>
 </template>
 
 <script setup lang="ts">
