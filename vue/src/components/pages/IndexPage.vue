@@ -1,15 +1,54 @@
 <template>
-  Index
-
+ <div>
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
+  R:  {{ count }}  
   </div>
+   <div>
+  2PR:  {{ c2pr }}  
+  </div>
+
+  <CustomButton :type = "'red'" @click="() => addCount(5)">+5</CustomButton>
+
+    <CustomButton @click="() => addCount(10)" @len="() => check(v)">
+      123
+      <template #count>
+        999
+      </template>
+    </CustomButton>
+
+        <CustomButton @click="() => addCount(10)"></CustomButton>
+
+            <CustomButton @click="() => addCount(10)" />
+ </div>
 </template>
 
-<script setup lang="ts">
+<script>
+import CustomButton from '../ui/CustomButton.vue';
 
+export default {
+  name: 'IndexPage',
+  components: {
+  CustomButton
+},
+  data () {
+    return {
+         count: 10
+    }
+  },
+  computed: {
+    c2pr () {
+      return 2 * Math.PI * this.count
+    }
+  },
+  methods: {
+    addCount(v = 10) {
+      this.count += v
+    },
+    check (v) {
+      alert("v")
+    }
+  }
+}
 </script>
 
 <style scoped>
