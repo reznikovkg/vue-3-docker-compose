@@ -2,10 +2,12 @@ import { createWebHistory, createRouter } from 'vue-router'
 
 import IndexPage from './../components/pages/IndexPage.vue'
 import ExamplePage from './../components/pages/ExamplePage.vue'
+import ButtonPage from './../components/pages/ButtonPage.vue'
 
 export const ROUTES = {
   EXAMPLE: 'EXAMPLE',
   INDEX: 'INDEX',
+  BUTTON: 'BUTTON'
 }
 
 const routes = [
@@ -18,6 +20,11 @@ const routes = [
     name: ROUTES.INDEX,
     path: '/',
     component: IndexPage
+  },
+  {
+    name: ROUTES.BUTTON,
+    path: '/button',
+    component: ButtonPage
   },
 ]
 
