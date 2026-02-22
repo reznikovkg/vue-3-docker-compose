@@ -19,8 +19,8 @@
       </CustomButton>
       <CustomButton @click="() => addCount(10)"></CustomButton>
       <CustomButton @click="() => addCount(10)"/>
-      <CustomButton type="green" @click="multiplyCount">х2</CustomButton>
-      <CustomButton type="yellow" @click="resetCount">Сброс значений</CustomButton>
+      <CustomButton :type="'green'" @click="() => multiplyCount()">х2</CustomButton>
+      <CustomButton :type="'yellow'" @click="() => resetCount()">Сброс значений</CustomButton>
     </div>
   </div>
 </template>

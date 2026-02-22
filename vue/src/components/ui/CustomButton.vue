@@ -39,12 +39,12 @@ export default {
     background: #ed5252;
   }
 
-,
-& --yellow {
+
+&--yellow {
   border: 1px solid rgba(251, 240, 32, 0.88);
   background: #cdc307;
-},
-& --green {
+}
+&--green {
   border: 1px solid rgba(12, 89, 6, 0.88);
   background: #3cf107;
 }
