@@ -16,4 +16,4 @@ createApp(App)
   .use(router)
   .use(routes)
   .use(store)
-  .mount('#project')sdfs
+  .mount('#project')
