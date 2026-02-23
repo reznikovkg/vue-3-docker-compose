@@ -1,22 +1,22 @@
 <template>
   <div>
     <h2>Счетчик: {{ count }}</h2>
-    <button @click="increment(5)">
+    <button @click="() => increment(5)">
       Увеличить на 5
     </button>
 
     <br>
-    <button @click="increment(10)">
+    <button @click="() => increment(10)">
       Увеличить на 10
     </button>
 
     <br>
-    <button @click="decrement(5)">
+    <button @click="() => decrement(5)">
       Уменьшить на 5
     </button>
     
     <br>
-    <button @click="decrement(10)">
+    <button @click="() => decrement(10)">
       Уменьшить на 10
     </button>
 
