@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="c-game">
     <slot name="start" :onStart="handleStart">
       <button type="button" class="c-game__start" @click="() => handleStart()">
@@ -77,7 +77,8 @@ export default {
 }
 
 .c-game__field {
-  min-height: 320px;
+  width: 640px; // Пока будет так
+  height: 480px;
   border: 1px solid #d9d9d9;
   border-radius: 8px;
 }
