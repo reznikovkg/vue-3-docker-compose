@@ -26,29 +26,37 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script>
 import BubbleGame from '@/components/BubbleGame.vue'
 
-/*
-import { computed, ref } from 'vue'
-import { useStore } from 'vuex'
+export default {
+  name: 'ExamplePage',
 
-const store = useStore()
-const count = computed(() => store.getters.getCount)
-const list = computed(() => store.getters['list/getList'])
+  components: {
+    BubbleGame
+  }
 
-const value = ref(1)
-const timeout = ref(0)
+  /*
+  import { computed, ref } from 'vue'
+  import { useStore } from 'vuex'
 
-const inc = () => store.dispatch('runIncrement', value.value)
-const setValue = () => store.dispatch('setCount', {
-  value: value.value,
-  timeout: timeout.value
-})
-*/
+  const store = useStore()
+  const count = computed(() => store.getters.getCount)
+  const list = computed(() => store.getters['list/getList'])
+
+  const value = ref(1)
+  const timeout = ref(0)
+
+  const inc = () => store.dispatch('runIncrement', value.value)
+  const setValue = () => store.dispatch('setCount', {
+    value: value.value,
+    timeout: timeout.value
+  })
+  */
+}
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .c-example-page {
   display: flex;
   flex-direction: column;
