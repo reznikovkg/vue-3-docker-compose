@@ -1,33 +1,18 @@
 <template>
 
-  <div>
-    {{count ** degree}}<br />
-
-    <button @click="() =>  addCount()">count +</button><br />
-    <button @click="() =>  addDegree()">degree +</button>
-  </div>
+  <FieldTable/>
 </template>
 
 <script>
+import FieldTable from '@/components/Field/FieldTable.vue';
+
 export default {
   name: 'IndexPage',
-  data () {
-    return {
-        count: 0,
-        degree: 1
-    }
+  components: {
+    FieldTable
   },
-  methods: {
-    addCount () {
-      this.count += 1
-    },
-    addDegree () {
-      this.degree += 1
-    }
-  }
 }
 </script>
 
 <style scoped>
-
 </style>

@@ -6,30 +6,32 @@ export default {
   namespaced: true,
   state () {
     return {
-      field: Array(7).fill(null).map(() => Array(7).fill(0))
+        size: 7,
+        field: Array(7).fill(null).map(() => Array(7).fill(0))
     }
   },
   getters: {
     getField: (state) => state.field,
+    getSize: (state) => state.size,
   },
   mutations: {
-    CHANGE_SIZE: (state, newSizeValue) => {
-        newSize = newSizeValue
-        if (newSize < 7) {
-            newSize = 7
+    CHANGE_SIZE: (state, newSize) => {
+        state.size = newSize
+        if (state.size < 7) {
+            state.size = 7
         }
-        else if (newSize > 21) {
-            newSize = 21
+        else if (state.size > 21) {
+            state.size = 21
         }
-        else if (newSize % 2 == 0) {
-            newSize += 1
+        else if (state.size % 2 == 0) {
+            state.size += 1
         }
-      state.field = Array(newSize).fill(null).map(() => Array(newSize).fill(0))
+      state.field = Array(state.size).fill(null).map(() => Array(state.size).fill(0))
     },
   },
   actions: {
-    changeSize: (store, newSizeValue) => {
-      store.commit(MUTATIONS.CHANGE_SIZE, newSizeValue)
+    changeSize: (store, newSize) => {
+      store.commit(MUTATIONS.CHANGE_SIZE, newSize)
     },
   }
 }
