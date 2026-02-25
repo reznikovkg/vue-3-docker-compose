@@ -25,26 +25,32 @@ export default {
   name: 'BubbleGame',
 
   props: {
+    // цвета участвующие в генерации пузырей см.список
     colorsCount: {
       type: Number,
       default: 3
     },
+    // цветт - попал - паравильно
     targetColor: {
       type: String,
       default: 'red'
     },
+    // пузырей в секунду мб писать дробной
     intensity: {
       type: Number,
       default: 1
     },
+    // очки по целевыому цвету
     scoreHit: {
       type: Number,
       default: 1
     },
+    // промах по целевому цвету
     scoreMiss: {
       type: Number,
       default: -5
     },
+    // вне колбэк при старте
     onStart: {
       type: Function,
       default: null
@@ -53,17 +59,23 @@ export default {
 
   emits: ['finish', 'update:score'],
 
+  // flagi состояния
   data() {
     return {
+      // старт ли?
       isRunning: false,
       score: 0,
+      // пузыри на поле и некст пузырик
       bubbles: [],
       nextId: 1,
-      spawnTimerId: null
+      spawnTimerId: null,
+      rafId: null
     }
   },
 
+  // стараться не трогать
   methods: {
+    // старт + генерация
     startGame() {
       this.stopGame(false)
 
@@ -85,6 +97,7 @@ export default {
       }, intervalMs)
     },
 
+    // стоп игры + таймера
     stopGame(emitFinish = true) {
       if (this.spawnTimerId) {
         clearInterval(this.spawnTimerId)
@@ -98,6 +111,7 @@ export default {
       this.isRunning = false
     },
 
+    // пузырь в рандом месте
     createBubble() {
       if (!this.isRunning) {
         return
@@ -119,13 +133,43 @@ export default {
         color,
         x,
         y,
-        r
+        r,
+        vx: Math.random() * 2 - 1 //при создании +-дрейф ... связь с nextX
       }
 
       this.nextId += 1
       this.bubbles = [...this.bubbles, bubble]
     },
 
+    tick() { // скорость пока тут
+      if (this.isRunning) {
+        const fieldWidth = this.$refs.gameField ? this.$refs.gameField.clientWidth : 640
+        const fieldHeight = this.$refs.gameField ? this.$refs.gameField.clientHeight : 480
+
+        const movedBubbles = this.bubbles
+          .map((bubble) => {
+            const speedY = Math.floor(Math.random() * 3) + 1
+            const vx = typeof bubble.vx === 'number' ? bubble.vx : Math.random() * 2 - 1
+            const maxX = Math.max(0, fieldWidth - bubble.r * 2)
+            const nextX = Math.min(Math.max(0, bubble.x + vx), maxX)
+            const nextY = bubble.y + speedY
+
+            return {
+              ...bubble,
+              x: nextX,
+              y: nextY,
+              vx
+            }
+          })
+          .filter((bubble) => bubble.y <= fieldHeight)
+
+        this.bubbles = movedBubbles
+      }
+
+      this.rafId = requestAnimationFrame(() => this.tick())
+    },
+
+    // клики по пузырику
     handleBubbleClick(bubble) {
       const delta = bubble.color === this.targetColor ? this.scoreHit : this.scoreMiss
       this.score += delta
@@ -138,8 +182,20 @@ export default {
     }
   },
 
-  beforeUnmount() {
-    this.stopGame()
+  mounted() { // см.стаковерфлоу
+    this.rafId = requestAnimationFrame(() => this.tick())
+  },
+
+  beforeUnmount() { // стоп анимка -- стоп спавн
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId)
+      this.rafId = null
+    }
+
+    if (this.spawnTimerId) {
+      clearInterval(this.spawnTimerId)
+      this.spawnTimerId = null
+    }
   }
 }
 </script>
@@ -158,7 +214,7 @@ export default {
 .c-game__field {
   position: relative;
   width: 640px; // Пока будет так
-  height: 480px;
+  height: 480px; // Сделать авто по экрану(см.стаковерфлоу)
   overflow: hidden;
   border: 1px solid #d9d9d9;
   border-radius: 8px;
