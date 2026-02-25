@@ -6,15 +6,15 @@
       </button>
     </slot>
 
-    <div ref="gameField" class="c-game__field">
+    <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)">
       <button
         v-for="bubble in bubbles"
         :key="bubble.id"
         type="button"
         class="c-game__bubble"
+        :data-id="bubble.id"
         :class="'c-game__bubble--' + bubble.color"
         :style="{ left: bubble.x + 'px', top: bubble.y + 'px', width: bubble.r * 2 + 'px', height: bubble.r * 2 + 'px' }"
-        @click="() => handleBubbleClick(bubble)"
       ></button>
     </div>
   </div>
@@ -90,6 +90,11 @@ export default {
 
       this.$emit('update:score', this.score)
 
+      // ТОЛЬКО ДЛЯ ТЕСТА
+      this.createBubble()
+      this.createBubble()
+      this.createBubble()
+
       const safeIntensity = this.intensity > 0 ? this.intensity : 1
       const intervalMs = 1000 / safeIntensity
       this.spawnTimerId = setInterval(() => {
@@ -125,7 +130,14 @@ export default {
       const r = Math.floor(Math.random() * 26) + 20
       const fieldWidth = this.$refs.gameField ? this.$refs.gameField.clientWidth : 640
       const maxX = Math.max(0, fieldWidth - r * 2)
-      const x = Math.floor(Math.random() * (maxX + 1))
+      let x = Math.floor(Math.random() * (maxX + 1))
+      //Спавн рядом для теста
+      if (this.bubbles.length && Math.random() < 0.65) {
+        const anchor = this.bubbles[Math.floor(Math.random() * this.bubbles.length)]
+        const spread = Math.max(8, Math.floor(anchor.r * 0.5))
+        const nearX = anchor.x + Math.floor(Math.random() * (spread * 2 + 1)) - spread
+        x = Math.min(Math.max(0, nearX), maxX)
+      }
       const y = 0
 
       const bubble = {
@@ -134,7 +146,7 @@ export default {
         x,
         y,
         r,
-        vx: Math.random() * 2 - 1 //при создании +-дрейф ... связь с nextX
+        vx: Math.random() * 0.7 - 0.35 //при создании +-дрейф ... связь с nextX
       }
 
       this.nextId += 1
@@ -148,7 +160,7 @@ export default {
 
         const movedBubbles = this.bubbles
           .map((bubble) => {
-            const speedY = Math.floor(Math.random() * 3) + 1
+            const speedY = Math.random() * 0.8 + 0.4
             const vx = typeof bubble.vx === 'number' ? bubble.vx : Math.random() * 2 - 1
             const maxX = Math.max(0, fieldWidth - bubble.r * 2)
             const nextX = Math.min(Math.max(0, bubble.x + vx), maxX)
@@ -169,16 +181,50 @@ export default {
       this.rafId = requestAnimationFrame(() => this.tick())
     },
 
-    // клики по пузырику
-    handleBubbleClick(bubble) {
-      const delta = bubble.color === this.targetColor ? this.scoreHit : this.scoreMiss
-      this.score += delta
-      this.$emit('update:score', this.score)
-      this.bubbles = this.bubbles.filter((item) => item.id !== bubble.id)
+    handleFieldClick(e) {
+      const x = e.clientX
+      const y = e.clientY
+      const elements = document.elementsFromPoint(x, y)
+
+      const ids = []
+      // см.докс
+      elements.forEach((element) => {
+        const id = element.dataset ? element.dataset.id : null
+        if (id && !ids.includes(id)) {
+          ids.push(id)
+        }
+      })
+
+      const deltas = []
+      let nextScore = this.score
+      let nextBubbles = [...this.bubbles]
+
+      // для каждого найти пузырь считать клик, копим и делитим иначе выход
+      ids.forEach((id) => {
+        const numericId = Number(id)
+        const bubble = nextBubbles.find((item) => item.id === numericId)
+        if (!bubble) {
+          return
+        }
+
+        const delta = bubble.color === this.targetColor ? this.scoreHit : this.scoreMiss
+        deltas.push(delta)
+        nextScore += delta
+        nextBubbles = nextBubbles.filter((item) => item.id !== numericId)
+      })
+
+      if (!deltas.length) {
+        return
+      }
+
+      this.score = nextScore
+      this.bubbles = nextBubbles
 
       const list = this.$store.getters['list/getList']
-      const newList = [...list, { t: delta }]
+      const newList = [...list, ...deltas.map((d) => ({ t: d }))]
       this.$store.dispatch('list/setList', newList)
+
+      this.$emit('update:score', this.score)
     }
   },
 
