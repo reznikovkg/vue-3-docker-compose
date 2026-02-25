@@ -1,42 +1,49 @@
 import { createStore } from 'vuex'
-import list from './list'
 
-const MUTATIONS = {
-  INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
-}
+const recipes = [
+  { ingredients: { fire: 1, water: 1 }, result: 'steam' },
+  { ingredients: { earth: 1, water: 1 }, result: 'mud' },
+  { ingredients: { fire: 1, earth: 1 }, result: 'lava' }
+]
 
-export default createStore({
-  state () {
-    return {
-      count: 0
-    }
+export const store = createStore({
+  state: {
+    discovered: ['fire', 'water', 'earth', 'air'],
+    table: {}
   },
   getters: {
-    getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
+    discoveredElements: state => state.discovered,
+    tableElements: state => state.table
   },
   mutations: {
-    [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
+    ADD_TO_TABLE(state, element) {
+      if (!state.table[element]) state.table[element] = 0
+      state.table[element]++
     },
-    [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
-    },
+    CLEAR_TABLE(state) { state.table = {} },
+    ADD_DISCOVERED(state, element) {
+      if (!state.discovered.includes(element)) state.discovered.push(element)
+    }
   },
   actions: {
-    runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
+    addToTable({ commit }, element) { 
+      commit('ADD_TO_TABLE', element) 
     },
-    setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
+    clearTable({ commit }) { 
+      commit('CLEAR_TABLE') 
     },
-  },
-  modules: {
-    list
+    mix({ state, commit }) {
+      const table = state.table
+      const found = recipes.find(recipe => {
+        const keys = Object.keys(recipe.ingredients)
+        return keys.length === Object.keys(table).length &&
+               keys.every(key => recipe.ingredients[key] === table[key])
+      })
+      if (found) {
+        commit('ADD_DISCOVERED', found.result)
+        commit('CLEAR_TABLE')
+        commit('ADD_TO_TABLE', found.result)
+      }
+    }
   }
 })
