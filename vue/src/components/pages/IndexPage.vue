@@ -2,6 +2,7 @@
   Index
 
   <div>
+  🔥 🌳 🌧️ ⛰️🪨🌲🌴
     <RouterLink :to="{ name: $routes.EXAMPLE }">
      To Example
     </RouterLink>
