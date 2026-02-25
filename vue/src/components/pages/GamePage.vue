@@ -2,7 +2,7 @@
   <div class="game">
     <header class="game__header">
       <button class="game__back-button" @click="goToMenu">В меню</button>
-      <h1 class="game__timer">00:00</h1>
+      <h1 class="game__timer">{{ formattedTime }}</h1>
     </header>
 
     <div
@@ -21,6 +21,20 @@
       <div class="game-over__content">
         <h2 class="game-over__title">Game Over!</h2>
         <p class="game-over__message">Вы нашли все пары!</p>
+
+        <div class="game-over__stats">
+          <div class="game-over__stat">
+            <span class="game-over__stat-label">Ваше время: </span>
+            <span class="game-over__stat-value">{{ formattedTime }}</span>
+          </div>
+          <div class="game-over__stat">
+            <span class="game-over__stat-label">Рекорд: </span>
+            <span class="game-over__stat-value">{{ formattedBestScore }}</span>
+          </div>
+          <div v-if="isNewRecord" class="game-over__new-record">
+            Новый рекорд!
+          </div>
+        </div>
 
         <div class="game-over__buttons">
           <button
@@ -52,14 +66,64 @@ export default {
     Card,
   },
 
+  data() {
+    return {
+      timer: null,
+      isNewRecord: false,
+    };
+  },
+
   computed: {
-    ...mapState(["cards"]),
-    ...mapGetters(["isGameFinished"]),
+    ...mapState(["cards", "elapsedTime", "bestScores", "difficulty"]),
+    ...mapGetters(["isGameFinished", "formattedTime", "formattedBestScore"]),
+  },
+
+  watch: {
+    cards: {
+      handler(newCards) {
+        const hasAnyFlip = newCards.some((card) => card.isFaceUp);
+        if (hasAnyFlip && !this.timer && !this.isGameFinished) {
+          this.startTimer();
+        }
+      },
+      deep: true,
+    },
+
+    isGameFinished(newValue) {
+      if (newValue) {
+        this.stopTimer();
+        this.checkNewRecord();
+      }
+    },
+  },
+
+  beforeUnmount() {
+    this.stopTimer();
   },
 
   methods: {
     handleFlip(cardId) {
       this.$store.dispatch("flipCard", cardId);
+    },
+
+    startTimer() {
+      this.timer = setInterval(() => {
+        this.$store.dispatch("updateTime", this.elapsedTime + 1);
+      }, 1000);
+    },
+
+    stopTimer() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    },
+
+    checkNewRecord() {
+      const currentBest = this.bestScores[this.difficulty];
+      if (!currentBest || this.elapsedTime < currentBest)
+        this.isNewRecord = true;
+      else this.isNewRecord = false;
     },
 
     restartGame() {
@@ -155,13 +219,28 @@ export default {
   &__title {
     font-size: 42px;
     color: black;
-    margin-bottom: 15px;
+    margin: 0;
   }
 
   &__message {
     font-size: 22px;
     color: rgb(113, 109, 109);
     margin-bottom: 10px;
+  }
+
+  &__stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__stat-label {
+    font-size: 18px;
+  }
+
+  &__stat-value {
+    font-size: 18px;
+    font-weight: bold;
   }
 
   &__buttons {

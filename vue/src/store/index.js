@@ -10,7 +10,20 @@ const MUTATIONS = {
   CLEAR_OPENED_CARDS: "CLEAR_OPENED_CARDS",
   SET_CAN_FLIP: "SET_CAN_FLIP",
   SET_GAME_STATUS: "SET_GAME_STATUS",
+  SET_ELAPSED_TIME: "SET_ELAPSED_TIME",
+  SET_BEST_SCORES: "SET_BEST_SCORES",
   RESET_GAME: "RESET_GAME",
+};
+
+const loadBestScores = () => {
+  const scores = localStorage.getItem("bestScores");
+  return scores
+    ? JSON.parse(scores)
+    : {
+        10: null,
+        14: null,
+        20: null,
+      };
 };
 
 export default createStore({
@@ -20,6 +33,8 @@ export default createStore({
     gameStatus: "menu", //menu, playing, finished
     openedCards: [],
     canFlip: true,
+    elapsedTime: 0,
+    bestScores: loadBestScores(),
   },
 
   getters: {
@@ -27,6 +42,21 @@ export default createStore({
     gameStatus: (state) => state.gameStatus,
     isGameFinished: (state) => state.gameStatus === "finished",
     currentDifficulty: (state) => state.difficulty,
+    formattedTime: (state) => {
+      const minutes = Math.floor(state.elapsedTime / 60);
+      const seconds = state.elapsedTime % 60;
+      return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    },
+    currentBestScore: (state) => {
+      return state.bestScores[state.difficulty];
+    },
+    formattedBestScore: (state, getters) => {
+      const best = getters.currentBestScore;
+      if (!best) return "--:--";
+      const minutes = Math.floor(best / 60);
+      const seconds = best % 60;
+      return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    },
   },
 
   mutations: {
@@ -39,6 +69,7 @@ export default createStore({
       state.gameStatus = "playing";
       state.openedCards = [];
       state.canFlip = true;
+      state.elapsedTime = 0;
     },
 
     [MUTATIONS.FLIP_CARD]: (state, payload) => {
@@ -89,11 +120,26 @@ export default createStore({
       state.gameStatus = payload;
     },
 
+    [MUTATIONS.SET_ELAPSED_TIME]: (state, payload) => {
+      state.elapsedTime = payload;
+    },
+
+    [MUTATIONS.SET_BEST_SCORES]: (state, payload) => {
+      if (
+        !state.bestScores[payload.difficulty] ||
+        payload.time < state.bestScores[payload.difficulty]
+      ) {
+        state.bestScores[payload.difficulty] = payload.time;
+        localStorage.setItem("bestScores", JSON.stringify(state.bestScores));
+      }
+    },
+
     [MUTATIONS.RESET_GAME]: (state) => {
       state.gameStatus = "menu";
       state.cards = [];
       state.openedCards = [];
       state.canFlip = true;
+      state.elapsedTime = 0;
     },
   },
 
@@ -137,6 +183,10 @@ export default createStore({
         store.commit(MUTATIONS.SET_CAN_FLIP, true);
 
         if (isGameComplete(store.state.cards)) {
+          store.commit(MUTATIONS.SET_BEST_SCORES, {
+            difficulty: store.state.difficulty,
+            time: store.state.elapsedTime,
+          });
           store.commit(MUTATIONS.SET_GAME_STATUS, "finished");
         }
       }, 700);
@@ -153,6 +203,10 @@ export default createStore({
 
         store.commit(MUTATIONS.SET_CAN_FLIP, true);
       }, 1000);
+    },
+
+    updateTime(store, payload) {
+      store.commit(MUTATIONS.SET_ELAPSED_TIME, payload);
     },
 
     resetGame(store) {

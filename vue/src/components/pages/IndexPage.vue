@@ -24,11 +24,29 @@
       </div>
 
       <button class="menu__start-btn" @click="startGame">Начать игру</button>
+
+      <div class="menu__scores">
+        <h2 class="menu__scores-title">Текущие рекорды:</h2>
+        <div class="menu__scores-list">
+          <div
+            v-for="option in difficultyOptions"
+            :key="option.value"
+            class="menu__scores-item"
+          >
+            <span class="menu__scores-label">{{ option.label }}:</span>
+            <span class="menu__scores-value">
+              {{ formatScores(bestScores[option.value]) }}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
+import { mapState } from "vuex";
+
 export default {
   name: "IndexPage",
 
@@ -43,10 +61,21 @@ export default {
     };
   },
 
+  computed: {
+    ...mapState(["bestScores"]),
+  },
+
   methods: {
     startGame() {
       this.$store.dispatch("startGame", this.selectedDifficulty);
       this.$router.push("/game");
+    },
+
+    formatScores(seconds) {
+      if (!seconds) return "--:--";
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
     },
   },
 };
@@ -68,7 +97,7 @@ export default {
   &__container {
     max-width: 500px;
     width: 100%;
-    padding: 40px 30px;
+    padding: 25px 30px;
     background-color: white;
     border-radius: 20px;
     text-align: center;
@@ -133,6 +162,45 @@ export default {
     border: none;
     border-radius: 50px;
     cursor: pointer;
+  }
+
+  &__scores {
+    margin-top: 30px;
+    padding: 15px;
+    background: #bcbdbe;
+    border-radius: 10px;
+
+    &-title {
+      margin-top: 0;
+      font-size: 22px;
+      color: black;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    &-list {
+      display: flex;
+      justify-content: space-around;
+      gap: 10px;
+    }
+  }
+
+  &__scores-item {
+    text-align: center;
+  }
+
+  &__scores-label {
+    display: block;
+    font-size: 18px;
+    color: #403e3e;
+    margin-bottom: 5px;
+  }
+
+  &__scores-value {
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    color: blue;
   }
 }
 </style>
