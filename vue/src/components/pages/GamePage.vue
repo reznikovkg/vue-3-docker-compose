@@ -10,13 +10,14 @@
     <div class="c-game-page__controls">
       <button
         class="c-button"
-        @click="addRandomItem"
+        @click="() => addRandomItem()"
+        :disabled="isDragging"
       >
         Добавить букву
       </button>
       <button
         class="c-button c-button--red"
-        @click="resetGame"
+        @click="() => resetGame()"
       >
         Новая игра
       </button>
@@ -25,7 +26,8 @@
     <div
       class="c-game-page__grid"
       :style="gridStyle"
-      @drop="handleGridDrop"
+      @dragover.prevent
+      @drop="() => handleGridDrop()"
     >
       <GameCell
         v-for="(cell, index) in grid"
@@ -33,11 +35,11 @@
         :item="cell"
         :index="index"
         :is-dragging="isDragging"
-        @drag-start="handleDragStart"
-        @drag-end="handleDragEnd"
-        @drop="handleDrop"
-        @touch-move="handleTouchMove"
-        @touch-end="handleTouchEnd"
+        @drag-start="(item, idx) => handleDragStart(item, idx)"
+        @drag-end="() => handleDragEnd()"
+        @drop="(idx) => handleDrop(idx)"
+        @touch-move="(event, idx) => handleTouchMove(event, idx)"
+        @touch-end="(event, idx) => handleTouchEnd(event, idx)"
       />
     </div>
 
@@ -234,7 +236,6 @@ export default {
         }
 
         this.grid[fromIndex] = null
-
       } else {
         const temp = { ...fromItem }
         this.grid[fromIndex] = { ...toItem }

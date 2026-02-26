@@ -35,7 +35,6 @@ body {
   flex-direction: column;
 }
 
-
 .c-button {
   border: 1px solid #08d3b0;
   background: #00915e;
@@ -51,6 +50,5 @@ body {
     border: 1px solid #d30058;
     background: #910038;
   }
-
 }
 </style>

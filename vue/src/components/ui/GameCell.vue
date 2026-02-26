@@ -8,13 +8,13 @@
     }"
     :data-index="index"
     :draggable="!!item && !isDragging"
-    @dragstart="onDragStart"
-    @dragend="onDragEnd"
+    @dragstart="(event) => onDragStart(event)"
+    @dragend="() => onDragEnd()"
     @dragover.prevent
-    @drop="onDrop"
-    @touchstart="onTouchStart"
-    @touchmove.prevent="onTouchMove"
-    @touchend="onTouchEnd"
+    @drop="(event) => onDrop(event)"
+    @touchstart="() => onTouchStart()"
+    @touchmove.prevent="(event) => onTouchMove(event)"
+    @touchend="(event) => onTouchEnd(event)"
   >
     <span v-if="item" class="c-game-cell__letter" :class="`c-game-cell__letter--tier-${item.tier}`">
       {{ item.value }}
@@ -201,7 +201,6 @@ export default {
       color: #f1c40f;
       font-size: 52px;
       font-weight: 800;
-
     }
 
     &--tier-7 {
@@ -227,6 +226,4 @@ export default {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 }
-
-
 </style>
