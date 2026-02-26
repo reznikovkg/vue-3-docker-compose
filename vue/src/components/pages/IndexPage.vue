@@ -1,8 +1,6 @@
 <template>
   <div>
-    <Flask />
-    <Flask />
-    <Flask />
+    <Flask v-for="(flask, index) in flasks" :key="index" />
   </div>
 </template>
 
@@ -11,7 +9,12 @@ import Flask from './Flask.vue'
 
 export default {
   name: 'IndexPage',
-  components: { Flask }
+  components: { Flask },
+  data () {
+    return {
+      flasks: [[], [], [], [], [], []]
+    }
+  }
 }
 </script>
 
