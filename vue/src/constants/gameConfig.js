@@ -17,3 +17,36 @@ export const GAME_DEFAULTS = {
   scoreMiss: -5,
   maxTime: 60
 }
+
+export const BUBBLE_IMAGE_MAP = {
+  red: [
+    new URL('../assets/bubbles/red/Bubble_1.png', import.meta.url).href,
+    new URL('../assets/bubbles/red/Bubble_2.png', import.meta.url).href,
+    new URL('../assets/bubbles/red/Bubble_3.png', import.meta.url).href
+  ],
+  blue: [
+    new URL('../assets/bubbles/blue/Bubble_1.png', import.meta.url).href,
+    new URL('../assets/bubbles/blue/Bubble_2.png', import.meta.url).href,
+    new URL('../assets/bubbles/blue/Bubble_3.png', import.meta.url).href
+  ],
+  green: [
+    new URL('../assets/bubbles/green/Bubble_1.png', import.meta.url).href,
+    new URL('../assets/bubbles/green/Bubble_2.png', import.meta.url).href,
+    new URL('../assets/bubbles/green/Bubble_3.png', import.meta.url).href
+  ],
+  yellow: [
+    new URL('../assets/bubbles/yellow/Bubble_1.png', import.meta.url).href,
+    new URL('../assets/bubbles/yellow/Bubble_2.png', import.meta.url).href,
+    new URL('../assets/bubbles/yellow/Bubble_3.png', import.meta.url).href
+  ],
+  orange: [
+    new URL('../assets/bubbles/orange/Bubble_1.png', import.meta.url).href,
+    new URL('../assets/bubbles/orange/Bubble_2.png', import.meta.url).href,
+    new URL('../assets/bubbles/orange/Bubble_3.png', import.meta.url).href
+  ],
+  purple: [
+    new URL('../assets/bubbles/purple/Bubble_1.png', import.meta.url).href,
+    new URL('../assets/bubbles/purple/Bubble_2.png', import.meta.url).href,
+    new URL('../assets/bubbles/purple/Bubble_3.png', import.meta.url).href
+  ]
+}

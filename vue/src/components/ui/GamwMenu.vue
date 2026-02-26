@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="c-menu">
     <h2 class="c-menu__title">Игра "Мыльные пузыри"</h2>
 

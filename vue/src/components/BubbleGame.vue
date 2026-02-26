@@ -1,19 +1,37 @@
-﻿<template>
+<template>
   <div class="c-game">
+    <!--
     <slot name="start">
       <button type="button" class="c-game__start" @click="() => startGame()">
         <slot name="start-label"></slot>
       </button>
     </slot>
-
+    
     <div class="c-game__controls">
       <div class="c-game__time">Time: {{ timeLeft }}</div>
       <button type="button" class="c-game__stop" @click="() => stopGame(false)">
         Stop
       </button>
     </div>
+    -->
 
     <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)">
+      <div class="c-game__topbar" @click="(e) => e.stopPropagation()">
+        <div class="c-game__target">
+          <span class="c-game__targetText">Собирай:</span>
+          <span class="c-game__targetColor" :style="{ background: targetColor }"></span>
+        </div>
+
+        <div class="c-game__timer">
+          {{ formattedTime }}
+        </div>
+
+        <div class="c-game__stop" @click="() => stopGame(false)">
+          <span class="c-game__stopIcon">⏸</span>
+          <span class="c-game__stopText">Стоп</span>
+        </div>
+      </div>
+
       <button
         v-for="bubble in bubbles"
         :key="bubble.id"
@@ -21,14 +39,14 @@
         class="c-game__bubble"
         :data-id="bubble.id"
         :class="'c-game__bubble--' + bubble.color"
-        :style="{ left: bubble.x + 'px', top: bubble.y + 'px', width: bubble.r * 2 + 'px', height: bubble.r * 2 + 'px' }"
+        :style="{ left: bubble.x + 'px', top: bubble.y + 'px', width: bubble.r * 2 + 'px', height: bubble.r * 2 + 'px', backgroundImage: bubble.imageUrl ? 'url(' + bubble.imageUrl + ')' : 'none' }"
       ></button>
     </div>
   </div>
 </template>
 
 <script>
-import { GAME_COLORS, GAME_DEFAULTS } from '@/constants/gameConfig.js'
+import { BUBBLE_IMAGE_MAP, GAME_COLORS, GAME_DEFAULTS } from '@/constants/gameConfig.js'
 
 export default {
   name: 'BubbleGame',
@@ -90,6 +108,17 @@ export default {
     }
   },
 
+  computed: {
+    formattedTime() {
+      const safeTime = this.timeLeft > 0 ? this.timeLeft : 0
+      const mm = Math.floor(safeTime / 60)
+      const ss = safeTime % 60
+      const mmText = String(mm).padStart(2, '0')
+      const ssText = String(ss).padStart(2, '0')
+      return mmText + ':' + ssText
+    }
+  },
+
   // стараться не трогать
   methods: {
     // старт + генерация
@@ -105,6 +134,11 @@ export default {
       if (typeof this.onStart === 'function') {
         this.onStart()
       }
+
+      // ТОЛЬКО ТЕСТ
+      //this.createBubble()
+      //this.createBubble()
+      //this.createBubble()
 
       this.$emit('update:score', this.score)
 
@@ -150,6 +184,8 @@ export default {
       const limit = Math.max(1, Math.min(this.colorsCount, GAME_COLORS.length))
       const colors = GAME_COLORS.slice(0, limit)
       const color = colors[Math.floor(Math.random() * colors.length)]
+      const images = BUBBLE_IMAGE_MAP[color] || []
+      const imageUrl = images.length ? images[Math.floor(Math.random() * images.length)] : null
 
       const r = Math.floor(Math.random() * 26) + 20
       const fieldWidth = this.$refs.gameField ? this.$refs.gameField.clientWidth : 640
@@ -167,6 +203,7 @@ export default {
       const bubble = {
         id: this.nextId,
         color,
+        imageUrl,
         x,
         y: 0,
         r,
@@ -254,6 +291,7 @@ export default {
 
   mounted() { // см.стаковерфлоу
     this.rafId = requestAnimationFrame(() => this.tick())
+    this.startGame()
   },
 
   beforeUnmount() { // стоп анимка -- стоп спавн
@@ -277,66 +315,121 @@ export default {
 
 <style lang="scss">
 .c-game {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .c-game__start {
   width: fit-content;
 }
 
-.c-game__controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.c-game__field {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
-.c-game__time {
-  line-height: 1.2;
+.c-game__topbar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.c-game__target {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #d9d9d9;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.c-game__targetText {
+  line-height: 1;
+}
+
+.c-game__targetColor {
+  width: 64px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.c-game__timer {
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid #d9d9d9;
+  line-height: 1;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .c-game__stop {
-  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid #d9d9d9;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(0, 0, 0, 0.35);
 }
 
-.c-game__field {
-  position: relative;
-  width: 640px; // Пока будет так
-  height: 480px; // Сделать авто по экрану(см.стаковерфлоу)
-  overflow: hidden;
-  border: 1px solid #d9d9d9;
-  border-radius: 8px;
+.c-game__stopIcon {
+  line-height: 1;
+}
+
+.c-game__stopText {
+  line-height: 1;
 }
 
 .c-game__bubble {
   position: absolute;
   border: 0;
   border-radius: 50%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
   cursor: pointer;
 }
 
 .c-game__bubble--red {
-  background: #ff4d4f;
+  background-color: #ff4d4f;
 }
 
 .c-game__bubble--blue {
-  background: #4096ff;
+  background-color: #4096ff;
 }
 
 .c-game__bubble--green {
-  background: #73d13d;
+  background-color: #73d13d;
 }
 
 .c-game__bubble--yellow {
-  background: #fadb14;
+  background-color: #fadb14;
 }
 
 .c-game__bubble--orange {
-  background: #fa8c16;
+  background-color: #fa8c16;
 }
 
 .c-game__bubble--purple {
-  background: #722ed1;
+  background-color: #722ed1;
 }
 </style>
