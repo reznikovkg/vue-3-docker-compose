@@ -1,10 +1,11 @@
-<template>
+﻿<template>
   <div class="c-game">
     <slot name="start">
       <button type="button" class="c-game__start" @click="() => startGame()">
         <slot name="start-label"></slot>
       </button>
     </slot>
+
     <div class="c-game__controls">
       <div class="c-game__time">Time: {{ timeLeft }}</div>
       <button type="button" class="c-game__stop" @click="() => stopGame(false)">
@@ -27,36 +28,38 @@
 </template>
 
 <script>
+import { GAME_COLORS, GAME_DEFAULTS } from '@/constants/gameConfig.js'
+
 export default {
   name: 'BubbleGame',
 
-    // Подумать что с этим сделать тут!!! 
-    // (IndexPage -> GamwMenu | GamwMenu на start | IndexPag в startFromMenu(settings) | IndexPage -> BubbleGame )
+  // Подумать что с этим сделать тут!!!
+  // (IndexPage -> GamwMenu | GamwMenu на start | IndexPage в startFromMenu(settings) | IndexPage -> BubbleGame )
   props: {
     // цвета участвующие в генерации пузырей см.список
     colorsCount: {
-      type: Number
-      // default: 3
+      type: Number,
+      default: GAME_DEFAULTS.colorsCount
     },
-    // цветт - попал - паравильно
+    // цвет - попал - правильно
     targetColor: {
-      type: String
-      // default: 'red'
+      type: String,
+      default: GAME_DEFAULTS.targetColor
     },
     // пузырей в секунду мб писать дробной
     intensity: {
-      type: Number
-      // default: 1
+      type: Number,
+      default: GAME_DEFAULTS.intensity
     },
-    // очки по целевыому цвету
+    // очки по целевому цвету
     scoreHit: {
-      type: Number
-      // default: 1
+      type: Number,
+      default: GAME_DEFAULTS.scoreHit
     },
     // промах по целевому цвету
     scoreMiss: {
-      type: Number
-      // default: -5
+      type: Number,
+      default: GAME_DEFAULTS.scoreMiss
     },
     // вне колбэк при старте
     onStart: {
@@ -65,7 +68,7 @@ export default {
     },
     maxTime: {
       type: Number,
-      default: 60
+      default: GAME_DEFAULTS.maxTime
     }
   },
 
@@ -82,7 +85,7 @@ export default {
       nextId: 1,
       spawnTimerId: null,
       finishTimerId: null,
-      timeLeft: 60,
+      timeLeft: GAME_DEFAULTS.maxTime,
       rafId: null
     }
   },
@@ -104,11 +107,6 @@ export default {
       }
 
       this.$emit('update:score', this.score)
-
-      // ТОЛЬКО ДЛЯ ТЕСТА
-      //this.createBubble()
-      //this.createBubble()
-      //this.createBubble()
 
       const safeIntensity = this.intensity > 0 ? this.intensity : 1
       const intervalMs = 1000 / safeIntensity
@@ -137,7 +135,7 @@ export default {
       }
 
       if (this.isRunning) {
-        this.$emit('finish', { score: this.score })
+        this.$emit('finish', { score: this.score, isAuto })
       }
 
       this.isRunning = false
@@ -149,29 +147,28 @@ export default {
         return
       }
 
-      const baseColors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple']
-      const limit = Math.max(1, Math.min(this.colorsCount, baseColors.length))
-      const colors = baseColors.slice(0, limit)
+      const limit = Math.max(1, Math.min(this.colorsCount, GAME_COLORS.length))
+      const colors = GAME_COLORS.slice(0, limit)
       const color = colors[Math.floor(Math.random() * colors.length)]
 
       const r = Math.floor(Math.random() * 26) + 20
       const fieldWidth = this.$refs.gameField ? this.$refs.gameField.clientWidth : 640
       const maxX = Math.max(0, fieldWidth - r * 2)
       let x = Math.floor(Math.random() * (maxX + 1))
-      //Спавн рядом для теста
+
+      // Спавн рядом для теста
       if (this.bubbles.length && Math.random() < 0.65) {
         const anchor = this.bubbles[Math.floor(Math.random() * this.bubbles.length)]
         const spread = Math.max(8, Math.floor(anchor.r * 0.5))
         const nearX = anchor.x + Math.floor(Math.random() * (spread * 2 + 1)) - spread
         x = Math.min(Math.max(0, nearX), maxX)
       }
-      const y = 0
 
       const bubble = {
         id: this.nextId,
         color,
         x,
-        y,
+        y: 0,
         r,
         vx: Math.random() * 0.7 - 0.35 //при создании +-дрейф ... связь с nextX
       }

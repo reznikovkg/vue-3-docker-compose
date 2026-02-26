@@ -69,6 +69,7 @@
 <script>
 import BubbleGame from '@/components/BubbleGame.vue'
 import GamwMenu from '@/components/ui/GamwMenu.vue'
+import { GAME_DEFAULTS } from '@/constants/gameConfig.js'
 
 export default {
   name: 'IndexPage',
@@ -86,11 +87,11 @@ export default {
       showMenu: true,
       lastResultScore: 0,
       gameSettings: {
-        colorsCount: 6,
-        targetColor: 'red',
-        intensity: 1,
-        scoreHit: 1,
-        scoreMiss: -5
+        colorsCount: GAME_DEFAULTS.colorsCount,
+        targetColor: GAME_DEFAULTS.targetColor,
+        intensity: GAME_DEFAULTS.intensity,
+        scoreHit: GAME_DEFAULTS.scoreHit,
+        scoreMiss: GAME_DEFAULTS.scoreMiss
       }
     }
   },

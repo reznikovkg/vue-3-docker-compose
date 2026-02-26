@@ -82,29 +82,31 @@
 </template>
 
 <script>
+import { GAME_COLORS, GAME_COLOR_HEX, GAME_DEFAULTS } from '@/constants/gameConfig.js'
+
 export default {
   name: 'GamwMenu',
 
   props: {
     colorsCount: {
       type: Number,
-      default: 6
+      default: GAME_DEFAULTS.colorsCount
     },
     targetColor: {
       type: String,
-      default: 'red'
+      default: GAME_DEFAULTS.targetColor
     },
     intensity: {
       type: Number,
-      default: 1
+      default: GAME_DEFAULTS.intensity
     },
     scoreHit: {
       type: Number,
-      default: 1
+      default: GAME_DEFAULTS.scoreHit
     },
     scoreMiss: {
       type: Number,
-      default: -5
+      default: GAME_DEFAULTS.scoreMiss
     }
   },
 
@@ -112,12 +114,12 @@ export default {
 
   data() {
     return {
-      baseColors: ['red', 'blue', 'green', 'yellow', 'orange', 'purple'],
-      colorsCountLocal: 6,
+      baseColors: GAME_COLORS,
+      colorsCountLocal: GAME_DEFAULTS.colorsCount,
       targetColorIndex: 0,
-      intensityLocal: 1,
-      scoreHitLocal: 1,
-      scoreMissLocal: -5
+      intensityLocal: GAME_DEFAULTS.intensity,
+      scoreHitLocal: GAME_DEFAULTS.scoreHit,
+      scoreMissLocal: GAME_DEFAULTS.scoreMiss
     }
   },
 
@@ -135,15 +137,7 @@ export default {
     },
 
     targetColorView() {
-      const palette = {
-        red: '#ff4d4f',
-        blue: '#4096ff',
-        green: '#73d13d',
-        yellow: '#fadb14',
-        orange: '#fa8c16',
-        purple: '#722ed1'
-      }
-      return palette[this.targetColorLocal] || '#ff4d4f'
+      return GAME_COLOR_HEX[this.targetColorLocal] || GAME_COLOR_HEX.red
     }
   },
 
