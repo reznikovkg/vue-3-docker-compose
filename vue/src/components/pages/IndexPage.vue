@@ -1,17 +1,19 @@
 <template>
-  Index
-
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
+    <Flask />
+    <Flask />
+    <Flask />
   </div>
 </template>
 
-<script setup lang="ts">
+<script>
+import Flask from './Flask.vue'
 
+export default {
+  name: 'IndexPage',
+  components: { Flask }
+}
 </script>
 
 <style scoped>
-
 </style>
