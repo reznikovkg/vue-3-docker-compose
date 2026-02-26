@@ -56,12 +56,29 @@ export default {
     },
     
     selectFlask (index) {
+      if (this.selectedIndex === null) {
+        if (this.flasks[index].length === 0) return
+        this.selectedIndex = index
+        return
+      }
       if (this.selectedIndex === index) {
         this.selectedIndex = null
         return
       }
       
-      this.selectedIndex = index
+      this.pour(this.selectedIndex, index)
+      this.selectedIndex = null
+    },
+
+    pour (fromIndex, toIndex) {
+      const from = this.flasks[fromIndex]
+      const to = this.flasks[toIndex]
+      
+      if (from.length === 0) return
+      if (to.length >= this.MAX_LAYERS) return
+      
+      const layer = from.pop()
+      to.push(layer)
     }
   }
 }
