@@ -1,10 +1,16 @@
-﻿<template>
+<template>
   <div class="c-game">
     <slot name="start">
       <button type="button" class="c-game__start" @click="() => startGame()">
         <slot name="start-label"></slot>
       </button>
     </slot>
+    <div class="c-game__controls">
+      <div class="c-game__time">Time: {{ timeLeft }}</div>
+      <button type="button" class="c-game__stop" @click="() => stopGame(false)">
+        Stop
+      </button>
+    </div>
 
     <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)">
       <button
@@ -24,36 +30,42 @@
 export default {
   name: 'BubbleGame',
 
+    // Подумать что с этим сделать тут!!! 
+    // (IndexPage -> GamwMenu | GamwMenu на start | IndexPag в startFromMenu(settings) | IndexPage -> BubbleGame )
   props: {
     // цвета участвующие в генерации пузырей см.список
     colorsCount: {
-      type: Number,
-      default: 3
+      type: Number
+      // default: 3
     },
     // цветт - попал - паравильно
     targetColor: {
-      type: String,
-      default: 'red'
+      type: String
+      // default: 'red'
     },
     // пузырей в секунду мб писать дробной
     intensity: {
-      type: Number,
-      default: 1
+      type: Number
+      // default: 1
     },
     // очки по целевыому цвету
     scoreHit: {
-      type: Number,
-      default: 1
+      type: Number
+      // default: 1
     },
     // промах по целевому цвету
     scoreMiss: {
-      type: Number,
-      default: -5
+      type: Number
+      // default: -5
     },
     // вне колбэк при старте
     onStart: {
       type: Function,
       default: null
+    },
+    maxTime: {
+      type: Number,
+      default: 60
     }
   },
 
@@ -69,6 +81,8 @@ export default {
       bubbles: [],
       nextId: 1,
       spawnTimerId: null,
+      finishTimerId: null,
+      timeLeft: 60,
       rafId: null
     }
   },
@@ -83,6 +97,7 @@ export default {
       this.score = 0
       this.bubbles = []
       this.nextId = 1
+      this.timeLeft = this.maxTime
 
       if (typeof this.onStart === 'function') {
         this.onStart()
@@ -91,26 +106,38 @@ export default {
       this.$emit('update:score', this.score)
 
       // ТОЛЬКО ДЛЯ ТЕСТА
-      this.createBubble()
-      this.createBubble()
-      this.createBubble()
+      //this.createBubble()
+      //this.createBubble()
+      //this.createBubble()
 
       const safeIntensity = this.intensity > 0 ? this.intensity : 1
       const intervalMs = 1000 / safeIntensity
       this.spawnTimerId = setInterval(() => {
         this.createBubble()
       }, intervalMs)
+
+      this.finishTimerId = setInterval(() => {
+        this.timeLeft -= 1
+        if (this.timeLeft <= 0) {
+          this.stopGame(true)
+        }
+      }, 1000)
     },
 
     // стоп игры + таймера
-    stopGame(emitFinish = true) {
+    stopGame(isAuto) {
       if (this.spawnTimerId) {
         clearInterval(this.spawnTimerId)
         this.spawnTimerId = null
       }
 
-      if (this.isRunning && emitFinish) {
-        this.$emit('finish', this.score)
+      if (this.finishTimerId) {
+        clearInterval(this.finishTimerId)
+        this.finishTimerId = null
+      }
+
+      if (this.isRunning) {
+        this.$emit('finish', { score: this.score })
       }
 
       this.isRunning = false
@@ -242,6 +269,11 @@ export default {
       clearInterval(this.spawnTimerId)
       this.spawnTimerId = null
     }
+
+    if (this.finishTimerId) {
+      clearInterval(this.finishTimerId)
+      this.finishTimerId = null
+    }
   }
 }
 </script>
@@ -254,6 +286,20 @@ export default {
 }
 
 .c-game__start {
+  width: fit-content;
+}
+
+.c-game__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.c-game__time {
+  line-height: 1.2;
+}
+
+.c-game__stop {
   width: fit-content;
 }
 

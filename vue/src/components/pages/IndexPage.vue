@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="c-index-page">
     <!--
     Index
@@ -9,11 +9,40 @@
       </RouterLink>
     </div>
     -->
+    <!--
+    <ComponentName
+      v-if="condition"
+      :propA="state.propA"
+      :propB="state.propB"
+      :propC="state.propC"
+      :propD="state.propD"
+      @eventName="handleEvent"
+    />
+    -->
 
-    <button type="button" class="c-index-page__button" @click="() => goToExample()">
-      Играть
-    </button>
+    <GamwMenu
+      v-if="showMenu"
+      :colorsCount="gameSettings.colorsCount"
+      :targetColor="gameSettings.targetColor"
+      :intensity="gameSettings.intensity"
+      :scoreHit="gameSettings.scoreHit"
+      :scoreMiss="gameSettings.scoreMiss"
+      @start="(settings) => startFromMenu(settings)"
+    />
 
+    <BubbleGame
+      v-else
+      :colorsCount="gameSettings.colorsCount"
+      :targetColor="gameSettings.targetColor"
+      :intensity="gameSettings.intensity"
+      :scoreHit="gameSettings.scoreHit"
+      :scoreMiss="gameSettings.scoreMiss"
+      @finish="(res) => onFinish(res)"
+    >
+      <template #start-label>Играть</template>
+    </BubbleGame>
+
+    <!--
     <div class="c-stats">
       <div class="c-stats__row">LIST POWER: {{ listPower }}</div>
 
@@ -33,32 +62,62 @@
         </div>
       </div>
     </div>
+    -->
   </div>
 </template>
 
 <script>
+import BubbleGame from '@/components/BubbleGame.vue'
+import GamwMenu from '@/components/ui/GamwMenu.vue'
+
 export default {
   name: 'IndexPage',
+
+  components: {
+    BubbleGame,
+    GamwMenu
+  },
+
+  // Подумать что можно сделать!!!
+  //Dashboard -> PreferencesModal (edit) -> Dashboard -> LiveWidget (run)
+  // Мб вынести в отдельный дефол default.js
+  data() {
+    return {
+      showMenu: true,
+      lastResultScore: 0,
+      gameSettings: {
+        colorsCount: 6,
+        targetColor: 'red',
+        intensity: 1,
+        scoreHit: 1,
+        scoreMiss: -5
+      }
+    }
+  },
 
   computed: {
     list() {
       return this.$store.getters['list/getList']
     },
 
-    listPower() {
-      return this.$store.getters['list/getListPower']
-    }
+    // listPower() {
+    //   return this.$store.getters['list/getListPower']
+    // }
   },
 
   methods: {
-    goToExample() {
-      this.$router.push({ name: this.$routes.EXAMPLE })
+    startFromMenu(settings) {
+      this.gameSettings = {
+        ...settings
+      }
+      this.showMenu = false
     },
 
-    addEvent(delta) {
-      const list = this.$store.getters['list/getList']
-      const newList = [...list, { t: delta }]
-      this.$store.dispatch('list/setList', newList)
+    onFinish(res) {
+      const score = res && typeof res.score === 'number' ? res.score : 0
+      this.lastResultScore = score
+      this.$store.dispatch('setLastResult', score)
+      this.showMenu = true
     }
   }
 }
@@ -68,14 +127,11 @@ export default {
 .c-index-page {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 16px;
   padding: 24px;
-}
-
-.c-index-page__button {
-  width: fit-content;
-  padding: 10px 18px;
-  cursor: pointer;
+  min-height: 100vh;
 }
 
 .c-stats {
