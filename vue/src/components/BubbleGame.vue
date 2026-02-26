@@ -17,9 +17,16 @@
 
     <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)">
       <div class="c-game__topbar" @click="(e) => e.stopPropagation()">
-        <div class="c-game__target">
-          <span class="c-game__targetText">Собирай:</span>
-          <span class="c-game__targetColor" :style="{ background: targetColor }"></span>
+        <div class="c-game__targetWrap">
+          <div class="c-game__target">
+            <span class="c-game__targetText">Собирай:</span>
+            <span class="c-game__targetColor" :style="{ background: targetColor }"></span>
+          </div>
+
+          <div class="c-game__score">
+            <span class="c-game__scoreText">Очки:</span>
+            <span class="c-game__scoreValue">{{ score }}</span>
+          </div>
         </div>
 
         <div class="c-game__timer">
@@ -345,6 +352,12 @@ export default {
   gap: 12px;
 }
 
+.c-game__targetWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .c-game__target {
   display: inline-flex;
   align-items: center;
@@ -354,6 +367,26 @@ export default {
   border-radius: 999px;
   border: 1px solid #d9d9d9;
   background: rgba(0, 0, 0, 0.35);
+}
+
+.c-game__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #d9d9d9;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.c-game__scoreText {
+  line-height: 1;
+}
+
+.c-game__scoreValue {
+  line-height: 1;
+  font-weight: 700;
 }
 
 .c-game__targetText {
