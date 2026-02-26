@@ -2,7 +2,7 @@
   <div class="alchemist">
     <!-- Верхняя часть - открытые элементы -->
     <div class="elements">
-      <div class="element" v-for="elem in openedElements" :key="elem.id">
+      <div class="element" v-for="elem in openedElements" :key="elem.id" @click="addToTable(elem.id)">
         <div class="picture">
           <img :src="elem.picture" class="element-picture"/>
         </div>
@@ -13,13 +13,22 @@
     <div class="bottom">
       <!-- Нижняя часть - стол -->
       <div class="table">
-        <!-- --------------- -->
+        <div class="table-item" v-for="item in tableElem" :key="item.id">
+          <span>{{ getElementName(item.id) }}</span>
+          <!--<span> - {{ item.count }}</span>-->
+
+          <div class="counter">
+            <button @click="changeCount(item.id, -1)">−</button>
+            <span class="count">{{ item.count }}</span>
+            <button @click="changeCount(item.id, 1)">+</button>
+          </div>
+        </div>
       </div>
 
       <!-- Кнопки -->
       <div class="buttons">
-        <button>Смешать</button>
-        <button>Сбросить</button>
+        <button @click="mixElements">Смешать</button>
+        <button @click="tableElem = []">Сбросить</button>
       </div>
     </div>
   </div>
@@ -40,21 +49,75 @@ export default {
         {id: 5, name: 'Пар', picture: '/src/assets/elements/steam.png', opened: false},
         {id: 6, name: 'Лава', picture: '/src/assets/elements/lava.png', opened: false},
         {id: 7, name: 'Грязь', picture: '/src/assets/elements/mud.png', opened: false}
+        //море
         //энергия
         //туман
         //пыль
         //камень
         //кирпич
         //облако
-
-      ]
+      ],
+      recipes: {
+      '1+2': 5,
+      '1+3': 6,
+      '2+3': 7
+    },
+      tableElem:[]
     }
   },
 
   computed: {
     // только открытые элементы
     openedElements() {
-      return this.elements.filter(el => el.opened)
+      return this.elements.filter(elem => elem.opened)
+    }
+  },
+  methods: {
+    addToTable (id) {
+      const item = this.tableElem.find(i => i.id === id)
+
+      if (item) {
+        item.count++
+      } else {
+        this.tableElem.push({ id, count: 1 })
+      }
+    },
+
+    changeCount (id, value) {
+      const item = this.tableElem.find(i => i.id === id)
+      if (!item) return
+
+      item.count += value
+
+      if (item.count <= 0) {
+        this.tableElem = this.tableElem.filter(i => i.id !== id)
+      }
+    },
+    
+    getElementName(id) {
+      const element = this.elements.find(e => e.id === id)
+      return element.name 
+    },
+
+    mixElements() {
+      if (this.tableElem.length < 2) {
+        alert('Необходимо 2 элемента для смешивания!')
+        return}
+      const ingredients = this.tableElem.map(item => item.id)
+      const key = ingredients.sort((a, b) => a - b).join('+')
+      const resultId = this.recipes[key]
+      if (resultId) {
+        const element = this.elements.find(e => e.id === resultId)
+
+        if (!element.opened) {
+          element.opened = true
+          alert(`Вы открыли новый элемент: ${element.name}`)
+        }
+        this.tableElem = []
+      } 
+      else {
+        alert('Ничего не получилось')
+      }
     }
   }
 }
@@ -86,6 +149,7 @@ export default {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 4px rgb(181, 67, 185);
+  cursor: pointer;
 }
 
 .picture {
@@ -126,11 +190,45 @@ export default {
   gap: 10px;
   padding: 10px;
 }
+.table-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counter button {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 2px solid #b543b9;
+  background: white;
+  font-size: 18px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+}
+
+.count {
+  min-width: 20px;
+  text-align: center;
+  font-weight: bold;
+}
 
 button {
   border-radius: 12px;
   padding: 10px;
   font-size: 16px;
   border: 2px solid rgb(181, 67, 185);
+  cursor: pointer;
 }
 </style>
