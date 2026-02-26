@@ -229,10 +229,19 @@ export default {
         const movedBubbles = this.bubbles
           .map((bubble) => {
             const speedY = Math.random() * 0.8 + 0.4
-            const vx = typeof bubble.vx === 'number' ? bubble.vx : Math.random() * 2 - 1
+            let vx = typeof bubble.vx === 'number' ? bubble.vx : Math.random() * 2 - 1
             const maxX = Math.max(0, fieldWidth - bubble.r * 2)
-            const nextX = Math.min(Math.max(0, bubble.x + vx), maxX)
+            let nextX = bubble.x + vx
             const nextY = bubble.y + speedY
+
+            // рикошет от левой/правой стены
+            if (nextX <= 0) {
+              nextX = 0
+              vx = Math.abs(vx)
+            } else if (nextX >= maxX) {
+              nextX = maxX
+              vx = -Math.abs(vx)
+            }
 
             return {
               ...bubble,
