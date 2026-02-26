@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Flask v-for="(flask, index) in flasks" :key="index" />
+    <Flask v-for="(flask, index) in flasks" :key="index" :isSelected="selectedIndex === index" @select="() => selectFlask(index)" />
   </div>
 </template>
 
@@ -10,18 +10,19 @@ import Flask from './Flask.vue'
 export default {
   name: 'IndexPage',
   components: { Flask },
-  data () {
+  data() {
     return {
       flasks: [],
+      selectedIndex: null,
       MAX_LAYERS: 4,
       COLORS: ['red', 'blue', 'green', 'yellow']
     }
   },
-  mounted () {
+  mounted() {
     this.generateGame()
   },
   methods: {
-    generateGame () {
+    generateGame() {
       this.flasks = []
 
       const TOTAL = this.COLORS.length + 2
@@ -52,6 +53,15 @@ export default {
           this.flasks[index].push(all.pop())
         }
       }
+    },
+    
+    selectFlask (index) {
+      if (this.selectedIndex === index) {
+        this.selectedIndex = null
+        return
+      }
+      
+      this.selectedIndex = index
     }
   }
 }
