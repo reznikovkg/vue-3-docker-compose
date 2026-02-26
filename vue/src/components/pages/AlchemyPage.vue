@@ -25,6 +25,12 @@ export default {
   margin: 0;
   padding: 0;
   background: linear-gradient(135deg, #f0f4f8, #c3cfe2);
+  box-sizing: border-box;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 </style>

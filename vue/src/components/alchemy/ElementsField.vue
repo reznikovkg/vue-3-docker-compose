@@ -35,5 +35,27 @@ export default {
   gap: 15px;
   padding: 20px;
   overflow-y: auto;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  align-content: flex-start;
+}
+
+.field::-webkit-scrollbar {
+  width: 8px;
+}
+
+.field::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.05);
+  border-radius: 4px;
+}
+
+.field::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 4px;
+}
+
+.field::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
 }
 </style>
