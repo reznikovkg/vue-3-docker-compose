@@ -4,7 +4,7 @@
       <h2>Пятнашки</h2>
       <div class="puzzle__status">Ходы: {{ moves }}</div>
       <div class="puzzle__board">
-        <div v-for="(tile, index) in tiles" :key="index" class="puzzle__tile">
+        <div v-for="(tile, index) in tiles" :key="index" class="puzzle__tile" @click="() => handleTileClick(index)">
           <span v-if="tile !== 0">{{ tile }}</span>
         </div>
       </div>
@@ -28,6 +28,35 @@ export default {
       this.moves = 0
       const total = this.gridSize * this.gridSize
       this.tiles = Array.from({ length: total }, (_, i) => (i + 1) % total)
+    },
+
+    getNeighbors(index) {
+      const neighbors = []
+      const row = Math.floor(index / this.gridSize)
+      const col = index % this.gridSize
+
+      if (row > 0) neighbors.push(index - this.gridSize)
+      if (row < this.gridSize - 1) neighbors.push(index + this.gridSize)
+      if (col > 0) neighbors.push(index - 1)
+      if (col < this.gridSize - 1) neighbors.push(index + 1)
+
+      return neighbors
+    },
+
+    handleTileClick(index) {
+      const emptyIndex = this.tiles.indexOf(0)
+      const neighbors = this.getNeighbors(emptyIndex)
+
+      if (neighbors.includes(index)) {
+        this.swapTiles(emptyIndex, index)
+        this.moves++
+      }
+    },
+
+    swapTiles(idx1, idx2) {
+      const temp = this.tiles[idx1]
+      this.tiles[idx1] = this.tiles[idx2]
+      this.tiles[idx2] = temp
     }
   },
   mounted() {
@@ -91,6 +120,19 @@ export default {
     align-items: center;
     justify-content: center;
     font-family: sans-serif;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+
+    &:active {
+      transform: scale(0.95);
+      background-color: #555;
+    }
+
+    &--empty {
+      background-color: transparent;
+      cursor: default;
+    }
   }
 
   &__restart {
