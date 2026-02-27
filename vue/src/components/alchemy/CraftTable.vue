@@ -5,11 +5,22 @@
         v-for="(count, name) in table"
         :key="name"
         class="table__item"
-        @click="() => add(name)"
       >
+        <button
+          class="table__remove"
+          @click.stop="() => removeAll(name)"
+        >
+          ✕
+        </button>
+
         <span class="table__icon">{{ icons[name] || '✨' }}</span>
         <span class="table__name">{{ name }}</span>
         <span class="table__count">x{{ count }}</span>
+
+        <div class="table__controls">
+          <button @click="() => decrease(name)">−</button>
+          <button @click="() => add(name)">+</button>
+        </div>
       </div>
     </div>
 
@@ -41,8 +52,17 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['addToTable', 'clearTable', 'mix']),
+    ...mapActions([
+      'addToTable',
+      'decreaseFromTable',
+      'removeElementCompletely',
+      'clearTable',
+      'mix'
+    ]),
+
     add(name) { this.addToTable(name) },
+    decrease(name) { this.decreaseFromTable(name) },
+    removeAll(name) { this.removeElementCompletely(name) },
     clear() { this.clearTable() }
   }
 }
@@ -75,7 +95,8 @@ export default {
 }
 
 .table__item {
-  flex: 0 1 80px;
+  position: relative;
+  flex: 0 1 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -83,7 +104,7 @@ export default {
   background: #fff;
   border-radius: 12px;
   padding: 10px;
-  cursor: pointer;
+  cursor: default;
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   text-align: center;
   transition: 0.2s;
@@ -91,7 +112,25 @@ export default {
 
 .table__item:hover {
   transform: translateY(-3px);
-  background: #f0f0f0;
+}
+
+.table__remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border: none;
+  background: #ff6b6b;
+  color: white;
+  font-size: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.table__remove:hover {
+  transform: scale(1.1);
 }
 
 .table__icon {
@@ -108,6 +147,26 @@ export default {
   font-size: 12px;
   color: #555;
   margin-top: 2px;
+}
+
+.table__controls {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.table__controls button {
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.table__controls button:hover {
+  background: #e0e0e0;
 }
 
 .table__buttons {

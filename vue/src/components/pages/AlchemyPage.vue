@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import ElementsField from '../Alchemy/ElementsField.vue'
-import CraftTable from '../Alchemy/CraftTable.vue'
+import ElementsField from '../alchemy/ElementsField.vue'
+import CraftTable from '../alchemy/CraftTable.vue'
 
 export default {
   name: 'AlchemyPage',
