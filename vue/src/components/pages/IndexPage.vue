@@ -2,9 +2,13 @@
   <div class="puzzle">
     <div class="puzzle__content">
       <h2>Пятнашки</h2>
+
+      <div v-if="isWin" class="puzzle__win">ПОБЕДА!</div>
+
       <div class="puzzle__status">Ходы: {{ moves }}</div>
+
       <div class="puzzle__board">
-        <div v-for="(tile, index) in tiles" :key="index" class="puzzle__tile" @click="() => handleTileClick(index)">
+        <div v-for="(tile, index) in tiles" :key="index" class="puzzle__tile" :class="{ 'puzzle__tile--empty': tile === 0, 'puzzle__tile--win': isWin }" @click="() => handleTileClick(index)">
           <span v-if="tile !== 0">{{ tile }}</span>
         </div>
       </div>
@@ -44,6 +48,8 @@ export default {
     },
 
     handleTileClick(index) {
+      if (this.isWin) return
+
       const emptyIndex = this.tiles.indexOf(0)
       const neighbors = this.getNeighbors(emptyIndex)
 
@@ -59,6 +65,21 @@ export default {
       this.tiles[idx2] = temp
     }
   },
+
+  computed: {
+    isWin() {
+      const total = this.gridSize * this.gridSize
+      for (let i = 0; i < total; i++) {
+        if (i < total - 1) {
+          if (this.tiles[i] !== i + 1) return false
+        } else {
+          if (this.tiles[i] !== 0) return false
+        }
+      }
+      return true
+    }
+  },
+
   mounted() {
     this.initGame()
   }
@@ -100,6 +121,13 @@ export default {
     font-family: sans-serif;
   }
 
+  &__win {
+    color: #4CAF50;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+
   &__board {
     display: grid;
     grid-template-columns: repeat(4, 80px);
@@ -132,6 +160,10 @@ export default {
     &--empty {
       background-color: transparent;
       cursor: default;
+    }
+
+    &--win {
+      background-color: #4CAF50;
     }
   }
 
