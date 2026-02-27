@@ -9,6 +9,11 @@
       <aside class="fishing-page__panel">
         <h2>Locations</h2>
         <p>WIP: location selector with reservoir list and active selection.</p>
+        <ul class="fishing-page__location-list">
+          <li v-for="location in locations" :key="location.id">
+            {{ location.name }}
+          </li>
+        </ul>
       </aside>
 
       <section class="fishing-page__scene">
@@ -27,6 +32,8 @@
 </template>
 
 <script>
+import { GAME_CONFIG } from '@/game-config';
+
 export default {
   name: 'FishingPage',
   data() {
@@ -37,6 +44,9 @@ export default {
   computed: {
     isIdle() {
       return this.phase === 'idle';
+    },
+    locations() {
+      return GAME_CONFIG.locations;
     },
   },
   methods: {
@@ -71,6 +81,11 @@ export default {
   border-radius: 8px;
   min-height: 240px;
   padding: 12px;
+}
+
+.fishing-page__location-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
 }
 
 @media (max-width: 900px) {
