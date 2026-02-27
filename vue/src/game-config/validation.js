@@ -28,6 +28,13 @@ const validateLocation = (location) => {
     errors.push('location.biteRateBase must be a number');
   }
 
+  if (
+    location.difficultyMultiplier !== undefined &&
+    !isFiniteNumber(location.difficultyMultiplier)
+  ) {
+    errors.push('location.difficultyMultiplier must be a number');
+  }
+
   return errors;
 };
 

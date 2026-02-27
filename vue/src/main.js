@@ -12,4 +12,6 @@ const routes = {
   },
 };
 
+store.dispatch('progress/bootstrapProgress');
+
 createApp(App).use(router).use(routes).use(store).mount('#project');

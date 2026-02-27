@@ -1,3 +1,10 @@
+import {
+  buildDefaultSaveState,
+  clear as clearSavedProgress,
+  load as loadSavedProgress,
+  save as saveProgress,
+} from '@/services/saveStorage';
+
 const MUTATIONS = {
   HYDRATE_PROGRESS: 'HYDRATE_PROGRESS',
   SET_SELECTED_LOCATION_ID: 'SET_SELECTED_LOCATION_ID',
@@ -15,6 +22,17 @@ const buildInitialState = () => ({
     catches: 0,
     fails: 0,
   },
+});
+
+const buildSaveState = (state) => ({
+  version: 1,
+  selectedLocationId: state.selectedLocationId,
+  stats: {
+    attempts: state.stats.attempts,
+    catches: state.stats.catches,
+    fails: state.stats.fails,
+  },
+  catchLog: state.catchLog,
 });
 
 export default {
@@ -64,12 +82,29 @@ export default {
     hydrateProgress({ commit }, payload) {
       commit(MUTATIONS.HYDRATE_PROGRESS, payload || buildInitialState());
     },
+    bootstrapProgress({ dispatch }) {
+      const saved = loadSavedProgress();
+      dispatch('hydrateProgress', saved || buildDefaultSaveState());
+
+      dispatch(
+        'gameSession/setActiveLocation',
+        saved?.selectedLocationId || null,
+        {
+          root: true,
+        },
+      );
+    },
+    persistProgress({ state }) {
+      saveProgress(buildSaveState(state));
+    },
     selectLocation({ commit, dispatch }, locationId) {
       commit(MUTATIONS.SET_SELECTED_LOCATION_ID, locationId);
       dispatch('gameSession/setActiveLocation', locationId, { root: true });
+      dispatch('persistProgress');
     },
-    recordAttempt({ commit }) {
+    recordAttempt({ commit, dispatch }) {
       commit(MUTATIONS.INCREMENT_ATTEMPTS);
+      dispatch('persistProgress');
     },
     recordCatch({ commit, dispatch }, payload) {
       commit(MUTATIONS.INCREMENT_ATTEMPTS);
@@ -87,6 +122,7 @@ export default {
         },
         { root: true },
       );
+      dispatch('persistProgress');
     },
     recordFail({ commit, dispatch }, payload) {
       commit(MUTATIONS.INCREMENT_ATTEMPTS);
@@ -104,9 +140,12 @@ export default {
         },
         { root: true },
       );
+      dispatch('persistProgress');
     },
-    resetProgress({ commit }) {
+    resetProgress({ commit, dispatch }) {
       commit(MUTATIONS.HYDRATE_PROGRESS, buildInitialState());
+      clearSavedProgress();
+      dispatch('gameSession/setActiveLocation', null, { root: true });
     },
   },
 };
