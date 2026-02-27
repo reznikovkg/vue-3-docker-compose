@@ -1,7 +1,7 @@
 export const TUNING = Object.freeze({
   biteDelayMs: Object.freeze({
     min: 900,
-    max: 3200,
+    max: 6400,
   }),
   minigame: Object.freeze({
     greenSpeedBase: 0.23,

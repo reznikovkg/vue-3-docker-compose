@@ -1,7 +1,7 @@
 <template>
   <section class="index-page">
     <h1>Fishing Game</h1>
-    <RouterLink :to="{ name: $routes.FISHING }">Go to Fishing</RouterLink>
+    <RouterLink :to="{ name: $routes.FISHING }">Go Fishing</RouterLink>
   </section>
 </template>
 
