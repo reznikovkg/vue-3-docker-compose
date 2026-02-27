@@ -32,6 +32,19 @@ export default {
       this.moves = 0
       const total = this.gridSize * this.gridSize
       this.tiles = Array.from({ length: total }, (_, i) => (i + 1) % total)
+      this.shuffleBoard()
+    },
+
+    shuffleBoard() {
+      let previousIndex = -1
+      for (let i = 0; i < 150; i++) {
+        const emptyIndex = this.tiles.indexOf(0)
+        const neighbors = this.getNeighbors(emptyIndex)
+        const validNeighbors = neighbors.filter(n => n !== previousIndex)
+        const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)]
+        this.swapTiles(emptyIndex, randomNeighbor)
+        previousIndex = emptyIndex
+      }
     },
 
     getNeighbors(index) {
@@ -177,6 +190,51 @@ export default {
     cursor: pointer;
     font-weight: bold;
     font-family: sans-serif;
+  }
+}
+
+@media (max-width: 500px) {
+  .puzzle {
+    padding: 15px;
+
+    h2 {
+      font-size: 32px;
+    }
+
+    &__status {
+      font-size: 16px;
+    }
+
+    &__board {
+      grid-template-columns: repeat(4, 70px);
+      grid-template-rows: repeat(4, 70px);
+    }
+
+    &__tile {
+      width: 70px;
+      height: 70px;
+      font-size: 24px;
+    }
+
+    &__restart {
+      padding: 12px 40px;
+      font-size: 16px;
+    }
+  }
+}
+
+@media (max-width: 350px) {
+  .puzzle {
+    &__board {
+      grid-template-columns: repeat(4, 60px);
+      grid-template-rows: repeat(4, 60px);
+    }
+
+    &__tile {
+      width: 60px;
+      height: 60px;
+      font-size: 20px;
+    }
   }
 }
 </style>
