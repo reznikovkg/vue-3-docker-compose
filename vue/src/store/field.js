@@ -1,5 +1,5 @@
 const MUTATIONS = {
-    CHANGE_SIZE: 'CHANGE_SIZE'
+    CHANGE_FIELD_SIZE: 'CHANGE_FIELD_SIZE'
 }
 
 export default {
@@ -7,15 +7,15 @@ export default {
   state () {
     return {
         size: 7,
-        field: Array(7).fill(null).map(() => Array(7).fill(0))
+        field: null
     }
   },
   getters: {
     getField: (state) => state.field,
-    getSize: (state) => state.size,
+    getFieldSize: (state) => state.size,
   },
   mutations: {
-    CHANGE_SIZE: (state, newSize) => {
+    CHANGE_FIELD_SIZE: (state, newSize) => {
         state.size = newSize
         if (state.size < 7) {
             state.size = 7
@@ -30,8 +30,8 @@ export default {
     },
   },
   actions: {
-    changeSize: (store, newSize) => {
-      store.commit(MUTATIONS.CHANGE_SIZE, newSize)
+    changeFieldSize: (store, newSize) => {
+      store.commit(MUTATIONS.CHANGE_FIELD_SIZE, newSize)
     },
   }
 }

@@ -1,8 +1,8 @@
 <template>
   <table class="field-table">
     <tbody>
-      <tr v-for="row in this.getSize" :key="row">
-        <td class="field-td" v-for="col in this.getSize" :key="col" width="80vmin / this.cellSize" height="80vmin / this.cellSize">
+      <tr v-for="row in this.getFieldSize" :key="row">
+        <td class="field-td" :style="{ '--grid-size': this.getFieldSize }" v-for="col in this.getFieldSize" :key="col">
         </td>
       </tr>
     </tbody>
@@ -15,7 +15,7 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'FieldTable',
   computed: {
-    ...mapGetters('field', ['getSize']),
+    ...mapGetters('field', ['getFieldSize']),
   }
 }
 </script>
@@ -28,6 +28,8 @@ export default {
 }
 
 .field-td {
-  border: 1px solid #000000;
+  border: 0.5vmin solid #000000;
+  width: calc(80vmin / var(--grid-size));
+  height: calc(80vmin / var(--grid-size));
 }
 </style>
