@@ -478,6 +478,11 @@ export default {
 
 <style scoped lang="scss">
 .fishing-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
   padding: 16px;
 }
 
@@ -490,15 +495,19 @@ export default {
 
 .fishing-page__layout {
   display: grid;
+  flex: 1;
   gap: 12px;
   grid-template-columns: 240px 1fr 240px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .fishing-page__panel,
 .fishing-page__scene {
   border: 1px solid #9da8b7;
   border-radius: 8px;
-  min-height: 240px;
+  min-height: 0;
+  overflow: auto;
   padding: 12px;
 }
 
@@ -611,7 +620,10 @@ export default {
 }
 
 .fishing-page__play-area {
+  margin: 0 auto;
+  max-width: 980px;
   user-select: none;
+  width: 100%;
 }
 
 .fishing-page__minigame-hud {
@@ -662,6 +674,7 @@ export default {
 @media (max-width: 900px) {
   .fishing-page__layout {
     grid-template-columns: 1fr;
+    overflow: auto;
   }
 
   .fishing-page__panel,
