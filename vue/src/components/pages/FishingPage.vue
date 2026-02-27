@@ -116,15 +116,14 @@ onUnmounted(() => {
 
 .notification {
   position: fixed;
-  top: 400px;
-  left: 500px;
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-  width: 600px;
-  height: 600px;
-  z-index: 10;
-  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  width: auto;
+  height: auto;
+  min-width: 300px;
+  max-width: 90vw;
 }
 
 .rod {

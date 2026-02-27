@@ -37,10 +37,8 @@ const closeLocationList = () => {
 
 <style scoped>
 .home-page {
-  position: relative;
   width: 100%;
   height: 100vh;
-  overflow: hidden;
 }
 
 .home-page__bg {
