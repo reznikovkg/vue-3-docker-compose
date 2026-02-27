@@ -449,6 +449,7 @@ export default {
   background-size: cover;
   background-position: center;
   cursor: pointer;
+  opacity: 0.88;
 }
 
 .c-game__bubble--red {
