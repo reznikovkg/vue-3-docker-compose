@@ -1,18 +1,22 @@
 <template>
-  <div class="bg">
+  <div class="home-page">
+
+    <div class="home-page__bg"></div>
+
     <button 
-      class="corner-button"
+      class="fish-button"
       @click="() => clickFishButton()"
     >
       На рыбалку
     </button>
-  </div>
 
-  <div 
-    class="locations-container"
-    v-if="showLocationList"
-  >
-    <LocationsList @close="() => closeLocationList()"></LocationsList>
+    <div 
+      class="locations-container"
+      v-if="showLocationList"
+    >
+      <LocationsList @close="() => closeLocationList()">
+      </LocationsList>
+    </div>
   </div>
 </template>
 
@@ -29,11 +33,17 @@ const clickFishButton = () => {
 const closeLocationList = () => {
   showLocationList.value = false
 }
-
 </script>
 
 <style scoped>
-.bg {
+.home-page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.home-page__bg {
   position: fixed;
   top: 0;
   left: 0;
@@ -46,7 +56,7 @@ const closeLocationList = () => {
   background-attachment: fixed;
 }
 
-.corner-button {
+.fish-button {
   position: absolute;
   bottom: 30px;
   right: 30px;
@@ -58,7 +68,6 @@ const closeLocationList = () => {
   font-size: 18px;
   cursor: pointer;
   border-radius: 30px;
-  
   display: flex;
   align-items: center;
   justify-content: center;

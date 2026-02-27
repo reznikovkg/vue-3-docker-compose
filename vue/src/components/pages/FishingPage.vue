@@ -1,61 +1,61 @@
 <template>
-  <div>
-    <h2>Всего поймано: {{ totalBiteCount }}</h2>
-  </div>
+  <div class="page">
+    <h2 class="page__counter">Всего поймано: {{ totalBiteCount }}</h2>
 
-  <div class="bg" :style="{ backgroundImage: `url(/images/${location.image})` }">
-  </div>
-
-  <button class="menu-button" @click="() => goToHomePage()">
-    <span class="menu-text">ДОМОЙ</span>
-  </button>
-
-  <div class="score-panel">
-    <div class="score-label">ВСЕГО ПОЙМАНО</div>
-    <div class="score-value">{{ totalBiteCount }}</div>
-  </div>
-
-  <div class="rod">
-  </div>
-
-  <button class="fish-button" 
-    v-if="canStartFish"
-    @click="() => startFish()"
-  >
-    Закинуть
-  </button>
-
-  <div class="fishing-controls" v-if="isBiting">
-    <div class="progress-wrapper">
-      <div class="progress-label">🎣 УДОЧКА</div>
-      <div class="progress-bar">
-        <div 
-          class="progress-fill" 
-          :style="{ width: progress + '%' }"
-        >
-          <span class="progress-text">{{ Math.floor(progress) }}%</span>
-        </div>
-      </div>
+    <div class="bg" :style="{ backgroundImage: `url(/images/${location.image})` }">
     </div>
 
-    <button 
-      class="reel-button"
-      @mousedown="startReeling"
-      @mouseup="stopReeling"
-      @mouseleave="stopReeling"
-      @touchstart="startReeling"
-      @touchend="stopReeling"
-      :class="{ active: isReeling }"
-    >
-      ТЯНУТЬ
+    <button class="menu-button" @click="() => goToHomePage()">
+      <span class="menu-button__text">ДОМОЙ</span>
     </button>
-  </div>
 
-  <Notification
-    v-if="notification !== null"
-    :message="notification"
-    @action="() => closeNotification()"
-  />
+    <div class="score-panel">
+      <div class="score-panel__label">ВСЕГО ПОЙМАНО</div>
+      <div class="score-panel__value">{{ totalBiteCount }}</div>
+    </div>
+
+    <div class="rod">
+    </div>
+
+    <button class="fish-button" 
+      v-if="canStartFish"
+      @click="() => startFish()"
+    >
+      Закинуть
+    </button>
+
+    <div class="fishing-controls" v-if="isBiting">
+      <div class="progress-wrapper">
+        <div class="progress-wrapper__label">🎣 УДОЧКА</div>
+        <div class="progress-wrapper__bar">
+          <div 
+            class="progress-wrapper__fill" 
+            :style="{ width: progress + '%' }"
+          >
+            <span class="progress-wrapper__text">{{ Math.floor(progress) }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <button 
+        class="reel-button"
+        @mousedown="() => startReeling()"
+        @mouseup="() => stopReeling()"
+        @mouseleave="() => stopReeling()"
+        @touchstart="() => startReeling()"
+        @touchend="() => stopReeling()"
+        :class="{ 'reel-button--active': isReeling }"
+      >
+        ТЯНУТЬ
+      </button>
+    </div>
+
+    <Notification
+      v-if="notification !== null"
+      :message="notification"
+      @action="() => closeNotification()"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -67,19 +67,23 @@ import Notification from '../Notification.vue';
 const props = defineProps(['location'])
 const location = computed(() => props.location)
 
+const router = useRouter()
+const goToHomePage = () => {
+  router.push("/")
+}
+
 const store = useStore()
 const isCasting = computed(() => store.getters['game/isCasting'])
 const isBiting = computed(() => store.getters['game/isBiting'])
 const totalBiteCount = computed(() => store.getters['game/totalBiteCount'])
 const notification = computed(() => store.getters['game/notification'])
+const progress = computed(() => store.getters['game/progress'])
+const isReeling = computed(() => store.getters['game/isReeling'])
 
 const canStartFish = computed(() => !isCasting.value && !isBiting.value)
 const startFish = () => {
   store.dispatch('game/startCasting')
 }
-
-const progress = computed(() => store.getters['game/progress'])
-const isReeling = computed(() => store.getters['game/isReeling'])
 
 const startReeling = () => {
   store.dispatch('game/startReeling')
@@ -88,19 +92,13 @@ const startReeling = () => {
 const stopReeling = () => {
   store.dispatch('game/stopReeling')
 }
+const closeNotification = () => {
+  store.dispatch('game/closeNotification')
+}
 
 onUnmounted(() => {
   store.dispatch('game/reset')
 })
-
-const router = useRouter()
-const goToHomePage = () => {
-  router.push("/")
-}
-
-const closeNotification = () => {
-  store.dispatch('game/closeNotification')
-}
 </script>
 
 <style scoped>
@@ -179,7 +177,7 @@ const closeNotification = () => {
   border-radius: 20px;
 }
 
-.progress-label {
+.progress-wrapper__label {
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -188,7 +186,7 @@ const closeNotification = () => {
   letter-spacing: 1px;
 }
 
-.progress-bar {
+.progress-wrapper__bar {
   width: 100%;
   height: 30px;
   background: #2c3e50;
@@ -196,7 +194,7 @@ const closeNotification = () => {
   overflow: hidden;
 }
 
-.progress-fill {
+.progress-wrapper__fill {
   height: 100%;
   background: green;
   transition: width 0.1s linear;
@@ -206,7 +204,7 @@ const closeNotification = () => {
   padding-right: 10px;
 }
 
-.progress-text {
+.progress-wrapper__text {
   color: white;
   font-size: 14px;
 }
@@ -220,6 +218,11 @@ const closeNotification = () => {
   font-size: 32px;
   cursor: pointer;
   border-radius: 30px;
+}
+
+.reel-button--active {
+  transform: scale(0.98);
+  background: linear-gradient(135deg, #cc0000, #990000);
 }
 
 .score-panel {
@@ -238,7 +241,7 @@ const closeNotification = () => {
   border-radius: 30px;
 }
 
-.score-label {
+.score-panel__label {
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -247,7 +250,7 @@ const closeNotification = () => {
   text-transform: uppercase;
 }
 
-.score-value {
+.score-panel__value {
   color: white;
   font-size: 42px;
   font-weight: bold;
@@ -270,4 +273,7 @@ const closeNotification = () => {
   cursor: pointer;
 }
 
+.menu-button__text {
+  color: white;
+}
 </style>

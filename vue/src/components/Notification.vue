@@ -1,9 +1,9 @@
 <template>
-  <div class="notification-center">
-    <div class="notification-content">
-      <div class="notification-message">{{ message }}</div>
+  <div class="notification">
+    <div class="notification__content">
+      <div class="notification__message">{{ message }}</div>
 
-      <button class="notification-button" @click="() => handleAction()">
+      <button class="notification__button" @click="() => handleAction()">
         Закрыть
       </button>
     </div>
@@ -20,7 +20,7 @@ const handleAction = () => {
 </script>
 
 <style scoped>
-.notification-center {
+.notification {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -28,7 +28,7 @@ const handleAction = () => {
   z-index: 2000;
 }
 
-.notification-content {
+.notification__content {
   background: rgba(26, 26, 26, 0.95);
   border-radius: 20px;
   padding: 30px 50px;
@@ -39,14 +39,14 @@ const handleAction = () => {
   align-items: center;
 }
 
-.notification-message {
+.notification__message {
   color: white;
   font-size: 20px;
   font-weight: bold;
   text-align: center;
 }
 
-.notification-button {
+.notification__button {
   background: linear-gradient(135deg, #3498db, #2980b9);
   color: white;
   border: none;
