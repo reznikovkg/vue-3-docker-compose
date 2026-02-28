@@ -30,6 +30,16 @@
       <div class="index__catch" v-if="lastCatch">
         Поймано: {{ lastCatch }}
       </div>
+
+      <!-- НОВАЯ ФИЧА: История поклевок -->
+      <div class="index__history" v-if="catchHistory.length > 0">
+        <div class="index__history-title">История улова:</div>
+        <div class="index__history-list">
+          <div v-for="(item, idx) in catchHistory" :key="idx" class="index__history-item">
+            {{ item }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -62,6 +72,7 @@ export default {
       timer: 0,
       biteMessage: 'Забросьте удочку',
       lastCatch: '',
+      catchHistory: [], // НОВОЕ: для истории
       biteTimeout: null,
       missTimeout: null,
       timerInterval: null
@@ -92,9 +103,13 @@ export default {
       this.biteMessage = 'Забросьте удочку'
       this.lastCatch = ''
       
+      // ИСПРАВЛЕНИЕ: очищаем таймеры при смене локации
       clearTimeout(this.biteTimeout)
       clearTimeout(this.missTimeout)
       clearInterval(this.timerInterval)
+      
+      // Дополнительно сбрасываем отображение таймера
+      this.timer = 0
     },
     handleClick() {
       if (this.isBiting) {
@@ -138,6 +153,14 @@ export default {
       const fish = fishList[randomIndex]
       
       this.lastCatch = fish
+      
+      // НОВОЕ: добавляем в историю
+      const historyItem = fish + ' - ' + this.currentLocation.name
+      this.catchHistory.unshift(historyItem)
+      if (this.catchHistory.length > 5) {
+        this.catchHistory.pop()
+      }
+      
       this.biteMessage = 'Поймана рыба'
       this.isBiting = false
       
@@ -170,7 +193,7 @@ export default {
 </script>
 
 <style scoped>
-/* Стили без изменений */
+/* Стили без изменений, но добавляем для истории */
 .index {
   font-family: Arial;
   padding: 10px;
@@ -261,5 +284,35 @@ export default {
   padding: 5px;
   text-align: center;
   background: #e0e0e0;
+  margin-bottom: 10px;
+}
+
+/* НОВЫЕ СТИЛИ для истории */
+.index__history {
+  border: 1px solid black;
+  padding: 10px;
+  background: #f9f9f9;
+}
+
+.index__history-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.index__history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.index__history-item {
+  font-size: 12px;
+  padding: 2px 0;
+  border-bottom: 1px dotted #ccc;
+}
+
+.index__history-item:last-child {
+  border-bottom: none;
 }
 </style>
