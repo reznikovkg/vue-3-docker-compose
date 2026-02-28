@@ -2,24 +2,24 @@
   <div class="info-panel">
     <div v-if="selectedEnemy" class="info-panel__controls">
       <button
-        class="info-panel__button"
-        @click="() => $emit('move', 'up')"
         :disabled="!canMoveUp"
+        class="info-panel__button"
+        @click="() => onMove('up')"
       >↑</button>
       <button
-        class="info-panel__button"
-        @click="() => $emit('move', 'down')"
         :disabled="!canMoveDown"
+        class="info-panel__button"
+        @click="() => onMove('down')"
       >↓</button>
       <button
-        class="info-panel__button"
-        @click="() => $emit('move', 'left')"
         :disabled="!canMoveLeft"
+        class="info-panel__button"
+        @click="() => onMove('left')"
       >←</button>
       <button
-        class="info-panel__button"
-        @click="() => $emit('move', 'right')"
         :disabled="!canMoveRight"
+        class="info-panel__button"
+        @click="() => onMove('right')"
       >→</button>
     </div>
 
@@ -27,7 +27,7 @@
       <button
         v-if="selectedTower.level < 5"
         class="info-panel__upgrade-button"
-        @click="() => $emit('upgrade-tower')"
+        @click="() => onUpgrade()"
       >
         Улучшить ({{ selectedTower.level + 1 }})
       </button>
@@ -48,17 +48,27 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  selectedEnemy: Object,
-  selectedTower: Object,
-  canMoveUp: Boolean,
-  canMoveDown: Boolean,
-  canMoveLeft: Boolean,
-  canMoveRight: Boolean
-})
-
-defineEmits(['move', 'upgrade-tower'])
+<script>
+export default {
+  name: 'InfoPanel',
+  emits: ['move', 'upgrade-tower'],
+  props: {
+    selectedEnemy: Object,
+    selectedTower: Object,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    canMoveLeft: Boolean,
+    canMoveRight: Boolean
+  },
+  methods: {
+    onMove (direction) {
+      this.$emit('move', direction)
+    },
+    onUpgrade () {
+      this.$emit('upgrade-tower')
+    }
+  }
+}
 </script>
 
 <style scoped lang="scss">

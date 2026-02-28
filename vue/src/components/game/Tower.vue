@@ -9,7 +9,7 @@
       left: x + 'px',
       top: y + 'px'
     }"
-    @click.stop="() => $emit('click')"
+    @click.stop="() => onClick()"
   >
     <div
       class="tower__circle"
@@ -34,22 +34,38 @@
   </div>
 </template>
 
-<script setup>
-const props = defineProps({
-  x: Number,
-  y: Number,
-  level: Number,
-  radius: Number,
-  selected: Boolean,
-  hasTower: Boolean
-})
+<script>
+export default {
+  name: 'Tower',
+  emits: ['click'],
+  props: {
+    x: Number,
+    y: Number,
+    radius: Number,
 
-const getColor = (level) => {
-  const colors = ['#8B4513', '#CD853F', '#D2691E', '#A0522D', '#8B0000']
-  return colors[Math.min(level - 1, colors.length - 1)] || '#8B4513'
+    level: {
+      type: Number,
+      default: 1
+    },
+    selected: {
+      type: Boolean,
+      default: false
+    },
+    hasTower: {
+      type: Boolean,
+      default: false
+    }
+  },
+  methods: {
+    onClick () {
+      this.$emit('click')
+    },
+    getColor (level) {
+      const colors = ['#8b4513', '#cd853f', '#d2691e', '#a0522d', '#8b0000']
+      return colors[Math.min(level - 1, colors.length - 1)] || '#8b4513'
+    }
+  }
 }
-
-defineEmits(['click'])
 </script>
 
 <style scoped lang="scss">

@@ -10,13 +10,16 @@
   ></div>
 </template>
 
-<script setup>
-defineProps({
-  x1: Number,
-  y1: Number,
-  length: Number,
-  angle: Number
-})
+<script>
+export default {
+  name: 'Shot',
+  props: {
+    x1: Number,
+    y1: Number,
+    length: Number,
+    angle: Number
+  }
+}
 </script>
 
 <style scoped lang="scss">

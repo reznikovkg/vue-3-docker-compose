@@ -1,24 +1,22 @@
-import { onUnmounted } from 'vue'
-import { useTowerCombat } from './useTowerCombat'
+import { updateTowers } from './useTowerCombat'
 
-export const useGameLoop = (towers, enemies, shots, selectedEnemyIndex, totalKills) => {
-  const { updateTowers } = useTowerCombat(towers, enemies, shots, selectedEnemyIndex, totalKills)
-
+export const createGameLoop = (ctx) => {
   let intervalId = null
 
   const startLoop = () => {
-    if (intervalId) return
+    if (intervalId) 
+      return
     intervalId = setInterval(() => {
-      updateTowers()
+      updateTowers(ctx)
     }, 100)
   }
 
-  onUnmounted(() => {
+  const stopLoop = () => {
     if (intervalId) {
       clearInterval(intervalId)
       intervalId = null
     }
-  })
+  }
 
-  return { startLoop }
+  return { startLoop, stopLoop }
 }

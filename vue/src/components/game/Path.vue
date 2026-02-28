@@ -5,10 +5,16 @@
   </svg>
 </template>
 
-<script setup>
-defineProps({
-  pathPoints: String
-})
+<script>
+export default {
+  name: 'Path',
+  props: {
+    pathPoints: {
+      type: String,
+      required: true
+    }
+  }
+}
 </script>
 
 <style scoped lang="scss">

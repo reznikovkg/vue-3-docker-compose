@@ -6,7 +6,7 @@
       left: x + 'px',
       top: y + 'px'
     }"
-    @click.stop="() => $emit('click')"
+    @click.stop="() => onClick()"
   >
     <div class="enemy__circle"></div>
     <div
@@ -18,17 +18,24 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  x: Number,
-  y: Number,
-  health: Number,
-  maxHealth: Number,
-  selected: Boolean,
-  index: Number
-})
-
-defineEmits(['click'])
+<script>
+export default {
+  name: 'Enemy',
+  emits: ['click'],
+  props: {
+    x: Number,
+    y: Number,
+    health: Number,
+    maxHealth: Number,
+    selected: Boolean,
+    index: Number
+  },
+  methods: {
+    onClick () {
+      this.$emit('click')
+    }
+  }
+}
 </script>
 
 <style scoped lang="scss">

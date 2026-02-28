@@ -5,20 +5,27 @@
       :key="level.id"
       class="levels__button"
       :class="{ 'levels__button--active': currentId === level.id }"
-      @click="() => $emit('select', level.id)"
+      @click="() => onSelect(level.id)"
     >
       Level {{ level.id }}
     </button>
   </div>
 </template>
 
-<script setup>
-defineProps({
-  levels: Array,
-  currentId: Number
-})
-
-defineEmits(['select'])
+<script>
+export default {
+  name: 'LevelButtons',
+  emits: ['select'],
+  props: {
+    levels: Array,
+    currentId: Number
+  },
+  methods: {
+    onSelect(levelId) {
+      this.$emit('select', levelId)
+    }
+  }
+}
 </script>
 
 <style scoped lang="scss">

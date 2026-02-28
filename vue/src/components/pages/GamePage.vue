@@ -3,8 +3,8 @@
     <LevelButtons
       :levels="levels"
       :current-id="currentLevelId"
-      @select="(id) => loadLevel(id)"
       class="game__level-buttons"
+      @select="(id) => loadLevel(id)"
     />
 
     <div class="game__layout layout">
@@ -28,8 +28,8 @@
           :radius="getTowerAtPosition(position.id)?.radius || 80"
           :selected="selectedTowerId === position.id"
           :has-tower="!!getTowerAtPosition(position.id)"
-          @click="() => selectTowerPosition(position.id)"
           class="game__tower"
+          @click="() => selectTowerPosition(position.id)"
         />
 
         <Shot
@@ -49,9 +49,9 @@
           :y="enemy.y"
           :health="enemy.health"
           :max-health="enemy.maxHealth"
-          :selected="selectedEnemyIndex === index"
-          @click="() => handleEnemyClick(index)"
+          :selected="selectedEnemyId === enemy.id"
           class="game__enemy"
+          @click="() => handleEnemyClick(enemy.id)"
         />
       </div>
 
@@ -62,20 +62,15 @@
         :can-move-down="canMoveEnemy('down')"
         :can-move-left="canMoveEnemy('left')"
         :can-move-right="canMoveEnemy('right')"
-        @move="(dir) => moveEnemyHandler(dir)"
-        @upgrade-tower="() => upgradeTower()"
         class="game__info-panel"
+        @move="(dir) => moveEnemy(dir)"
+        @upgrade-tower="() => upgradeTower()"
       />
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { usePathUtils } from '@/composables/usePathUtils'
-import { useGameLoop } from '@/composables/useGameLoop'
-import { useGameState } from '@/composables/useGameState'
-
+<script>
 import LevelButtons from '@/components/ui/LevelButtons.vue'
 import InfoPanel from '@/components/ui/InfoPanel.vue'
 import Path from '@/components/game/Path.vue'
@@ -83,87 +78,94 @@ import Tower from '@/components/game/Tower.vue'
 import Enemy from '@/components/game/Enemy.vue'
 import Shot from '@/components/game/Shot.vue'
 
-const gameArea = ref(null)
-const shots = ref([])
+import { createGameState, gameStateMethods } from '@/composables/useGameState'
+import { createGameLoop } from '@/composables/useGameLoop'
+import { calculatePathPoints } from '@/composables/usePathUtils'
 
-const { isPointOnPath, calculatePathPoints } = usePathUtils()
-const {
-  levels,
-  currentLevelId,
-  currentPath,
-  towerPositions,
-  towers,
-  enemies,
-  selectedEnemyIndex,
-  selectedTowerId,
-  selectedTower,
-  selectedEnemy,
-  getTowerAtPosition,
-  loadLevel,
-  buildTower,
-  upgradeTower,
-  moveEnemy,
-  getNextEnemyPosition
-} = useGameState()
+export default {
+  name: 'Game',
+  components: { LevelButtons, InfoPanel, Path, Tower, Enemy, Shot },
+  data() {
+    return {
+      ...createGameState(),
+      shots: [],
+      gameLoop: null
+    }
+  },
+  computed: {
+    selectedEnemy() {
+      return this.enemies.find(e => e.id === this.selectedEnemyId) || null
+    },
+    selectedTower() {
+      if (!this.selectedTowerId) 
+        return null
 
-const { startLoop } = useGameLoop(towers, enemies, shots, selectedEnemyIndex)
+      return this.towers.find(t => t.positionId === this.selectedTowerId) || null
+    },
+    pathPoints() {
+      return calculatePathPoints(this.currentPath)
+    }
+  },
+  mounted() {
+    this.loadLevel(1)
+    this.gameLoop = createGameLoop(this)
+    this.gameLoop.startLoop()
+  },
+  beforeUnmount() {
+    if (this.gameLoop) 
+      this.gameLoop.stopLoop()
+  },
+  methods: {
+    ...gameStateMethods,
+    selectTowerPosition(positionId) {
+      const existingTower = this.getTowerAtPosition(positionId)
+      if (!existingTower) {
+        this.buildTower(positionId)
+      } else {
+        this.selectedTowerId = positionId
+        this.selectedEnemyId = null
+      }
+    },
+    handleClick(event) {
+      const rect = this.$refs.gameArea.getBoundingClientRect()
+      const clickX = event.clientX - rect.left
+      const clickY = event.clientY - rect.top
 
-const pathPoints = computed(() => calculatePathPoints(currentPath.value))
+      const clickedPosition = this.towerPositions.find(
+        pos => Math.hypot(clickX - pos.x, clickY - pos.y) < 20
+      )
 
-const handleEnemyClick = (index) => {
-  if (enemies.value[index]) {
-    selectedEnemyIndex.value = index
+      if (clickedPosition) 
+        this.selectTowerPosition(clickedPosition.id)
+    },
+    handleRightClick(event) {
+      const rect = this.$refs.gameArea.getBoundingClientRect()
+      const clickX = event.clientX - rect.left
+      const clickY = event.clientY - rect.top
+
+      const clickedPosition = this.towerPositions.find(
+        pos => Math.hypot(clickX - pos.x, clickY - pos.y) < 20
+      )
+
+      if (!clickedPosition) 
+        return
+
+      const idx = this.towers.findIndex(t => t.positionId === clickedPosition.id)
+      if (idx !== -1) 
+        this.towers.splice(idx, 1)
+
+      if (this.selectedTowerId === clickedPosition.id) 
+        this.selectedTowerId = null
+    },
+    handleEnemyClick(id) {
+      const enemy = this.enemies.find(e => e.id === id)
+      if (enemy) {
+        this.selectedEnemyId = enemy.id
+        this.selectedTowerId = null
+      }
+    }
   }
 }
-
-const selectTowerPosition = (positionId) => {
-  const existingTower = getTowerAtPosition(positionId)
-  if (!existingTower) buildTower(positionId)
-  else {
-    selectedTowerId.value = positionId
-    selectedEnemyIndex.value = null
-  }
-}
-
-const canMoveEnemy = (direction) => {
-  if (!selectedEnemy.value) return false
-  const { x, y } = getNextEnemyPosition(selectedEnemy.value, direction)
-  return isPointOnPath(x, y, currentPath.value)
-}
-
-const moveEnemyHandler = (direction) => moveEnemy(direction, isPointOnPath)
-
-const handleClick = (event) => {
-  const rect = gameArea.value.getBoundingClientRect()
-  const clickX = event.clientX - rect.left
-  const clickY = event.clientY - rect.top
-
-  const clickedPosition = towerPositions.value.find(
-    pos => Math.hypot(clickX - pos.x, clickY - pos.y) < 20
-  )
-  if (clickedPosition) selectTowerPosition(clickedPosition.id)
-}
-
-const handleRightClick = (event) => {
-  const rect = gameArea.value.getBoundingClientRect()
-  const clickX = event.clientX - rect.left
-  const clickY = event.clientY - rect.top
-
-  const clickedPosition = towerPositions.value.find(
-    pos => Math.hypot(clickX - pos.x, clickY - pos.y) < 20
-  )
-  if (!clickedPosition) return
-
-  const idx = towers.value.findIndex(t => t.positionId === clickedPosition.id)
-  if (idx !== -1) towers.value.splice(idx, 1)
-
-  if (selectedTowerId.value === clickedPosition.id) selectedTowerId.value = null
-}
-
-onMounted(() => {
-  loadLevel(1)
-  startLoop()
-})
 </script>
 
 <style scoped lang="scss">

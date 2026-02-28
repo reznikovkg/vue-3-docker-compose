@@ -1,39 +1,34 @@
-import { ref, computed } from 'vue'
 import { LEVELS_DATA } from '@/constants/levels'
+import { isPointOnPath } from '@/composables/usePathUtils'
 
-export const useGameState = () => {
-  const levels = LEVELS_DATA
-  const currentLevelId = ref(1)
-  const currentPath = ref([])
-  const towerPositions = ref([])
-  const towers = ref([])
-  const enemies = ref([])
-  const totalKills = ref(0)
-  const selectedEnemyIndex = ref(null)
-  const selectedTowerId = ref(null)
+export const createGameState = () => ({
+  levels: LEVELS_DATA,
+  currentLevelId: 1,
+  currentPath: [],
+  towerPositions: [],
+  towers: [],
+  enemies: [],
+  totalKills: 0,
+  selectedEnemyId: null,
+  selectedTowerId: null
+})
 
-  const selectedTower = computed(() =>
-    selectedTowerId.value
-      ? towers.value.find(t => t.positionId === selectedTowerId.value)
-      : null
-  )
+export const gameStateMethods = {
 
-  const selectedEnemy = computed(() =>
-    selectedEnemyIndex.value !== null ? enemies.value[selectedEnemyIndex.value] : null
-  )
+  getTowerAtPosition(positionId) {
+    return this.towers.find(t => t.positionId === positionId) || null
+  },
 
-  const getTowerAtPosition = (positionId) =>
-    towers.value.find(t => t.positionId === positionId)
+  loadLevel(levelId) {
+    const level = this.levels.find(l => l.id === levelId)
+    if (!level) 
+      return
 
-  const loadLevel = (levelId) => {
-    const level = levels.find(l => l.id === levelId)
-    if (!level) return
-
-    currentLevelId.value = levelId
-    currentPath.value = level.path
-    towerPositions.value = level.towerPositions || []
-    towers.value = []
-    enemies.value = level.startEnemies.map((pos, i) => ({
+    this.currentLevelId = levelId
+    this.currentPath = level.path || []
+    this.towerPositions = level.towerPositions || []
+    this.towers = []
+    this.enemies = (level.startEnemies || []).map((pos, i) => ({
       id: Date.now() + Math.random() + i,
       x: pos.x,
       y: pos.y,
@@ -41,16 +36,17 @@ export const useGameState = () => {
       maxHealth: 100
     }))
 
-    selectedEnemyIndex.value = null
-    selectedTowerId.value = null
-    totalKills.value = 0
-  }
+    this.selectedEnemyId = null
+    this.selectedTowerId = null
+    this.totalKills = 0
+  },
 
-  const buildTower = (positionId) => {
-    const position = towerPositions.value.find(p => p.id === positionId)
-    if (!position) return
+  buildTower(positionId) {
+    const position = this.towerPositions.find(p => p.id === positionId)
+    if (!position) 
+      return
 
-    const newTower = {
+    this.towers.push({
       positionId: position.id,
       x: position.x,
       y: position.y,
@@ -63,66 +59,67 @@ export const useGameState = () => {
       kills: 0,
       cooldown: 0,
       targetId: null
-    }
+    })
 
-    towers.value.push(newTower)
-    selectedTowerId.value = positionId
-    selectedEnemyIndex.value = null
-  }
+    this.selectedTowerId = positionId
+    this.selectedEnemyId = null
+  },
 
-  const upgradeTower = () => {
-    if (!selectedTower.value) return
-    if (selectedTower.value.level >= 5) return
+  upgradeTower() {
+    if (!this.selectedTower) 
+      return
+    if (this.selectedTower.level >= 5) 
+      return
 
-    selectedTower.value.level++
-    selectedTower.value.damage = 6 + selectedTower.value.level * 2.5
-    selectedTower.value.attackSpeed = 2 + selectedTower.value.level * 0.7
-    selectedTower.value.radius = 80 + selectedTower.value.level * 8
-    selectedTower.value.maxHealth += 20
-    selectedTower.value.health = selectedTower.value.maxHealth
-  }
+    const t = this.selectedTower
+    t.level++
+    t.damage = 6 + t.level * 2.5
+    t.attackSpeed = 2 + t.level * 0.7
+    t.radius = 80 + t.level * 8
+    t.maxHealth += 20
+    t.health = t.maxHealth
+  },
 
-  const getNextEnemyPosition = (enemy, direction) => {
+  getNextEnemyPosition(enemy, direction) {
     const speed = 10
-    let x = enemy.x
-    let y = enemy.y
+    let { x, y } = enemy
 
-    if (direction === 'up') y -= speed
-    if (direction === 'down') y += speed
-    if (direction === 'left') x -= speed
-    if (direction === 'right') x += speed
+    if (direction === 'up') 
+      y -= speed
+    if (direction === 'down') 
+      y += speed
+    if (direction === 'left') 
+      x -= speed
+    if (direction === 'right') 
+      x += speed
 
     return { x, y }
-  }
+  },
 
-  const moveEnemy = (direction, isPointOnPath) => {
-    if (!selectedEnemy.value) return
+  getSelectedEnemy() {
+    if (this.selectedEnemyId === null) 
+      return null
+    return this.enemies.find(e => e.id === this.selectedEnemyId) || null
+  },
 
-    const { x, y } = getNextEnemyPosition(selectedEnemy.value, direction)
+  moveEnemy(direction) {
+    if (!this.canMoveEnemy(direction)) 
+      return false
 
-    if (!isPointOnPath(x, y, currentPath.value)) return
+    const enemy = this.getSelectedEnemy()
+    const { x, y } = this.getNextEnemyPosition(enemy, direction)
 
-    selectedEnemy.value.x = x
-    selectedEnemy.value.y = y
-  }
+    enemy.x = x
+    enemy.y = y
+    return true
+  },
 
-  return {
-    levels,
-    currentLevelId,
-    currentPath,
-    towerPositions,
-    towers,
-    enemies,
-    totalKills,
-    selectedEnemyIndex,
-    selectedTowerId,
-    selectedTower,
-    selectedEnemy,
-    getTowerAtPosition,
-    loadLevel,
-    buildTower,
-    upgradeTower,
-    moveEnemy,
-    getNextEnemyPosition
+  canMoveEnemy(direction) {
+    const enemy = this.getSelectedEnemy()
+    if (!enemy) 
+      return false
+
+    const { x, y } = this.getNextEnemyPosition(enemy, direction)
+    return isPointOnPath(x, y, this.currentPath)
   }
 }
