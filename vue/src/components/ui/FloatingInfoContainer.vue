@@ -37,15 +37,15 @@ const label = computed(() => {
   border-radius: 0.25rem;
   background: rgb(45, 45, 45);
   border: 1px solid rgb(100, 100, 100);
-}
 
-.current-location {
-  * {
-    display: inline;
-  }
+  .current-location {
+    * {
+      display: inline;
+    }
 
-  &__label {
-    font-weight: bold;
+    &__label {
+      font-weight: bold;
+    }
   }
 }
 </style>

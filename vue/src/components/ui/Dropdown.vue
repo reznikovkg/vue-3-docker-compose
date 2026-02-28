@@ -59,9 +59,11 @@ onUnmounted(() => {
 
   &__button {
     cursor: pointer;
-    font-size: inherit;
+    font-size: 1.25rem;
     background: rgb(45, 45, 45);
     border-radius: 0.25rem;
+    user-select: none;
+    transition: background-color 0.2s ease;
 
     &:hover {
       background: rgb(70, 70, 70);
@@ -85,6 +87,7 @@ onUnmounted(() => {
   &__item {
     padding: 0.25rem 0.5rem;
     cursor: pointer;
+    transition: background-color 0.2s ease;
 
     &:hover {
       background: rgb(90, 90, 90);

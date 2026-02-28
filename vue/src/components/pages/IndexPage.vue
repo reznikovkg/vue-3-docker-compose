@@ -1,6 +1,6 @@
 <template>
   <div class="game-page" :style="backgroundStyle">
-    <Dropdown /><FloatingInfoContainer />
+    <Dropdown /><FloatingInfoContainer /><FishingContainer />
   </div>
 </template>
 
@@ -11,6 +11,7 @@ import { useStore } from "vuex";
 import { getLocation } from "../utils";
 import Dropdown from "../ui/Dropdown.vue";
 import FloatingInfoContainer from "../ui/FloatingInfoContainer.vue";
+import FishingContainer from "../ui/FishingContainer.vue";
 
 const store = useStore();
 const backgroundStyle = computed(() => {
