@@ -1,16 +1,21 @@
 <template>
   <div class="puzzle">
     <div class="puzzle__content">
-      <h2>Пятнашки</h2>
+      <h2 class="puzzle__title">Пятнашки</h2>
 
       <div v-if="isWin" class="puzzle__win">ПОБЕДА!</div>
 
       <div class="puzzle__status">Ходы: {{ moves }}</div>
 
       <div class="puzzle__board">
-        <div v-for="(tile, index) in tiles" :key="index" class="puzzle__tile" :class="{ 'puzzle__tile--empty': tile === 0, 'puzzle__tile--win': isWin }" @click="() => handleTileClick(index)">
-          <span v-if="tile !== 0">{{ tile }}</span>
-        </div>
+        <PuzzleTile
+            v-for="tile in tileList"
+            :key="tile.index"
+            :value="tile.value"
+            :is-empty="tile.isEmpty"
+            :is-win="isWin"
+            @click="() => handleTileClick(tile.index)"
+        />
       </div>
       <button class="puzzle__restart" @click="() => initGame()">Перемешать</button>
     </div>
@@ -18,8 +23,13 @@
 </template>
 
 <script>
+import PuzzleTile from './PuzzleTile.vue'
+
 export default {
-  name: 'PuzzleGame',
+  name: 'IndexPage',
+  components: {
+    PuzzleTile,
+  },
   data() {
     return {
       gridSize: 4,
@@ -27,21 +37,64 @@ export default {
       moves: 0,
     }
   },
+  computed: {
+    isWin() {
+      return this.checkWin()
+    },
+
+    tileList() {
+      return this.tiles.map((value, index) => {
+        return {
+          index: index,
+          value: value,
+          isEmpty: value === 0,
+        }
+      })
+    },
+  },
   methods: {
+    checkWin() {
+      const total = this.gridSize * this.gridSize
+
+      for (let i = 0; i < total; i++) {
+        const expectedValue = (i < total - 1) ? (i + 1) : 0
+
+        if (this.tiles[i] !== expectedValue) {
+          return false
+        }
+      }
+
+      return true
+    },
+
     initGame() {
       this.moves = 0
+
       const total = this.gridSize * this.gridSize
-      this.tiles = Array.from({ length: total }, (_, i) => (i + 1) % total)
+
+      this.tiles = Array.from(
+          { length: total },
+          (_, i) => {
+            return (i + 1) % total
+          }
+      )
+
       this.shuffleBoard()
     },
 
     shuffleBoard() {
       let previousIndex = -1
+
       for (let i = 0; i < 150; i++) {
         const emptyIndex = this.tiles.indexOf(0)
         const neighbors = this.getNeighbors(emptyIndex)
-        const validNeighbors = neighbors.filter(n => n !== previousIndex)
-        const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)]
+        const validNeighbors = neighbors.filter((n) => {
+          return n !== previousIndex
+        })
+        const randomNeighbor = validNeighbors[
+            Math.floor(Math.random() * validNeighbors.length)
+            ]
+
         this.swapTiles(emptyIndex, randomNeighbor)
         previousIndex = emptyIndex
       }
@@ -52,16 +105,29 @@ export default {
       const row = Math.floor(index / this.gridSize)
       const col = index % this.gridSize
 
-      if (row > 0) neighbors.push(index - this.gridSize)
-      if (row < this.gridSize - 1) neighbors.push(index + this.gridSize)
-      if (col > 0) neighbors.push(index - 1)
-      if (col < this.gridSize - 1) neighbors.push(index + 1)
+      if (row > 0) {
+        neighbors.push(index - this.gridSize)
+      }
+
+      if (row < this.gridSize - 1) {
+        neighbors.push(index + this.gridSize)
+      }
+
+      if (col > 0) {
+        neighbors.push(index - 1)
+      }
+
+      if (col < this.gridSize - 1) {
+        neighbors.push(index + 1)
+      }
 
       return neighbors
     },
 
     handleTileClick(index) {
-      if (this.isWin) return
+      if (this.isWin) {
+        return
+      }
 
       const emptyIndex = this.tiles.indexOf(0)
       const neighbors = this.getNeighbors(emptyIndex)
@@ -76,21 +142,7 @@ export default {
       const temp = this.tiles[idx1]
       this.tiles[idx1] = this.tiles[idx2]
       this.tiles[idx2] = temp
-    }
-  },
-
-  computed: {
-    isWin() {
-      const total = this.gridSize * this.gridSize
-      for (let i = 0; i < total; i++) {
-        if (i < total - 1) {
-          if (this.tiles[i] !== i + 1) return false
-        } else {
-          if (this.tiles[i] !== 0) return false
-        }
-      }
-      return true
-    }
+    },
   },
 
   mounted() {
@@ -119,7 +171,7 @@ export default {
     max-width: 400px;
   }
 
-  h2 {
+  &__title {
     color: #fff;
     font-size: 36px;
     margin: 0 0 20px 0;
@@ -149,37 +201,6 @@ export default {
     margin: 0 auto 30px;
   }
 
-  &__tile {
-    width: 80px;
-    height: 80px;
-    background-color: #333;
-    color: #fff;
-    font-size: 28px;
-    font-weight: bold;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: sans-serif;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.15s ease;
-
-    &:active {
-      transform: scale(0.95);
-      background-color: #555;
-    }
-
-    &--empty {
-      background-color: transparent;
-      cursor: default;
-    }
-
-    &--win {
-      background-color: #4CAF50;
-    }
-  }
-
   &__restart {
     padding: 15px 50px;
     font-size: 18px;
@@ -197,7 +218,7 @@ export default {
   .puzzle {
     padding: 15px;
 
-    h2 {
+    &__title {
       font-size: 32px;
     }
 
@@ -208,12 +229,6 @@ export default {
     &__board {
       grid-template-columns: repeat(4, 70px);
       grid-template-rows: repeat(4, 70px);
-    }
-
-    &__tile {
-      width: 70px;
-      height: 70px;
-      font-size: 24px;
     }
 
     &__restart {
@@ -228,12 +243,6 @@ export default {
     &__board {
       grid-template-columns: repeat(4, 60px);
       grid-template-rows: repeat(4, 60px);
-    }
-
-    &__tile {
-      width: 60px;
-      height: 60px;
-      font-size: 20px;
     }
   }
 }
