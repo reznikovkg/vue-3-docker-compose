@@ -16,14 +16,16 @@
               'menu__difficulty-btn--active':
                 selectedDifficulty === option.value,
             }"
-            @click="selectedDifficulty = option.value"
+            @click="() => (selectedDifficulty = option.value)"
           >
             {{ option.label }} ({{ option.value }} карт)
           </button>
         </div>
       </div>
 
-      <button class="menu__start-btn" @click="startGame">Начать игру</button>
+      <button class="menu__start-btn" @click="() => handleStartGame()">
+        Начать игру
+      </button>
 
       <div class="menu__scores">
         <h2 class="menu__scores-title">Текущие рекорды:</h2>
@@ -35,7 +37,7 @@
           >
             <span class="menu__scores-label">{{ option.label }}:</span>
             <span class="menu__scores-value">
-              {{ formatScores(bestScores[option.value]) }}
+              {{ formatScores(getBestScores[option.value]) }}
             </span>
           </div>
         </div>
@@ -45,7 +47,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "IndexPage",
@@ -62,12 +64,14 @@ export default {
   },
 
   computed: {
-    ...mapState(["bestScores"]),
+    ...mapGetters("cards", ["getBestScores"]),
   },
 
   methods: {
-    startGame() {
-      this.$store.dispatch("startGame", this.selectedDifficulty);
+    ...mapActions("cards", ["startGame"]),
+
+    handleStartGame() {
+      this.startGame(this.selectedDifficulty);
       this.$router.push("/game");
     },
 
@@ -118,38 +122,38 @@ export default {
 
   &__difficulty {
     margin-bottom: 30px;
+  }
 
-    &-title {
-      font-size: 22px;
-      color: #4f4d4d;
-      margin-bottom: 20px;
+  &__difficulty-title {
+    font-size: 22px;
+    color: #4f4d4d;
+    margin-bottom: 20px;
+  }
+
+  &__difficulty-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  &__difficulty-btn {
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: white;
+    color: #494545;
+    cursor: pointer;
+
+    &:hover {
+      border-color: rgb(184, 13, 122);
     }
+  }
 
-    &-buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    &-btn {
-      padding: 15px 20px;
-      font-size: 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      background-color: white;
-      color: #494545;
-      cursor: pointer;
-
-      &:hover {
-        border-color: rgb(184, 13, 122);
-      }
-
-      &--active {
-        border-color: rgb(184, 13, 122);
-        background-color: rgb(184, 13, 122);
-        color: white;
-      }
-    }
+  &__difficulty-btn--active {
+    border-color: rgb(184, 13, 122);
+    background-color: rgb(184, 13, 122);
+    color: white;
   }
 
   &__start-btn {

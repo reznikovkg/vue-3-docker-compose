@@ -1,8 +1,8 @@
 <template>
   <div
     class="card"
-    :class="{ 'is-founded': card.isFounded }"
-    @click="handleClick"
+    :class="{ 'card--founded': card.isFounded }"
+    @click="() => handleClick()"
   >
     <div class="card__content">
       <div v-if="card.isFaceUp" class="card__front">
@@ -45,7 +45,7 @@ export default {
     height: 100%;
   }
 
-  &.is-founded {
+  &--founded {
     opacity: 0;
     transition: opacity 0.5s;
     pointer-events: none;

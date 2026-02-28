@@ -1,19 +1,21 @@
 <template>
   <div class="game">
     <header class="game__header">
-      <button class="game__back-button" @click="goToMenu">В меню</button>
-      <h1 class="game__timer">{{ formattedTime }}</h1>
+      <button class="game__back-button" @click="() => goToMenu()">
+        В меню
+      </button>
+      <h1 class="game__timer">{{ getFormattedTime }}</h1>
     </header>
 
     <div
       class="game__cards-container"
-      :class="`game__cards-container--${cards.length}`"
+      :class="`game__cards-container--${getCards.length}`"
     >
       <Card
-        v-for="card in cards"
+        v-for="card in getCards"
         :key="card.id"
         :card="card"
-        @flip="handleFlip"
+        @flip="(cardId) => handleFlip(cardId)"
       />
     </div>
 
@@ -25,11 +27,13 @@
         <div class="game-over__stats">
           <div class="game-over__stat">
             <span class="game-over__stat-label">Ваше время: </span>
-            <span class="game-over__stat-value">{{ formattedTime }}</span>
+            <span class="game-over__stat-value">{{ getFormattedTime }}</span>
           </div>
           <div class="game-over__stat">
             <span class="game-over__stat-label">Рекорд: </span>
-            <span class="game-over__stat-value">{{ formattedBestScore }}</span>
+            <span class="game-over__stat-value">{{
+              getFormattedBestScore
+            }}</span>
           </div>
           <div v-if="isNewRecord" class="game-over__new-record">
             Новый рекорд!
@@ -39,13 +43,13 @@
         <div class="game-over__buttons">
           <button
             class="game-over__button game-over__button--restart"
-            @click="restartGame"
+            @click="() => restartGame()"
           >
             Играть снова
           </button>
           <button
             class="game-over__button game-over__button--menu"
-            @click="goToMenu"
+            @click="() => goToMenu()"
           >
             В меню
           </button>
@@ -57,7 +61,7 @@
 
 <script>
 import Card from "../Card.vue";
-import { mapState, mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "GamePage",
@@ -68,47 +72,59 @@ export default {
 
   data() {
     return {
+      isGameStarted: false,
       timer: null,
       isNewRecord: false,
     };
   },
 
   computed: {
-    ...mapState(["cards", "elapsedTime", "bestScores", "difficulty"]),
-    ...mapGetters(["isGameFinished", "formattedTime", "formattedBestScore"]),
-  },
-
-  watch: {
-    cards: {
-      handler(newCards) {
-        const hasAnyFlip = newCards.some((card) => card.isFaceUp);
-        if (hasAnyFlip && !this.timer && !this.isGameFinished) {
-          this.startTimer();
-        }
-      },
-      deep: true,
-    },
-
-    isGameFinished(newValue) {
-      if (newValue) {
-        this.stopTimer();
-        this.checkNewRecord();
-      }
-    },
+    ...mapGetters("cards", [
+      "getCards",
+      "getDifficulty",
+      "getElapsedTime",
+      "getBestScores",
+      "isGameFinished",
+      "getFormattedTime",
+      "getFormattedBestScore",
+    ]),
   },
 
   beforeUnmount() {
     this.stopTimer();
   },
 
+  mounted() {
+    if (this.getCards.length > 0) {
+      this.isGameStarted = false;
+      this.isNewRecord = false;
+    }
+  },
+
   methods: {
+    ...mapActions("cards", [
+      "flipCard",
+      "startGame",
+      "resetGame",
+      "updateTime",
+    ]),
+
     handleFlip(cardId) {
-      this.$store.dispatch("flipCard", cardId);
+      if (!this.isGameStarted && !this.isGameFinished) {
+        this.isGameStarted = true;
+        this.startTimer();
+      }
+      this.flipCard(cardId).then(() => {
+        if (this.isGameFinished) {
+          this.stopTimer();
+          this.checkNewRecord();
+        }
+      });
     },
 
     startTimer() {
       this.timer = setInterval(() => {
-        this.$store.dispatch("updateTime", this.elapsedTime + 1);
+        this.updateTime(this.getElapsedTime + 1);
       }, 1000);
     },
 
@@ -120,19 +136,20 @@ export default {
     },
 
     checkNewRecord() {
-      const currentBest = this.bestScores[this.difficulty];
-      if (!currentBest || this.elapsedTime < currentBest)
+      const currentBest = this.getBestScores[this.getDifficulty];
+      if (!currentBest || this.getElapsedTime < currentBest)
         this.isNewRecord = true;
       else this.isNewRecord = false;
     },
 
     restartGame() {
-      const difficulty = this.$store.state.difficulty;
-      this.$store.dispatch("startGame", difficulty);
+      this.isGameStarted = false;
+      this.isNewRecord = false;
+      this.startGame(this.getDifficulty);
     },
 
     goToMenu() {
-      this.$store.dispatch("resetGame");
+      this.resetGame();
       this.$router.push("/");
     },
   },
