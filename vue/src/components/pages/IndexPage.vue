@@ -1,6 +1,8 @@
 <template>
   Index
-
+  <RouterLink :to="{ name: $routes.ALCHEMY }">
+    🧪 Алхимик
+  </RouterLink>
   <div>
     <RouterLink :to="{ name: $routes.EXAMPLE }">
      To Example
