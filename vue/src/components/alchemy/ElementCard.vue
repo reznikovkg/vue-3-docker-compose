@@ -28,7 +28,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .card {
   background: linear-gradient(135deg, #ffffff, #f0f0f0);
   color: #222;
@@ -43,20 +43,21 @@ export default {
   cursor: pointer;
   box-shadow: 0 5px 15px rgba(0,0,0,0.25);
   transition: 0.2s;
-}
+  
 
-.card:hover {
-  transform: translateY(-5px);
-  background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
-}
+  &:hover {
+    transform: translateY(-5px);
+    background: linear-gradient(135deg, #e0e0e0, #d0d0d0);
+  }
 
-.card__icon {
-  font-size: 32px;
-  margin-bottom: 5px;
-}
+  &__icon {
+    font-size: 32px;
+    margin-bottom: 5px;
+  }
 
-.card__name {
-  font-weight: bold;
-  font-size: 16px;
+  &__name {
+    font-weight: bold;
+    font-size: 16px;
+  }
 }
 </style>
