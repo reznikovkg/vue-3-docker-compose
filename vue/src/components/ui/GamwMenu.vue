@@ -214,95 +214,95 @@ export default {
   border-radius: 18px;
   background: #f5f5f7;
   color: #111;
-}
 
-.c-menu__title {
-  margin: 0;
-  font-size: 40px;
-  line-height: 1.1;
-  font-weight: 700;
-  text-align: center;
-}
+  &__title {
+    margin: 0;
+    font-size: 40px;
+    line-height: 1.1;
+    font-weight: 700;
+    text-align: center;
+  }
 
-.c-menu__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: center;
-}
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+  }
 
-.c-menu__label {
-  font-weight: 600;
-}
+  &__label {
+    font-weight: 600;
+  }
 
-.c-menu__control {
-  display: flex;
-  align-items: center;
-}
+  &__control {
+    display: flex;
+    align-items: center;
+  }
 
-.c-menu__input {
-  width: 100%;
-  height: 42px;
-  padding: 8px 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 12px;
-  font-size: 18px;
-  color: #111;
-}
+  &__input {
+    width: 100%;
+    height: 42px;
+    padding: 8px 12px;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    font-size: 18px;
+    color: #111;
+  }
 
-.c-menu__colorBox {
-  position: relative;
-  width: 100%;
-  height: 42px;
-  border: 1px solid #d9d9d9;
-  border-radius: 12px;
-  overflow: hidden;
-}
+  &__colorBox {
+    position: relative;
+    width: 100%;
+    height: 42px;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    overflow: hidden;
+  }
 
-.c-menu__colorSlider {
-  position: absolute;
-  left: 8px;
-  right: 8px;
-  top: 50%;
-  width: calc(100% - 16px);
-  transform: translateY(-50%);
-}
+  &__colorSlider {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 50%;
+    width: calc(100% - 16px);
+    transform: translateY(-50%);
+  }
 
-.c-menu__btn {
-  height: 54px;
-  border: 0;
-  border-radius: 14px;
-  font-size: 28px;
-  font-weight: 700;
-  cursor: pointer;
-}
+  &__btn {
+    height: 54px;
+    border: 0;
+    border-radius: 14px;
+    font-size: 28px;
+    font-weight: 700;
+    cursor: pointer;
+  }
 
-.c-menu__btn--start {
-  background: linear-gradient(90deg, #5fcb73, #2fa858);
-  color: #fff;
-}
+  &__btn--start {
+    background: linear-gradient(90deg, #5fcb73, #2fa858);
+    color: #fff;
+  }
 
-.c-menu__result {
-  font-size: 22px;
-  font-weight: 700;
+  &__result {
+    font-size: 22px;
+    font-weight: 700;
+  }
 }
 
 @media (max-width: 768px) {
   .c-menu {
     width: 100%;
     padding: 16px;
-  }
 
-  .c-menu__title {
-    font-size: 30px;
-  }
+    &__title {
+      font-size: 30px;
+    }
 
-  .c-menu__btn {
-    font-size: 24px;
-  }
+    &__btn {
+      font-size: 24px;
+    }
 
-  .c-menu__row {
-    grid-template-columns: 1fr;
+    &__row {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

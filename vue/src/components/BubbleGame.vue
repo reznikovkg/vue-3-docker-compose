@@ -6,7 +6,7 @@
         <slot name="start-label"></slot>
       </button>
     </slot>
-    
+
     <div class="c-game__controls">
       <div class="c-game__time">Time: {{ timeLeft }}</div>
       <button type="button" class="c-game__stop" @click="() => stopGame(false)">
@@ -39,6 +39,7 @@
         </div>
       </div>
 
+      <!--
       <button
         v-for="bubble in bubbles"
         :key="bubble.id"
@@ -48,15 +49,31 @@
         :class="'c-game__bubble--' + bubble.color"
         :style="{ left: bubble.x + 'px', top: bubble.y + 'px', width: bubble.r * 2 + 'px', height: bubble.r * 2 + 'px', backgroundImage: bubble.imageUrl ? 'url(' + bubble.imageUrl + ')' : 'none' }"
       ></button>
+      -->
+
+      <Bubble
+        v-for="bubble in bubbles"
+        :key="bubble.id"
+        :bubbleId="bubble.id"
+        :type="bubble.color"
+        :left="bubble.x"
+        :top="bubble.y"
+        :size="bubble.r * 2"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import { BUBBLE_IMAGE_MAP, GAME_COLORS, GAME_DEFAULTS } from '@/constants/gameConfig.js'
+import { GAME_COLORS, GAME_DEFAULTS } from '@/constants/gameConfig.js'
+import Bubble from '@/components/ui/Bubble.vue'
 
 export default {
   name: 'BubbleGame',
+
+  components: {
+    Bubble
+  },
 
   // Подумать что с этим сделать тут!!!
   // (IndexPage -> GamwMenu | GamwMenu на start | IndexPage в startFromMenu(settings) | IndexPage -> BubbleGame )
@@ -191,8 +208,8 @@ export default {
       const limit = Math.max(1, Math.min(this.colorsCount, GAME_COLORS.length))
       const colors = GAME_COLORS.slice(0, limit)
       const color = colors[Math.floor(Math.random() * colors.length)]
-      const images = BUBBLE_IMAGE_MAP[color] || []
-      const imageUrl = images.length ? images[Math.floor(Math.random() * images.length)] : null
+      // const images = BUBBLE_IMAGE_MAP[color] || []
+      // const imageUrl = images.length ? images[Math.floor(Math.random() * images.length)] : null
 
       const r = Math.floor(Math.random() * 26) + 20
       const fieldWidth = this.$refs.gameField ? this.$refs.gameField.clientWidth : 640
@@ -210,7 +227,7 @@ export default {
       const bubble = {
         id: this.nextId,
         color,
-        imageUrl,
+        // imageUrl,
         x,
         y: 0,
         r,
@@ -336,143 +353,108 @@ export default {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-}
 
-.c-game__start {
-  width: fit-content;
-}
+  &__start {
+    width: fit-content;
+  }
 
-.c-game__field {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
+  &__field {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
 
-.c-game__topbar {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+  &__topbar {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
 
-.c-game__targetWrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
+  &__targetWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-.c-game__target {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid #d9d9d9;
-  background: rgba(0, 0, 0, 0.35);
-}
+  &__target {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #d9d9d9;
+    background: rgba(0, 0, 0, 0.35);
+  }
 
-.c-game__score {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: 1px solid #d9d9d9;
-  background: rgba(0, 0, 0, 0.35);
-}
+  &__score {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #d9d9d9;
+    background: rgba(0, 0, 0, 0.35);
+  }
 
-.c-game__scoreText {
-  line-height: 1;
-}
+  &__scoreText {
+    line-height: 1;
+  }
 
-.c-game__scoreValue {
-  line-height: 1;
-  font-weight: 700;
-}
+  &__scoreValue {
+    line-height: 1;
+    font-weight: 700;
+  }
 
-.c-game__targetText {
-  line-height: 1;
-}
+  &__targetText {
+    line-height: 1;
+  }
 
-.c-game__targetColor {
-  width: 64px;
-  height: 20px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-}
+  &__targetColor {
+    width: 64px;
+    height: 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+  }
 
-.c-game__timer {
-  min-height: 40px;
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: 1px solid #d9d9d9;
-  line-height: 1;
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.35);
-}
+  &__timer {
+    min-height: 40px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid #d9d9d9;
+    line-height: 1;
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.35);
+  }
 
-.c-game__stop {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid #d9d9d9;
-  cursor: pointer;
-  user-select: none;
-  background: rgba(0, 0, 0, 0.35);
-}
+  &__stop {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid #d9d9d9;
+    cursor: pointer;
+    user-select: none;
+    background: rgba(0, 0, 0, 0.35);
+  }
 
-.c-game__stopIcon {
-  line-height: 1;
-}
+  &__stopIcon {
+    line-height: 1;
+  }
 
-.c-game__stopText {
-  line-height: 1;
-}
-
-.c-game__bubble {
-  position: absolute;
-  border: 0;
-  border-radius: 50%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  cursor: pointer;
-  opacity: 0.88;
-}
-
-.c-game__bubble--red {
-  background-color: #ff4d4f;
-}
-
-.c-game__bubble--blue {
-  background-color: #4096ff;
-}
-
-.c-game__bubble--green {
-  background-color: #73d13d;
-}
-
-.c-game__bubble--yellow {
-  background-color: #fadb14;
-}
-
-.c-game__bubble--orange {
-  background-color: #fa8c16;
-}
-
-.c-game__bubble--purple {
-  background-color: #722ed1;
+  &__stopText {
+    line-height: 1;
+  }
 }
 </style>

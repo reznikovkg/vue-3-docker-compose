@@ -142,30 +142,30 @@ export default {
   padding: 12px;
   border: 1px solid #d9d9d9;
   border-radius: 8px;
-}
 
-.c-stats__row {
-  display: flex;
-  gap: 8px;
-  line-height: 1.4;
-}
+  &__row {
+    display: flex;
+    gap: 8px;
+    line-height: 1.4;
+  }
 
-.c-stats__list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
 
-.c-stats__btn {
-  width: fit-content;
-  padding: 6px 10px;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-}
+  &__btn {
+    width: fit-content;
+    padding: 6px 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+  }
 
-.c-stats__btn--red {
-  border-color: #ff4d4f;
-  color: #ff4d4f;
+  &__btn--red {
+    border-color: #ff4d4f;
+    color: #ff4d4f;
+  }
 }
 </style>
