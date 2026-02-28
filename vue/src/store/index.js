@@ -16,13 +16,12 @@ export default {
     }
 
     const findEmptyCells = () => {
-      const empty = []
-      for (let i = 0; i < state.gridSize; i++) {
-        for (let j = 0; j < state.gridSize; j++) {
-          if (!state.grid[i]?.[j]) empty.push({ row: i, col: j })
-        }
-      }
-      return empty
+      return state.grid.flatMap((row, i) =>
+        row.reduce((acc, cell, j) => {
+          if (!cell) acc.push({ row: i, col: j })
+          return acc
+        }, [])
+      )
     }
 
     const getRandomLevel = () => {
@@ -68,6 +67,7 @@ export default {
         newGame()  
       }
     }
+
     loadGame()
     const store = {
       gridSize: state.gridSize,

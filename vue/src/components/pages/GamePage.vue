@@ -87,7 +87,7 @@ export default {
   mounted() {
     this.loadFromStorage()
   },
-   methods: {
+  methods: {
     saveToStorage() {
       localStorage.setItem(
         STORAGE_KEY,
@@ -103,23 +103,24 @@ export default {
       )
     },
     loadFromStorage() {
-      const savedState = localStorage.getItem(STORAGE_KEY)
-      if (savedState) 
-        try {
-          const state = JSON.parse(savedState)
-          this.gridSize = state.gridSize || 8
-          this.grid = state.grid || this.createEmptyGrid()
-          this.score = state.score || 0
-          this.itemsMerged = state.itemsMerged || 0
-          this.noSpaceCount = state.noSpaceCount || 0
-          this.gameOver = state.gameOver || false
-          this.gameWon = state.gameWon || false
-          this.store.gridSize = this.gridSize
-          this.store.grid = this.grid
-          this.store.score = this.score
-        } catch (e) {
-          console.error('Ошибка загрузки сохранения:', e)
-          this.startNewGame()
+        const savedState = localStorage.getItem(STORAGE_KEY)
+        if (savedState){
+            try {
+                const state = JSON.parse(savedState)
+                this.gridSize = state.gridSize || 8
+                this.grid = state.grid || this.createEmptyGrid()
+                this.score = state.score || 0
+                this.itemsMerged = state.itemsMerged || 0
+                this.noSpaceCount = state.noSpaceCount || 0
+                this.gameOver = state.gameOver || false
+                this.gameWon = state.gameWon || false
+                this.store.gridSize = this.gridSize
+                this.store.grid = this.grid
+                this.store.score = this.score
+            } catch (e) {
+                console.error('Ошибка загрузки сохранения:', e)
+                this.startNewGame()
+            }
         }else {
             this.startNewGame()
         }
@@ -134,14 +135,12 @@ export default {
         this.gameOver = true
         return
       }
-      for (let i = 0; i < this.gridSize; i++) {
-        for (let j = 0; j < this.gridSize; j++) {
-          if (this.grid[i]?.[j]?.level >= MAX_LEVEL) {
-            this.gameWon = true
-            this.gameOver = true
-            return
-          }
-        }
+      const hasMaxLevel = this.grid.some(row => 
+        row.some(cell => cell?.level >= MAX_LEVEL)
+      )
+      if (hasMaxLevel) {
+        this.gameWon = true
+        this.gameOver = true
       }
     },
     startNewGame() {
@@ -161,21 +160,10 @@ export default {
       this.store.score = this.score
       this.store.saveGame()
     },
-    loadFromStore() {
-      this.gridSize = this.store.gridSize
-      this.grid = this.store.grid ? JSON.parse(JSON.stringify(this.store.grid)) : this.createEmptyGrid()
-      this.score = this.store.score || 0
-    },
     createEmptyGrid() {
-      const newGrid = []
-      for (let i = 0; i < this.gridSize; i++) {
-        const row = []
-        for (let j = 0; j < this.gridSize; j++) {
-          row.push(null)
-        }
-        newGrid.push(row)
-      }
-      return newGrid
+      return Array(this.gridSize).fill().map(() => 
+        Array(this.gridSize).fill(null)
+      )
     },
     newGame() {
       if (confirm('Начать новую игру?')) {
@@ -184,14 +172,12 @@ export default {
     },
     addRandomItem() {
       if (this.gameOver) return
-      const emptyCells = []
-      for (let i = 0; i < this.gridSize; i++) {
-        for (let j = 0; j < this.gridSize; j++) {
-          if (!this.grid[i]?.[j]) {
-            emptyCells.push({ row: i, col: j })
-          }
-        }
-      }
+      const emptyCells = this.grid.flatMap((row, i) => 
+        row.reduce((acc, cell, j) => {
+          if (!cell) acc.push({ row: i, col: j })
+          return acc
+        }, [])
+      )
       if (emptyCells.length > 0) {
         const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
         const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL)
@@ -220,14 +206,12 @@ export default {
             this.syncWithStore()
             return
         }
-        const emptyCells = []
-        for (let i = 0; i < this.gridSize; i++) {
-          for (let j = 0; j < this.gridSize; j++) {
-            if (!this.grid[i]?.[j]) {
-              emptyCells.push({ row: i, col: j })
-            }
-          }
-        }
+        const emptyCells = this.grid.flatMap((row, i) => 
+          row.reduce((acc, cell, j) => {
+            if (!cell) acc.push({ row: i, col: j })
+            return acc
+          }, [])
+        )
         if (emptyCells.length > 0) {
           const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
           const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL) 
@@ -243,14 +227,12 @@ export default {
     },
     addItemAfterMove() {
       if (this.gameOver) return
-      const emptyCells = []
-      for (let i = 0; i < this.gridSize; i++) {
-        for (let j = 0; j < this.gridSize; j++) {
-          if (!this.grid[i]?.[j]) {
-            emptyCells.push({ row: i, col: j })
-          }
-        }
-      }
+      const emptyCells = this.grid.flatMap((row, i) => 
+        row.reduce((acc, cell, j) => {
+          if (!cell) acc.push({ row: i, col: j })
+          return acc
+        }, [])
+      )
       if (emptyCells.length > 0) {
         const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
         const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL) 
@@ -261,18 +243,6 @@ export default {
         this.saveToStorage()
         this.syncWithStore()
       }
-    },
-    checkVictory() {
-      for (let i = 0; i < this.gridSize; i++) {
-        for (let j = 0; j < this.gridSize; j++) {
-          if (this.grid[i]?.[j]?.level >= MAX_LEVEL) {
-            this.gameWon = true
-            this.gameOver = true
-            return true
-          }
-        }
-      }
-      return false
     },
     resetGame() {
       this.newGame()
