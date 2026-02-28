@@ -44,7 +44,6 @@ export default {
   box-shadow: 0 5px 15px rgba(0,0,0,0.25);
   transition: 0.2s;
   
-
   &:hover {
     transform: translateY(-5px);
     background: linear-gradient(135deg, #e0e0e0, #d0d0d0);

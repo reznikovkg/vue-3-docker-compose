@@ -19,12 +19,17 @@ export const store = createStore({
 
   mutations: {
     ADD_TO_TABLE(state, element) {
-      if (!state.table[element]) state.table[element] = 0
+      if (!state.table[element]) {
+        state.table[element] = 0
+      }
+      
       state.table[element]++
     },
 
     DECREASE_FROM_TABLE(state, element) {
-      if (!state.table[element]) return
+      if (!state.table[element]) {
+        return
+      }
 
       state.table[element]--
 
