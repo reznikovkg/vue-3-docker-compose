@@ -1,17 +1,5 @@
-<template>
-  Index
+<template></template>
 
-  <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
-  </div>
-</template>
+<script setup></script>
 
-<script setup lang="ts">
-
-</script>
-
-<style scoped>
-
-</style>
+<style lang="scss"></style>
