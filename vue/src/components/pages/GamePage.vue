@@ -87,55 +87,24 @@ export default {
   mounted() {
     this.loadFromStorage()
   },
-  watch: {
-    itemsMerged() {
-      if (this.itemsMerged >= WIN_CONDITION) {
-        this.gameWon = true
-        this.gameOver = true
-      }
-      this.saveToStorage()
-    },
-    noSpaceCount() {
-      if (this.noSpaceCount >= LOSE_CONDITION && !this.gameWon) {
-        this.gameOver = true
-      }
-      this.saveToStorage()
-    },
-    grid: {
-      handler() {
-        this.saveToStorage()
-      },
-      deep: true
-    },
-    score() {
-      this.saveToStorage()
-    },
-    gameOver() {
-      this.saveToStorage()
-    },
-    gameWon() {
-      this.saveToStorage()
-    },
-    gridSize() {
-      this.saveToStorage()
-    }
-  },
-  methods: {
+   methods: {
     saveToStorage() {
-      const gameState = {
-        gridSize: this.gridSize,
-        grid: this.grid,
-        score: this.score,
-        itemsMerged: this.itemsMerged,
-        noSpaceCount: this.noSpaceCount,
-        gameOver: this.gameOver,
-        gameWon: this.gameWon
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState))
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          gridSize: this.gridSize,
+          grid: this.grid,
+          score: this.score,
+          itemsMerged: this.itemsMerged,
+          noSpaceCount: this.noSpaceCount,
+          gameOver: this.gameOver,
+          gameWon: this.gameWon
+        })
+      )
     },
     loadFromStorage() {
       const savedState = localStorage.getItem(STORAGE_KEY)
-      if (savedState) {
+      if (savedState) 
         try {
           const state = JSON.parse(savedState)
           this.gridSize = state.gridSize || 8
@@ -151,9 +120,28 @@ export default {
         } catch (e) {
           console.error('Ошибка загрузки сохранения:', e)
           this.startNewGame()
+        }else {
+            this.startNewGame()
         }
-      } else {
-        this.startNewGame()
+    },
+    checkGameConditions() {
+      if (this.itemsMerged >= WIN_CONDITION) {
+        this.gameWon = true
+        this.gameOver = true
+        return
+      }
+      if (this.noSpaceCount >= LOSE_CONDITION && !this.gameWon) {
+        this.gameOver = true
+        return
+      }
+      for (let i = 0; i < this.gridSize; i++) {
+        for (let j = 0; j < this.gridSize; j++) {
+          if (this.grid[i]?.[j]?.level >= MAX_LEVEL) {
+            this.gameWon = true
+            this.gameOver = true
+            return
+          }
+        }
       }
     },
     startNewGame() {
@@ -211,20 +199,26 @@ export default {
         newGrid[row][col] = { level }
         this.grid = newGrid
         this.noSpaceCount = 0
+        this.checkGameConditions()
+        this.saveToStorage()
         this.syncWithStore()
       } else {
         this.noSpaceCount++
         if (this.noSpaceCount >= LOSE_CONDITION && !this.gameWon) {
           this.gameOver = true
         }
+        this.checkGameConditions()
+        this.saveToStorage()
       }
     },
     addMultipleRandomItems(count) {
       if (this.gameOver) return
       const addNextItem = (remaining) => {
         if (remaining <= 0) {
-          this.syncWithStore()
-          return
+            this.checkGameConditions()
+            this.saveToStorage()
+            this.syncWithStore()
+            return
         }
         const emptyCells = []
         for (let i = 0; i < this.gridSize; i++) {
@@ -263,6 +257,8 @@ export default {
         const newGrid = JSON.parse(JSON.stringify(this.grid))
         newGrid[row][col] = { level }
         this.grid = newGrid
+        this.checkGameConditions()
+        this.saveToStorage()
         this.syncWithStore()
       }
     },
@@ -292,6 +288,8 @@ export default {
       this.gameOver = false
       this.gameWon = false
       this.addMultipleRandomItems(5)
+      this.checkGameConditions()
+      this.saveToStorage()
       this.syncWithStore()
     },
     handleDragStart(data) {
@@ -343,10 +341,12 @@ export default {
         moveHappened = true
       }
       this.grid = newGrid
+      this.checkGameConditions()
       if (moveHappened && !this.gameOver) {
         this.addItemAfterMove()
       }
       this.draggedItem = null
+      this.saveToStorage()
       this.syncWithStore()
     }
   }
