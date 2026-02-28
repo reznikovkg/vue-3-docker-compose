@@ -1,7 +1,15 @@
 <template>
   <div class="location-selector">
-    <select class="location-selector__select" v-model="selected" @change="onChange">
-      <option v-for="item in items" :key="item.id" :value="item">
+    <select 
+      class="location-selector__select" 
+      @change="onChange"
+    >
+      <option 
+        v-for="item in locations" 
+        :key="item.id" 
+        :value="item.id"
+        :selected="item.id === selected.id"
+      >
         {{ item.name }}
       </option>
     </select>
@@ -12,28 +20,20 @@
 export default {
   name: 'LocationSelector',
   props: {
-    items: {
+    locations: {
       type: Array,
       required: true
     },
-    value: {
+    selected: {
       type: Object,
       required: true
     }
   },
-  computed: {
-    selected: {
-      get() {
-        return this.value
-      },
-      set(val) {
-        this.$emit('input', val)
-      }
-    }
-  },
   methods: {
-    onChange() {
-      this.$emit('change-location', this.selected)
+    onChange(event) {
+      const selectedId = parseInt(event.target.value)
+      const location = this.locations.find(l => l.id === selectedId)
+      this.$emit('change-location', location)
     }
   }
 }

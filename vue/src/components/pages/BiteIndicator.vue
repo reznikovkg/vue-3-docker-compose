@@ -21,11 +21,11 @@ export default {
   props: {
     lastCatch: {
       type: String,
-      required: true
+      default: ''
     },
     catchHistory: {
       type: Array,
-      required: true
+      default: () => []
     }
   }
 }
