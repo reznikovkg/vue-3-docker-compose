@@ -1,14 +1,21 @@
 <template>
   <div
     class="tower"
-    :class="{ 'tower--selected': selected, 'tower--empty': !hasTower }"
-    :style="{ left: x + 'px', top: y + 'px' }"
+    :class="[
+      selected ? 'tower--selected' : '',
+      !hasTower ? 'tower--empty' : ''
+    ]"
+    :style="{
+      left: x + 'px',
+      top: y + 'px'
+    }"
     @click.stop="() => $emit('click')"
   >
     <div
       class="tower__circle"
-      :class="{ 'tower__circle--empty': !hasTower }"
-      :style="{ background: hasTower ? getColor(level) : 'transparent' }"
+      :style="{
+        background: hasTower ? getColor(level) : 'transparent'
+      }"
     >
       <span v-if="hasTower">{{ level }}</span>
       <span v-else class="tower__plus">+</span>
@@ -45,18 +52,18 @@ const getColor = (level) => {
 defineEmits(['click'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .tower {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 4;
 
-  &--selected .tower__circle {
+  &--selected &__circle {
     border: 3px solid yellow;
     transform: scale(1.2);
   }
 
-  &--empty .tower__circle {
+  &--empty &__circle {
     background: rgba(255, 255, 255, 0.3);
     border: 2px dashed #4caf50;
 
@@ -65,39 +72,35 @@ defineEmits(['click'])
       transform: scale(1.1);
     }
   }
-}
 
-.tower__circle {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-  cursor: pointer;
-  transition: transform 0.2s, border 0.2s, background 0.2s;
-
-  &--empty {
-    border: 2px dashed #4caf50;
+  &__circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transition: transform 0.2s, border 0.2s, background 0.2s;
   }
-}
 
-.tower__plus {
-  font-size: 20px;
-  font-weight: bold;
-  color: #4caf50;
-}
+  &__plus {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4caf50;
+  }
 
-.tower__range {
-  position: absolute;
-  border: 1px dashed rgba(255,0,0,0.35);
-  border-radius: 50%;
-  pointer-events: none;
-  display: block;
-  background: rgba(255, 0, 0, 0.05);
+  &__range {
+    position: absolute;
+    border: 1px dashed rgba(255,0,0,0.35);
+    border-radius: 50%;
+    pointer-events: none;
+    display: block;
+    background: rgba(255, 0, 0, 0.05);
+  }
 }
 </style>

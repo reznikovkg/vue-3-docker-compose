@@ -61,7 +61,7 @@ defineProps({
 defineEmits(['move', 'upgrade-tower'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .info-panel {
   background: #f5f5f5;
   border-radius: 8px;
@@ -71,68 +71,68 @@ defineEmits(['move', 'upgrade-tower'])
   display: flex;
   align-items: center;
   justify-content: center;
-}
 
-.info-panel__controls {
-  display: flex;
-  gap: 5px;
-}
+  &__controls {
+    display: flex;
+    gap: 5px;
+  }
 
-.info-panel__button {
-  width: 45px;
-  height: 45px;
-  font-size: 24px;
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
+  &__button {
+    width: 45px;
+    height: 45px;
+    font-size: 24px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 
-.info-panel__button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  }
 
-.info-panel__upgrade-button {
-  width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  background: #ff9800;
-  color: white;
-}
+  &__upgrade-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    background: #ff9800;
+    color: white;
+  }
 
-.info-panel__no-upgrade {
-  text-align: center;
-  color: #4CAF50;
-  font-size: 16px;
-}
+  &__no-upgrade {
+    text-align: center;
+    color: #4CAF50;
+    font-size: 16px;
+  }
 
-.info-panel__no-selection {
-  text-align: center;
-  color: #666;
-  width: 100%;
-}
+  &__no-selection {
+    text-align: center;
+    color: #666;
+    width: 100%;
 
-.info-panel__no-selection-title {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  font-weight: bold;
-}
+    &-title {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
 
-.info-panel__no-selection-list {
-  margin: 0;
-  padding: 0;
-  text-align: left;
-}
+    &-list {
+      margin: 0;
+      padding: 0;
+      text-align: left;
+    }
 
-.info-panel__no-selection-item {
-  margin: 8px 0;
-  list-style: none;
-  font-size: 14px;
+    &-item {
+      margin: 8px 0;
+      list-style: none;
+      font-size: 14px;
+    }
+  }
 }
 </style>

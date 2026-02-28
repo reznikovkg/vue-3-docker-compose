@@ -14,7 +14,10 @@
         @click="(e) => handleClick(e)"
         @contextmenu.prevent="(e) => handleRightClick(e)"
       >
-        <Path class="game__path" :path-points="pathPoints" />
+        <Path
+          class="game__path"
+          :path-points="pathPoints"
+        />
 
         <Tower
           v-for="position in towerPositions"
@@ -47,7 +50,7 @@
           :health="enemy.health"
           :max-health="enemy.maxHealth"
           :selected="selectedEnemyIndex === index"
-          @click="() => selectedEnemyIndex = index"
+          @click="() => handleEnemyClick(index)"
           class="game__enemy"
         />
       </div>
@@ -68,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { usePathUtils } from '@/composables/usePathUtils'
 import { useGameLoop } from '@/composables/useGameLoop'
 import { useGameState } from '@/composables/useGameState'
@@ -91,7 +94,6 @@ const {
   towerPositions,
   towers,
   enemies,
-  totalKills,
   selectedEnemyIndex,
   selectedTowerId,
   selectedTower,
@@ -103,9 +105,16 @@ const {
   moveEnemy,
   getNextEnemyPosition
 } = useGameState()
-const { startLoop } = useGameLoop(towers, enemies, shots, selectedEnemyIndex, totalKills)
+
+const { startLoop } = useGameLoop(towers, enemies, shots, selectedEnemyIndex)
 
 const pathPoints = computed(() => calculatePathPoints(currentPath.value))
+
+const handleEnemyClick = (index) => {
+  if (enemies.value[index]) {
+    selectedEnemyIndex.value = index
+  }
+}
 
 const selectTowerPosition = (positionId) => {
   const existingTower = getTowerAtPosition(positionId)
@@ -151,37 +160,31 @@ const handleRightClick = (event) => {
   if (selectedTowerId.value === clickedPosition.id) selectedTowerId.value = null
 }
 
-watch(enemies, (newEnemies) => {
-  if (selectedEnemyIndex.value !== null && !newEnemies[selectedEnemyIndex.value]) {
-    selectedEnemyIndex.value = null
-  }
-}, { deep: true })
-
 onMounted(() => {
   loadLevel(1)
   startLoop()
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .game {
   padding: 20px;
   font-family: Arial, sans-serif;
-}
 
-.game__area {
-  position: relative;
-  width: 800px;
-  height: 600px;
-  border: 2px solid #333;
-  background: #2d5a27;
-  overflow: hidden;
-  cursor: crosshair;
-}
+  &__area {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 2px solid #333;
+    background: #2d5a27;
+    overflow: hidden;
+    cursor: crosshair;
+  }
 
-.game__layout {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
+  &__layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
 }
 </style>

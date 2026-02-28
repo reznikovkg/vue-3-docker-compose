@@ -19,7 +19,7 @@ defineProps({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .shot {
   position: absolute;
   height: 2px;

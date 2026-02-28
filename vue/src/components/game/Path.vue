@@ -11,7 +11,7 @@ defineProps({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .path {
   position: absolute;
   top: 0;
@@ -20,17 +20,17 @@ defineProps({
   height: 100%;
   pointer-events: none;
   z-index: 1;
-}
 
-.path__fill {
-  fill: #8B7355;
-  fill-opacity: 0.6;
-}
+  &__fill {
+    fill: #8B7355;
+    fill-opacity: 0.6;
+  }
 
-.path__stroke {
-  fill: none;
-  stroke: #5D4037;
-  stroke-width: 2;
-  stroke-dasharray: 5, 5;
+  &__stroke {
+    fill: none;
+    stroke: #5D4037;
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+  }
 }
 </style>
