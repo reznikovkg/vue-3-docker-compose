@@ -35,11 +35,11 @@ export default {
     draggedItem: Object,
     gameOver: Boolean
   },
-  emits: ['dragStart', 'drop'],
+  emits: ['drag-start', 'drop'],
   methods: {
     onDragStart(e, row, col, cell) {
       if (cell && !this.gameOver) {
-        this.$emit('dragStart', { row, col, cell })
+        this.$emit('drag-start', { row, col, cell })
       }
     },
     onDrop(e, row, col) {

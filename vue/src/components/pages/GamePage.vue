@@ -5,25 +5,49 @@
         Очки: {{ score }}
       </div>
       <div class="game-page__controls">
-        <button class="game-page__button" @click="addRandomItem" :disabled="gameOver"> Добавить предмет</button>
-        <button class="game-page__button" @click="resetGame">Новая игра</button>
-      </div>
+        <button
+            class="button button--primary"
+            @click="addRandomItem"
+            :disabled="gameOver"
+        >
+            Добавить предмет
+        </button>
+        <button
+            class="button button--primary"
+            @click="resetGame"
+        >
+            Новая игра
+        </button>
     </div>
+</div>
 
-    <div class="game-page__overlay" v-if="gameOver" @click="resetGame">
+     <div
+      v-if="gameOver"
+      class="game-page__overlay"
+      @click="resetGame"
+    >
       <div class="game-page__message">
-        <h2 class="game-page__title">{{ gameOverMessage }}</h2>
-        <p class="game-page__text">Ваш счет: {{ score }}</p>
-        <button class="game-page__play-again" @click="resetGame">Играть снова</button>
+        <h2 class="game-page__title">
+          {{ gameOverMessage }}
+        </h2>
+        <p class="game-page__text">
+          Ваш счет: {{ score }}
+        </p>
+        <button
+          class="button button--play-again"
+          @click="resetGame"
+        >
+          Играть снова
+        </button>
       </div>
     </div>
 
     <GameGrid
       :grid="grid"
-      :gridSize="gridSize"
-      :draggedItem="draggedItem"
-      :gameOver="gameOver"
-      @dragStart="handleDragStart"
+      :grid-size="gridSize"
+      :dragged-item="draggedItem"
+      :game-over="gameOver"
+      @drag-start="handleDragStart"
       @drop="handleDrop"
     />
 
@@ -31,7 +55,7 @@
       <button 
         v-for="size in [8, 10, 12]" 
         :key="size"
-        class="game-page__size-button"
+        class="button button--size"
         @click="() => changeGridSize(size)"
         :disabled="gameOver"
       >
@@ -41,7 +65,10 @@
 
     <div class="game-page__progress">
       <div class="game-page__progress-bar">
-        <div class="game-page__progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+        <div
+          class="game-page__progress-fill"
+          :style="{ width: progressPercentage + '%' }"
+        />
       </div>
       <div class="game-page__progress-text">
         Прогресс до победы: {{ itemsMerged }}/{{ WIN_CONDITION }}
@@ -325,155 +352,131 @@ export default {
 
 <style lang="scss">
 .game-page {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
-    position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  position: relative;
 
-    &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding: 10px;
-        background: #fffdfd;
-        border-radius: 8px;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: #fffdfd;
+    border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 
-    &__score {
-        font-size: 24px;
-        font-weight: bold;
-        color: #000000;
-    }
+  &__score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000000;
+  }
 
-    &__controls {
-        display: flex;
-        gap: 10px;
-    }
+  &__controls {
+    display: flex;
+    gap: 10px;
+  }
 
-    &__button {
-        padding: 10px 20px;
-        background: #9d45cd;
-        color: #000000;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
+  &__size-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
 
-        &:hover:not(:disabled) {
-            background: darken(#9d45cd, 10%);
-        }
+  &__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+  }
 
-        &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    }
+  &__message {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
 
-    &__size-controls {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 20px;
-    }
+  &__title {
+    font-size: 32px;
+    margin-bottom: 20px;
+    color: #333;
+  }
 
-    &__size-button {
-        padding: 8px 16px;
-        background: #9d45cd;
-        color: #000000;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
+  &__text {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #666;
+  }
 
-        &:hover:not(:disabled) {
-            background: darken(#9d45cd, 10%);
-        }
+  &__progress {
+    margin-top: 20px;
+  }
 
-        &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    }
+  &__progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+  }
 
-    &__overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        animation: fadeIn 0.3s;
-    }
+  &__progress-fill {
+    height: 100%;
+    background: #9d45cd;
+    transition: width 0.3s;
+    border-radius: 10px;
+  }
 
-    &__message {
-        background: #ffffff;
-        padding: 40px;
-        border-radius: 20px;
-        text-align: center;
-        max-width: 400px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
+  &__progress-text {
+    text-align: center;
+    margin-top: 5px;
+    color: #666;
+    font-size: 14px;
+  }
+}
 
-    &__title {
-        font-size: 32px;
-        margin-bottom: 20px;
-        color: #333;
-    }
+.button {
+  padding: 10px 20px;
+  background: #9d45cd;
+  color: #000000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
 
-    &__text {
-        font-size: 24px;
-        margin-bottom: 30px;
-        color: #666;
-    }
+  &:hover:not(:disabled) {
+    background: darken(#9d45cd, 10%);
+  }
 
-    &__play-again {
-        padding: 15px 30px;
-        font-size: 18px;
-        background: #9d45cd;
-        color: #000000;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: background 0.3s;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
-        &:hover {
-            background: darken(#9d45cd, 10%);
-        }
-    }
+  &--size {
+    padding: 8px 16px;
+  }
 
-    &__progress {
-        margin-top: 20px;
-    }
-
-    &__progress-bar {
-        width: 100%;
-        height: 20px;
-        background: #f0f0f0;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    &__progress-fill {
-        height: 100%;
-        background: #9d45cd;
-        transition: width 0.3s;
-        border-radius: 10px;
-    }
-
-    &__progress-text {
-        text-align: center;
-        margin-top: 5px;
-        color: #666;
-        font-size: 14px;
-    }
+  &--play-again {
+    padding: 15px 30px;
+    font-size: 18px;
+  }
 }
 
 @keyframes fadeIn {
