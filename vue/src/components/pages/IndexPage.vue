@@ -5,16 +5,34 @@
       <div class="puzzle__moves">Ходов: {{ moves }}</div>
     </div>
 
-    <div class="puzzle__grid">
+    <div class="puzzle__size-control">
+      <label class="puzzle__label">
+        Размер N:
+        <input 
+          type="number"
+          v-model.number="sizeInput"
+          min="3"
+          max="10"
+          class="puzzle__input"
+          @change="() => changeSize()"
+        >
+      </label>
+      <span class="puzzle__size-info">{{ size }} x {{ size }}</span>
+    </div>
+
+    <div 
+      class="puzzle__grid" 
+      :style="{ gridTemplateColumns: `repeat(${size}, 1fr)` }"
+    >
       <div 
         v-for="(cell, i) in cells" 
         :key="i"
         class="puzzle__cell" 
-        :class="{ 'puzzle__cell--empty': cell === 9 }"
+        :class="{ 'puzzle__cell--empty': cell === size * size }"
         @click="() => moveCell(i)"
         @touchstart.prevent="() => moveCell(i)"
       >
-        <span v-if="cell !== 9">{{ cell }}</span>
+        <span v-if="cell !== size * size">{{ cell }}</span>
       </div>
     </div>
     <div class="puzzle__controls">
@@ -32,17 +50,22 @@ export default {
   data() {
     return {
       cells: [],
-      moves: 0
+      moves: 0,
+      size: 3,
+      sizeInput: 3
     }
   },
   computed: {
     emptyIndex() {
-      return this.cells.indexOf(9)
+      return this.cells.indexOf(this.size * this.size)
     },
     isSolved() {
-      return this.cells.every((cell, index) => 
-        index === 8 ? cell === 9 : cell === index + 1
-      )
+      return this.cells.every((cell, index) => {
+        if (index === this.cells.length - 1) {
+          return cell === this.size * this.size
+        }
+        return cell === index + 1
+      })
     }
   },
   methods: {
@@ -54,22 +77,30 @@ export default {
       }
       return newArr
     },
+    createArray() {
+      const total = this.size * this.size
+      const arr = []
+      for (let i = 1; i <= total; i++) {
+        arr.push(i)
+      }
+      return arr
+    },
     newGame() {
-      let newCells = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      let newCells = this.createArray()
 
       do {
         newCells = this.shuffle(newCells)
-      } while (newCells[8] !== 9)
+      } while (newCells[this.size * this.size - 1] !== this.size * this.size)
 
       this.cells = newCells 
       this.moves = 0
     },
     canMove(index) {
       const empty = this.emptyIndex
-      const emptyRow = Math.floor(empty / 3)
-      const emptyCol = empty % 3
-      const row = Math.floor(index / 3)
-      const col = index % 3
+      const emptyRow = Math.floor(empty / this.size)
+      const emptyCol = empty % this.size
+      const row = Math.floor(index / this.size)
+      const col = index % this.size
       return (Math.abs(emptyRow - row) + Math.abs(emptyCol - col)) === 1
     },
     moveCell(index) {
@@ -78,9 +109,17 @@ export default {
       const newCell = [...this.cells]
       const empty = this.emptyIndex
       newCell[empty] = newCell[index]
-      newCell[index] = 9
+      newCell[index] = this.size * this.size
       this.cells = newCell
       this.moves++
+    },
+    changeSize() {
+      if (this.sizeInput < 3) this.sizeInput = 3
+      if (this.sizeInput > 10) this.sizeInput = 10
+      if (this.sizeInput !== this.size) {
+        this.size = this.sizeInput
+        this.newGame()
+      }
     }
   },
   mounted() {
@@ -91,7 +130,7 @@ export default {
 
 <style scoped lang="scss">
 .puzzle {
-  max-width: 400px;
+  max-width: 600px;
   margin: 30px auto;
   padding: 20px;
   font-family: Arial, sans-serif;
@@ -112,9 +151,46 @@ export default {
     font-weight: bold;
     color: #4CAF50;
   }
+  
+  &__size-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 8px;
+  }
+  
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  &__input {
+    width: 70px;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: center;
+    
+    &:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+  }
+  
+  &__size-info {
+    font-size: 16px;
+    color: #666;
+    font-weight: bold;
+  }
   &__grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     background: #ccc;
     padding: 15px;
@@ -128,7 +204,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 36px;
+    font-size: clamp(14px, 5vw, 36px);
     font-weight: bold;
     color: #333;
     cursor: pointer;
@@ -192,8 +268,25 @@ export default {
     &__moves {
       font-size: 16px;
     }
+    &__size-control {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+    }
+    &__label {
+      font-size: 14px;
+    }
+    &__input {
+      width: 60px;
+      padding: 6px;
+      font-size: 14px;
+    }
+    &__size-info {
+      font-size: 14px;
+    }
     &__cell {
-      font-size: 24px;
+      font-size: clamp(12px, 4vw, 24px);
     }
     &__button {
       padding: 8px 16px;
