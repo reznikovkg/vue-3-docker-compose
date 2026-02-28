@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <div class="controls">
-      <h2>Счет: {{ score }}</h2>
+      <div class="score-text">Счет: {{ score }}</div>
       <button class="controls__button" @click="() => start()">Начать игру</button>
     </div>
 
