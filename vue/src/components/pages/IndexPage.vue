@@ -5,64 +5,61 @@
         <div class="index__title">Русская рыбалка</div>
       </div>
 
-      <div class="index__location">
-        <select class="index__select" v-model="selectedLocation" @change="changeLocation">
-          <option v-for="item in locations" :key="item.id" :value="item">
-            {{ item.name }}
-          </option>
-        </select>
-      </div>
+      <LocationSelector 
+        :items="locations" 
+        :value="selectedLocation"
+        @change-location="changeLocation"
+      />
 
-      <div class="index__water">
-        <div class="index__bite" :class="{ 'index__bite--active': isBiting }">
-          {{ biteMessage }}
-        </div>
+      <FishingArea
+        :background="currentLocation.background"
+        :is-waiting="isWaiting"
+        :is-biting="isBiting"
+        :timer="timer"
+        :bite-message="biteMessage"
+        :button-text="buttonText"
+        @cast="handleClick"
+      />
 
-        <button class="index__button" @click="handleClick" :disabled="isWaiting">
-          {{ buttonText }}
-        </button>
-
-        <div class="index__timer" v-if="isWaiting">
-          {{ timer }} сек
-        </div>
-      </div>
-
-      <div class="index__catch" v-if="lastCatch">
-        Поймано: {{ lastCatch }}
-      </div>
-
-      <!-- НОВАЯ ФИЧА: История поклевок -->
-      <div class="index__history" v-if="catchHistory.length > 0">
-        <div class="index__history-title">История улова:</div>
-        <div class="index__history-list">
-          <div v-for="(item, idx) in catchHistory" :key="idx" class="index__history-item">
-            {{ item }}
-          </div>
-        </div>
-      </div>
+      <BiteIndicator
+        :last-catch="lastCatch"
+        :catch-history="catchHistory"
+      />
     </div>
   </div>
 </template>
 
 <script>
+import LocationSelector from './LocationSelector.vue'
+import FishingArea from './FishingArea.vue'
+import BiteIndicator from './BiteIndicator.vue'
+
 export default {
   name: 'IndexPage',
+  components: {
+    LocationSelector,
+    FishingArea,
+    BiteIndicator
+  },
   data() {
     return {
       locations: [
         {
           id: 1,
           name: 'Пруд',
+          background: '/img/pond.jpg',
           fish: ['Карась', 'Окунь', 'Карп']
         },
         {
           id: 2,
           name: 'Река',
+          background: '/img/river.jpg',
           fish: ['Щука', 'Окунь', 'Плотва']
         },
         {
           id: 3,
           name: 'Озеро',
+          background: '/img/lake.jpg',
           fish: ['Лещ', 'Судак', 'Карась']
         }
       ],
@@ -72,7 +69,7 @@ export default {
       timer: 0,
       biteMessage: 'Забросьте удочку',
       lastCatch: '',
-      catchHistory: [], // НОВОЕ: для истории
+      catchHistory: [],
       biteTimeout: null,
       missTimeout: null,
       timerInterval: null
@@ -96,20 +93,17 @@ export default {
     }
   },
   methods: {
-    changeLocation() {
+    changeLocation(location) {
+      this.selectedLocation = location
       this.isWaiting = false
       this.isBiting = false
       this.timer = 0
       this.biteMessage = 'Забросьте удочку'
       this.lastCatch = ''
       
-      // ИСПРАВЛЕНИЕ: очищаем таймеры при смене локации
       clearTimeout(this.biteTimeout)
       clearTimeout(this.missTimeout)
       clearInterval(this.timerInterval)
-      
-      // Дополнительно сбрасываем отображение таймера
-      this.timer = 0
     },
     handleClick() {
       if (this.isBiting) {
@@ -154,7 +148,6 @@ export default {
       
       this.lastCatch = fish
       
-      // НОВОЕ: добавляем в историю
       const historyItem = fish + ' - ' + this.currentLocation.name
       this.catchHistory.unshift(historyItem)
       if (this.catchHistory.length > 5) {
@@ -193,7 +186,6 @@ export default {
 </script>
 
 <style scoped>
-/* Стили без изменений, но добавляем для истории */
 .index {
   font-family: Arial;
   padding: 10px;
@@ -215,104 +207,5 @@ export default {
 .index__title {
   font-size: 20px;
   font-weight: bold;
-}
-
-.index__location {
-  margin-bottom: 10px;
-}
-
-.index__select {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid black;
-  background: white;
-}
-
-.index__water {
-  border: 1px solid black;
-  height: 200px;
-  margin-bottom: 10px;
-  padding: 10px;
-  background: #f0f0f0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.index__bite {
-  border: 1px solid black;
-  padding: 5px;
-  margin-bottom: 5px;
-  width: 100%;
-  text-align: center;
-  background: white;
-}
-
-.index__bite--active {
-  background: yellow;
-}
-
-.index__button {
-  border: 1px solid black;
-  padding: 5px 10px;
-  margin-bottom: 5px;
-  background: white;
-  cursor: pointer;
-  width: 100%;
-}
-
-.index__button:hover {
-  background: #f0f0f0;
-}
-
-.index__button:disabled {
-  background: #e0e0e0;
-  cursor: not-allowed;
-}
-
-.index__timer {
-  border: 1px solid black;
-  padding: 5px;
-  width: 100%;
-  text-align: center;
-  background: white;
-}
-
-.index__catch {
-  border: 1px solid black;
-  padding: 5px;
-  text-align: center;
-  background: #e0e0e0;
-  margin-bottom: 10px;
-}
-
-/* НОВЫЕ СТИЛИ для истории */
-.index__history {
-  border: 1px solid black;
-  padding: 10px;
-  background: #f9f9f9;
-}
-
-.index__history-title {
-  font-weight: bold;
-  margin-bottom: 5px;
-  font-size: 14px;
-}
-
-.index__history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.index__history-item {
-  font-size: 12px;
-  padding: 2px 0;
-  border-bottom: 1px dotted #ccc;
-}
-
-.index__history-item:last-child {
-  border-bottom: none;
 }
 </style>
