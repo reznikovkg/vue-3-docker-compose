@@ -3,13 +3,24 @@
     <div class="game__content">
       <h2>Переливатор</h2>
 
-      <div v-if="isFinished" class="game__win">Игра окончена!</div>
-
-      <div class="game__field">
-        <Flask v-for="(flask, index) in flasks" :key="index" :layers="flask" :maxLayers="MAX_LAYERS" :isSelected="selectedIndex === index" @select="() => selectFlask(index)" />
+      <div v-if="isFinished" class="game__win">
+        Игра окончена!
       </div>
 
-      <button class="game__restart" @click="() => generateGame()">Новая игра</button>
+      <div class="game__field">
+        <Flask
+          v-for="(flask, index) in flasks"
+          :key="index"
+          :layers="flask"
+          :maxLayers="MAX_LAYERS"
+          :isSelected="selectedIndex === index"
+          @select="() => selectFlask(index)"
+        />
+      </div>
+
+      <button class="game__restart" @click="() => generateGame()">
+        Новая игра
+      </button>
     </div>
   </div>
 </template>
@@ -19,9 +30,8 @@ import Flask from './Flask.vue'
 
 export default {
   name: 'IndexPage',
-  components: {
-    Flask
-  },
+  components: { Flask },
+
   data () {
     return {
       flasks: [],
@@ -31,51 +41,75 @@ export default {
       isFinished: false
     }
   },
+
   mounted () {
     this.generateGame()
   },
+
   methods: {
     generateGame () {
       this.selectedIndex = null
       this.isFinished = false
-      this.flasks = []
 
-      const allLayers = []
+      const layers = this.createLayers()
+      this.shuffle(layers)
 
-      for (let i = 0; i < this.COLORS.length; i++) {
-        for (let j = 0; j < this.MAX_LAYERS; j++) {
-          allLayers.push(this.COLORS[i])
+      this.flasks = this.createEmptyFlasks()
+      this.distributeLayers(layers)
+    },
+
+    createLayers () {
+      const result = []
+
+      this.COLORS.forEach(color => {
+        for (let i = 0; i < this.MAX_LAYERS; i++) {
+          result.push(color)
         }
-      }
+      })
 
-      for (let i = allLayers.length - 1; i > 0; i--) {
+      return result
+    },
+
+    shuffle (array) {
+      for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
-        const temp = allLayers[i]
-        allLayers[i] = allLayers[j]
-        allLayers[j] = temp
+        const temp = array[i]
+        array[i] = array[j]
+        array[j] = temp
+      }
+    },
+
+    createEmptyFlasks () {
+      const total = this.COLORS.length + 2
+      const result = []
+
+      for (let i = 0; i < total; i++) {
+        result.push([])
       }
 
-      const TOTAL_FLASKS = this.COLORS.length + 2
+      return result
+    },
 
-      for (let i = 0; i < TOTAL_FLASKS; i++) {
-        this.flasks.push([])
-      }
+    distributeLayers (layers) {
+      layers.forEach(layer => {
+        let placed = false
 
-      while (allLayers.length > 0) {
-        const randomIndex = Math.floor(Math.random() * TOTAL_FLASKS)
+        while (!placed) {
+          const randomIndex = Math.floor(Math.random() * this.flasks.length)
 
-        if (this.flasks[randomIndex].length < this.MAX_LAYERS) {
-          const layer = allLayers.pop()
-          this.flasks[randomIndex].push(layer)
+          if (this.flasks[randomIndex].length < this.MAX_LAYERS) {
+            this.flasks[randomIndex].push(layer)
+            placed = true
+          }
         }
-      }
+      })
     },
 
     selectFlask (index) {
       if (this.isFinished) return
 
       if (this.selectedIndex === null) {
-        if (this.flasks[index].length === 0) return
+        if (!this.flasks[index].length) return
         this.selectedIndex = index
         return
       }
@@ -93,21 +127,18 @@ export default {
       const from = this.flasks[fromIndex]
       const to = this.flasks[toIndex]
 
-      if (from.length === 0) return
+      if (!from.length) return
       if (to.length >= this.MAX_LAYERS) return
 
       const topColor = from[from.length - 1]
 
-      if (to.length > 0) {
-        const targetTop = to[to.length - 1]
-        if (targetTop !== topColor) return
-      }
+      if (to.length && to[to.length - 1] !== topColor) return
 
       let count = 0
 
       for (let i = from.length - 1; i >= 0; i--) {
-        if (from[i] === topColor) count++
-        else break
+        if (from[i] !== topColor) break
+        count++
       }
 
       const freeSpace = this.MAX_LAYERS - to.length
@@ -117,24 +148,17 @@ export default {
         to.push(from.pop())
       }
 
-      if (this.checkWin()) this.isFinished = true
+      if (this.checkWin()) {
+        this.isFinished = true
+      }
     },
 
     checkWin () {
-      for (let i = 0; i < this.flasks.length; i++) {
-        const flask = this.flasks[i]
-
-        if (flask.length === 0) continue
+      return this.flasks.every(flask => {
+        if (!flask.length) return true
         if (flask.length !== this.MAX_LAYERS) return false
-
-        const color = flask[0]
-
-        for (let j = 0; j < flask.length; j++) {
-          if (flask[j] !== color) return false
-        }
-      }
-
-      return true
+        return flask.every(color => color === flask[0])
+      })
     }
   }
 }
