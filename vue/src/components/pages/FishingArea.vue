@@ -1,6 +1,8 @@
 <template>
   <div class="fishing-area">
-    <div class="fishing-area__water">
+    <div class="fishing-area__water" :style="{ backgroundImage: 'url(' + background + ')' }">
+      <div class="fishing-area__overlay"></div>
+      
       <div class="fishing-area__bite" :class="{ 'fishing-area__bite--active': isBiting }">
         {{ biteMessage }}
       </div>
@@ -20,6 +22,10 @@
 export default {
   name: 'FishingArea',
   props: {
+    background: {
+      type: String,
+      required: true
+    },
     isWaiting: {
       type: Boolean,
       required: true
@@ -55,11 +61,23 @@ export default {
   height: 200px;
   margin-bottom: 10px;
   padding: 10px;
-  background: #f0f0f0;
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
+  position: relative;
+}
+
+.fishing-area__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  pointer-events: none;
 }
 
 .fishing-area__bite {
@@ -69,6 +87,7 @@ export default {
   width: 100%;
   text-align: center;
   background: white;
+  z-index: 1;
 }
 
 .fishing-area__bite--active {
@@ -82,6 +101,7 @@ export default {
   background: white;
   cursor: pointer;
   width: 100%;
+  z-index: 1;
 }
 
 .fishing-area__button:hover {
@@ -99,5 +119,6 @@ export default {
   width: 100%;
   text-align: center;
   background: white;
+  z-index: 1;
 }
 </style>

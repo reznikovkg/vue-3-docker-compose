@@ -12,6 +12,7 @@
       />
 
       <FishingArea
+        :background="currentLocation.background"
         :is-waiting="isWaiting"
         :is-biting="isBiting"
         :timer="timer"
@@ -46,16 +47,19 @@ export default {
         {
           id: 1,
           name: 'Пруд',
+          background: '/img/pond.jpg',
           fish: ['Карась', 'Окунь', 'Карп']
         },
         {
           id: 2,
           name: 'Река',
+          background: '/img/river.jpg',
           fish: ['Щука', 'Окунь', 'Плотва']
         },
         {
           id: 3,
           name: 'Озеро',
+          background: '/img/lake.jpg',
           fish: ['Лещ', 'Судак', 'Карась']
         }
       ],
