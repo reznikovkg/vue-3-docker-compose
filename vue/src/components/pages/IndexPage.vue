@@ -61,7 +61,10 @@ export default {
       isBiting: false,
       timer: 0,
       biteMessage: 'Забросьте удочку',
-      lastCatch: ''
+      lastCatch: '',
+      biteTimeout: null,
+      missTimeout: null,
+      timerInterval: null
     }
   },
   computed: {
@@ -83,7 +86,15 @@ export default {
   },
   methods: {
     changeLocation() {
-      this.selectedLocation = event.target.value
+      this.isWaiting = false
+      this.isBiting = false
+      this.timer = 0
+      this.biteMessage = 'Забросьте удочку'
+      this.lastCatch = ''
+      
+      clearTimeout(this.biteTimeout)
+      clearTimeout(this.missTimeout)
+      clearInterval(this.timerInterval)
     },
     handleClick() {
       if (this.isBiting) {
@@ -114,6 +125,12 @@ export default {
       this.isBiting = true
       this.biteMessage = 'Клюет!'
       clearInterval(this.timerInterval)
+      
+      this.missTimeout = setTimeout(() => {
+        if (this.isBiting) {
+          this.missFish()
+        }
+      }, 3000)
     },
     catchFish() {
       const fishList = this.currentLocation.fish
@@ -125,16 +142,35 @@ export default {
       this.isBiting = false
       
       clearTimeout(this.biteTimeout)
+      clearTimeout(this.missTimeout)
       clearInterval(this.timerInterval)
+    },
+    missFish() {
+      this.biteMessage = 'Рыба сорвалась'
+      this.isBiting = false
+      
+      clearTimeout(this.missTimeout)
+      
+      setTimeout(() => {
+        if (!this.isWaiting && !this.isBiting) {
+          this.biteMessage = 'Забросьте удочку'
+        }
+      }, 1500)
     }
   },
   created() {
     this.selectedLocation = this.locations[0]
+  },
+  beforeDestroy() {
+    clearTimeout(this.biteTimeout)
+    clearTimeout(this.missTimeout)
+    clearInterval(this.timerInterval)
   }
 }
 </script>
 
 <style scoped>
+/* Стили без изменений */
 .index {
   font-family: Arial;
   padding: 10px;
