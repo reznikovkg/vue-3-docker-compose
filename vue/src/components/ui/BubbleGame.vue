@@ -12,7 +12,6 @@
 <script>
 export default {
   name: 'BubbleGame',
-
   props: {
     colorsCount: { type: Number, required: true },
     targetColor: { type: Number, required: true },
@@ -23,9 +22,7 @@ export default {
     bubbleSize: { type: Number, default: 60 },
     duration: { type: Number, default: 30 }
   },
-
   emits: ['finish', 'score'],
-
   data() {
     return {
       bubbles: [],
@@ -37,11 +34,9 @@ export default {
       animationFrame: null
     }
   },
-
   mounted() {
     this.startGame(() => this.run())
   },
-
   beforeUnmount() {
     if (this.animationFrame) {
       cancelAnimationFrame(this.animationFrame)
@@ -50,7 +45,6 @@ export default {
       clearInterval(this.spawnTimer)
     }
   },
-
   methods: {
     run() {
       this.running = true
@@ -64,7 +58,6 @@ export default {
       
       this.animate()
     },
-
     animate() {
       if (!this.running) return
 
@@ -74,17 +67,13 @@ export default {
         this.finishGame()
         return
       }
-
       this.updateBubbles()
       this.animationFrame = requestAnimationFrame(() => this.animate())
     },
-
     addBubble() {
       if (!this.running) return
-      
       const colorIndex = Math.floor(Math.random() * this.colorsCount)
       const angle = (Math.random() - 0.5) * Math.PI / 4
-
       this.bubbles.push({
         id: crypto.randomUUID(),
         x: Math.random() * 90 + 5,
@@ -94,59 +83,47 @@ export default {
         color: colorIndex
       })
     },
-
     updateBubbles() {
       this.bubbles.forEach(b => {
         b.x += b.dx
         b.y += b.dy
         b.dx += (Math.random() - 0.5) * 0.01
-        
         if (b.x < 0 || b.x > 100) {
           b.dx *= -0.8
         }
         b.x = Math.max(0, Math.min(100, b.x))
       })
-
       this.bubbles = this.bubbles.filter(b => b.y < 110)
     },
-
     popBubble(bubble) {
       const hit = bubble.color === this.targetColor
       this.score += hit ? this.scoreHit : this.scoreMiss
       this.$emit('score', this.score)
-      
       this.bubbles = this.bubbles.filter(b => b.id !== bubble.id)
     },
-
     onAreaClick(e) {
       const rect = this.$el.getBoundingClientRect()
       const clickX = e.clientX
       const clickY = e.clientY
-
       const hitBubbles = this.bubbles.filter(b => {
         const bubbleX = rect.left + (b.x / 100) * rect.width
         const bubbleY = rect.top + (b.y / 100) * rect.height
         const radius = this.bubbleSize / 2
-        
         const distance = Math.hypot(bubbleX - clickX, bubbleY - clickY)
         return distance <= radius
       })
-
       if (hitBubbles.length === 0) {
         this.score += this.scoreMiss
         this.$emit('score', this.score)
         return
       }
-
       hitBubbles.forEach(bubble => {
         const hit = bubble.color === this.targetColor
         this.score += hit ? this.scoreHit : this.scoreMiss
         this.bubbles = this.bubbles.filter(b => b.id !== bubble.id)
       })
-      
       this.$emit('score', this.score)
     },
-
     finishGame() {
       this.running = false
       if (this.spawnTimer) {
@@ -157,7 +134,6 @@ export default {
       }
       this.$emit('finish', this.score)
     },
-
     bubbleStyle(bubble) {
       return {
         left: bubble.x + '%',
@@ -169,7 +145,6 @@ export default {
         pointerEvents: 'none'
       }
     },
-
     colorByIndex(index) {
       const palette = ['#ff4444', '#4444ff', '#44ff44', '#ff8844', '#9944ff', '#44ffff']
       return palette[index % palette.length]

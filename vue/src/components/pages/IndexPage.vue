@@ -25,28 +25,23 @@ import BubbleGame from '../ui/BubbleGame.vue'
 
 export default {
   components: { BubbleGame },
-
   data() {
     return {
       score: 0,
       startHandler: null
     }
   },
-
   methods: {
     registerStart(cb) {
       this.startHandler = cb
     },
-
     start() {
       this.score = 0
       if (this.startHandler) this.startHandler()
     },
-
     onScore(val) {
       this.score = val
     },
-
     onFinish(val) {
       alert(`Игра окончена. Итоговый счет: ${val}`)
     }
@@ -74,11 +69,6 @@ export default {
   padding: 10px 20px;
   border-radius: 30px;
   backdrop-filter: blur(5px);
-
-  h2 {
-    margin: 0;
-    color: white;
-  }
 
   &__button {
     background-color: #f07db6;
