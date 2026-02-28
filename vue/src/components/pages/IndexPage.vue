@@ -1,13 +1,13 @@
 <template>
   <div class="puzzle">
     <div class="puzzle__header">
-      <h1>Пятнашки</h1>
+      <div class="puzzle__title">Пятнашки</div>
       <div class="puzzle__moves">Ходов: {{ moves }}</div>
     </div>
 
     <div class="puzzle__grid">
       <div 
-        v-for="(cell, i) in cell" 
+        v-for="(cell, i) in cells" 
         :key="i"
         class="puzzle__cell" 
         :class="{ 'puzzle__cell--empty': cell === 9 }"
@@ -31,19 +31,18 @@ export default {
   name: 'IndexPage',
   data() {
     return {
-      cell: [],
+      cells: [],
       moves: 0
     }
   },
   computed: {
     emptyIndex() {
-      return this.cell.indexOf(9)
+      return this.cells.indexOf(9)
     },
     isSolved() {
-      for(let i = 0; i < 8; i++) {
-        if(this.cell[i] !== i + 1) return false
-      }
-      return true
+      return this.cells.every((cell, index) => 
+        index === 8 ? cell === 9 : cell === index + 1
+      )
     }
   },
   methods: {
@@ -56,13 +55,13 @@ export default {
       return newArr
     },
     newGame() {
-      let newCell = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-      
+      let newCells = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
       do {
-        newCell = this.shuffle(newCell)
-      } while (newCell[8] !== 9)
-      
-      this.cell = newCell
+        newCells = this.shuffle(newCells)
+      } while (newCells[8] !== 9)
+
+      this.cells = newCells 
       this.moves = 0
     },
     canMove(index) {
@@ -74,13 +73,13 @@ export default {
       return (Math.abs(emptyRow - row) + Math.abs(emptyCol - col)) === 1
     },
     moveCell(index) {
-      if(this.isSolved) return
-      if(!this.canMove(index)) return
-      const newCell = [...this.cell]
+      if (this.isSolved) return
+      if (!this.canMove(index)) return
+      const newCell = [...this.cells]
       const empty = this.emptyIndex
       newCell[empty] = newCell[index]
       newCell[index] = 9
-      this.cell = newCell
+      this.cells = newCell
       this.moves++
     }
   },
@@ -102,13 +101,12 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    h1 {
-      margin: 0;
-      font-size: 24px;
-      color: #333;
-    }
   }
-
+  &__title { 
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+  }
   &__moves {
     font-size: 18px;
     font-weight: bold;
@@ -188,11 +186,8 @@ export default {
 @media (max-width: 480px) {
   .puzzle {
     padding: 10px;
-
-    &__header {
-      h1 {
-        font-size: 20px;
-      }
+    &__title { 
+      font-size: 20px;
     }
     &__moves {
       font-size: 16px;
