@@ -78,9 +78,9 @@ import Tower from '@/components/game/Tower.vue'
 import Enemy from '@/components/game/Enemy.vue'
 import Shot from '@/components/game/Shot.vue'
 
-import { createGameState, gameStateMethods } from '@/composables/useGameState'
+import { createGameState } from '@/composables/useGameState'
 import { createGameLoop } from '@/composables/useGameLoop'
-import { calculatePathPoints } from '@/composables/usePathUtils'
+import { calculatePathPoints, isPointOnPath } from '@/composables/usePathUtils'
 
 export default {
   name: 'Game',
@@ -116,7 +116,96 @@ export default {
       this.gameLoop.stopLoop()
   },
   methods: {
-    ...gameStateMethods,
+    getTowerAtPosition(positionId) {
+      return this.towers.find(t => t.positionId === positionId) || null
+    },
+    loadLevel(levelId) {
+      const level = this.levels.find(l => l.id === levelId)
+      if (!level) 
+        return
+
+      this.currentLevelId = levelId
+      this.currentPath = level.path || []
+      this.towerPositions = level.towerPositions || []
+      this.towers = []
+      this.enemies = (level.startEnemies || []).map((pos, i) => ({
+        id: Date.now() + Math.random() + i,
+        x: pos.x,
+        y: pos.y,
+        health: 100,
+        maxHealth: 100
+      }))
+
+      this.selectedEnemyId = null
+      this.selectedTowerId = null
+      this.totalKills = 0
+    },
+    buildTower(positionId) {
+      const pos = this.towerPositions.find(p => p.id === positionId)
+      if (!pos) 
+        return
+
+      this.towers.push({
+        positionId: pos.id,
+        x: pos.x,
+        y: pos.y,
+        level: 1,
+        damage: 6,
+        radius: 80,
+        attackSpeed: 2,
+        health: 100,
+        maxHealth: 100,
+        kills: 0,
+        cooldown: 0,
+        targetId: null
+      })
+
+      this.selectedTowerId = positionId
+      this.selectedEnemyId = null
+    },
+    upgradeTower() {
+      if (!this.selectedTower || this.selectedTower.level >= 5) 
+        return
+
+      const t = this.selectedTower
+      t.level++
+      t.damage = 6 + t.level * 2.5
+      t.attackSpeed = 2 + t.level * 0.7
+      t.radius = 80 + t.level * 8
+      t.maxHealth += 20
+      t.health = t.maxHealth
+    },
+    getNextEnemyPosition(enemy, direction) {
+      const speed = 10
+      let { x, y } = enemy
+
+      if (direction === 'up') 
+        pos.y -= speed
+      if (direction === 'down') 
+        pos.y += speed
+      if (direction === 'left') 
+        pos.x -= speed
+      if (direction === 'right') 
+        pos.x += speed
+
+      return { x, y }
+    },
+    canMoveEnemy(direction) {
+      const enemy = this.selectedEnemy
+      if (!enemy) 
+        return false
+
+      const { x, y } = this.getNextEnemyPosition(enemy, direction)
+      return isPointOnPath(x, y, this.currentPath)
+    },
+    moveEnemy(direction) {
+      if (!this.canMoveEnemy(direction)) 
+        return
+      const enemy = this.selectedEnemy
+      const { x, y } = this.getNextEnemyPosition(enemy, direction)
+      enemy.x = x
+      enemy.y = y
+    },
     selectTowerPosition(positionId) {
       const existingTower = this.getTowerAtPosition(positionId)
       if (!existingTower) {
@@ -161,7 +250,7 @@ export default {
       const enemy = this.enemies.find(e => e.id === id)
       if (enemy) {
         this.selectedEnemyId = enemy.id
-        this.selectedTowerId = null
+      this.selectedTowerId = null
       }
     }
   }

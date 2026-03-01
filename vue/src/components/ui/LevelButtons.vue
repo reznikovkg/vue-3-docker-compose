@@ -40,11 +40,11 @@ export default {
     border: none;
     cursor: pointer;
     border-radius: 4px;
+  }
 
-    &--active {
-      background: #4CAF50;
-      color: white;
-    }
+  &__button--active {
+    background: #4CAF50;
+    color: white;
   }
 }
 </style>

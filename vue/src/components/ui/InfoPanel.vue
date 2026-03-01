@@ -125,24 +125,24 @@ export default {
     text-align: center;
     color: #666;
     width: 100%;
+  }
 
-    &-title {
-      margin: 0 0 10px 0;
-      font-size: 16px;
-      font-weight: bold;
-    }
+  &__no-selection-title {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: bold;
+  }
 
-    &-list {
-      margin: 0;
-      padding: 0;
-      text-align: left;
-    }
+  &__no-selection-list {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+  }
 
-    &-item {
-      margin: 8px 0;
-      list-style: none;
-      font-size: 14px;
-    }
+  &__no-selection-item {
+    margin: 8px 0;
+    list-style: none;
+    font-size: 14px;
   }
 }
 </style>
