@@ -1,45 +1,36 @@
 <template>
   <div class="alchemist">
-    <!-- Верхняя часть - открытые элементы -->
-    <div class="elements">
-      <div class="element" v-for="elem in openedElements" :key="elem.id" @click="addToTable(elem.id)">
-        <div class="picture">
-          <img :src="elem.picture" class="element-picture"/>
-        </div>
-        <div class="name">{{ elem.name }}</div>
-      </div>
-    </div>
 
-    <div class="bottom">
-      <!-- Нижняя часть - стол -->
-      <div class="table">
-        <div class="table-item" v-for="item in tableElem" :key="item.id">
-          <span>{{ getElementName(item.id) }}</span>
+    <ElementsGrid
+      :openedElements="openedElements"
+      @add="addToTable"
+    />
 
-          <div class="counter">
-            <button @click="changeCount(item.id, -1)">−</button>
-            <span class="count">{{ item.count }}</span>
-            <button @click="changeCount(item.id, 1)">+</button>
-          </div>
-        </div>
-      </div>
+    <AlchemistTable
+      :tableElem="tableElem"
+      :getElementName="getElementName"
+      @change="changeCount"
+      @mix="mixElements"
+      @reset="tableElem = []"
+    />
 
-      <!-- Кнопки -->
-      <div class="buttons">
-        <button @click="mixElements">Смешать</button>
-        <button @click="tableElem = []">Сбросить</button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
+import ElementsGrid from "@/components/pages/Elements.vue"
+import AlchemistTable from "@/components/pages/Table.vue"
+
 export default {
   name: 'AlchemistGame',
 
+  components: {
+    ElementsGrid,
+    AlchemistTable
+  },
+
   data() {
     return {
-      // Элементы
       elements: [
         {id: 1, name: 'Огонь', picture: '/src/assets/elements/fire.png', opened: true},
         {id: 2, name: 'Вода', picture: '/src/assets/elements/water.png', opened: true},
@@ -57,18 +48,18 @@ export default {
         {id: 14, name: 'Облако', picture: '/src/assets/elements/cloud.png', opened: false},
       ],
       recipes: {
-        '1+2': 5,  
-        '1+3': 6,  
-        '2+3': 7,   
-        '2+2': 8,   
-        '1+4': 9,   
-        '2+4': 10,  
-        '3+4': 11,  
-        '3+3': 12,  
-        '1+12': 13, 
-        '2+10': 14  
+        '1+2': 5,
+        '1+3': 6,
+        '2+3': 7,
+        '2+2': 8,
+        '1+4': 9,
+        '2+4': 10,
+        '3+4': 11,
+        '3+3': 12,
+        '1+12': 13,
+        '2+10': 14
       },
-      tableElem:[]
+      tableElem: []
     }
   },
 
@@ -77,8 +68,9 @@ export default {
       return this.elements.filter(elem => elem.opened)
     }
   },
+
   methods: {
-    addToTable (id) {
+    addToTable(id) {
       const item = this.tableElem.find(i => i.id === id)
 
       if (item) {
@@ -88,7 +80,7 @@ export default {
       }
     },
 
-    changeCount (id, value) {
+    changeCount(id, value) {
       const item = this.tableElem.find(i => i.id === id)
       if (!item) return
 
@@ -98,10 +90,10 @@ export default {
         this.tableElem = this.tableElem.filter(i => i.id !== id)
       }
     },
-    
+
     getElementName(id) {
       const element = this.elements.find(e => e.id === id)
-      return element.name 
+      return element.name
     },
 
     mixElements() {
@@ -113,14 +105,14 @@ export default {
       const ingredients = []
 
       this.tableElem.forEach(item => {
-        for (let i = 0; i < item.count; i++) { 
+        for (let i = 0; i < item.count; i++) {
           ingredients.push(item.id)
         }
       })
+
       ingredients.sort((a, b) => a - b)
 
       const key = ingredients.join('+')
-
       const resultId = this.recipes[key]
 
       if (resultId) {
@@ -131,8 +123,9 @@ export default {
         }
         this.tableElem = []
         this.addToTable(resultId)
-      } 
-      else {alert('Ничего не получилось')}
+      } else {
+        alert('Ничего не получилось')
+      }
     }
   }
 }
@@ -143,117 +136,5 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-// Верх — 80% 
-.elements {
-  flex: 8;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  padding: 12px;
-  align-content: start;
-}
-
-.element {
-  aspect-ratio: 1 / 1; // квадратные ячейки
-  background: #ffffff;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgb(181, 67, 185);
-  cursor: pointer;
-}
-
-.picture {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.element-picture {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-
-.name {
-  margin-top: 6px;
-  font-size: 14px;
-  color: #000;
-}
-
-// Низ — 20% 
-.bottom {
-  flex: 2;
-  display: flex;
-  border-top: 1px solid #770059;
-}
-
-.table {
-  flex: 3;
-  padding: 10px;
-}
-
-.buttons {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
-}
-.table-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.counter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.counter button {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: 2px solid #b543b9;
-  background: white;
-  font-size: 18px;
-  cursor: pointer;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0;
-}
-
-.count {
-  min-width: 20px;
-  text-align: center;
-  font-weight: bold;
-}
-
-button {
-  border-radius: 12px;
-  padding: 10px;
-  font-size: 16px;
-  border: 2px solid rgb(181, 67, 185);
-  cursor: pointer;
-}
-
-.buttons button {
-  transition: all 0.2s ease;
-}
-
-.buttons button:hover {
-  background-color: #b543b9;
-  color: white;
-  transform: scale(1.05);
 }
 </style>
