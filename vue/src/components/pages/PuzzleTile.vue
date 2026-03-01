@@ -2,6 +2,7 @@
   <div
       class="puzzle__tile"
       :class="tileClasses"
+      :style="tileStyle"
       @click="() => handleClick()"
   >
     <span v-if="!isEmpty">{{ value }}</span>
@@ -23,6 +24,10 @@ export default {
     isWin: {
       type: Boolean,
       default: false,
+    },
+    tileStyle: {
+      type: Object,
+      default: () => ({}),
     },
   },
   emits: ['click'],
@@ -46,13 +51,12 @@ export default {
 
 <style scoped lang="scss">
 .puzzle__tile {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   background-color: #333;
   color: #fff;
-  font-size: 28px;
   font-weight: bold;
-  border-radius: 8px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,6 +64,7 @@ export default {
   cursor: pointer;
   user-select: none;
   transition: all 0.15s ease;
+  box-sizing: border-box;
 
   &:active {
     transform: scale(0.95);
@@ -73,22 +78,6 @@ export default {
 
   &--win {
     background-color: #4CAF50;
-  }
-}
-
-@media (max-width: 500px) {
-  .puzzle__tile {
-    width: 70px;
-    height: 70px;
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 350px) {
-  .puzzle__tile {
-    width: 60px;
-    height: 60px;
-    font-size: 20px;
   }
 }
 </style>
