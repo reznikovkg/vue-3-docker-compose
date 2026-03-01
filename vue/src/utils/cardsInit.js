@@ -62,9 +62,9 @@ export const shuffleCards = (cards) => {
   const shuffled = [];
   const usedCards = [];
   while (shuffled.length < cards.length) {
-    let cardIndex = Math.floor(Math.random() * cards.length);
+    const cardIndex = Math.floor(Math.random() * cards.length);
     if (!usedCards.includes(cardIndex)) {
-      let currentCard = { ...cards[cardIndex], isFaceUp: false };
+      const currentCard = { ...cards[cardIndex], isFaceUp: false };
       usedCards.push(cardIndex);
       shuffled.push(currentCard);
     }
