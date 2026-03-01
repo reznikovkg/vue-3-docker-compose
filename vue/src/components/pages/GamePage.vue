@@ -137,9 +137,7 @@ export default {
 
     checkNewRecord() {
       const currentBest = this.getBestScores[this.getDifficulty];
-      if (!currentBest || this.getElapsedTime < currentBest)
-        this.isNewRecord = true;
-      else this.isNewRecord = false;
+      this.isNewRecord = !currentBest || this.getElapsedTime < currentBest;
     },
 
     restartGame() {

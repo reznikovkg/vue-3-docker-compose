@@ -10,4 +10,8 @@ const routes = {
   },
 };
 
-createApp(App).use(router).use(routes).use(store).mount("#project");
+createApp(App)
+  .use(router)
+  .use(routes)
+  .use(store)
+  .mount('#project')

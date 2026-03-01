@@ -151,12 +151,12 @@ export default {
   },
 
   actions: {
-    startGame(store, payload) {
+    startGame: (store, payload) => {
       store.commit(MUTATIONS.SET_DIFFICULTY, payload);
       store.commit(MUTATIONS.START_GAME);
     },
 
-    flipCard(store, payload) {
+    flipCard: (store, payload) => {
       return new Promise((resolve) => {
         if (!store.state.canFlip) {
           resolve();
@@ -182,7 +182,7 @@ export default {
       });
     },
 
-    checkPair(store) {
+    checkPair: (store) => {
       return new Promise((resolve) => {
         store.commit(MUTATIONS.SET_CAN_FLIP, false);
 
@@ -202,7 +202,7 @@ export default {
       });
     },
 
-    handleFoundPair(store, payload) {
+    handleFoundPair: (store, payload) => {
       return new Promise((resolve) => {
         setTimeout(() => {
           store.commit(MUTATIONS.SET_PAIR_FOUND, payload);
@@ -221,7 +221,7 @@ export default {
       });
     },
 
-    handleMismatchedPair(store, payload) {
+    handleMismatchedPair: (store, payload) => {
       return new Promise((resolve) => {
         setTimeout(() => {
           store.commit(MUTATIONS.SET_CARDS_FACE_UP, {
@@ -235,11 +235,11 @@ export default {
       });
     },
 
-    updateTime(store, payload) {
+    updateTime: (store, payload) => {
       store.commit(MUTATIONS.SET_ELAPSED_TIME, payload);
     },
 
-    resetGame(store) {
+    resetGame: (store) => {
       store.commit(MUTATIONS.RESET_GAME);
     },
   },
