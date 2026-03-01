@@ -180,13 +180,13 @@ export default {
       let { x, y } = enemy
 
       if (direction === 'up') 
-        pos.y -= speed
+        y -= speed
       if (direction === 'down') 
-        pos.y += speed
+        y += speed
       if (direction === 'left') 
-        pos.x -= speed
+        x -= speed
       if (direction === 'right') 
-        pos.x += speed
+        x += speed
 
       return { x, y }
     },
@@ -250,7 +250,7 @@ export default {
       const enemy = this.enemies.find(e => e.id === id)
       if (enemy) {
         this.selectedEnemyId = enemy.id
-      this.selectedTowerId = null
+        this.selectedTowerId = null
       }
     }
   }
