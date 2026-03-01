@@ -57,7 +57,6 @@
 
 <script>
 import GameCell from '../ui/GameCell.vue'
-
 const GRID_SIZE = 8
 const STORAGE_KEY = 'game-state'
 const ITEM_TIERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
@@ -97,7 +96,6 @@ export default {
   methods: {
     loadGame() {
       const savedState = localStorage.getItem(STORAGE_KEY)
-
       if (savedState) {
         try {
           const { grid, score } = JSON.parse(savedState)
@@ -149,21 +147,17 @@ export default {
         alert('Нет свободных клеток!')
         return
       }
-
       const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)]
       const tier = Math.floor(Math.random() * 3)
-
       this.grid[randomIndex] = {
         tier,
         value: ITEM_TIERS[tier]
       }
-
       this.saveGame()
     },
 
     handleDragStart(item, index) {
       if (!item) return
-
       this.isDragging = true
       this.draggedItem = item
       this.draggedFromIndex = index
@@ -181,7 +175,6 @@ export default {
         this.handleDragEnd()
         return
       }
-
       this.mergeItems(this.draggedFromIndex, targetIndex)
       this.handleDragEnd()
     },
@@ -204,44 +197,35 @@ export default {
         this.touchStartPosition = null
         return
       }
-
       if (this.touchStartPosition.index !== targetIndex) {
         this.mergeItems(this.touchStartPosition.index, targetIndex)
       }
-
       this.touchStartPosition = null
     },
 
     mergeItems(fromIndex, toIndex) {
       const fromItem = this.grid[fromIndex]
       const toItem = this.grid[toIndex]
-
       if (!fromItem) return
-
       if (!toItem) {
         this.grid[toIndex] = { ...fromItem }
         this.grid[fromIndex] = null
         this.saveGame()
         return
       }
-
       if (fromItem.tier === toItem.tier) {
         const newTier = Math.min(fromItem.tier + 1, ITEM_TIERS.length - 1)
-
         this.score += TIER_POINTS[newTier]
-
         this.grid[toIndex] = {
           tier: newTier,
           value: ITEM_TIERS[newTier]
         }
-
         this.grid[fromIndex] = null
       } else {
         const temp = { ...fromItem }
         this.grid[fromIndex] = { ...toItem }
         this.grid[toIndex] = temp
       }
-
       this.saveGame()
     }
   }

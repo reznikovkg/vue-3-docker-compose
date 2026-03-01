@@ -52,18 +52,14 @@ export default {
   methods: {
     onDragStart(event) {
       if (!this.item) return
-
       event.dataTransfer.effectAllowed = 'move'
       event.dataTransfer.setData('text/plain', this.index.toString())
-
       const dragIcon = document.createElement('div')
       dragIcon.className = 'c-game-cell__drag-preview'
       dragIcon.textContent = this.item.value
       document.body.appendChild(dragIcon)
       event.dataTransfer.setDragImage(dragIcon, 25, 25)
-
       setTimeout(() => document.body.removeChild(dragIcon), 0)
-
       this.$emit('drag-start', this.item, this.index)
     },
 
@@ -78,7 +74,6 @@ export default {
 
     onTouchStart() {
       if (!this.item) return
-
       this.longPressTimer = setTimeout(() => {
         this.$emit('touch-move', this.index)
       }, 200)
@@ -86,13 +81,10 @@ export default {
 
     onTouchMove(event) {
       if (!this.item) return
-
       clearTimeout(this.longPressTimer)
-
       const touch = event.touches[0]
       const element = document.elementFromPoint(touch.clientX, touch.clientY)
       const cellElement = element?.closest('.c-game-cell')
-
       if (cellElement) {
         const targetIndex = cellElement.dataset.index
         if (targetIndex !== undefined) {
@@ -103,11 +95,9 @@ export default {
 
     onTouchEnd(event) {
       clearTimeout(this.longPressTimer)
-
       const touch = event.changedTouches[0]
       const element = document.elementFromPoint(touch.clientX, touch.clientY)
       const cellElement = element?.closest('.c-game-cell')
-
       if (cellElement) {
         const targetIndex = cellElement.dataset.index
         if (targetIndex !== undefined) {
