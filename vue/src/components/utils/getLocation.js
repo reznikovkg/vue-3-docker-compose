@@ -1,4 +1,4 @@
-import { LOCATIONS } from "../../constants";
+import { LOCATIONS } from '../../constants'
 
 export const getLocation = (currentLocationValue) =>
-  LOCATIONS.find(({ value }) => value === currentLocationValue);
+  LOCATIONS.find(({ value }) => value === currentLocationValue)

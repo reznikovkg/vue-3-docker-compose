@@ -1,8 +1,8 @@
-import { LOCATIONS } from "../constants";
+import { LOCATIONS } from '../constants'
 
 const MUTATIONS = {
-  SET_CURRENT_LOCATION_VALUE: "SET_CURRENT_LOCATION_VALUE",
-};
+  SET_CURRENT_LOCATION_VALUE: 'SET_CURRENT_LOCATION_VALUE',
+}
 
 export default {
   namespaced: true,
@@ -13,7 +13,7 @@ export default {
 
   mutations: {
     [MUTATIONS.SET_CURRENT_LOCATION_VALUE]: (state, value) => {
-      state.currentLocationValue = value;
+      state.currentLocationValue = value
     },
   },
 
@@ -23,7 +23,7 @@ export default {
 
   actions: {
     setCurrentLocationValue(store, value) {
-      store.commit(MUTATIONS.SET_CURRENT_LOCATION_VALUE, value);
+      store.commit(MUTATIONS.SET_CURRENT_LOCATION_VALUE, value)
     },
   },
-};
+}

@@ -5,6 +5,7 @@
 .env.*.local
 
 # Editor directories and files
+.prettierrc
 .idea
 .vscode
 *.suo

@@ -17,36 +17,36 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
-import { useStore } from "vuex";
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useStore } from 'vuex'
 
-import { LOCATIONS } from "../../constants";
+import { LOCATIONS } from '../../constants'
 
-const isOpen = ref(false);
-const dropdownRef = ref(null);
-const store = useStore();
+const isOpen = ref(false)
+const dropdownRef = ref(null)
+const store = useStore()
 
 const setLocation = (location) => {
-  store.dispatch("game/setCurrentLocationValue", location);
-  isOpen.value = false;
-};
+  store.dispatch('game/setCurrentLocationValue', location)
+  isOpen.value = false
+}
 
 const toggle = () => {
-  isOpen.value = !isOpen.value;
-};
+  isOpen.value = !isOpen.value
+}
 
 const handleClickOutside = (event) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-    isOpen.value = false;
+    isOpen.value = false
   }
-};
+}
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
+  document.addEventListener('click', handleClickOutside)
+})
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped lang="scss">

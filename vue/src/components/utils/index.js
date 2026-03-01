@@ -1,1 +1,1 @@
-export { getLocation } from "./getLocation";
+export { getLocation } from './getLocation'
