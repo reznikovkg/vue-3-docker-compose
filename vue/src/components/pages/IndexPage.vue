@@ -173,25 +173,20 @@ export default {
     padding: 15px;
     background: #bcbdbe;
     border-radius: 10px;
-  }
 
-  &__scores-title {
-    margin-top: 0;
-    font-size: 22px;
-    color: black;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
+    &-title {
+      margin-top: 0;
+      font-size: 22px;
+      color: black;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
 
-  &__scores-list {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: 0;
-    font-size: 22px;
-    color: black;
-    font-weight: bold;
-    margin-bottom: 10px;
+    &-list {
+      display: flex;
+      justify-content: space-around;
+      gap: 10px;
+    }
   }
 
   &__scores-item {
