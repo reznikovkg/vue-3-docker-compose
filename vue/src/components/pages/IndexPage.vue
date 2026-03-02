@@ -70,6 +70,7 @@
 import BubbleGame from '@/components/BubbleGame.vue'
 import GamwMenu from '@/components/ui/GamwMenu.vue'
 import { GAME_DEFAULTS } from '@/constants/gameConfig.js'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'IndexPage',
@@ -107,6 +108,10 @@ export default {
   },
 
   methods: {
+    ...mapActions([
+      'setLastResult'
+    ]),
+
     startFromMenu(settings) {
       this.gameSettings = {
         ...settings
@@ -117,8 +122,9 @@ export default {
     onFinish(res) {
       const score = res && typeof res.score === 'number' ? res.score : 0
       this.lastResultScore = score
-      this.$store.dispatch('setLastResult', score)
-      this.showMenu = true
+      this.setLastResult(score).then(() => {
+        this.showMenu = true
+      })
     }
   }
 }

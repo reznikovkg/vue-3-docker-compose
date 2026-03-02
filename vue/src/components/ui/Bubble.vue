@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div
-    class="c-game__bubble"
-    :class="'c-game__bubble--' + type"
+    class="c-bubble"
+    :class="'c-bubble--' + type"
     :data-id="bubbleId"
     :style="{ left: left + 'px', top: top + 'px', width: size + 'px', height: size + 'px', backgroundColor: bubbleColor }"
   >
-    <span class="c-game__bubbleBlik"></span>
+    <span class="c-bubble--blik"></span>
   </div>
 </template>
 
@@ -47,19 +47,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.c-game {
-  &__bubble {
-    position: absolute;
-    border-radius: 50%;
-    cursor: pointer;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    opacity: 0.86;
-  }
+.c-bubble {
+  position: absolute;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  opacity: 0.86;
 
   // Добавить ли тень блику??!!
 
-  &__bubbleBlik {
+  &--blik {
     position: absolute;
     top: 15%;
     left: 20%;
