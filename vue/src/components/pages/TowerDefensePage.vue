@@ -1,10 +1,6 @@
 <template>
   <div class="towerDefensePage">
     <div class="towerDefensePage__topBar">
-      <RouterLink :to="{ name: $routes.INDEX }" class="towerDefensePage__backLink">
-        To Index
-      </RouterLink>
-
       <div class="towerDefensePage__levelList">
         <button
           v-for="level in levels"
@@ -423,14 +419,6 @@ onBeforeUnmount(() => page.unmount())
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-}
-
-.towerDefensePage__backLink {
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: #e7f5eb;
-  color: #1a6a36;
-  text-decoration: none;
 }
 
 .towerDefensePage__levelList {
