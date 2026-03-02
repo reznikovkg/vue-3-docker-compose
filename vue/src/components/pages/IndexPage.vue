@@ -1,9 +1,12 @@
 <template>
-  Index
+  <div class="indexPage">Index</div>
+  <div class="indexPage__links">
+    <RouterLink :to="{ name: $routes.TOWER_DEFENSE }">
+      To Tower Defense
+    </RouterLink>
 
-  <div>
     <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
+      To Example
     </RouterLink>
   </div>
 </template>
@@ -13,5 +16,13 @@
 </script>
 
 <style scoped>
+.indexPage {
+  margin-bottom: 12px;
+}
+
+.indexPage__links {
+  display: flex;
+  gap: 12px;
+}
 
 </style>
