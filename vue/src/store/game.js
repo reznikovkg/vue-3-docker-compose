@@ -1,0 +1,25 @@
+const MUTATIONS = {
+    SET_ISFINISHED: "SET_ISFINISHED"
+}
+
+export default {
+    namespaced: true,
+    state() {
+        return {
+            isFinished: false
+        }
+    },
+    getters: {
+        getIsFinished: (state) => state.isFinished
+    },
+    mutations: {
+        [MUTATIONS.SET_ISFINISHED]: (state, value) => {
+            state.isFinished = value
+        }
+    },
+    actions: {
+        changeIsFinished: (store, value) => {
+            store.commit(MUTATIONS.SET_ISFINISHED, value)
+        }
+    }
+}
