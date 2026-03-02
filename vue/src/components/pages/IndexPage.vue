@@ -164,13 +164,9 @@ export default {
   &__btn {
     width: fit-content;
     padding: 6px 10px;
-    border: 1px solid #d9d9d9;
+    border: 1px solid #ff4d4f;
     border-radius: 6px;
     cursor: pointer;
-  }
-
-  &__btn--red {
-    border-color: #ff4d4f;
     color: #ff4d4f;
   }
 }

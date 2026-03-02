@@ -255,7 +255,6 @@ export default {
     height: 42px;
     border: 1px solid #d9d9d9;
     border-radius: 12px;
-    overflow: hidden;
   }
 
   &__colorSlider {
