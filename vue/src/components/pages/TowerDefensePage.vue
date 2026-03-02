@@ -13,14 +13,6 @@
           {{ level.name }}
         </button>
       </div>
-
-      <button
-        type="button"
-        class="towerDefensePage__spawnButton"
-        @click="() => page.spawnEnemyAtSpawnPoint()"
-      >
-        Add Enemy At Spawn
-      </button>
     </div>
 
     <div class="towerDefensePage__layout">
@@ -318,11 +310,6 @@ class TowerDefensePageClass {
     this.focusBoard()
   }
 
-  spawnEnemyAtSpawnPoint = () => {
-    store.dispatch('towerDefense/addEnemyAtPoint', null)
-    this.focusBoard()
-  }
-
   spawnEnemyAtCustomPoint = () => {
     const level = currentLevel.value
     const point = {
@@ -428,7 +415,6 @@ onBeforeUnmount(() => page.unmount())
 }
 
 .towerDefensePage__levelButton,
-.towerDefensePage__spawnButton,
 .towerDefensePage__actionButton {
   border: 1px solid #bac7bf;
   background: #ffffff;
