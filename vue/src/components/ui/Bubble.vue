@@ -1,7 +1,8 @@
 <template>
   <div ref="bubble"
        class="bubble"
-       :class="['bubble--' + color, 'bubble--' + size]"
+       :class="'bubble--' + size"
+       :style="{ '--bubble-color': color }"
        @click="() => pop()">
     <div class="bubble__highlight"></div>
   </div>
@@ -19,7 +20,7 @@ export default {
   },
   props: {
     color: {
-      default: 'default',
+      default: '#6ea6df',
       type: String,
     },
     size: {
@@ -29,20 +30,17 @@ export default {
   },
   methods: {
     startFlight() {
-      this.isFlying = true;
-      this.startTime = performance.now();
-
+      this.isFlying = true
+      this.startTime = performance.now()
       requestAnimationFrame((timestamp) => {
         this.animate(timestamp)
       });
     },
     animate(currentTime) {
       if (!this.isFlying || !this.$refs.bubble) return
-
       const elapsedTime = currentTime - this.startTime
       const progress = Math.min(elapsedTime / 5000, 1)
       this.$refs.bubble.style.transform = `translateY(${progress * 100}px)`
-
       if (elapsedTime < 5000) {
         requestAnimationFrame((timestamp) => this.animate(timestamp))
       } else {
@@ -50,15 +48,14 @@ export default {
       }
     },
     pop() {
-      this.$emit('pop');
-      this.isFlying = false;
-
+      this.$emit('pop')
+      this.isFlying = false
     }
   },
   mounted() {
     this.$nextTick(() => {
       this.startFlight()
-    });
+    })
   }
 }
 </script>
@@ -66,31 +63,11 @@ export default {
 <style lang="scss">
 .bubble {
   position: absolute;
-  border: 1px solid #6ea6df;
-  background: rgba(110, 166, 223, 0.5);
+  border: 1px solid var(--bubble-color);
+  background: color-mix(in srgb, var(--bubble-color), transparent 50%);
   border-radius: 50%;
   width: 40px;
   height: 40px;
-
-  &--blue {
-    border: 1px solid #0879ea;
-    background: rgba(8, 121, 234, 0.5);
-  }
-
-  &--breeze {
-    border: 1px solid #06b8a2;
-    background: rgba(6, 184, 162, 0.5);
-  }
-
-  &--purple {
-    border: 1px solid #7506dc;
-    background: rgba(117, 6, 220, 0.5);
-  }
-
-  &--pink {
-    border: 1px solid #ad39ba;
-    background: rgba(173, 57, 186, 0.5);
-  }
 
   &--small {
     width: 20px;

@@ -6,7 +6,7 @@
           <span class="header-panel__label">Score: {{ score }}</span>
           <div class="header-panel__selection-group">
             <span class="header-panel__label">Select: </span>
-            <div class="header-panel__color" :style="{ backgroundColor: indicatorColor }"></div>
+            <div class="header-panel__color" :style="{ backgroundColor : this.colorMap[this.selectColor] || this.colorMap.default }"></div>
           </div>
         </div>
       </div>
@@ -19,7 +19,7 @@
       <Bubble
           v-for="(b, index) in activeBubbles"
           :key="index"
-          :color="b.color"
+          :color="colorMap[b.color] || colorMap.default"
           :size="b.size"
           :style="{ left: b.x + '%' }"
           @pop="handleBubblePop(index)"
@@ -50,7 +50,7 @@ export default {
       type: Number
     },
     points: {
-      default: 0,
+      default: 1,
       type: Number
     },
     fine: {
@@ -61,68 +61,83 @@ export default {
   data() {
     return {
       score: 0,
-      activeBubbles: [
-        /*{ color: 'blue', size: 'medium', x: 10 },
-        { color: 'purple', size: 'small', x: 40 },
-        { color: 'pink', size: 'big', x: 70 },*/
-      ],
+      activeBubbles: [],
+      spawnTimer: null,
       colorMap: {
         blue: '#0879ea',
         breeze: '#06b8a2',
         purple: '#7506dc',
         pink: '#ad39ba',
-        default: '#6ea6df'
+        default: '#7cafe3'
       }
     };
   },
   computed: {
-    indicatorColor() {
-      return this.colorMap[this.selectColor] || this.colorMap.default;
+    interval() {
+      return 1000 / this.intensity
     }
   },
   methods: {
     initGame() {
-      this.score = 0;
-      this.activeBubbles = [];
-      this.spawnInitialBubbles();
+      this.stopSpawning()
+      this.score = 0
+      this.activeBubbles = []
+      this.addBubble()
+      this.startSpawning()
     },
-    spawnInitialBubbles() {
-      for (let i = 0; i < this.num; i++) {
-        this.addBubble();
+    startSpawning() {
+      this.spawnTimer = setInterval(() => {
+        this.addBubble()
+      }, this.interval)
+    },
+    stopSpawning() {
+      if (this.spawnTimer) {
+        clearInterval(this.spawnTimer)
+        this.spawnTimer = null
       }
     },
     addBubble() {
       const colors = ['blue', 'breeze', 'purple', 'pink'];
       this.activeBubbles.push({
         id: Date.now() + Math.random(),
-        color: colors[Math.floor(Math.random() * colors.length)],
+        color: colors[Math.floor(Math.random() * this.num)],
         size: 'medium',
         x: Math.random() * 90,
         y: 0
       });
     },
     check() {
-      if (this.score > 10) {
+      if (this.score >= 50 || this.score <= -50) {
+        this.stopSpawning()
         this.$emit('finish', this.score)
       }
     },
     restartGame() {
       this.initGame()
     },
-    increaseScore() {
-      this.score += this.points
+    processScore(bubbleColorName) {
+      if (bubbleColorName === this.selectColor) {
+        this.score += this.points
+      }
+      else {
+        this.score -= this.fine
+      }
     },
     handleBubblePop(index) {
-      this.increaseScore();
-      this.removeBubble(index);
-      this.check();
+      const poppedBubble = this.activeBubbles[index]
+      this.processScore(poppedBubble.color)
+      this.removeBubble(index)
+      this.check()
     },
     removeBubble(index) {
-      this.activeBubbles.splice(index, 1);
+      this.activeBubbles.splice(index, 1)
     }
   },
+  beforeUnmount() {
+    this.stopSpawning()
+  },
   mounted() {
-    this.initGame();
+    this.initGame()
   }
 }
 </script>
