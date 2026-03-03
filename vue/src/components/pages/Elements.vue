@@ -1,36 +1,31 @@
 <template>
   <div class="elements">
     <div 
-      class="element" 
+      class="elements__item" 
       v-for="elem in openedElements" 
       :key="elem.id" 
-      @click="add(elem.id)"
+      @click="() => addToTable(elem.id)"
     >
-      <div class="picture">
-        <img :src="elem.picture" class="element-picture"/>
+    <div class="elements__picture">
+      <img :src="elem.picture" class="elements__image"/>
       </div>
-      <div class="name">{{ elem.name }}</div>
+      <div class="elements__name">{{ elem.name }}</div>
     </div>
   </div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
+
 export default {
   name: 'ElementsGrid',
 
-  props: {
-    openedElements: {
-      type: Array,
-      required: true
-    }
+  computed: {
+    ...mapGetters(['openedElements'])
   },
 
-  emits: ['add'],
-
   methods: {
-    add(id) {
-      this.$emit('add', id)
-    }
+    ...mapActions(['addToTable'])
   }
 }
 </script>
@@ -43,35 +38,40 @@ export default {
   gap: 12px;
   padding: 12px;
   align-content: start;
-}
 
-.element {
-  aspect-ratio: 1 / 1;
-  background: #ffffff;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgb(181, 67, 185);
-  cursor: pointer;
-}
+  &__item {
+    aspect-ratio: 1 / 1;
+    background: #ffffff;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgb(181, 67, 185);
+    cursor: pointer;
 
-.picture {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    &:hover {
+      transform: scale(1.05);
+      transition: 0.2s;
+    }
+  }
 
-.element-picture {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
+  &__picture {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-.name {
-  margin-top: 6px;
-  font-size: 14px;
-  color: #000;
+  &__image {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+  }
+
+  &__name {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #000;
+  }
 }
 </style>
