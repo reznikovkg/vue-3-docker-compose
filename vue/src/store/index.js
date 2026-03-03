@@ -1,84 +1,87 @@
-import { reactive } from 'vue'
+import { createStore } from 'vuex'
 const STORAGE_KEY = 'mergeGame'
 
-const state = reactive({
-  gridSize: 8,
-  grid: [],
-  score: 0
-})
-
-export default {
-  install(app) {
-    const createEmptyGrid = () => {
-      return Array(state.gridSize).fill().map(
-        () => Array(state.gridSize).fill(null)
-      )
+export default createStore({
+  state: {
+    gridSize: 8,
+    grid: [],
+    score: 0
+  },
+ mutations: {
+    setGridSize(state, size) {
+      state.gridSize = size
+    },
+    setGrid(state, grid) {
+      state.grid = grid
+    },
+    setScore(state, score) {
+      state.score = score
+    },
+    updateCell(state, { row, col, value }) {
+      if (!state.grid[row]) state.grid[row] = []
+      state.grid[row][col] = value
     }
-
-    const findEmptyCells = () => {
-      return state.grid.flatMap((row, i) =>
-        row.reduce((acc, cell, j) => {
-          if (!cell) acc.push({ row: i, col: j })
-          return acc
-        }, [])
-      )
-    }
-
-    const getRandomLevel = () => {
+  },
+  actions: {
+    createEmptyGrid({ state, commit }) {
+      const grid = Array(state.gridSize)
+        .fill()
+        .map(() => Array(state.gridSize).fill(null))
+      commit('setGrid', grid)
+    },
+    findEmptyCells({ state }) {
+      const emptyCells = []
+      state.grid.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+          if (!cell) emptyCells.push({ row: rowIndex, col: colIndex })
+        })
+      })
+      return emptyCells
+    },
+    getRandomLevel() {
       const rand = Math.random()
       if (rand < 0.7) return 1
       if (rand < 0.9) return 2
       return 3
-    }
-
-    const addRandomItem = () => {
-      const emptyCells = findEmptyCells()
+    },
+    addRandomItem({ dispatch, commit }) {
+      const emptyCells = dispatch('findEmptyCells')
       if (emptyCells.length > 0) {
         const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
-        if (!state.grid[row]) state.grid[row] = []
-        state.grid[row][col] = { level: getRandomLevel() }
+        const level = dispatch('getRandomLevel')
+        commit('updateCell', { row, col, value: { level } })
       }
-    }
-
-    const newGame = () => {
-      state.grid = createEmptyGrid()
-      state.score = 0
+    },
+    newGame({ dispatch, commit }) {
+      dispatch('createEmptyGrid')
+      commit('setScore', 0)
       for (let i = 0; i < 5; i++) {
-        addRandomItem() 
-    }
-  }
-
-    const saveGame = () => {
+        dispatch('addRandomItem')
+      }
+      dispatch('saveGame')
+    },
+    saveGame({ state }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         grid: state.grid,
         score: state.score,
         gridSize: state.gridSize
       }))
-    }
-
-    const loadGame = () => {
+    },
+    loadGame({ dispatch, commit, state }) {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const data = JSON.parse(saved)
-        state.gridSize = data.gridSize || 8
-        state.grid = data.grid || createEmptyGrid()
-        state.score = data.score || 0
+        commit('setGridSize', data.gridSize || 8)
+        commit('setGrid', data.grid || [])
+        commit('setScore', data.score || 0)
       } else {
-        newGame()  
+        dispatch('newGame')
       }
     }
-
-    loadGame()
-    const store = {
-      gridSize: state.gridSize,
-      grid: state.grid,
-      score: state.score,
-      addRandomItem, 
-      newGame,
-      saveGame,
-      loadGame
-    }
-    app.provide('store', store)
-    app.config.globalProperties.$store = store
+  },
+  getters: {
+    gridSize: state => state.gridSize,
+    grid: state => state.grid,
+    score: state => state.score
   }
-}
+})

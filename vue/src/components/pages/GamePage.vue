@@ -7,14 +7,14 @@
       <div class="game-page__controls">
         <button
             class="button button--primary"
-            @click="addRandomItem"
+            @click="() => addRandomItem()"
             :disabled="gameOver"
         >
             Добавить предмет
         </button>
         <button
             class="button button--primary"
-            @click="resetGame"
+            @click="() => resetGame()"
         >
             Новая игра
         </button>
@@ -24,7 +24,7 @@
      <div
       v-if="gameOver"
       class="game-page__overlay"
-      @click="resetGame"
+      @click="() => resetGame()"
     >
       <div class="game-page__message">
         <h2 class="game-page__title">
@@ -35,7 +35,7 @@
         </p>
         <button
           class="button button--play-again"
-          @click="resetGame"
+          @click="() => resetGame()"
         >
           Играть снова
         </button>
@@ -47,8 +47,8 @@
       :grid-size="gridSize"
       :dragged-item="draggedItem"
       :game-over="gameOver"
-      @drag-start="handleDragStart"
-      @drop="handleDrop"
+      @drag-start="(data) => handleDragStart(data)"
+      @drop="(data) => handleDrop(data)"
     />
 
     <div class="game-page__size-controls">
@@ -89,7 +89,6 @@ export default {
   components: {
     GameGrid
   },
-  inject: ['store'],
   data() {
     return {
       gridSize: 8,
@@ -141,9 +140,6 @@ export default {
                 this.noSpaceCount = state.noSpaceCount || 0
                 this.gameOver = state.gameOver || false
                 this.gameWon = state.gameWon || false
-                this.store.gridSize = this.gridSize
-                this.store.grid = this.grid
-                this.store.score = this.score
             } catch (e) {
                 console.error('Ошибка загрузки сохранения:', e)
                 this.startNewGame()
@@ -179,13 +175,6 @@ export default {
       this.gameWon = false
       this.addMultipleRandomItems(5)
       this.saveToStorage()
-      this.syncWithStore()
-    },
-    syncWithStore() {
-      this.store.gridSize = this.gridSize
-      this.store.grid = JSON.parse(JSON.stringify(this.grid))
-      this.store.score = this.score
-      this.store.saveGame()
     },
     createEmptyGrid() {
       return Array(this.gridSize).fill().map(() => 
@@ -198,31 +187,30 @@ export default {
       }
     },
     addRandomItem() {
-      if (this.gameOver) return
-      const emptyCells = this.grid.flatMap((row, i) => 
-        row.reduce((acc, cell, j) => {
-          if (!cell) acc.push({ row: i, col: j })
-          return acc
-        }, [])
-      )
-      if (emptyCells.length > 0) {
+        if (this.gameOver) return
+        const emptyCells = []
+        this.grid.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                if (!cell) {
+                    emptyCells.push({ row: rowIndex, col: colIndex })
+                }
+            })
+        })
+        if (emptyCells.length === 0) {
+            this.noSpaceCount++
+            if (this.noSpaceCount >= LOSE_CONDITION && !this.gameWon) {
+                this.gameOver = true
+            }
+            this.checkGameConditions()
+            this.saveToStorage()
+            return
+        }
         const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
-        const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL)
-        const newGrid = JSON.parse(JSON.stringify(this.grid))
-        newGrid[row][col] = { level }
-        this.grid = newGrid
+        const level = Math.floor(Math.random() * 3) + 1
+        this.grid[row][col] = { level: Math.min(level, MAX_LEVEL) }
         this.noSpaceCount = 0
         this.checkGameConditions()
         this.saveToStorage()
-        this.syncWithStore()
-      } else {
-        this.noSpaceCount++
-        if (this.noSpaceCount >= LOSE_CONDITION && !this.gameWon) {
-          this.gameOver = true
-        }
-        this.checkGameConditions()
-        this.saveToStorage()
-      }
     },
     addMultipleRandomItems(count) {
       if (this.gameOver) return
@@ -230,7 +218,6 @@ export default {
         if (remaining <= 0) {
             this.checkGameConditions()
             this.saveToStorage()
-            this.syncWithStore()
             return
         }
         const emptyCells = this.grid.flatMap((row, i) => 
@@ -268,7 +255,6 @@ export default {
         this.grid = newGrid
         this.checkGameConditions()
         this.saveToStorage()
-        this.syncWithStore()
       }
     },
     resetGame() {
@@ -287,7 +273,6 @@ export default {
       this.addMultipleRandomItems(5)
       this.checkGameConditions()
       this.saveToStorage()
-      this.syncWithStore()
     },
     handleDragStart(data) {
       if (this.gameOver) return
@@ -344,7 +329,6 @@ export default {
       }
       this.draggedItem = null
       this.saveToStorage()
-      this.syncWithStore()
     }
   }
 }
