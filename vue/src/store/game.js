@@ -268,8 +268,16 @@ export default {
       commit(MUTATIONS.SET_KEY, { key: event.key, isPressed: false })
     },
 
-    setMousePos: ({ commit }, pos) => {
+    setMousePosition: ({ commit }, pos) => {
       commit(MUTATIONS.SET_MOUSE_POS, pos)
+    },
+
+    setWorldSize: ({ commit }, size) => {
+      commit(MUTATIONS.SET_WORLD_SIZE, size)
+    },
+    
+    setPlayerPosition: ({ commit }, pos) => {
+      commit(MUTATIONS.SET_PLAYER_POSITION, pos)
     },
 
     updatePlayerPosition: ({ state, commit }, dt) => {

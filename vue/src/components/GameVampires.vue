@@ -1,5 +1,5 @@
 <template>
-  <div class="game" ref="game" @mousemove="(e) => handleMouseMove(e)">
+  <div class="game" ref="game" @mousemove="(e) => comMouseMove(e)">
     <div class="game__hud">
       <div class="game__time">Время: {{ formattedTime }}</div>
 
@@ -42,13 +42,13 @@
     <div v-if="!gameActive" class="game__game-over">
       <h2 class="game__game-over-title">GAME OVER</h2>
       <p class="game__game-over-time">Время: {{ formattedTime }}</p>
-      <button class="game__game-over-button" @click="() => resetGame()">НОВАЯ ИГРА</button>
+      <button class="game__game-over-button" @click="() => restartGame()">НОВАЯ ИГРА</button>
     </div>
   </div>
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'GameVampires',
@@ -79,45 +79,56 @@ export default {
   mounted() {
     this.loop = (timestamp) => {
       if (this.gameActive) 
-        this.$store.dispatch('game/gameLoop', timestamp)
+        this.gameLoop(timestamp)
       this.animationFrame = requestAnimationFrame(this.loop)
     }
 
     this.init()
-    window.addEventListener('keydown', this.handleKeyDown)
-    window.addEventListener('keyup', this.handleKeyUp)
-    window.addEventListener('resize', this.handleResize)
+    window.addEventListener('keydown', this.comKeyDown)
+    window.addEventListener('keyup', this.comKeyUp)
+    window.addEventListener('resize', this.comResize)
   },
   beforeUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown)
-    window.removeEventListener('keyup', this.handleKeyUp)
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('keydown', this.comKeyDown)
+    window.removeEventListener('keyup', this.comKeyUp)
+    window.removeEventListener('resize', this.comResize)
     cancelAnimationFrame(this.animationFrame)
   },
   methods: {
-    handleMouseMove(e) {
+    ...mapActions('game', [
+      'gameLoop',
+      'resetGame',
+      'handleKeyDown',
+      'handleKeyUp',
+      'setMousePosition',
+      'setWorldSize',
+      'setPlayerPosition',
+    ]),
+    
+    comMouseMove(e) {
       const rect = this.$refs.game.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      this.$store.dispatch('game/setMousePos', { x, y })
+      this.setMousePosition({ x, y })
     },
 
-    handleKeyDown(e) {
+    comKeyDown(e) {
       if (e.key.startsWith('Arrow')) 
         e.preventDefault()
-      this.$store.dispatch('game/handleKeyDown', e)
+      this.handleKeyDown(e)
     },
-    handleKeyUp(e) {
+    
+    comKeyUp(e) {
       if (e.key.startsWith('Arrow')) 
         e.preventDefault()
-      this.$store.dispatch('game/handleKeyUp', e)
+      this.handleKeyUp(e)
     },
 
-    handleResize() {
+    comResize() {
       const width = window.innerWidth
       const height = window.innerHeight
 
-      this.$store.commit('game/SET_WORLD_SIZE', { width, height })
+      this.setWorldSize({ width, height })
 
       const p = this.$store.state.game.player
       const r = p.radius
@@ -125,16 +136,16 @@ export default {
       const x = Math.max(r, Math.min(width - r, p.x))
       const y = Math.max(r, Math.min(height - r, p.y))
 
-      this.$store.commit('game/SET_PLAYER_POSITION', { x, y })
+      this.setPlayerPosition({ x, y })
     },
 
     init() {
-      this.$store.dispatch('game/resetGame')
+      this.resetGame()
       cancelAnimationFrame(this.animationFrame)
       this.animationFrame = requestAnimationFrame(this.loop)
     },
 
-    resetGame() {
+    restartGame() {
       this.init()
     },
   },
