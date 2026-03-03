@@ -28,7 +28,6 @@ const backgroundStyle = computed(() => {
 
 <style scoped lang="scss">
 .game-page {
-  margin: 0;
   min-height: 100dvh;
 }
 </style>

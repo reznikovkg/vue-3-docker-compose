@@ -36,7 +36,7 @@ const toggle = () => {
 }
 
 const handleClickOutside = (event) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+  if (!dropdownRef.value?.contains(event.target)) {
     isOpen.value = false
   }
 }
