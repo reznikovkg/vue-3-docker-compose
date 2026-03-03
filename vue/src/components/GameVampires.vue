@@ -130,7 +130,7 @@ export default {
 
       this.setWorldSize({ width, height })
 
-      const p = this.$store.state.game.player
+      const p = this.player
       const r = p.radius
 
       const x = Math.max(r, Math.min(width - r, p.x))
