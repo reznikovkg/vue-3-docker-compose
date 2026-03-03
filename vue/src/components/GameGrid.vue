@@ -11,14 +11,14 @@
       </div>
       <button 
         class="game__button"
-        @click="addRandomItem"
+        @click="handleAddItem"
         :disabled="isFull"
       >
         Добавить предмет
       </button>
       <button 
         class="game__button game__button--secondary"
-        @click="resetGame"
+        @click="handleReset"
       >
         Новая игра
       </button>
@@ -58,7 +58,7 @@
       </div>
     </div>
 
-    <div v-if="message" class="game__message" :class="messageClass">
+    <div v-if="message" class="game__message" :class="`game__message--${messageType}`">
       {{ message }}
     </div>
 
@@ -68,7 +68,7 @@
         <p class="game__game-over-text">Нет свободных ячеек</p>
         <p class="game__game-over-score">Ваш счет: {{ score }}</p>
         <p class="game__game-over-moves">Сделано ходов: {{ moves }}</p>
-        <button class="game__button game__button--large" @click="resetGame">
+        <button class="game__button game__button--large" @click="handleReset">
           Начать заново
         </button>
       </div>
@@ -77,93 +77,63 @@
 </template>
 
 <script>
+import { mapState, mapGetters, mapActions } from 'vuex'
+
 export default {
 name: 'GameGrid',
 
 data() {
     return {
-      gridSize: 8,
-      grid: [],
-      score: 0,
-      moves: 0,
       draggedIndex: null,
       dragOverCell: null,
-      touchStartIndex: null,
-      message: '',
-      messageClass: '',
-      messageTimeout: null,
-      gameOver: false,
-      itemIcons: ['🌱', '🌿', '🍀', '🌳', '🌲', '🏔️', '🌋', '⭐', '💎', '👑']
+      touchStartIndex: null
     }
 },
 
 computed: {
-    isFull() {
-      return this.grid.every(cell => cell !== null)
-    }
+    ...mapState('game', [
+      'grid',
+      'score',
+      'moves',
+      'gameOver',
+      'message',
+      'messageType'
+    ]),
+    
+    ...mapGetters('game', [
+      'isFull',
+      'getItemIcon'
+    ])
 },
 
 mounted() {
-    this.loadGame()
-    if (this.grid.every(cell => cell === null)) {
-      this.initGame()
-    }
+    this.initializeGame()
 },
 
 methods: {
-    initGame() {
-      this.grid = Array(this.gridSize * this.gridSize).fill(null)
-      this.score = 0
-      this.moves = 0
-      this.gameOver = false
+    ...mapActions('game', [
+      'initGame',
+      'loadGame',
+      'addRandomItem',
+      'mergeItems',
+      'resetGame'
+    ]),
+
+    async initializeGame() {
+      const loaded = await this.loadGame()
       
-      for (let i = 0; i < 7; i++) {
-        this.addRandomItem(false)
+      if (!loaded || this.grid.every(cell => cell === null)) {
+        this.initGame()
       }
-      
-      this.saveGame()
+    },
+    handleAddItem() {
+      this.addRandomItem({ countAsMove: true, showAnimation: true })
     },
 
-    addRandomItem(countAsMove = true, showAnimation = true) {
-      const emptyCells = this.grid
-        .map((cell, index) => cell === null ? index : null)
-        .filter(index => index !== null)
-
-      if (emptyCells.length === 0) {
-        if (countAsMove) {
-          this.gameOver = true
-          this.showMessage('Игра окончена! Нет свободных ячеек!', 'error')
-        }
-        return false
+    handleReset() {
+      if (this.gameOver || confirm('Начать новую игру? Текущий прогресс будет потерян.')) {
+        this.resetGame()
       }
-
-      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)]
-      
-      let randomLevel
-      const rand = Math.random()
-      if (rand < 0.60) {
-        randomLevel = 1 
-      } else if (rand < 0.85) {
-        randomLevel = 2 
-      } else {
-        randomLevel = 3
-      }
-
-      this.grid[randomIndex] = {
-        level: randomLevel,
-        isNew: showAnimation
-      }
-
-      if (showAnimation) {
-        setTimeout(() => {
-          if (this.grid[randomIndex]) {
-            this.grid[randomIndex].isNew = false
-          }
-        }, 500)
-      }
-
-      this.saveGame()
-      return true
     },
 
     onDragStart(event, index) {
@@ -194,7 +164,10 @@ methods: {
         return
       }
 
-      this.mergeItems(this.draggedIndex, targetIndex)
+      this.mergeItems({
+        fromIndex: this.draggedIndex,
+        toIndex: targetIndex
+      })
     },
 
     onTouchStart(event, index) {
@@ -224,99 +197,14 @@ methods: {
       }
 
       if (this.touchStartIndex !== targetIndex) {
-        this.mergeItems(this.touchStartIndex, targetIndex)
+        this.mergeItems({
+          fromIndex: this.touchStartIndex,
+          toIndex: targetIndex
+        })
       }
 
       this.touchStartIndex = null
       this.dragOverCell = null
-    },
-
-    mergeItems(fromIndex, toIndex) {
-      const fromItem = this.grid[fromIndex]
-      const toItem = this.grid[toIndex]
-
-      if (fromItem.level === toItem.level) {
-        const newLevel = toItem.level + 1
-        this.grid[toIndex] = { 
-          level: newLevel,
-          isNew: false
-        }
-        this.grid[fromIndex] = null
-
-        const points = Math.pow(2, newLevel) * 10
-        this.score += points
-        this.moves++
-
-        this.showMessage(`+${points} очков! Уровень ${newLevel}!`, 'success')
-        
-        setTimeout(() => {
-          const added = this.addRandomItem(false, true)
-          if (added) {
-            this.showMessage('Появился новый предмет!', 'success')
-          }
-        }, 300)
-        
-        this.saveGame()
-      } else {
-        this.showMessage('Можно объединять только одинаковые предметы!', 'warning')
-      }
-    },
-
-    getItemIcon(level) {
-      return this.itemIcons[Math.min(level - 1, this.itemIcons.length - 1)]
-    },
-
-    showMessage(text, type = 'info') {
-      this.message = text
-      this.messageClass = `game__message--${type}`
-      
-      if (this.messageTimeout) {
-        clearTimeout(this.messageTimeout)
-      }
-
-      this.messageTimeout = setTimeout(() => {
-        this.message = ''
-        this.messageClass = ''
-      }, 2000)
-    },
-
-    saveGame() {
-      const gameState = {
-        grid: this.grid.map(cell => {
-          if (cell === null) return null
-          return { level: cell.level }
-        }),
-        score: this.score,
-        moves: this.moves,
-        gameOver: this.gameOver
-      }
-      localStorage.setItem('puzzleGameState', JSON.stringify(gameState))
-    },
-
-    loadGame() {
-      const saved = localStorage.getItem('puzzleGameState')
-      if (saved) {
-        try {
-          const gameState = JSON.parse(saved)
-          this.grid = gameState.grid || Array(this.gridSize * this.gridSize).fill(null)
-          this.score = gameState.score || 0
-          this.moves = gameState.moves || 0
-          this.gameOver = gameState.gameOver || false
-        } catch (e) {
-          console.error('Ошибка загрузки игры:', e)
-          this.grid = Array(this.gridSize * this.gridSize).fill(null)
-        }
-      } else {
-        this.grid = Array(this.gridSize * this.gridSize).fill(null)
-      }
-    },
-
-    resetGame() {
-      if (this.gameOver || confirm('Начать новую игру? Текущий прогресс будет потерян.')) {
-        localStorage.removeItem('puzzleGameState')
-        this.initGame()
-        this.showMessage('Новая игра начата!', 'success')
-      }
     }
 }
 }

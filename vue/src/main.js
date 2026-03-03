@@ -1,6 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+import store from './store'
 import './styles/game.less'
 
 createApp(App)
-  .mount('#project')
+  .use(store)
+  .mount('#app')
