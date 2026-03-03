@@ -1,22 +1,26 @@
+const MUTATIONS = {
+  SET_LIST: 'SET_LIST'
+}
+
 export default {
   namespaced: true,
   state () {
     return {
-      list: [1, 2, 3]
+      list: [{ t: 10 }, { t: 12 }, { t: 15 }]
     }
   },
   getters: {
     getList: (state) => state.list,
+    getListPower: (state) => state.list.map(i => i.t),
   },
   mutations: {
-    SET_LIST: (state, payload) => {
+    [MUTATIONS.SET_LIST]: (state, payload) => {
       state.list = payload
     },
   },
   actions: {
     setList: (store, payload) => {
-      store.commit('SET_LIST', payload)
-      // store.dispatch('list/setList', null, { root: true })
+      store.commit(MUTATIONS.SET_LIST, payload)
     },
   }
 }
