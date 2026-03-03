@@ -71,17 +71,14 @@ export default {
       }
 
       const rect = this.$refs.area.getBoundingClientRect()
-
       this.floatPosition = {
         x: event.clientX - rect.left,
         y: event.clientY - rect.top
       }
-
       this.targetX = rect.width / 2
       this.targetY = rect.height - 60
       this.fishingState = 'waiting'
       this.message = 'Ждем...'
-
       this.biteTimeout = setTimeout(() => {
         if (this.fishingState === 'waiting') {
           this.fishingState = 'fighting'
@@ -97,16 +94,13 @@ export default {
       
       clearInterval(this.releaseInterval)
       this.releaseInterval = null
-      
       this.message = ''
-
       this.pullInterval = setInterval(() => {
         this.tension = Math.min(100, this.tension + 4.5)
 
         if (this.floatPosition) {
           const dx = (this.targetX - this.floatPosition.x) * 0.1
           const dy = (this.targetY - this.floatPosition.y) * 0.1
-          
           this.floatPosition.x += dx
           this.floatPosition.y += dy
 
@@ -132,7 +126,7 @@ export default {
 
       this.releaseInterval = setInterval(() => {
         this.tension = Math.max(0, this.tension - 4.5)
-        
+
         if (this.floatPosition) {
           this.floatPosition.y = Math.max(0, this.floatPosition.y - 1)
         }
@@ -174,12 +168,9 @@ export default {
       this.releaseInterval = null
       this.biteTimeout = null
       this.messageTimeout = null
-
       this.message = ''
-
       this.fishingState = 'idle'
       this.tension = 0
-
       this.floatPosition = null
       this.message = 'Рыба поймана!'
 
