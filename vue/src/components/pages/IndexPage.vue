@@ -7,7 +7,7 @@
     <BubbleGame
         v-else
         :num="5"
-        :intensity="0.5"
+        :intensity="2"
         :points="5"
         :selectColor="'blue'"
         @finish="(p) => handleGameFinish(p)"

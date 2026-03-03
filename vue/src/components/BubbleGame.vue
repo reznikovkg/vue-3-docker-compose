@@ -15,14 +15,15 @@
       </div>
     </header>
 
-    <main class="bubble-game__field">
+    <main class="bubble-game__field" @click="(e) => handleFieldClick(e)">
       <Bubble
           v-for="(b, index) in activeBubbles"
-          :key="index"
+          :key="b.id"
+          :index="index"
           :color="colorMap[b.color] || colorMap.default"
           :size="b.size"
           :style="{ left: b.x + '%' }"
-          @pop="handleBubblePop(index)"
+          @expired="() => removeBubble()"
       />
 
     </main>
@@ -97,13 +98,15 @@ export default {
       }
     },
     addBubble() {
-      const colors = ['blue', 'breeze', 'purple', 'pink'];
+      const colors = Object.keys(this.colorMap);
       this.activeBubbles.push({
         id: Date.now() + Math.random(),
         color: colors[Math.floor(Math.random() * this.num)],
         size: 'medium',
         x: Math.random() * 90,
-        y: 0
+        y: 0,
+        offset: Math.random() * 100,
+        amplitude: 20 + Math.random() * 50
       });
     },
     check() {
@@ -123,8 +126,22 @@ export default {
         this.score -= this.fine
       }
     },
+    handleFieldClick(event) {
+      const elements = document.elementsFromPoint(event.clientX, event.clientY);
+
+      const hitIndices = elements
+          .filter(el => el.classList.contains('bubble'))
+          .map(el => parseInt(el.getAttribute('data-index')))
+          .filter(val => !isNaN(val))
+          .sort((a, b) => b - a)
+
+      hitIndices.forEach(index => {
+        this.handleBubblePop(index)
+      })
+    },
     handleBubblePop(index) {
       const poppedBubble = this.activeBubbles[index]
+      if (!poppedBubble) return
       this.processScore(poppedBubble.color)
       this.removeBubble(index)
       this.check()

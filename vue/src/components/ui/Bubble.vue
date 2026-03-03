@@ -2,8 +2,8 @@
   <div ref="bubble"
        class="bubble"
        :class="'bubble--' + size"
-       :style="{ '--bubble-color': color }"
-       @click="() => pop()">
+       :data-index="index"
+       :style="{ '--bubble-color': color }">
     <div class="bubble__highlight"></div>
   </div>
 </template>
@@ -11,7 +11,7 @@
 <script>
 export default {
   name: "Bubble",
-  emits: ['pop'],
+  emits: ['expired'],
   data() {
     return {
       isFlying: false,
@@ -19,6 +19,10 @@ export default {
     }
   },
   props: {
+    index: {
+      default: 0,
+      type: Number,
+    },
     color: {
       default: '#6ea6df',
       type: String,
@@ -26,6 +30,14 @@ export default {
     size: {
       default: 'default',
       type: String,
+    },
+    amplitude: {
+      type: Number,
+      default: 30,
+    },
+    offset: {
+      type: Number,
+      default: 0
     },
   },
   methods: {
@@ -37,19 +49,23 @@ export default {
       });
     },
     animate(currentTime) {
-      if (!this.isFlying || !this.$refs.bubble) return
-      const elapsedTime = currentTime - this.startTime
-      const progress = Math.min(elapsedTime / 5000, 1)
-      this.$refs.bubble.style.transform = `translateY(${progress * 100}px)`
-      if (elapsedTime < 5000) {
-        requestAnimationFrame((timestamp) => this.animate(timestamp))
+      if (!this.isFlying || !this.$refs.bubble) return;
+
+      const elapsedTime = (currentTime - this.startTime) / 1000;
+      const y = elapsedTime * 0.2 * 100;
+      const x = Math.sin(elapsedTime + this.offset) * this.amplitude;
+
+      this.$refs.bubble.style.transform = `translate(${x}px, ${y}px)`;
+
+      const fieldHeight = window.innerHeight;
+      const bubbleRect = this.$refs.bubble.getBoundingClientRect();
+
+      if (bubbleRect.top < fieldHeight) {
+        requestAnimationFrame((timestamp) => this.animate(timestamp));
       } else {
-        this.isFlying = false
+        this.isFlying = false;
+        this.$emit('expired', this.index);
       }
-    },
-    pop() {
-      this.$emit('pop')
-      this.isFlying = false
     }
   },
   mounted() {
