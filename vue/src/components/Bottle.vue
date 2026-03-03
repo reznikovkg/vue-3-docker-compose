@@ -3,7 +3,7 @@
     ref="bottleButton"
     class="bottle"
     :class="{ 'bottle--selected': isSelected }"
-    @click="() => $emit('select', index)"
+    @click="() => handleClick()"
   >
     <div class="bottle__layers">
       <div
@@ -38,16 +38,16 @@ export default {
       default: false,
     },
   },
-  emits: ['select']
+  emits: ['select'],
+  methods: {
+    handleClick() {
+      this.$emit('select', this.index)
+    }
+  }
 }
 </script>
 
 <style scoped lang="scss">
-.bottle--selected {
-  border-color: black;
-  box-shadow: 0 0 4px 4px rgb(143, 143, 143);
-}
-
 .bottle {
   width: 120px;
   height: 260px;
@@ -61,21 +61,26 @@ export default {
   box-sizing: border-box;
   appearance: none;
   cursor: pointer;
-}
 
-.bottle__layers {
-  height: 100%;
-  display: flex;
-  flex-direction: column-reverse;
-}
+  &--selected {
+    border-color: black;
+    box-shadow: 0 0 4px 4px rgb(143, 143, 143);
+  }
 
-.bottle__layer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 1);
-  font-weight: 700;
-  font-size: 14px;
-  text-shadow: 1px 1px 5px black;
+  &__layers {
+    height: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+  }
+
+  &__layer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 1);
+    font-weight: 700;
+    font-size: 14px;
+    text-shadow: 1px 1px 5px black;
+  }
 }
 </style>

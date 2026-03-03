@@ -15,8 +15,8 @@
         :key="index"
         :bottle="bottle"
         :index="index"
-        :is-selected="selectedBottleIndex === index"
-        @select="handleBottleClick"
+        :is-selected="isBottleSelected(index)"
+        @select="() => handleBottleClick(index)"
       />
     </div>
   </div>
@@ -65,14 +65,14 @@ export default {
     },
     createAllLayers(unitAmount) {
       const layers = []
+      const gameColors = COLORS.slice(0, COLOR_COUNT)
 
-      COLORS.slice(0, COLOR_COUNT).forEach((color) => {
-        Array.from({ length: MAX_LAYERS }).forEach(() => {
-          layers.push({
-            color,
-            amount: unitAmount,
-          })
-        })
+      gameColors.forEach((color) => {
+        const colorLayers = Array.from({ length: MAX_LAYERS }, () => ({
+          color: color,
+          amount: unitAmount
+        }))
+        layers.push(...colorLayers)
       })
 
       return layers
@@ -81,18 +81,23 @@ export default {
       const unitAmount = 100 / MAX_LAYERS
       const allLayers = this.createAllLayers(unitAmount)
       const shuffledLayers = this.shuffleArray(allLayers)
-      const bottles = Array.from({ length: BOTTLE_COUNT }, (_, bottleIndex) => {
-        if (bottleIndex >= COLOR_COUNT) {
-          return { layers: [] }
-        }
+      const bottles = Array.from({ length : BOTTLE_COUNT})
+        .map((_, bottleIndex) => {
+          if (bottleIndex >= COLOR_COUNT) {
+            return { layers: [] }
+          }
+
         const startIndex = bottleIndex * MAX_LAYERS
-        const layers = shuffledLayers.slice(startIndex, startIndex + MAX_LAYERS)
+        const bottleLayers = shuffledLayers.slice(startIndex, startIndex + MAX_LAYERS)
 
         return {
-          layers: this.normaliseLayers(layers)
+          layers: this.normaliseLayers(bottleLayers)
         }
       })
       return this.checkWin(bottles) ? this.generateBottles() : bottles
+    },
+    isBottleSelected(index) {
+      return this.selectedBottleIndex === index
     },
     handleBottleClick(index) {
       if (this.isWin) {
@@ -210,9 +215,15 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .game-page {
   min-width: 900px;
+
+  &__win {
+    margin-bottom: 20px;
+    color: rgb(0, 170, 42);
+    font-weight: 700;
+  }
 }
 
 .game-panel {
@@ -220,12 +231,6 @@ export default {
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
-}
-
-.game-page__win {
-  margin-bottom: 20px;
-  color: rgb(0, 170, 42);
-  font-weight: 700;
 }
 
 .game-button {
