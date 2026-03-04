@@ -12,7 +12,8 @@ export default {
         }
     },
     getters: {
-        getIsFinished: (state) => state.isGameFinished
+        getIsFinished: (state) => state.isGameFinished,
+        getIsGameStarted: (state) => state.isGameStarted
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {

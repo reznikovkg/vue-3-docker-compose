@@ -30,6 +30,7 @@ export default {
   computed: {
     ...mapGetters('field', ['getFieldSize', 'getField']),
     ...mapGetters('cube', ['getCentralCubePosition']),
+    ...mapGetters('game', ['getIsGameStarted']),
 
     grid() {
       return this.getField || []
@@ -43,6 +44,10 @@ export default {
       return y === row && x === col
     },
     move(dx, dy){
+      if (!this.getIsGameStarted) {
+        return
+      }
+
       let {x, y} = this.getCentralCubePosition
       
       x += dx
