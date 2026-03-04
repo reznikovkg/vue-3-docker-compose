@@ -1,6 +1,6 @@
 <template>
   <div>
-    <FieldTable class="game-field"/>
+    <FieldTable class="game-field" ref="gridRef" tabindex="0"/>
     <div class="start-size-menu">
       <button class="start-button" @click="handleStart" :disabled="isGameActive">Start</button>
       <input
@@ -60,6 +60,7 @@ export default {
       this.moveInterval = setInterval(() => {
         this.movePiece()
       }, 500)
+      this.$refs.gridRef?.$el?.focus()
     }
   }
 }

@@ -1,7 +1,6 @@
 <template>
   <table 
     class="field-table"
-    tabindex="0"
     @keydown.up="move(0, -1)"
     @keydown.down="move(0, 1)"
     @keydown.left="move(-1, 0)"
