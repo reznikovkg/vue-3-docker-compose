@@ -78,11 +78,11 @@ export default {
       store.commit(MUTATIONS.SET_NUMBER, { position: newPosition, objectType: OBJECTS.CENTRAL_CUBE })
       store.commit(MUTATIONS.SET_NUMBER, { position: oldPosition, objectType: OBJECTS.NONE })
     },
-    startGame: ({ commit, dispatch }) => {
+    initStartGame: ({ commit, dispatch }) => {
         commit(MUTATIONS.SET_GAME_ACTIVE, true)
         dispatch('spawnPiece')
     },
-    stopGame: ({ commit, dispatch }) => {
+    initStopGame: ({ commit, dispatch }) => {
         dispatch('clearPieceFromField')
         commit(MUTATIONS.SET_GAME_ACTIVE, false)
         commit(MUTATIONS.SET_CURRENT_PIECE, null)

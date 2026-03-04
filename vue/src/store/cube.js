@@ -7,8 +7,8 @@ export default {
   state () {
     return {
         centralCubePosition: {
-            x: 1,
-            y: 1    
+            x: 0,
+            y: 0    
         },
     }
   },
@@ -20,6 +20,9 @@ export default {
         state.centralCubePosition = newPosition
   },
   actions: {
+    resetCentralCubePosition: (store) => {
+        store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, { x: 0, y: 0 })
+    },
     setPositionCentralCubeToDefault: (store) => {
         const size = store.rootGetters['field/getFieldSize']
         const center = Math.ceil(size / 2)
@@ -51,7 +54,7 @@ export default {
             store.dispatch('field/changeCentralCubePosition', 
                 { oldPosition, newPosition }, 
                 { root: true })
-            store.dispatch('game/changeIsFinished', true, { root: true })
+            store.dispatch('game/stopGame', null, { root: true })
         }
     }
   }

@@ -18,4 +18,4 @@ createApp(App)
   .use(store)
   .mount('#project')
 
-store.dispatch('cube/setPositionCentralCubeToDefault')
+// store.dispatch('cube/setPositionCentralCubeToDefault')
