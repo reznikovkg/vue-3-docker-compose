@@ -12,7 +12,7 @@
         class="field-td" 
         :style="{ '--grid-size': this.getFieldSize }"
         :class="{
-          isCentral: isCentral(rowIdx, colIdx),
+          isCentral: isCentral(rowIdx + 1, colIdx + 1),
           piece: cell === 2
         }"
         v-for="(cell, colIdx) in row"

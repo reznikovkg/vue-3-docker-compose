@@ -48,9 +48,11 @@ export default {
       'stopGame',
       'movePiece'
     ]),
+    ...mapActions('cube', ['initPositionCube']),
     updateFieldSize() {
       this.changeFieldSize(this.fieldSize)
       this.fieldSize = this.getFieldSize
+      this.initPositionCube()
     },
     handleStart() {
       if (this.isGameActive) return
