@@ -14,8 +14,6 @@ export default {
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
-            console.log("Finished")
-
             state.isFinished = value
         }
     },
