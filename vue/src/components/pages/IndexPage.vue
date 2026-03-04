@@ -2,44 +2,63 @@
   <div>
     <FieldTable class="game-field"/>
     <div class="start-size-menu">
-      <button class="start-button">Start</button>
-      <input class="field-size-input" v-model="fieldSize" type="number">
-      <div>
-        Размер: {{updateSize}}
-      </div>
+      <button class="start-button" @click="handleStart" :disabled="isGameActive">Start</button>
+      <input
+        class="field-size-input"
+        v-model.number="fieldSize"
+        type="number"
+        min="7"
+        max="21"
+        step="2"
+        :disabled="isGameActive"
+        @input="updateFieldSize"
+      >
+      <div>Размер: {{ getFieldSize }}</div>
     </div>
   </div>
 </template>
 
 <script>
-import FieldTable from '@/components/Field/FieldTable.vue';
-import { mapActions, mapGetters } from 'vuex';
+import FieldTable from '@/components/Field/FieldTable.vue'
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'IndexPage',
-  components: {
-    FieldTable
-  },
-  data () {
+  components: { FieldTable },
+  data() {
     return {
-      fieldSize: 7
+      fieldSize: 7,
+      moveInterval: null
     }
   },
   computed: {
-    ...mapGetters('field', ['getFieldSize']),
-    updateSize() {
-      if (this.fieldSize < this.getFieldSize){
-        this.fieldSize--
-      }
-      this.changeFieldSize(this.fieldSize);
-      this.fieldSize = this.getFieldSize
-      return this.fieldSize;
-    }
+    ...mapGetters('field', ['getFieldSize', 'isGameActive'])
+  },
+  mounted() {
+    this.updateFieldSize()
+  },
+  beforeUnmount() {
+    if (this.moveInterval) clearInterval(this.moveInterval)
+    this.stopGame()
   },
   methods: {
     ...mapActions('field', [
-      'changeFieldSize'
-    ])
+      'changeFieldSize',
+      'startGame',
+      'stopGame',
+      'movePiece'
+    ]),
+    updateFieldSize() {
+      this.changeFieldSize(this.fieldSize)
+      this.fieldSize = this.getFieldSize
+    },
+    handleStart() {
+      if (this.isGameActive) return
+      this.startGame()
+      this.moveInterval = setInterval(() => {
+        this.movePiece()
+      }, 500)
+    }
   }
 }
 </script>
@@ -57,12 +76,12 @@ export default {
   font-size: 3vmin;
   gap: 1vmin;
 }
-.start-button{
+.start-button {
   width: 11vmin;
   height: 4vmin;
   font-size: 3vmin;
 }
 .game-field {
-  background-color:white;
+  background-color: white;
 }
 </style>
