@@ -7,12 +7,16 @@
     @keydown.left="move(-1, 0)"
     @keydown.right="move(1, 0)">
     <tbody>
-      <tr v-for="row in this.getFieldSize" :key="row">
-        <td class="field-td" :style="{ '--grid-size': this.getFieldSize }"
+      <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
+        <td 
+        class="field-td" 
+        :style="{ '--grid-size': this.getFieldSize }"
         :class="{
-          'isCentral': isCentral(row, col)
+          isCentral: isCentral(rowIdx, colIdx),
+          piece: cell === 2
         }"
-        v-for="col in this.getFieldSize" :key="col">
+        v-for="(cell, colIdx) in row"
+        :key="colIdx">
         </td>
       </tr>
     </tbody>
@@ -25,8 +29,12 @@ import { mapGetters, mapActions } from 'vuex';
 export default {
   name: 'FieldTable',
   computed: {
-    ...mapGetters('field', ['getFieldSize']),
-    ...mapGetters('cube', ['getCentralCubePosition'])
+    ...mapGetters('field', ['getFieldSize', 'getField']),
+    ...mapGetters('cube', ['getCentralCubePosition']),
+
+    grid() {
+      return this.getField || []
+    }
   },
   methods: {
     ...mapActions('cube', ['changeCentralCubePosition']),
@@ -58,6 +66,11 @@ export default {
   border: 0.5vmin solid #000000;
   width: calc(80vmin / var(--grid-size));
   height: calc(80vmin / var(--grid-size));
+  background-color: white;
+}
+
+.field-td.piece {
+  background-color: #ff9800;
 }
 
 .isCentral{

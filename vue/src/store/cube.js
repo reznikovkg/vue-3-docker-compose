@@ -31,6 +31,9 @@ export default {
         let edge = store.rootGetters['field/getFieldSize']
         let oldPosition = store.state.centralCubePosition
 
+        console.log(edge)
+        console.log(newPosition)
+
         if(newPosition.x > 1 && newPosition.x < edge &&
             newPosition.y > 1 && newPosition.y < edge
         )
