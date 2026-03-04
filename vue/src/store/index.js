@@ -17,24 +17,25 @@ export default createStore({
     setScore(state, score) {
       state.score = score
     },
-    updateCell(state, { row, col, value }) {
-      if (!state.grid[row]) state.grid[row] = []
-      state.grid[row][col] = value
+    updateCell(state, {index, value}) {
+      state.grid[index] = value  
     }
   },
   actions: {
     createEmptyGrid({ state, commit }) {
-      const grid = Array(state.gridSize)
-        .fill()
-        .map(() => Array(state.gridSize).fill(null))
+      const totalCells = state.gridSize * state.gridSize
+      const grid = Array(totalCells).fill(null) 
       commit('setGrid', grid)
+
     },
     findEmptyCells({ state }) {
       const emptyCells = []
-      state.grid.forEach((row, rowIndex) => {
-        row.forEach((cell, colIndex) => {
-          if (!cell) emptyCells.push({ row: rowIndex, col: colIndex })
-        })
+      state.grid.forEach((cell, index) => { 
+        if (!cell) {
+          const row = Math.floor(index / state.gridSize)
+          const col = index % state.gridSize
+          emptyCells.push({ row, col, index })
+        }
       })
       return emptyCells
     },
@@ -44,12 +45,12 @@ export default createStore({
       if (rand < 0.9) return 2
       return 3
     },
-    addRandomItem({ dispatch, commit }) {
-      const emptyCells = dispatch('findEmptyCells')
+    addRandomItem({ dispatch, commit, state }) {
+      const emptyCells = awaitdispatch('findEmptyCells')
       if (emptyCells.length > 0) {
-        const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+        const { index } = emptyCells[Math.floor(Math.random() * emptyCells.length)] 
         const level = dispatch('getRandomLevel')
-        commit('updateCell', { row, col, value: { level } })
+        commit('updateCell', { index, value: { level } })
       }
     },
     newGame({ dispatch, commit }) {

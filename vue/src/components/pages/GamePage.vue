@@ -158,9 +158,7 @@ export default {
         this.gameOver = true
         return
       }
-      const hasMaxLevel = this.grid.some(row => 
-        row.some(cell => cell?.level >= MAX_LEVEL)
-      )
+      const hasMaxLevel = this.grid.some(cell => cell?.level >= MAX_LEVEL)
       if (hasMaxLevel) {
         this.gameWon = true
         this.gameOver = true
@@ -177,9 +175,8 @@ export default {
       this.saveToStorage()
     },
     createEmptyGrid() {
-      return Array(this.gridSize).fill().map(() => 
-        Array(this.gridSize).fill(null)
-      )
+      const totalCells = this.gridSize * this.gridSize
+      return Array(totalCells).fill(null)
     },
     newGame() {
       if (confirm('Начать новую игру?')) {
@@ -188,15 +185,13 @@ export default {
     },
     addRandomItem() {
         if (this.gameOver) return
-        const emptyCells = []
-        this.grid.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                if (!cell) {
-                    emptyCells.push({ row: rowIndex, col: colIndex })
-                }
-            })
+        const emptyIndices = []
+        this.grid.forEach((cell, index) => {
+            if (!cell) {
+                emptyIndices.push(index)
+            }
         })
-        if (emptyCells.length === 0) {
+        if (emptyIndices.length === 0) {
             this.noSpaceCount++
             if (this.noSpaceCount >= LOSE_CONDITION && !this.gameWon) {
                 this.gameOver = true
@@ -205,9 +200,9 @@ export default {
             this.saveToStorage()
             return
         }
-        const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+        const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]
         const level = Math.floor(Math.random() * 3) + 1
-        this.grid[row][col] = { level: Math.min(level, MAX_LEVEL) }
+        this.grid[randomIndex] = { level: Math.min(level, MAX_LEVEL) }
         this.noSpaceCount = 0
         this.checkGameConditions()
         this.saveToStorage()
@@ -220,43 +215,39 @@ export default {
             this.saveToStorage()
             return
         }
-        const emptyCells = this.grid.flatMap((row, i) => 
-          row.reduce((acc, cell, j) => {
-            if (!cell) acc.push({ row: i, col: j })
-            return acc
-          }, [])
-        )
-        if (emptyCells.length > 0) {
-          const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
-          const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL) 
-          const newGrid = JSON.parse(JSON.stringify(this.grid))
-          newGrid[row][col] = { level }
-          this.grid = newGrid
-          setTimeout(() => addNextItem(remaining - 1), 10)
+        const emptyIndices = []
+        this.grid.forEach((cell, index) => {
+            if (!cell) emptyIndices.push(index)
+        })
+        if (emptyIndices.length > 0) {
+            const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]
+            const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL)
+            const newGrid = [...this.grid]
+            newGrid[randomIndex] = { level }
+            this.grid = newGrid
+            setTimeout(() => addNextItem(remaining - 1), 10)
         } else {
-          addNextItem(0)
+            addNextItem(0)
         }
       }
       addNextItem(count)
     },
     addItemAfterMove() {
-      if (this.gameOver) return
-      const emptyCells = this.grid.flatMap((row, i) => 
-        row.reduce((acc, cell, j) => {
-          if (!cell) acc.push({ row: i, col: j })
-          return acc
-        }, [])
-      )
-      if (emptyCells.length > 0) {
-        const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)]
-        const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL) 
-        const newGrid = JSON.parse(JSON.stringify(this.grid))
-        newGrid[row][col] = { level }
+        if (this.gameOver) return
+        const emptyIndices = []
+        this.grid.forEach((cell, index) => {
+        if (!cell) emptyIndices.push(index)
+    })
+    if (emptyIndices.length > 0) {
+        const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]
+        const level = Math.min(Math.floor(Math.random() * 3) + 1, MAX_LEVEL)
+        const newGrid = [...this.grid]
+        newGrid[randomIndex] = { level }
         this.grid = newGrid
         this.checkGameConditions()
         this.saveToStorage()
-      }
-    },
+    }
+    }, 
     resetGame() {
       this.newGame()
     },
@@ -277,59 +268,56 @@ export default {
     handleDragStart(data) {
       if (this.gameOver) return
       this.draggedItem = {
-        row: data.row,
-        col: data.col,
+        index: data.index,      
         level: data.cell.level
-      }
+        }
     },
     handleDrop(data) {
-      if (!this.draggedItem || this.gameOver) return
-      const sourceRow = this.draggedItem.row
-      const sourceCol = this.draggedItem.col
-      const targetRow = data.row
-      const targetCol = data.col
-      if (sourceRow === targetRow && sourceCol === targetCol) {
-        this.draggedItem = null
-        return
-      }
-      const newGrid = JSON.parse(JSON.stringify(this.grid))
-      const sourceItem = newGrid[sourceRow][sourceCol]
-      const targetItem = newGrid[targetRow][targetCol]
-      let moveHappened = false
-      if (!targetItem) {
-        newGrid[targetRow][targetCol] = JSON.parse(JSON.stringify(sourceItem))
-        newGrid[sourceRow][sourceCol] = null
-        moveHappened = true
-      }
-      else if (sourceItem.level === targetItem.level) {
-        if (sourceItem.level < MAX_LEVEL) {
-          const newLevel = sourceItem.level + 1
-          const pointsEarned = Math.pow(newLevel, 2) * 10
-          this.score += pointsEarned
-          this.itemsMerged++
-          newGrid[targetRow][targetCol] = { level: newLevel }
-          newGrid[sourceRow][sourceCol] = null
-          moveHappened = true
-          if (newLevel >= MAX_LEVEL) {
-            this.gameWon = true
-            this.gameOver = true
-          }
+        if (!this.draggedItem || this.gameOver) return
+        const sourceIndex = this.draggedItem.index            
+        const targetIndex = data.index
+        if (sourceIndex === targetIndex) {
+            this.draggedItem = null
+            return
         }
-      }
-      else {
-        const temp = JSON.parse(JSON.stringify(newGrid[sourceRow][sourceCol]))
-        newGrid[sourceRow][sourceCol] = JSON.parse(JSON.stringify(newGrid[targetRow][targetCol]))
-        newGrid[targetRow][targetCol] = temp
-        moveHappened = true
-      }
-      this.grid = newGrid
-      this.checkGameConditions()
-      if (moveHappened && !this.gameOver) {
-        this.addItemAfterMove()
-      }
-      this.draggedItem = null
-      this.saveToStorage()
-    }
+        const newGrid = [...this.grid]
+        const sourceItem = newGrid[sourceIndex]
+        const targetItem = newGrid[targetIndex]
+        let moveHappened = false
+        if (!targetItem) {
+            newGrid[targetIndex] = { ...sourceItem }
+            newGrid[sourceIndex] = null
+            moveHappened = true
+        }
+        else if (sourceItem.level === targetItem.level) {
+            if (sourceItem.level < MAX_LEVEL) {
+                const newLevel = sourceItem.level + 1
+                const pointsEarned = Math.pow(newLevel, 2) * 10
+                this.score += pointsEarned
+                this.itemsMerged++
+                newGrid[targetIndex] = { level: newLevel }
+                newGrid[sourceIndex] = null
+                moveHappened = true
+                if (newLevel >= MAX_LEVEL) {
+                        this.gameWon = true
+                        this.gameOver = true
+                }
+            }
+        }
+        else {
+            const temp = { ...newGrid[sourceIndex] }
+            newGrid[sourceIndex] = { ...newGrid[targetIndex] }
+            newGrid[targetIndex] = temp
+            moveHappened = true
+        }
+        this.grid = newGrid
+        this.checkGameConditions()
+        if (moveHappened && !this.gameOver) {
+            this.addItemAfterMove()
+        }
+        this.draggedItem = null
+        this.saveToStorage()
+    } 
   }
 }
 </script>
