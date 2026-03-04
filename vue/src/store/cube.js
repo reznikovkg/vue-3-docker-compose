@@ -20,7 +20,7 @@ export default {
         state.centralCubePosition = newPosition
   },
   actions: {
-    initPositionCube: (store) => {
+    setPositionCentralCubeToDefault: (store) => {
         const size = store.rootGetters['field/getFieldSize']
         const center = Math.ceil(size / 2)
 
