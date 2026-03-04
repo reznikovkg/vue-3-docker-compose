@@ -14,12 +14,17 @@ export default {
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
+            console.log("Finished")
+
             state.isFinished = value
         }
     },
     actions: {
         changeIsFinished: (store, value) => {
             store.commit(MUTATIONS.SET_ISFINISHED, value)
+        },
+        gameIsFinished: (store) => {
+            store.commit(MUTATIONS.SET_ISFINISHED, true)
         }
     }
 }

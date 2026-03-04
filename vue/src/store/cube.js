@@ -7,8 +7,8 @@ export default {
   state () {
     return {
         centralCubePosition: {
-            x: 0,
-            y: 0    
+            x: 1,
+            y: 1    
         },
     }
   },
@@ -16,36 +16,42 @@ export default {
     getCentralCubePosition: (state) => state.centralCubePosition,
   },
   mutations: {
-    [MUTATIONS.SET_CENTRAL_CUBE_POSITION]: (state, newPosition) => {
-        let edge = Math.abs(Math.ceil(state.size / 2))
-        let xAbs = Math.abs(newPosition.x)
-        let yAbs = Math.abs(newPosition.y)
-
-        if(xAbs < edge && yAbs < edge)
-            state.centralCubePosition = newPosition
-        else
-            state.centralCubePosition = {
-                x: 0,
-                y: 0
-            }
-    }
+    [MUTATIONS.SET_CENTRAL_CUBE_POSITION]: (state, newPosition) => 
+        state.centralCubePosition = newPosition
   },
   actions: {
-    changeCentralCubePosition: (store, newPosition) => {
-        let size = store.getFieldSize()
-        let edge = Math.abs(Math.ceil(size / 2))
-        let xAbs = Math.abs(newPosition.x)
-        let yAbs = Math.abs(newPosition.y)
+    initPositionCube: (store) => {
+        const size = store.rootGetters['field/getFieldSize']
+        const center = Math.ceil(size / 2)
 
-        if(xAbs < edge && yAbs < edge)
+        store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, { x: center, y: center })
+    },
+    changeCentralCubePosition: (store, newPosition) => {
+        let center = Math.ceil(store.rootGetters['field/getFieldSize'] / 2)
+        let edge = store.rootGetters['field/getFieldSize']
+        let oldPosition = store.state.centralCubePosition
+
+        if(newPosition.x > 1 && newPosition.x < edge &&
+            newPosition.y > 1 && newPosition.y < edge
+        )
+        {
             store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
+            store.dispatch('field/changeCentralCubePosition', 
+                { oldPosition, newPosition }, 
+                { root: true })
+        }
         else
         {
-            store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, {
-                x: 0,
-                y: 0
-            })
-            store.commit(MUTATIONS.SET_ISFINISHED, true)
+            newPosition = {
+                x: center,
+                y: center
+            }
+
+            store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
+            store.dispatch('field/changeCentralCubePosition', 
+                { oldPosition, newPosition }, 
+                { root: true })
+            store.dispatch('game/changeIsFinished', true, { root: true })
         }
     }
   }
