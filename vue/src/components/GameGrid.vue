@@ -9,16 +9,16 @@
         <span class="game__moves-label">Ходов:</span>
         <span class="game__moves-value">{{ moves }}</span>
       </div>
-      <button 
+      <button
         class="game__button"
-        @click="handleAddItem"
         :disabled="isFull"
+        @click="() => handleAddItem()"
       >
         Добавить предмет
       </button>
-      <button 
+      <button
         class="game__button game__button--secondary"
-        @click="handleReset"
+        @click="() => handleReset()"
       >
         Новая игра
       </button>
@@ -34,10 +34,10 @@
           'grid__cell--drag-over': dragOverCell === index,
           'grid__cell--new': cell && cell.isNew
         }"
-        @drop="onDrop($event, index)"
-        @dragover.prevent="onDragOver(index)"
-        @dragleave="onDragLeave"
-        @touchend="onTouchEnd($event, index)"
+        @drop="(event) => onDrop(event, index)"
+        @dragover.prevent="() => onDragOver(index)"
+        @dragleave="() => onDragLeave()"
+        @touchend="(event) => onTouchEnd(event, index)"
       >
         <div
           v-if="cell !== null"
@@ -47,18 +47,22 @@
             { 'item--new': cell.isNew }
           ]"
           :draggable="true"
-          @dragstart="onDragStart($event, index)"
-          @dragend="onDragEnd"
-          @touchstart="onTouchStart($event, index)"
-          @touchmove.prevent="onTouchMove"
+          @dragstart="(event) => onDragStart(event, index)"
+          @dragend="(event) => onDragEnd(event)"
+          @touchstart="(event) => onTouchStart(event, index)"
+          @touchmove.prevent="(event) => onTouchMove(event)"
         >
-          <span class="item__icon">{{ getItemIcon(cell.level) }}</span>
+          <span class="item__icon" :data-icon="getIconName(cell.level)"></span>
           <span class="item__level">{{ cell.level }}</span>
         </div>
       </div>
     </div>
 
-    <div v-if="message" class="game__message" :class="`game__message--${messageType}`">
+    <div
+      v-if="message"
+      class="game__message"
+      :class="`game__message--${messageType}`"
+    >
       {{ message }}
     </div>
 
@@ -68,7 +72,10 @@
         <p class="game__game-over-text">Нет свободных ячеек</p>
         <p class="game__game-over-score">Ваш счет: {{ score }}</p>
         <p class="game__game-over-moves">Сделано ходов: {{ moves }}</p>
-        <button class="game__button game__button--large" @click="handleReset">
+        <button
+          class="game__button game__button--large"
+          @click="() => handleReset()"
+        >
           Начать заново
         </button>
       </div>
@@ -77,12 +84,13 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex'
+const STORAGE_KEY = 'puzzleGameState'
+const INITIAL_ITEMS_COUNT = 7
 
 export default {
-name: 'GameGrid',
+  name: 'GameGrid',
 
-data() {
+  data() {
     return {
       draggedIndex: null,
       dragOverCell: null,
@@ -91,48 +99,219 @@ data() {
 },
 
 computed: {
-    ...mapState('game', [
-      'grid',
-      'score',
-      'moves',
-      'gameOver',
-      'message',
-      'messageType'
-    ]),
-    
-    ...mapGetters('game', [
-      'isFull',
-      'getItemIcon'
-    ])
+    grid() {
+      return this.$store.state.game.grid
+    },
+
+    score() {
+      return this.$store.state.game.score
+    },
+
+    moves() {
+      return this.$store.state.game.moves
+    },
+
+    gameOver() {
+      return this.$store.state.game.gameOver
+    },
+
+    message() {
+      return this.$store.state.game.message
+    },
+
+    messageType() {
+      return this.$store.state.game.messageType
+    },
+
+    isFull() {
+      return this.$store.getters['game/isFull']
+    },
+
+    emptyCells() {
+      return this.$store.getters['game/emptyCells']
+    },
+
+    spawnProbabilities() {
+      return this.$store.state.game.spawnProbabilities
+    }
 },
 
 mounted() {
-    this.initializeGame()
+    this.loadGame()
+
+    if (this.grid.every(cell => cell === null)) {
+      this.initGame()
+    }
 },
 
 methods: {
-    ...mapActions('game', [
-      'initGame',
-      'loadGame',
-      'addRandomItem',
-      'mergeItems',
-      'resetGame'
-    ]),
+    initGame() {
+      this.$store.commit('game/RESET_GAME')
 
-    async initializeGame() {
-      const loaded = await this.loadGame()
-      
-      if (!loaded || this.grid.every(cell => cell === null)) {
-        this.initGame()
+      for (let i = 0; i < INITIAL_ITEMS_COUNT; i++) {
+        this.addRandomItem(false, false)
       }
+
+      this.saveGame()
     },
+
+    addRandomItem(countAsMove = true, showAnimation = true) {
+      const emptyCells = this.emptyCells
+
+      if (emptyCells.length === 0) {
+        if (countAsMove) {
+          this.$store.commit('game/SET_GAME_OVER', true)
+          this.showMessage('Игра окончена! Нет свободных ячеек!', 'error')
+        }
+        return false
+      }
+
+      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+
+      const rand = Math.random()
+      let randomLevel = 1
+      let cumulativeProbability = 0
+
+      for (const config of this.spawnProbabilities) {
+        cumulativeProbability += config.probability
+        if (rand < cumulativeProbability) {
+          randomLevel = config.level
+          break
+        }
+      }
+
+      this.$store.commit('game/SET_CELL', {
+        index: randomIndex,
+        value: {
+          level: randomLevel,
+          isNew: showAnimation
+        }
+      })
+
+      if (showAnimation) {
+        setTimeout(() => {
+          this.$store.commit('game/SET_CELL_NEW', {
+            index: randomIndex,
+            isNew: false
+          })
+        }, 500)
+      }
+
+      this.saveGame()
+      return true
+    },
+
     handleAddItem() {
-      this.addRandomItem({ countAsMove: true, showAnimation: true })
+      this.addRandomItem(true, true)
     },
 
     handleReset() {
       if (this.gameOver || confirm('Начать новую игру? Текущий прогресс будет потерян.')) {
-        this.resetGame()
+        localStorage.removeItem(STORAGE_KEY)
+        this.initGame()
+        this.showMessage('Новая игра начата!', 'success')
+      }
+    },
+
+    getIconName(level) {
+      return this.$store.getters['game/getItemIcon'](level)
+    },
+
+    showMessage(text, type = 'info') {
+      this.$store.commit('game/SET_MESSAGE', { text, type })
+
+      setTimeout(() => {
+        this.$store.commit('game/CLEAR_MESSAGE')
+      }, 2000)
+    },
+
+    saveGame() {
+      const gameState = {
+        grid: this.grid.map(cell => {
+          if (cell === null) return null
+          return { level: cell.level }
+        }),
+        score: this.score,
+        moves: this.moves,
+        gameOver: this.gameOver
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState))
+      } catch (e) {
+        console.error('Ошибка сохранения игры:', e)
+      }
+    },
+
+    loadGame() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+
+        if (saved) {
+          const gameState = JSON.parse(saved)
+
+          this.$store.commit('game/SET_GRID', gameState.grid || [])
+          this.$store.commit('game/SET_SCORE', gameState.score || 0)
+          this.$store.commit('game/SET_MOVES', gameState.moves || 0)
+          this.$store.commit('game/SET_GAME_OVER', gameState.gameOver || false)
+
+          return true
+        }
+
+        return false
+      } catch (e) {
+        console.error('Ошибка загрузки игры:', e)
+        return false
+      }
+    },
+
+    mergeItems(fromIndex, toIndex) {
+      const fromItem = this.$store.getters['game/getCell'](fromIndex)
+      const toItem = this.$store.getters['game/getCell'](toIndex)
+
+      if (toItem === null) {
+        this.$store.commit('game/SET_CELL', { index: toIndex, value: fromItem })
+        this.$store.commit('game/CLEAR_CELL', fromIndex)
+        this.$store.commit('game/INCREMENT_MOVES')
+
+        setTimeout(() => {
+          const added = this.addRandomItem(false, true)
+          if (added) {
+            this.showMessage('Появился новый предмет!', 'success')
+          }
+        }, 300)
+
+        this.saveGame()
+        return true
+      }
+
+      if (fromItem.level === toItem.level) {
+        const newLevel = toItem.level + 1
+
+        this.$store.commit('game/SET_CELL', {
+          index: toIndex,
+          value: { level: newLevel, isNew: false }
+        })
+        this.$store.commit('game/CLEAR_CELL', fromIndex)
+
+        const points = Math.pow(2, newLevel) * 10
+        this.$store.commit('game/ADD_SCORE', points)
+        this.$store.commit('game/INCREMENT_MOVES')
+
+        this.showMessage(`+${points} очков! Уровень ${newLevel}!`, 'success')
+
+        setTimeout(() => {
+          const added = this.addRandomItem(false, true)
+          if (added) {
+            this.showMessage('Появился новый предмет!', 'success')
+          }
+        }, 300)
+
+        this.saveGame()
+        return true
+      } else {
+        this.showMessage('Можно объединять только одинаковые предметы!', 'warning')
+        return false
       }
     },
 
@@ -164,10 +343,7 @@ methods: {
         return
       }
 
-      this.mergeItems({
-        fromIndex: this.draggedIndex,
-        toIndex: targetIndex
-      })
+      this.mergeItems(this.draggedIndex, targetIndex)
     },
 
     onTouchStart(event, index) {
@@ -180,7 +356,7 @@ methods: {
 
       const touch = event.touches[0]
       const element = document.elementFromPoint(touch.clientX, touch.clientY)
-      
+
       if (element && element.classList.contains('grid__cell')) {
         const cells = Array.from(document.querySelectorAll('.grid__cell'))
         const index = cells.indexOf(element)
@@ -197,10 +373,7 @@ methods: {
       }
 
       if (this.touchStartIndex !== targetIndex) {
-        this.mergeItems({
-          fromIndex: this.touchStartIndex,
-          toIndex: targetIndex
-        })
+        this.mergeItems(this.touchStartIndex, targetIndex)
       }
 
       this.touchStartIndex = null
