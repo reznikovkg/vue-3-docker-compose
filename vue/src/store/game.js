@@ -7,6 +7,8 @@ const MUTATIONS = {
   SET_LAST_TIME: 'SET_LAST_TIME',
   SET_WORLD_SIZE: 'SET_WORLD_SIZE',
 
+  SET_CAMERA: 'SET_CAMERA',
+
   SET_MOUSE_POS: 'SET_MOUSE_POS',
 
   SPAWN_BULLET: 'SPAWN_BULLET',
@@ -34,15 +36,19 @@ const dist2 = (ax, ay, bx, by) => {
   return dx * dx + dy * dy
 }
 
-const spawnAtEdge = (world) => {
+const spawnAtViewportEdge = (state) => {
+  const { width: w, height: h } = state.world
+  const { x: cx, y: cy } = state.camera
+  const pad = 40
+
   const side = Math.floor(Math.random() * 4)
   if (side === 0) 
-    return { x: Math.random() * world.width, y: 0 }
+    return { x: cx + Math.random() * w, y: cy - pad }
   if (side === 1) 
-    return { x: world.width, y: Math.random() * world.height }
+    return { x: cx + w + pad, y: cy + Math.random() * h }
   if (side === 2) 
-    return { x: Math.random() * world.width, y: world.height }
-  return { x: 0, y: Math.random() * world.height }
+    return { x: cx + Math.random() * w, y: cy + h + pad }
+  return { x: cx - pad, y: cy + Math.random() * h }
 }
 
 export default {
@@ -61,6 +67,11 @@ export default {
       maxHealth: 100,
       speed: 300,
       radius: 20,
+    },
+
+    camera: {
+      x: 0,
+      y: 0,
     },
 
     mouse: {
@@ -129,6 +140,11 @@ export default {
       state.player.y = y
     },
 
+    [MUTATIONS.SET_CAMERA]: (state, { x, y }) => {
+      state.camera.x = x
+      state.camera.y = y
+    },
+
     [MUTATIONS.SET_KEY]: (state, { key, isPressed }) => {
       if (key in state.keys) 
         state.keys[key] = isPressed
@@ -158,6 +174,9 @@ export default {
       state.mouse.x = state.world.width / 2
       state.mouse.y = state.world.height / 2
 
+      state.camera.x = state.player.x - state.world.width / 2
+      state.camera.y = state.player.y - state.world.height / 2
+
       state.bullets = []
       state.nextBulletId = 1
 
@@ -170,6 +189,9 @@ export default {
       state.gameTime = 0
       state.gameActive = true
       state.lastTimestamp = 0
+
+      for (const k in state.keys) 
+        state.keys[k] = false
     },
 
     [MUTATIONS.SET_LAST_TIME]: (state, timestamp) => {
@@ -198,9 +220,13 @@ export default {
       const pad = 60
       const w = state.world.width
       const h = state.world.height
-      state.bullets = state.bullets.filter(
-        (b) => b.x > -pad && b.x < w + pad && b.y > -pad && b.y < h + pad
-      )
+      const cx = state.camera.x
+      const cy = state.camera.y
+      state.bullets = state.bullets.filter((b) => {
+        const sx = b.x - cx
+        const sy = b.y - cy
+        return sx > -pad && sx < w + pad && sy > -pad && sy < h + pad
+      })
     },
 
     [MUTATIONS.DEC_FIRE_COOLDOWN]: (state, dt) => {
@@ -272,8 +298,12 @@ export default {
       commit(MUTATIONS.SET_MOUSE_POS, pos)
     },
 
-    setWorldSize: ({ commit }, size) => {
+    setWorldSize: ({ state, commit }, size) => {
       commit(MUTATIONS.SET_WORLD_SIZE, size)
+      commit(MUTATIONS.SET_CAMERA, {
+        x: state.player.x - size.width / 2,
+        y: state.player.y - size.height / 2,
+      })
     },
     
     setPlayerPosition: ({ commit }, pos) => {
@@ -307,11 +337,11 @@ export default {
 
       const newX = state.player.x + dx * state.player.speed * dt
       const newY = state.player.y + dy * state.player.speed * dt
-
-      const x = clamp(newX, state.player.radius, state.world.width - state.player.radius)
-      const y = clamp(newY, state.player.radius, state.world.height - state.player.radius)
-
-      commit(MUTATIONS.SET_PLAYER_POSITION, { x, y })
+      commit(MUTATIONS.SET_PLAYER_POSITION, { x: newX, y: newY })
+      
+      const cx = newX - state.world.width / 2
+      const cy = newY - state.world.height / 2
+      commit(MUTATIONS.SET_CAMERA, { x: cx, y: cy })
     },
 
     updateShooting: ({ state, commit }) => {
@@ -324,9 +354,8 @@ export default {
 
       const px = state.player.x
       const py = state.player.y
-      const mx = state.mouse.x
-      const my = state.mouse.y
-
+      const mx = state.mouse.x + state.camera.x
+      const my = state.mouse.y + state.camera.y
       const dx = mx - px
       const dy = my - py
       
@@ -370,7 +399,7 @@ export default {
       if (state.spawner.cooldown > 0) 
         return
 
-      const { x, y } = spawnAtEdge(state.world)
+      const { x, y } = spawnAtViewportEdge(state)
 
       const id = state.nextEnemyId
       commit(MUTATIONS.SET_NEXT_ENEMY_ID, id + 1)

@@ -11,34 +11,39 @@
       </div>
     </div>
 
-    <div
-      class="game__player"
-      :style="{
-        left: player.x + 'px',
-        top: player.y + 'px'
-      }"
-    ></div>
+    <div 
+      class="game__world"
+      :style="{ transform: `translate(${-camera.x}px, ${-camera.y}px)` }"
+    >
+      <div
+        class="game__player"
+        :style="{
+          left: player.x + 'px',
+          top: player.y + 'px'
+        }"
+      ></div>
 
-    <div
-      v-for="b in bullets"
-      :key="b.id"
-      class="game__bullet"
-      :style="{
-        left: b.x + 'px',
-        top: b.y + 'px'
-      }"
-    ></div>
+      <div
+        v-for="b in bullets"
+        :key="b.id"
+        class="game__bullet"
+        :style="{
+          left: b.x + 'px',
+          top: b.y + 'px'
+        }"
+      ></div>
 
-    <div
-      v-for="e in enemies"
-      :key="e.id"
-      class="game__enemy"
-      :style="{
-        left: e.x + 'px',
-        top: e.y + 'px'
-      }"
-    ></div>
-
+      <div
+        v-for="e in enemies"
+        :key="e.id"
+        class="game__enemy"
+        :style="{
+          left: e.x + 'px',
+          top: e.y + 'px'
+        }"
+      ></div>
+    </div>
+    
     <div v-if="!gameActive" class="game__game-over">
       <h2 class="game__game-over-title">GAME OVER</h2>
       <p class="game__game-over-time">Время: {{ formattedTime }}</p>
@@ -63,7 +68,8 @@ export default {
       'player', 
       'gameActive', 
       'bullets', 
-      'enemies'
+      'enemies',
+      'camera'
     ]),
     ...mapGetters('game', [
       'getFormattedTime', 
@@ -127,16 +133,7 @@ export default {
     comResize() {
       const width = window.innerWidth
       const height = window.innerHeight
-
       this.setWorldSize({ width, height })
-
-      const p = this.player
-      const r = p.radius
-
-      const x = Math.max(r, Math.min(width - r, p.x))
-      const y = Math.max(r, Math.min(height - r, p.y))
-
-      this.setPlayerPosition({ x, y })
     },
 
     init() {
@@ -174,6 +171,13 @@ export default {
     padding: 10px 20px;
     border-radius: 5px;
     border: 1px solid #444;
+  }
+
+  &__world {
+    position: absolute;
+    left: 0;
+    top: 0;
+    will-change: transform;
   }
 
   &__time {
