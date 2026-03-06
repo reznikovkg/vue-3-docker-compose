@@ -121,6 +121,11 @@ export default {
   },
 
   getters: {
+    getPlayer: (state) => state.player,
+    getCamera: (state) => state.camera,
+    getBullets: (state) => state.bullets,
+    getEnemies: (state) => state.enemies,
+    getGameActive: (state) => state.gameActive,
     getFormattedTime: (state) => {
       const minutes = Math.floor(state.gameTime / 60)
       const seconds = Math.floor(state.gameTime % 60)

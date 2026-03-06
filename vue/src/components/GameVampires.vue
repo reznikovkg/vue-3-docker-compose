@@ -64,17 +64,30 @@ export default {
     }
   },
   computed: {
-    ...mapState('game', [
-      'player', 
-      'gameActive', 
-      'bullets', 
-      'enemies',
-      'camera'
-    ]),
     ...mapGetters('game', [
+      'getPlayer',
+      'getGameActive',
+      'getBullets',
+      'getEnemies',
+      'getCamera',
       'getFormattedTime', 
       'getHealthPercent'
     ]),
+    player() { 
+      return this.getPlayer 
+    },
+    gameActive() { 
+      return this.getGameActive 
+    },
+    bullets() { 
+      return this.getBullets 
+    },
+    enemies() { 
+      return this.getEnemies 
+    },
+    camera() { 
+      return this.getCamera 
+    },
     formattedTime() {
       return this.getFormattedTime
     },
