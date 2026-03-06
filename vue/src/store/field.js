@@ -302,11 +302,8 @@ export default {
             case 3: x++; break
         }
 
-        let outside = false
-        if (direction === 0 && y >= state.size) outside = true
-        else if (direction === 1 && x + width <= 0) outside = true
-        else if (direction === 2 && y + height <= 0) outside = true
-        else if (direction === 3 && x >= state.size) outside = true
+        let outside = (direction === 0 && y >= state.size) || (direction === 1 && x + width <= 0) ||
+        (direction === 2 && y + height <= 0) || (direction === 3 && x >= state.size)
 
         if (outside) {
             commit(MUTATIONS.SET_CURRENT_PIECE, null)
