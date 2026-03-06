@@ -42,7 +42,6 @@ const getCharStyle = (char) => {
 <style scoped lang="less">
 .sprite-text {
   display: inline-flex;
-  font-size: 0;
 
   &__char {
     display: inline-block;
