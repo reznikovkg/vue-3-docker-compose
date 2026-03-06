@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import {computed} from 'vue'
 
 const props = defineProps({
   text: String,
@@ -28,22 +28,21 @@ const getCharStyle = (char) => {
 
   return {
     display: 'inline-block',
-    width: `${map.width}px`,
-    height: `${map.height}px`,
+    width: `${map.width * scale}px`,
+    height: `${map.height * scale}px`,
     backgroundImage: `url(${props.config.spriteUrl})`,
     backgroundRepeat: 'no-repeat',
-    backgroundPosition: `-${map.x}px -${map.y}px`,
-    backgroundSize: 'auto',
-    transform: `scale(${scale})`,
-    transformOrigin: 'top left',
+    backgroundPosition: `-${map.x * scale}px -${map.y * scale}px`,
+    backgroundSize: `${props.config.spriteWidth * scale}px ${props.config.spriteHeight * scale}px`,
     verticalAlign: 'top'
-  }
+  };
 }
 </script>
 
 <style scoped lang="less">
 .sprite-text {
   display: inline-flex;
+  font-size: 0;
 
   &__char {
     display: inline-block;
