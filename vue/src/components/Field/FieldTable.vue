@@ -65,7 +65,6 @@ export default {
   width: fit-content;
   table-layout: fixed;
 }
-
 .field-td {
   border: 0.5vmin solid #000000;
   width: calc(80vmin / var(--grid-size));
