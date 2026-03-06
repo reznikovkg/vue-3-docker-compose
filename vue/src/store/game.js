@@ -1,6 +1,7 @@
 const MUTATIONS = {
     SET_ISFINISHED: "SET_ISFINISHED",
-    SET_ISSTARTED: "SET_ISSTARTED"
+    SET_ISSTARTED: "SET_ISSTARTED",
+    SET_MOVE_INTERVAL: "SET_MOVE_INTERVAL"
 }
 
 export default {
@@ -8,7 +9,8 @@ export default {
     state() {
         return {
             isGameFinished: false,
-            isGameStarted: false
+            isGameStarted: false,
+            moveInterval: null
         }
     },
     getters: {
@@ -21,6 +23,10 @@ export default {
         },
         [MUTATIONS.SET_ISSTARTED]: (state, value) => {
             state.isGameStarted = value
+        },
+        [MUTATIONS.SET_MOVE_INTERVAL]: (state, value) => {
+            if (!value) clearInterval(state.moveInterval)
+            state.moveInterval = value
         }
     },
     actions: {
@@ -28,6 +34,7 @@ export default {
             store.commit(MUTATIONS.SET_ISFINISHED, value)
         },
         stopGame: (store) => {
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
             store.commit(MUTATIONS.SET_ISFINISHED, true)
             store.commit(MUTATIONS.SET_ISSTARTED, false)
             store.dispatch("field/initStopGame", null, { root: true })
@@ -38,6 +45,9 @@ export default {
             store.commit(MUTATIONS.SET_ISFINISHED, false)
             store.dispatch("field/initStartGame", null, { root: true })
             store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
+                store.dispatch("field/movePiece", null, { root: true })
+            }, 500))
         }
     }
 }

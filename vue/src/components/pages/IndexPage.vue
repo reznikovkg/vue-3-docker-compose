@@ -27,8 +27,7 @@ export default {
   components: { FieldTable },
   data() {
     return {
-      fieldSize: 7,
-      moveInterval: null
+      fieldSize: 7
     }
   },
   computed: {
@@ -38,7 +37,6 @@ export default {
     this.updateFieldSize()
   },
   beforeUnmount() {
-    if (this.moveInterval) clearInterval(this.moveInterval)
     this.stopGame()
   },
   methods: {
@@ -57,9 +55,6 @@ export default {
     handleStart() {
       if (this.isGameActive) return
       this.startGame()
-      this.moveInterval = setInterval(() => {
-        this.movePiece()
-      }, 500)
       this.$refs.gridRef?.$el?.focus()
     }
   }
