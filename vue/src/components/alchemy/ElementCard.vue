@@ -1,6 +1,11 @@
 <template>
-  <div class="card" @click="() => $emit('select', name)">
-    <div class="card__icon">{{ icon }}</div>
+  <div 
+    class="card"
+    draggable="true"
+    @dragstart="dragStart"
+    @click="() => $emit('select', name)"
+  >
+    <div class="card__icon">{{ icons[name] || '✨' }}</div>
     <div class="card__name">{{ name }}</div>
   </div>
 </template>
@@ -12,17 +17,32 @@ export default {
     name: String
   },
   computed: {
-    icon() {
-      const icons = {
+    icons() {
+      return {
         fire: '🔥',
-        water: '💧',
-        earth: '🌍',
+        water: '💧', 
+        earth: '🌍', 
         air: '🌪',
-        steam: '☁️',
-        mud: '🟫',
-        lava: '🌋'
+        steam: '☁️', 
+        mud: '🟫', 
+        lava: '🌋',
+        dust: '🌫', 
+        metal: '⚙️', 
+        plant: '🌿', 
+        energy: '⚡',
+        ice: '❄️', 
+        cloud: '☁️', 
+        sand: '🏜', 
+        crystal: '💎',
+        metallic_lava: '🌋⚙️', 
+        snow: '❄️☁️'
       }
-      return icons[this.name] || '✨'
+    }
+  },
+  methods: {
+    dragStart(event) {
+      event.dataTransfer.effectAllowed = "copy";
+      event.dataTransfer.setData("text/plain", this.name);
     }
   }
 }

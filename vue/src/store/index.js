@@ -1,29 +1,109 @@
 import { createStore } from 'vuex'
 
-const recipes = [
+const slotRecipes = [
+  { 
+    pattern: [
+      ['fire', 'water', null],
+      ['earth', 'air', null],
+      [null, null, null]
+    ],
+    result: 'crystal',
+  },
+  { 
+    pattern: [
+      ['air', null, null],
+      ['water', null, null],
+      ['earth', null, null]
+    ],
+    result: 'plant',
+  },
+  { 
+    pattern: [
+      ['fire', null, 'air'],
+      [null, null, null],
+      [null, null, null]
+    ],
+    result: 'energy',
+  },
+  { 
+    pattern: [
+      ['fire', null, null],
+      [null, 'water', null],
+      [null, null, 'earth']
+    ],
+    result: 'metal', 
+  },
+  { 
+    pattern: [
+      ['water', null, null],
+      [null, 'air', null],
+      [null, null, 'fire']
+    ],
+    result: 'ice',
+  },
+  { 
+    pattern: [
+      ['earth', 'water', null],
+      [null, 'fire', null],
+      [null, null, null]
+    ],
+    result: 'sand',
+  }
+]
+
+const tableRecipes = [
   { ingredients: { fire: 1, water: 1 }, result: 'steam' },
   { ingredients: { earth: 1, water: 1 }, result: 'mud' },
-  { ingredients: { fire: 1, earth: 1 }, result: 'lava' }
+  { ingredients: { fire: 1, earth: 1 }, result: 'lava' },
+  { ingredients: { lava: 1, metal: 1 }, result: 'metallic_lava' },
 ]
+
+function containsPattern(matrix, pattern, startRow = 0, startCol = 0) {
+  const rows = matrix.length
+  const cols = matrix[0].length
+  const pRows = pattern.length
+  const pCols = pattern[0].length
+
+  if (startRow > rows - pRows) {
+    return false
+  }
+  
+  if (startCol > cols - pCols) {
+    return containsPattern(matrix, pattern, startRow + 1, 0)
+  }
+
+  const isMatch = pattern.every((patternRow, i) => 
+    patternRow.every((patternValue, j) => {
+      if (patternValue === null) {
+        return true
+      }
+
+      return matrix[startRow + i]?.[startCol + j] === patternValue
+    })
+  )
+
+  return isMatch || containsPattern(matrix, pattern, startRow, startCol + 1)
+}
 
 export const store = createStore({
   state: {
     discovered: ['fire', 'water', 'earth', 'air'],
-    table: {}
+    table: {},
+    slots: Array(3).fill(null).map(() => Array(3).fill(null))
   },
 
   getters: {
-    discoveredElements: state => state.discovered,
-    tableElements: state => state.table
+    discoveredElements: s => s.discovered,
+    tableElements: s => s.table,
+    slots: s => s.slots
   },
 
   mutations: {
     ADD_TO_TABLE(state, element) {
-      if (!state.table[element]) {
-        state.table[element] = 0
+      state.table = {
+        ...state.table,
+        [element]: (state.table[element] || 0) + 1
       }
-      
-      state.table[element]++
     },
 
     DECREASE_FROM_TABLE(state, element) {
@@ -31,24 +111,42 @@ export const store = createStore({
         return
       }
 
-      state.table[element]--
-
-      if (state.table[element] <= 0) {
-        delete state.table[element]
+      const newCount = state.table[element] - 1
+      if (newCount <= 0) {
+        const { [element]: removed, ...rest } = state.table
+        state.table = rest
+      } else {
+        state.table = {
+          ...state.table,
+          [element]: newCount
+        }
       }
     },
 
-    REMOVE_ELEMENT_COMPLETELY(state, element) {
-      delete state.table[element]
+    REMOVE_ELEMENT(state, element) {
+      const { [element]: removed, ...rest } = state.table
+      state.table = rest
     },
 
     CLEAR_TABLE(state) {
       state.table = {}
     },
 
-    ADD_DISCOVERED(state, element) {
-      if (!state.discovered.includes(element)) {
-        state.discovered.push(element)
+    SET_SLOT(state, { row, col, el }) { 
+      state.slots = state.slots.map((r, i) => 
+        i === row 
+          ? r.map((c, j) => j === col ? el : c)
+          : r
+      )
+    },
+    
+    CLEAR_SLOTS(state) { 
+      state.slots = Array(3).fill(null).map(() => Array(3).fill(null)) 
+    },
+    
+    ADD_DISCOVERED(state, el) {
+      if (!state.discovered.includes(el)) {
+        state.discovered = [...state.discovered, el]
       }
     }
   },
@@ -57,7 +155,6 @@ export const store = createStore({
     addToTable({ commit }, element) {
       commit('ADD_TO_TABLE', element)
     },
-
     decreaseFromTable({ commit }, element) {
       commit('DECREASE_FROM_TABLE', element)
     },
@@ -70,23 +167,44 @@ export const store = createStore({
       commit('CLEAR_TABLE')
     },
 
+    setSlot({ commit, dispatch }, payload) {
+      commit('SET_SLOT', payload)
+      dispatch('checkSlotRecipes')
+    },
+
+    checkSlotRecipes({ state, commit }) {
+      const foundRecipe = slotRecipes.find(recipe => containsPattern(state.slots, recipe.pattern))
+      
+      if (foundRecipe) {
+        commit('ADD_DISCOVERED', foundRecipe.result)
+        commit('CLEAR_SLOTS')
+        commit('ADD_TO_TABLE', foundRecipe.result)
+        return true
+      }
+
+      return false
+    },
+
     mix({ state, commit }) {
       const table = state.table
-
-      const found = recipes.find(recipe => {
+      const tableKeys = Object.keys(table)
+      
+      const foundRecipe = tableRecipes.find(recipe => {
         const recipeKeys = Object.keys(recipe.ingredients)
-        const tableKeys = Object.keys(table)
-
-        return (
-          recipeKeys.length === tableKeys.length &&
-          recipeKeys.every(key => recipe.ingredients[key] === table[key])
+        
+        if (recipeKeys.length !== tableKeys.length) {
+          return false
+        }
+        
+        return recipeKeys.every(key => 
+          table[key] === recipe.ingredients[key]
         )
       })
-
-      if (found) {
-        commit('ADD_DISCOVERED', found.result)
+      
+      if (foundRecipe) {
+        commit('ADD_DISCOVERED', foundRecipe.result)
         commit('CLEAR_TABLE')
-        commit('ADD_TO_TABLE', found.result)
+        commit('ADD_TO_TABLE', foundRecipe.result)
       }
     }
   }
