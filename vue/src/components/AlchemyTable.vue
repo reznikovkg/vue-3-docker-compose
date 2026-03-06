@@ -48,7 +48,7 @@ const mixElements = () => store.dispatch('alchemy/mixElements')
   gap: 8px;
   min-height: 0;
   background: #1e293b;
-  width: 100%;
+  width: 100;
 }
 
 .workspace__items {
@@ -95,7 +95,7 @@ const mixElements = () => store.dispatch('alchemy/mixElements')
   cursor: pointer;
   padding: 10px 4px;
   border: 1px solid #4a5568;
-  width: 100%;
+  width: 100;
 }
 
 .workspace__button--mix {

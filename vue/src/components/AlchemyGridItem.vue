@@ -34,7 +34,7 @@ const selectElement = () => store.dispatch('alchemy/selectElement', props.elemen
   border: 2px solid transparent;
   color: #1e293b;
   aspect-ratio: 1;
-  width: 100%;
+  width: 100;
 }
 
 .grid-item--selected {

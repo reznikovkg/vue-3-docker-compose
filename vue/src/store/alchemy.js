@@ -34,9 +34,7 @@ export default {
     tableItems: (state) => state.tableItems,
     selectedElement: (state) => state.selectedElement,
 
-    totalItems: (state) => {
-      return state.tableItems.reduce((sum, item) => sum + item.quantity, 0)
-    },
+    totalItems: (state) => state.tableItems.reduce((sum, item) => sum + item.quantity, 0),
     message: (state) => state.message,
     
     isSelected: (state) => (element) => {
@@ -210,7 +208,7 @@ export default {
 }
 
 
-function getCombinations(array, size) {
+const getCombinations = (array, size) => {
   const combinations = []
   
   function combine(start, current) {
@@ -230,7 +228,7 @@ function getCombinations(array, size) {
   return combinations
 }
 
-function findIndicesForCombination(allIds, combination) {
+const findIndicesForCombination = (allIds, combination) => {
   const indices = []
   const used = new Set()
   
@@ -247,7 +245,7 @@ function findIndicesForCombination(allIds, combination) {
   return indices
 }
 
-function countItemsToRemove(usedIndices, allIds) {
+const countItemsToRemove = (usedIndices, allIds) => {
   const removeMap = new Map()
   
   usedIndices.forEach(index => {
