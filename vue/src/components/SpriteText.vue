@@ -23,6 +23,9 @@ const getCharStyle = (char) => {
   const map = props.config.spriteMap[char.toUpperCase()] || props.config.spriteMap[' ']
   if (!map) return {}
 
+  const fontSize = props.config.fontSize || map.height
+  const scale = fontSize / map.height
+
   return {
     display: 'inline-block',
     width: `${map.width}px`,
@@ -31,6 +34,8 @@ const getCharStyle = (char) => {
     backgroundRepeat: 'no-repeat',
     backgroundPosition: `-${map.x}px -${map.y}px`,
     backgroundSize: 'auto',
+    transform: `scale(${scale})`,
+    transformOrigin: 'top left',
     verticalAlign: 'top'
   }
 }

@@ -2,7 +2,7 @@ import spriteImage from '../assets/pixel-sprite.png'
 
 export const pixelSpriteConfig = {
     spriteUrl: spriteImage,
-    fontSize: 32,
+    fontSize: 64,
     spriteMap: {
         // 1-я строка спрайта
         A: {x: 33, y: 20, width: 70, height: 100},
