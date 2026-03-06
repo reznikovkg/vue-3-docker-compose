@@ -123,6 +123,10 @@ export const store = createStore({
       }
     },
 
+    REMOVE_ELEMENT_COMPLETELY(state, element) {
+      delete state.table[element]
+    },
+
     REMOVE_ELEMENT(state, element) {
       const { [element]: removed, ...rest } = state.table
       state.table = rest
