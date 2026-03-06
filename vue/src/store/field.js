@@ -305,6 +305,8 @@ export default {
         let outside = (direction === 0 && y >= store.state.size) || (direction === 1 && x + width <= 0) ||
         (direction === 2 && y + height <= 0) || (direction === 3 && x >= store.state.size)
 
+
+
         if (outside) {
             store.commit(MUTATIONS.SET_CURRENT_PIECE, null)
             if (store.state.gameActive) {
@@ -315,6 +317,9 @@ export default {
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
             store.dispatch('drawPieceOnField')
         }
+    },
+    checkLevel: (store, level) => {
+
     }
   }
 }
