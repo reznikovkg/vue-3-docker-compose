@@ -1,17 +1,14 @@
 <template>
-  Index
-
-  <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
-  </div>
+  <GameVampires />
 </template>
 
-<script setup lang="ts">
+<script>
+import GameVampires from '../GameVampires.vue';
 
+export default {
+  name: 'IndexPage',
+  components: {
+    GameVampires
+  }
+}
 </script>
-
-<style scoped>
-
-</style>
