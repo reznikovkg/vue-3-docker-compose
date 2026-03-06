@@ -1,28 +1,59 @@
 <template>
-  <table class="field-table">
+  <table 
+    class="field-table"
+    @keydown.up="move(0, -1)"
+    @keydown.down="move(0, 1)"
+    @keydown.left="move(-1, 0)"
+    @keydown.right="move(1, 0)">
     <tbody>
       <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
-        <td
-          v-for="(cell, colIdx) in row"
-          :key="colIdx"
-          class="field-td"
-          :class="{ piece: cell === 2 }"
-          :style="{ '--grid-size': getFieldSize }"
-        ></td>
+        <td 
+        class="field-td" 
+        :style="{ '--grid-size': this.getFieldSize }"
+        :class="{
+          isCentral: isCentral(rowIdx + 1, colIdx + 1),
+          piece: cell === 2
+        }"
+        v-for="(cell, colIdx) in row"
+        :key="colIdx">
+        </td>
       </tr>
     </tbody>
   </table>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'FieldTable',
   computed: {
     ...mapGetters('field', ['getFieldSize', 'getField']),
+    ...mapGetters('cube', ['getCentralCubePosition']),
+    ...mapGetters('game', ['getIsGameStarted']),
+
     grid() {
       return this.getField || []
+    }
+  },
+  methods: {
+    ...mapActions('cube', ['changeCentralCubePosition']),
+    isCentral(row, col) {
+      let {x, y} = this.getCentralCubePosition
+
+      return y === row && x === col
+    },
+    move(dx, dy){
+      if (!this.getIsGameStarted) {
+        return
+      }
+
+      let {x, y} = this.getCentralCubePosition
+      
+      x += dx
+      y += dy
+
+      this.changeCentralCubePosition({x: x, y: y})
     }
   }
 }
@@ -40,7 +71,12 @@ export default {
   height: calc(80vmin / var(--grid-size));
   background-color: white;
 }
+
 .field-td.piece {
   background-color: #ff9800;
+}
+
+.isCentral{
+  background-color: red;
 }
 </style>

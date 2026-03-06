@@ -17,3 +17,5 @@ createApp(App)
   .use(routes)
   .use(store)
   .mount('#project')
+
+// store.dispatch('cube/setPositionCentralCubeToDefault')
