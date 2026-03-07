@@ -13,6 +13,7 @@ export const createGameState = () => ({
   totalKills: 0,
   selectedTowerId: null,
   enemiesSpawned: 0,
+  points: 200,
   
   gameOver: false,
   victory: false,
