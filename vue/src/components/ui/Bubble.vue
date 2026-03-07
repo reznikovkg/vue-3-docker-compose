@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <div
     class="c-bubble"
-    :class="'c-bubble--' + type"
+    :class="'c-bubble--' + type + ' c-bubble--' + sizeType"
     :data-id="bubbleId"
     :style="{ left: left + 'px', top: top + 'px', width: size + 'px', height: size + 'px', backgroundColor: bubbleColor }"
   >
@@ -35,6 +35,10 @@ export default {
     size: {
       type: Number,
       default: BUBBLE_DEFAULTS.size
+    },
+    sizeType: {
+      type: String,
+      default: BUBBLE_DEFAULTS.sizeType
     }
   },
 
@@ -67,6 +71,19 @@ export default {
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.35);
     pointer-events: none;
+  }
+
+  &--big {
+    border-width: 2px;
+  }
+
+  &--medium {
+    border-width: 1px;
+  }
+
+  &--small {
+    border-width: 1px;
+    opacity: 0.9;
   }
 }
 </style>
