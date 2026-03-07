@@ -330,6 +330,31 @@ export default {
             store.dispatch('drawPieceOnField')
             for (let level = 0; level < store.state.size; level++)
                 store.dispatch('checkLevel', level)
+
+            const centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
+            const attachedPieces = store.rootGetters['cube/getAttachedPieces']
+            let attachedPiecesAbroad = false
+            attachedPieces.forEach(piece => {
+                attachedPiecesAbroad ||= centralCubePosition.x + piece.x <= 1 || centralCubePosition.x + piece.x >= store.state.size ||
+                centralCubePosition.y + piece.y <= 1 || centralCubePosition.y + piece.y >= store.state.size
+            })
+            if (attachedPiecesAbroad) {
+                const center = Math.ceil(store.state.size / 2)
+                const oldPosition = {
+                    x: centralCubePosition.x,
+                    y: centralCubePosition.y
+                }
+                const newPosition = {
+                    x: center,
+                    y: center
+                }
+
+                store.dispatch('cube/setPositionCentralCubeToDefault', null, { root: true })
+                store.dispatch('changeCentralCubePosition', 
+                    { oldPosition, newPosition })
+                store.dispatch('game/stopGame', null, { root: true })
+            }
+
             let isSpawn = false
             for (let r = 0; r < updatedPiece.shape.length && !isSpawn; r++) {
                 for (let c = 0; c < updatedPiece.shape[0].length && !isSpawn; c++) {

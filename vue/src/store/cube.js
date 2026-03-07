@@ -42,8 +42,14 @@ export default {
         let edge = store.rootGetters['field/getFieldSize']
         let oldPosition = store.state.centralCubePosition
 
+        let attachedPiecesAbroad = false
+        store.state.attachedPieces.forEach(piece => {
+            attachedPiecesAbroad ||= newPosition.x + piece.x <= 1 || newPosition.x + piece.x >= edge ||
+            newPosition.y + piece.y <= 1 || newPosition.y + piece.y >= edge
+        })
+
         if(newPosition.x > 1 && newPosition.x < edge &&
-            newPosition.y > 1 && newPosition.y < edge
+            newPosition.y > 1 && newPosition.y < edge && !attachedPiecesAbroad
         )
         {
             store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
