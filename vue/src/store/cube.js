@@ -1,5 +1,6 @@
 const MUTATIONS = {
-    SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION'
+    SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION',
+    CLEAR_ATTACHED_PIECES: 'CLEAR_ATTACHED_PIECES'
 }
 
 export default {
@@ -10,17 +11,23 @@ export default {
             x: 0,
             y: 0    
         },
-        attachmentPieces: []
+        attachedPieces: []
     }
   },
   getters: {
     getCentralCubePosition: (state) => state.centralCubePosition,
+    getAttachedPieces: (state) => state.attachedPieces,
   },
   mutations: {
     [MUTATIONS.SET_CENTRAL_CUBE_POSITION]: (state, newPosition) => 
-        state.centralCubePosition = newPosition
+        state.centralCubePosition = newPosition,
+    [MUTATIONS.CLEAR_ATTACHED_PIECES]: (state) => 
+        state.attachedPieces = []
   },
   actions: {
+    clearAttachedPieces: (store) => {
+        store.commit(MUTATIONS.CLEAR_ATTACHED_PIECES)
+    },
     resetCentralCubePosition: (store) => {
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, { x: 0, y: 0 })
     },

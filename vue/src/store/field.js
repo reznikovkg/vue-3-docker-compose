@@ -6,7 +6,8 @@ const MUTATIONS = {
     SET_GAME_ACTIVE: 'SET_GAME_ACTIVE',
     SET_CURRENT_PIECE: 'SET_CURRENT_PIECE',
     SET_LAST_SIDE: 'SET_LAST_SIDE',
-    SET_FIELD: 'SET_FIELD'
+    SET_FIELD: 'SET_FIELD',
+    CLEAR_FIELD: 'CLEAR_FIELD',
 }
 
 const OBJECTS = {
@@ -51,6 +52,9 @@ export default {
       state.currentPiece = null
       state.lastSide = null
     },
+    [MUTATIONS.CLEAR_FIELD]: (state) => {
+        state.field = null
+    },
     [MUTATIONS.SET_NUMBER]: (state, { position, number }) => {
       if (position.x >= 0 && position.x < state.size &&
             position.y >= 0 && position.y < state.size) {
@@ -74,6 +78,9 @@ export default {
     changeFieldSize: (store, newSize) => {
       store.commit(MUTATIONS.CHANGE_FIELD_SIZE, newSize)
     },
+    clearField: (store) => {
+      store.commit(MUTATIONS.CLEAR_FIELD)
+    },
     startGame: (store) => {
         store.commit(MUTATIONS.SET_GAME_ACTIVE, true)
         store.dispatch('spawnPiece')
@@ -84,43 +91,39 @@ export default {
         store.commit(MUTATIONS.SET_CURRENT_PIECE, null)
         store.commit(MUTATIONS.SET_LAST_SIDE, null)
     },
-    clearPieceFromField(store) {
+    clearPieceFromField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
-        const newField = store.state.field.map(row => [...row])
         for (let r = 0; r < shape.length; r++) {
             for (let c = 0; c < shape[0].length; c++) {
                 if (shape[r][c] === 1) {
                     const nx = x + c
                     const ny = y + r
-                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size) {
-                        if (newField[ny][nx] === 2) {
-                            newField[ny][nx] = 0
-                        }
-                    }
+                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size)
+                        if (store.state.field[ny][nx] === OBJECTS.EXTERNAL_FIGURE)
+                            store.dispatch('clearCell', {x: nx, y: ny})
                 }
             }
         }
-        store.commit(MUTATIONS.SET_FIELD, newField)
     },
-    drawPieceOnField(store) {
+    clearCell: (store, position) => {
+        store.commit(MUTATIONS.SET_NUMBER, { position: position, number: OBJECTS.NONE })
+    },
+    drawPieceOnField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
         const piece = state.currentPiece
         const { shape, x, y } = piece
-        const newField = store.state.field.map(row => [...row])
         for (let r = 0; r < shape.length; r++) {
             for (let c = 0; c < shape[0].length; c++) {
                 if (shape[r][c] === 1) {
                     const nx = x + c
                     const ny = y + r
-                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size) {
-                        newField[ny][nx] = 2
-                    }
+                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size)
+                        store.commit(MUTATIONS.SET_NUMBER, { position: {x: nx, y: ny}, number: OBJECTS.EXTERNAL_FIGURE })
                 }
             }
         }
-        store.commit(MUTATIONS.SET_FIELD, newField)
     },
     spawnPiece: (store) => {
         if (!store.state.gameActive) return
@@ -178,8 +181,19 @@ export default {
         store.dispatch('drawPieceOnField')
     },
     changeCentralCubePosition: (store, { oldPosition, newPosition }) => {
-      store.commit(MUTATIONS.SET_NUMBER, { position: {x: newPosition.x - 1, y: newPosition.y - 1}, number: OBJECTS.CENTRAL_CUBE })
-      store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldPosition.x - 1, y: oldPosition.y - 1}, number: OBJECTS.NONE })
+      const realOldPosition = {x: oldPosition.x - 1, y: oldPosition.y - 1}
+      const realPosition = {x: newPosition.x - 1, y: newPosition.y - 1}
+      const attachedPieces = store.rootGetters['cube/getAttachedPieces']
+      attachedPieces.forEach(piece => {
+        store.commit(MUTATIONS.SET_NUMBER, { position: {x: realOldPosition.x + piece.x, y: realOldPosition.y + piece.y},
+            number: OBJECTS.NONE })
+      })
+      store.commit(MUTATIONS.SET_NUMBER, { position: realPosition, number: OBJECTS.CENTRAL_CUBE })
+      store.commit(MUTATIONS.SET_NUMBER, { position: realOldPosition, number: OBJECTS.NONE })
+      attachedPieces.forEach(piece => {
+        store.commit(MUTATIONS.SET_NUMBER, { position: {x: realPosition.x + piece.x, y: realPosition.y + piece.y},
+            number: OBJECTS.ATTACHED_CUBE })
+      })
     },
     initStartGame: (store) => {
         store.commit(MUTATIONS.SET_GAME_ACTIVE, true)
@@ -191,7 +205,7 @@ export default {
         store.commit(MUTATIONS.SET_CURRENT_PIECE, null)
         store.commit(MUTATIONS.SET_LAST_SIDE, null)
     },
-    clearPieceFromField(store) {
+    clearPieceFromField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
@@ -211,7 +225,7 @@ export default {
         }
         store.commit(MUTATIONS.SET_FIELD, newField)
     },
-    drawPieceOnField(store) {
+    drawPieceOnField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
@@ -322,7 +336,7 @@ export default {
                         const nx = x + c
                         const ny = y + r
                         if (0 <= ny && ny < store.state.size && 0 <= nx && nx < store.state.size &&
-                            store.state.field[ny][nx] == 3) {
+                            store.state.field[ny][nx] == OBJECTS.ATTACHED_CUBE) {
                                 store.dispatch('spawnPiece')
                                 isSpawn = true
                             }
@@ -333,7 +347,7 @@ export default {
     },
     isHomogeneousLevel: (store, {level, number}) => {
       if (level < 0) return true
-      if (level == 0) return number == 1
+      if (level == 0) return number == OBJECTS.CENTRAL_CUBE
       let { x, y } = store.rootGetters['cube/getCentralCubePosition']
       x--
       y--
@@ -390,43 +404,38 @@ export default {
       let cur_cell = store.state.field[y][x]
       if (cur_cell != OBJECTS.NONE && cur_cell != OBJECTS.EXTERNAL_FIGURE) {
         const queue = []
+        store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
+        while (queue.length > 0) {
+          const { x, y } = queue.shift()
+          store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
+        }
+      }
+    },
+    checkNeighboringCells: (store, {queue, x, y}) => {
+        let fieldSize = store.state.size
+        const attachedPieces = store.rootGetters['cube/getAttachedPieces']
+        let centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
+        centralCubePosition = { x: centralCubePosition.x - 1, y: centralCubePosition.y - 1}
         if (y > 0 && store.state.field[y - 1][x] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y - 1})
+          attachedPieces.push({x: x - centralCubePosition.x, y: y - 1 - centralCubePosition.y})
         }
         if (y < fieldSize - 1 && store.state.field[y + 1][x] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y + 1})
+          attachedPieces.push({x: x - centralCubePosition.x, y: y + 1 - centralCubePosition.y})
         }
         if (x > 0 && store.state.field[y][x - 1] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x - 1, y: y})
+          attachedPieces.push({x: x - 1 - centralCubePosition.x, y: y - centralCubePosition.y})
         }
         if (x < fieldSize - 1 && store.state.field[y][x + 1] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x + 1, y: y})
+          attachedPieces.push({x: x + 1 - centralCubePosition.x, y: y - centralCubePosition.y})
         }
-        while (queue.length > 0) {
-          const { x, y } = queue.shift()
-          if (y > 0 && store.state.field[y - 1][x] == OBJECTS.EXTERNAL_FIGURE) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: OBJECTS.ATTACHED_CUBE})
-            queue.push({x: x, y: y - 1})
-          }
-          if (y < fieldSize - 1 && store.state.field[y + 1][x] == OBJECTS.EXTERNAL_FIGURE) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: OBJECTS.ATTACHED_CUBE})
-            queue.push({x: x, y: y + 1})
-          }
-          if (x > 0 && store.state.field[y][x - 1] == OBJECTS.EXTERNAL_FIGURE) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
-            queue.push({x: x - 1, y: y})
-          }
-          if (x < fieldSize - 1 && store.state.field[y][x + 1] == OBJECTS.EXTERNAL_FIGURE) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
-            queue.push({x: x + 1, y: y})
-          }
-        }
-      }
-      return false
     }
   }
 }
