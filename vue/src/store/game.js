@@ -47,7 +47,7 @@ export default {
             store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })
-            }, 2000))
+            }, 500))
         }
     }
 }

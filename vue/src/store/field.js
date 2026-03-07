@@ -315,6 +315,20 @@ export default {
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
             store.dispatch('drawPieceOnField')
             store.dispatch('checkLevel', 0)
+            let isSpawn = false
+            for (let r = 0; r < updatedPiece.shape.length && !isSpawn; r++) {
+                for (let c = 0; c < updatedPiece.shape[0].length && !isSpawn; c++) {
+                    if (shape[r][c] === 1) {
+                        const nx = x + c
+                        const ny = y + r
+                        if (0 <= ny && ny < store.state.size && 0 <= nx && nx < store.state.size &&
+                            store.state.field[ny][nx] == 3) {
+                                store.dispatch('spawnPiece')
+                                isSpawn = true
+                            }
+                    }
+                }
+            }
         }
     },
     checkLevel: (store, level) => {
@@ -324,7 +338,6 @@ export default {
       y--
       let fieldSize = store.state.size
       if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
-        let len = 1 + level * 2
         for (let up = -level; up <= level; up++) {
           store.dispatch('checkCell', { x: x + up, y: y - level })
         }
@@ -344,7 +357,7 @@ export default {
     },
     checkCell: (store, {x, y}) => { 
       let fieldSize = store.state.size
-      let cur_cell = store.getters['getField'][y][x]
+      let cur_cell = store.state.field[y][x]
       if (cur_cell != 0 && cur_cell != 2) {
         const queue = []
         if (y > 0 && store.state.field[y - 1][x] == 2) {
