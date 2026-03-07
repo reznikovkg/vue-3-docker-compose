@@ -53,7 +53,7 @@ export default {
       state.lastSide = null
     },
     [MUTATIONS.CLEAR_FIELD]: (state) => {
-        state.field = null
+      state.field = Array(state.size).fill(null).map(() => Array(state.size).fill(0))
     },
     [MUTATIONS.SET_NUMBER]: (state, { position, number }) => {
       if (position.x >= 0 && position.x < state.size &&
@@ -328,7 +328,8 @@ export default {
             const updatedPiece = { ...piece, x, y }
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
             store.dispatch('drawPieceOnField')
-            store.dispatch('checkLevel', 0)
+            for (let level = 0; level < store.state.size; level++)
+                store.dispatch('checkLevel', level)
             let isSpawn = false
             for (let r = 0; r < updatedPiece.shape.length && !isSpawn; r++) {
                 for (let c = 0; c < updatedPiece.shape[0].length && !isSpawn; c++) {
@@ -354,21 +355,17 @@ export default {
       let fieldSize = store.state.size
       let isHomogeneous = true
       if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
-        for (let up = -level; up <= level && isHomogeneous; up++) {
+        for (let up = -level; up <= level && isHomogeneous; up++)
             isHomogeneous &&= store.state.field[y - level][x + up] == number
-        }
         
-        for (let down = -level; down <= level && isHomogeneous; down++) {
+        for (let down = -level; down <= level && isHomogeneous; down++)
             isHomogeneous &&= store.state.field[y + level][x + down] == number
-        }
 
-        for (let right = -level; right <= level && isHomogeneous; right++) {
+        for (let right = -level; right <= level && isHomogeneous; right++)
             isHomogeneous &&= store.state.field[y + right][x - level] == number
-        }
         
-        for (let left = -level; left <= level && isHomogeneous; left++) {
+        for (let left = -level; left <= level && isHomogeneous; left++)
             isHomogeneous &&= store.state.field[y + left][x + level] == number
-        }
       }
       return isHomogeneous
     },
@@ -378,23 +375,25 @@ export default {
       x--
       y--
       let fieldSize = store.state.size
-      if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
-        for (let up = -level; up <= level; up++) {
-          store.dispatch('checkCell', { x: x + up, y: y - level })
-        }
+      if (y - level >= 0)
+        for (let up = -level; up <= level; up++)
+            if (x + up >= 0 && x + up < fieldSize)
+                store.dispatch('checkCell', { x: x + up, y: y - level })
         
-        for (let down = -level; down <= level; down++) {
-          store.dispatch('checkCell', { x: x + down, y: y + level })
-        }
+      if (y + level < fieldSize)
+        for (let down = -level; down <= level; down++)
+            if (x + down >= 0 && x + down < fieldSize)
+                store.dispatch('checkCell', { x: x + down, y: y + level })
 
-        for (let right = -level; right <= level; right++) {
-          store.dispatch('checkCell', { x: x - level, y: y + right })
-        }
+      if (x - level >= 0)
+        for (let right = -level; right <= level; right++)
+            if (y + right >= 0 && y + right < fieldSize)
+                store.dispatch('checkCell', { x: x - level, y: y + right })
         
-        for (let left = -level; left <= level; left++) {
-          store.dispatch('checkCell', { x: x + level, y: y + left })
-        }
-      }
+      if (x + level < fieldSize)
+        for (let left = -level; left <= level; left++)
+            if (y + left >= 0 && y + left < fieldSize)
+                store.dispatch('checkCell', { x: x + level, y: y + left })
       store.dispatch('isHomogeneousLevel', { level: 1, number: 0}).then(
         value => console.log(value)
       )

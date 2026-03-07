@@ -40,7 +40,7 @@ export default {
             store.dispatch("field/initStopGame", null, { root: true })
             store.dispatch("cube/resetCentralCubePosition", null, {root: true})
             store.dispatch("cube/clearAttachedPieces", null, { root: true })
-            store.dispatch("field/changeFieldSize", null, { root: true })
+            store.dispatch("field/clearField", null, { root: true })
         },
         startGame: (store) => {
             store.commit(MUTATIONS.SET_ISSTARTED, true)
