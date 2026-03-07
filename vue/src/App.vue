@@ -38,7 +38,8 @@ export default {
           layers: [ 
             { color: 'blue', percent: 25 },
             { color: 'yellow', percent: 25 },
-            { color: 'green', percent: 25 }
+            { color: 'blue', percent: 25 },
+            { color: 'yellow', percent: 25 }
           ]
         },
         {
@@ -92,6 +93,22 @@ export default {
 
       const pourAmount = Math.min(topLayer.percent, availableSpace)
       console.log('Переливаем ', pourAmount, ' цвета ', topLayer.color)
+
+      if (topLayer.percent === pourAmount) {
+        fromFlask.layers.pop()
+      } else {
+        topLayer.percent -= pourAmount
+      }
+
+      if (toFlask.layers.length === 0) {
+        toFlask.layers.push({
+          color: topLayer.color,
+          percent: pourAmount
+        })
+      } else {
+        const toTopLayer = toFlask.layers[toFlask.layers.length - 1]
+        toTopLayer.percent += pourAmount
+      }
     }
   }
 }
