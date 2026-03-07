@@ -11,8 +11,9 @@
         class="field-td" 
         :style="{ '--grid-size': this.getFieldSize }"
         :class="{
-          isCentral: isCentral(rowIdx + 1, colIdx + 1),
-          piece: cell === 2
+          'is-central': isCentral(rowIdx + 1, colIdx + 1),
+          'piece': cell === 2,
+          'attached-piece': cell === 3
         }"
         v-for="(cell, colIdx) in row"
         :key="colIdx">
@@ -72,11 +73,14 @@ export default {
   background-color: white;
 }
 
-.field-td.piece {
+.piece {
   background-color: #ff9800;
 }
 
-.isCentral{
+.is-central{
   background-color: red;
+}
+.attached-piece {
+  background-color: rgb(7, 36, 199);
 }
 </style>

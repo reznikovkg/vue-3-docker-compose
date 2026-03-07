@@ -331,6 +331,33 @@ export default {
             }
         }
     },
+    isHomogeneousLevel: (store, {level, number}) => {
+      if (level < 0) return true
+      if (level == 0) return number == 1
+      let { x, y } = store.rootGetters['cube/getCentralCubePosition']
+      x--
+      y--
+      let fieldSize = store.state.size
+      let isHomogeneous = true
+      if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
+        for (let up = -level; up <= level && isHomogeneous; up++) {
+            isHomogeneous &&= store.state.field[y - level][x + up] == number
+        }
+        
+        for (let down = -level; down <= level && isHomogeneous; down++) {
+            isHomogeneous &&= store.state.field[y + level][x + down] == number
+        }
+
+        for (let right = -level; right <= level && isHomogeneous; right++) {
+            isHomogeneous &&= store.state.field[y + right][x - level] == number
+        }
+        
+        for (let left = -level; left <= level && isHomogeneous; left++) {
+            isHomogeneous &&= store.state.field[y + left][x + level] == number
+        }
+      }
+      return isHomogeneous
+    },
     checkLevel: (store, level) => {
       if (level < 0) return
       let { x, y } = store.rootGetters['cube/getCentralCubePosition']
@@ -354,44 +381,47 @@ export default {
           store.dispatch('checkCell', { x: x + level, y: y + left })
         }
       }
+      store.dispatch('isHomogeneousLevel', { level: 1, number: 0}).then(
+        value => console.log(value)
+      )
     },
     checkCell: (store, {x, y}) => { 
       let fieldSize = store.state.size
       let cur_cell = store.state.field[y][x]
-      if (cur_cell != 0 && cur_cell != 2) {
+      if (cur_cell != OBJECTS.NONE && cur_cell != OBJECTS.EXTERNAL_FIGURE) {
         const queue = []
-        if (y > 0 && store.state.field[y - 1][x] == 2) {
-          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: 3})
+        if (y > 0 && store.state.field[y - 1][x] == OBJECTS.EXTERNAL_FIGURE) {
+          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y - 1})
         }
-        if (y < fieldSize - 1 && store.state.field[y + 1][x] == 2) {
-          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: 3})
+        if (y < fieldSize - 1 && store.state.field[y + 1][x] == OBJECTS.EXTERNAL_FIGURE) {
+          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y + 1})
         }
-        if (x > 0 && store.state.field[y][x - 1] == 2) {
-          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: 3})
+        if (x > 0 && store.state.field[y][x - 1] == OBJECTS.EXTERNAL_FIGURE) {
+          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x - 1, y: y})
         }
-        if (x < fieldSize - 1 && store.state.field[y][x + 1] == 2) {
-          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: 3})
+        if (x < fieldSize - 1 && store.state.field[y][x + 1] == OBJECTS.EXTERNAL_FIGURE) {
+          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x + 1, y: y})
         }
         while (queue.length > 0) {
           const { x, y } = queue.shift()
-          if (y > 0 && store.state.field[y - 1][x] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: 3})
+          if (y > 0 && store.state.field[y - 1][x] == OBJECTS.EXTERNAL_FIGURE) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: OBJECTS.ATTACHED_CUBE})
             queue.push({x: x, y: y - 1})
           }
-          if (y < fieldSize - 1 && store.state.field[y + 1][x] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: 3})
+          if (y < fieldSize - 1 && store.state.field[y + 1][x] == OBJECTS.EXTERNAL_FIGURE) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: OBJECTS.ATTACHED_CUBE})
             queue.push({x: x, y: y + 1})
           }
-          if (x > 0 && store.state.field[y][x - 1] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: 3})
+          if (x > 0 && store.state.field[y][x - 1] == OBJECTS.EXTERNAL_FIGURE) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
             queue.push({x: x - 1, y: y})
           }
-          if (x < fieldSize - 1 && store.state.field[y][x + 1] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: 3})
+          if (x < fieldSize - 1 && store.state.field[y][x + 1] == OBJECTS.EXTERNAL_FIGURE) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
             queue.push({x: x + 1, y: y})
           }
         }
