@@ -16,8 +16,7 @@
       </div>
 
       <RouterLink :to="{ name: $routes.GAME }" class="home__start-link"> 
-        <span class="home__icon-play">▶</span>
-        <span>Начать игру</span>
+        <span>▶ Начать игру</span>
       </RouterLink>
 
       <section class="home__rules rules">
@@ -67,7 +66,12 @@ interface Props {
   bestScore: number;
 }
 
-defineProps<Props>();
+// todo прокидывать настоящие значения
+const props = withDefaults(defineProps<Props>(), {
+  bestScore: 1500
+});
+
+
 </script>
 
 <style scoped lang="scss">
@@ -82,8 +86,6 @@ defineProps<Props>();
 
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     row-gap: 32px;
   }
 
@@ -130,17 +132,13 @@ defineProps<Props>();
 
   &__start-link {
     width: 100%;
-    padding: 24px 128px;
+    padding: 24px;
     font-size: 18px;
     font-weight: 600;
-    text-decoration: none;
     background-color: var(--vt-c-green);
     color: var(--vt-c-white);
     border: none;
     border-radius: var(--vt-radius-default);
-    cursor: pointer;
-    box-shadow: var(--vt-shadow-default);
-    transition: background-color 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
