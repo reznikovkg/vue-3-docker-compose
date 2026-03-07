@@ -9,22 +9,9 @@
         </div>
       </header>
 
-      <section class="result__stats stats">
-        <div class="stats__card stats__card--main">
-          <p class="stats__label">Ты проехал</p>
-          <div class="stats__value">
-            <span class="stats__emoji">🏆</span>
-            <span class="stats__number">{{ distance }}м</span>
-          </div>
-        </div>
-
-        <div v-if="bestScore > 0 && !isNewRecord" class="stats__card stats__card--small">
-          <p class="stats__label stats__label--small">Лучший результат</p>
-          <div class="stats__value stats__value--small">
-            <span class="stats__emoji stats__emoji--small">🏆</span>
-            <span class="stats__emoji stats__number--small">{{ bestScore }}м</span>
-          </div>
-        </div>
+      <section class="result__stats">
+        <StatsCard :score="distance" label="Ты проехал" variant="main" />
+        <StatsCard v-if="bestScore > 0 && !isNewRecord" :score="bestScore" label="Лучший результат" variant="small" />
       </section>
 
       <footer class="result__actions">
@@ -39,6 +26,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import BaseLink from '@/components/ui/BaseLink.vue';
+import StatsCard from '@/components/ui/StatsCard.vue';
 
 interface Props {
   distance: number;
@@ -93,61 +81,11 @@ const isNewRecord = computed(() => props.distance > props.bestScore);
     flex-direction: column;
     gap: 12px;
   }
-}
 
-.stats {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  row-gap: 16px;
-
-  &__card {
-    border-radius: var(--vt-radius-default);
-    backdrop-filter: var(--vt-blur-default);
-
-    &--main {
-      padding: 24px;
-      background-color: var(--color-background-soft);
-      border: 2px solid var(--color-border);
-    }
-
-    &--small {
-      padding: 16px;
-      background-color: var(--color-background-mute);
-      border: 1px solid var(--color-border);
-    }
-  }
-
-  &__label {
-    font-size: 18px;
-    color: var(--vt-c-blue-soft);
-  }
-
-  &__value {
+  &__stats {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    column-gap: 8px;
-  }
-
-  &__number {
-    font-size: 48px;
-    font-weight: 700;
-    color: var(--vt-c-blue-soft);
-
-    &--small {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--vt-c-yellow);
-    }
-  }
-
-  &__emoji {
-    font-size: 32px;
-
-    &--small {
-      font-size: 20px;
-    }
+    flex-direction: column;
+    row-gap: 16px;
   }
 }
 </style>

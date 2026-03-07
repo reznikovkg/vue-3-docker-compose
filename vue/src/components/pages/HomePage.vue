@@ -7,14 +7,7 @@
         <span class="home__subtitle">Уворачивайся от машин!</span>
       </header>
 
-      <div v-if="bestScore > 0" class="home__score-card">
-        <div class="home__score-value">
-          <span class="home__icon-trophy">🏆</span>
-          <span class="home__score-number">{{ bestScore }}м</span>
-        </div>
-        <p class="home__score-label">Лучший результат</p>
-      </div>
-
+      <StatsCard v-if="bestScore > 0" :score="bestScore" label="Лучший результат" variant="small" />
       <BaseLink :to="{ name: $routes.GAME }" title="▶ Начать игру" variant="primary" />
 
       <section class="home__rules rules">
@@ -61,6 +54,7 @@
 
 <script setup lang="ts">
 import BaseLink from '@/components/ui/BaseLink.vue';
+import StatsCard from '@/components/ui/StatsCard.vue';
 
 interface Props {
   bestScore: number;
@@ -104,29 +98,6 @@ const props = withDefaults(defineProps<Props>(), {
 
   &__subtitle {
     font-size: 20px;
-    color: var(--vt-c-blue-soft);
-  }
-
-  &__score-card {
-    background-color: var(--color-background-soft);
-    backdrop-filter: var(--vt-blur-default);
-    border-radius: var(--vt-radius-default);
-    padding: 16px;
-    border: 2px solid var(--color-border);
-  }
-
-  &__score-value {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: var(--vt-c-yellow);
-    font-size: 24px;
-    font-weight: 700;
-  }
-
-  &__score-label {
-    font-size: 14px;
     color: var(--vt-c-blue-soft);
   }
 }
