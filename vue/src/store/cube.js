@@ -47,29 +47,11 @@ export default {
             attachedPiecesAbroad ||= newPosition.x + piece.x <= 1 || newPosition.x + piece.x >= edge ||
             newPosition.y + piece.y <= 1 || newPosition.y + piece.y >= edge
         })
-
-        if(newPosition.x > 1 && newPosition.x < edge &&
-            newPosition.y > 1 && newPosition.y < edge && !attachedPiecesAbroad
-        )
-        {
-            store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
-            store.dispatch('field/changeCentralCubePosition', 
-                { oldPosition, newPosition }, 
-                { root: true })
-        }
-        else
-        {
-            newPosition = {
-                x: center,
-                y: center
-            }
-
-            store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
-            store.dispatch('field/changeCentralCubePosition', 
-                { oldPosition, newPosition }, 
-                { root: true })
-            store.dispatch('game/stopGame', null, { root: true })
-        }
+        store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
+        store.dispatch('field/changeCentralCubePosition', 
+            { oldPosition, newPosition }, 
+            { root: true })
+        store.dispatch('field/checkFigureAttachment', null, { root: true })
     }
   }
 }

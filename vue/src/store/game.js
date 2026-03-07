@@ -33,6 +33,31 @@ export default {
         changeIsFinished: (store, value) => {
             store.commit(MUTATIONS.SET_ISFINISHED, value)
         },
+        checkGameEnd: (store) => {
+            const centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
+            const attachedPieces = store.rootGetters['cube/getAttachedPieces']
+            let attachedPiecesAbroad = false
+            attachedPieces.forEach(piece => {
+                attachedPiecesAbroad ||= centralCubePosition.x + piece.x <= 1 || centralCubePosition.x + piece.x >= store.state.size ||
+                centralCubePosition.y + piece.y <= 1 || centralCubePosition.y + piece.y >= store.state.size
+            })
+            if (attachedPiecesAbroad) {
+                const center = Math.ceil(store.state.size / 2)
+                const oldPosition = {
+                    x: centralCubePosition.x,
+                    y: centralCubePosition.y
+                }
+                const newPosition = {
+                    x: center,
+                    y: center
+                }
+
+                store.dispatch('cube/setPositionCentralCubeToDefault', null, { root: true })
+                store.dispatch('field/changeCentralCubePosition', 
+                    { oldPosition, newPosition }, { root: true })
+                store.dispatch('game/stopGame', null, { root: true })
+            }
+        },
         stopGame: (store) => {
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
             store.commit(MUTATIONS.SET_ISFINISHED, true)
