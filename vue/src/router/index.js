@@ -1,5 +1,6 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
+import HomePage from '@/components/pages/HomePage.vue'
 import IndexPage from '@/components/pages/IndexPage.vue'
 import ExamplePage from '@/components/pages/ExamplePage.vue'
 
@@ -17,6 +18,7 @@ const routes = [
   {
     name: ROUTES.HOME,
     path: '/home',
+    component: HomePage
   },
 
   // TODO edit to /game and /result
