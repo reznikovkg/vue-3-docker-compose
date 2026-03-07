@@ -15,9 +15,7 @@
         <p class="home__score-label">Лучший результат</p>
       </div>
 
-      <RouterLink :to="{ name: $routes.GAME }" class="home__start-link"> 
-        <span>▶ Начать игру</span>
-      </RouterLink>
+      <BaseLink :to="{ name: $routes.GAME }" title="▶ Начать игру" variant="primary" />
 
       <section class="home__rules rules">
         <h2 class="rules__title">Как играть:</h2>
@@ -62,6 +60,8 @@
 </template>
 
 <script setup lang="ts">
+import BaseLink from '@/components/ui/BaseLink.vue';
+
 interface Props {
   bestScore: number;
 }
@@ -128,25 +128,6 @@ const props = withDefaults(defineProps<Props>(), {
   &__score-label {
     font-size: 14px;
     color: var(--vt-c-blue-soft);
-  }
-
-  &__start-link {
-    width: 100%;
-    padding: 24px;
-    font-size: 18px;
-    font-weight: 600;
-    background-color: var(--vt-c-green);
-    color: var(--vt-c-white);
-    border: none;
-    border-radius: var(--vt-radius-default);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    &:hover {
-      background-color: var(--vt-c-green-hover);
-    }
   }
 }
 

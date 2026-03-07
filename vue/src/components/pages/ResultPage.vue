@@ -28,13 +28,9 @@
       </section>
 
       <footer class="result__actions">
-        <RouterLink :to="{ name: $routes.GAME }" class="result__link result__link--primary">
-          <span>🔄 Играть снова</span>
-        </RouterLink>
+        <BaseLink :to="{ name: $routes.GAME }" title="🔄 Играть снова" variant="primary" />
 
-        <RouterLink :to="{ name: $routes.HOME }" class="result__link result__link--secondary">
-          <span>🏠 Главное меню</span>
-        </RouterLink>
+        <BaseLink :to="{ name: $routes.HOME }" title="🏠 Главное меню" variant="secondary" />
       </footer>
     </div>
   </div>
@@ -42,6 +38,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import BaseLink from '@/components/ui/BaseLink.vue';
 
 interface Props {
   distance: number;
@@ -95,38 +92,6 @@ const isNewRecord = computed(() => props.distance > props.bestScore);
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  &__link {
-    width: 100%;
-    padding: 24px;
-    font-size: 18px;
-    font-weight: 600;
-    border-radius: var(--vt-radius-default);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    &--primary {
-      background-color: var(--vt-c-green);
-      color: var(--vt-c-white);
-
-      &:hover {
-        background-color: var(--vt-c-green-hover);
-      }
-    }
-
-    &--secondary {
-      background-color: var(--color-background-soft);
-      color: var(--vt-c-white);
-      border: 1px solid var(--color-border);
-      backdrop-filter: var(--vt-blur-default);
-
-      &:hover {
-        background-color: var(--color-background-mute);
-      }
-    }
   }
 }
 
