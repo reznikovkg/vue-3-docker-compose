@@ -2,7 +2,10 @@
   <div class="puzzle">
     <div class="puzzle__header">
       <div class="puzzle__title">Пятнашки</div>
-      <div class="puzzle__moves">Ходов: {{ moves }}</div>
+      <div class="puzzle__stats">
+        <div class="puzzle__moves">Ходов: {{ moves }}</div>
+        <div class="puzzle__timer">{{ formatTime }}</div>
+      </div>
     </div>
 
     <div class="puzzle__size-control">
@@ -20,6 +23,27 @@
       <span class="puzzle__size-info">{{ size }} x {{ size }}</span>
     </div>
 
+    <div class="puzzle__mode-control">
+      <button 
+        class="puzzle__mode-button" 
+        :class="{ 'puzzle__mode-button--active': !blockMode }"
+        @click="() => setMode(false)"
+      >
+        Обычный режим
+      </button>
+      <button 
+        class="puzzle__mode-button" 
+        :class="{ 'puzzle__mode-button--active': blockMode }"
+        @click="() => setMode(true)"
+      >
+        Режим блокировок
+      </button>
+    </div>
+
+    <div class="puzzle__bonus" v-if="bonusActive">
+      Бонусный ход
+    </div>
+
     <div 
       class="puzzle__grid" 
       :style="{ gridTemplateColumns: `repeat(${size}, 1fr)` }"
@@ -28,9 +52,12 @@
         v-for="(cell, i) in cells" 
         :key="i"
         class="puzzle__cell" 
-        :class="{ 'puzzle__cell--empty': cell === size * size }"
-        @click="() => moveCell(i)"
-        @touchstart.prevent="() => moveCell(i)"
+        :class="{ 
+          'puzzle__cell--empty': cell === size * size,
+          'puzzle__cell--blocked': blockMode && blockedCell === i
+        }"
+        @click="() => handleClick(i)"
+        @touchstart.prevent="() => handleClick(i)"
       >
         <span v-if="cell !== size * size">{{ cell }}</span>
       </div>
@@ -39,7 +66,17 @@
       <button class="puzzle__button" @click="() => newGame()">Новая игра</button>
     </div>
     <div v-if="isSolved" class="puzzle__win">
-      Победа
+      <div>Победа</div>
+      <div>Время: {{ formatTime }}</div>
+      <div>Ходов: {{ moves }}</div>
+      <div v-if="isNewRecord" class="puzzle__record">Новый рекорд</div>
+    </div>
+
+    <div class="puzzle__records">
+      <div class="puzzle__records-title">Рекорды</div>
+      <div v-for="(rec, idx) in records" :key="idx" class="puzzle__record-item">
+        {{ rec.size }}x{{ rec.size }} - {{ formatTimeShort(rec.time) }} - {{ rec.moves }} ходов
+      </div>
     </div>
   </div>
 </template>
@@ -52,7 +89,13 @@ export default {
       cells: [],
       moves: 0,
       size: 3,
-      sizeInput: 3
+      sizeInput: 3,
+      timer: null,
+      seconds: 0,
+      bonusActive: false,
+      blockedCell: null,
+      records: [],
+      blockMode: false
     }
   },
   computed: {
@@ -66,6 +109,17 @@ export default {
         }
         return cell === index + 1
       })
+    },
+    formatTime() {
+      const m = Math.floor(this.seconds / 60)
+      const s = this.seconds % 60
+      return `${m}:${s.toString().padStart(2, '0')}`
+    },
+    isNewRecord() {
+      if (!this.isSolved) return false
+      const sameSize = this.records.filter(r => r.size === this.size)
+      if (sameSize.length < 5) return true
+      return this.seconds < Math.max(...sameSize.map(r => r.time))
     }
   },
   methods: {
@@ -94,6 +148,16 @@ export default {
 
       this.cells = newCells 
       this.moves = 0
+      this.seconds = 0
+      this.blockedCell = null
+      this.bonusActive = false
+      this.startTimer()
+    },
+    setMode(mode) {
+      if (this.blockMode !== mode) {
+        this.blockMode = mode
+        this.newGame()
+      }
     },
     canMove(index) {
       const empty = this.emptyIndex
@@ -103,15 +167,32 @@ export default {
       const col = index % this.size
       return (Math.abs(emptyRow - row) + Math.abs(emptyCol - col)) === 1
     },
-    moveCell(index) {
+    handleClick(index) {
       if (this.isSolved) return
+      if (this.bonusActive && index !== this.emptyIndex) {
+        this.moveCell(index)
+        this.bonusActive = false
+        return
+      }
       if (!this.canMove(index)) return
+      if (this.blockMode && this.blockedCell === index) return
+      this.moveCell(index)
+    },
+    moveCell(index) {
       const newCell = [...this.cells]
       const empty = this.emptyIndex
       newCell[empty] = newCell[index]
       newCell[index] = this.size * this.size
       this.cells = newCell
       this.moves++
+      if (this.blockMode) {
+        this.blockNextCell()
+      }
+      
+      if (this.isSolved) {
+        clearInterval(this.timer)
+        this.checkRecord()
+      }
     },
     changeSize() {
       if (this.sizeInput < 3) this.sizeInput = 3
@@ -120,10 +201,67 @@ export default {
         this.size = this.sizeInput
         this.newGame()
       }
+    },
+    startTimer() {
+      if (this.timer) clearInterval(this.timer)
+      this.timer = setInterval(() => {
+        if (!this.isSolved) {
+          this.seconds++
+        }
+      }, 1000)
+    },
+    blockNextCell() {
+      if (this.isSolved) return
+      const possible = this.cells
+        .map((_, i) => i)
+        .filter(i => this.canMove(i) && i !== this.emptyIndex)
+      this.blockedCell = possible.length 
+        ? possible[Math.floor(Math.random() * possible.length)]
+        : null
+    },
+    loadRecords() {
+      const saved = localStorage.getItem('puzzleRecords')
+      if (saved) {
+        try {
+          this.records = JSON.parse(saved)
+        } catch {}
+      }
+    },
+    saveRecords() {
+      localStorage.setItem('puzzleRecords', JSON.stringify(this.records))
+    },
+    checkRecord() {
+      const newRecord = {
+        size: this.size,
+        time: this.seconds,
+        moves: this.moves,
+        date: Date.now()
+      }
+      const sameSize = this.records.filter(r => r.size === this.size)
+      sameSize.push(newRecord)
+      sameSize.sort((a, b) => a.time - b.time)
+      const top5 = sameSize.slice(0, 5)
+      const otherSizes = this.records.filter(r => r.size !== this.size)
+      this.records = [...otherSizes, ...top5]
+      this.saveRecords()
+    },
+    formatTimeShort(sec) {
+      const m = Math.floor(sec / 60)
+      const s = sec % 60
+      return `${m}:${s.toString().padStart(2, '0')}`
     }
   },
   mounted() {
+    this.loadRecords()
     this.newGame()
+    setInterval(() => {
+      if (!this.isSolved) {
+        this.bonusActive = true
+      }
+    }, 60000)
+  },
+  beforeUnmount() {
+    if (this.timer) clearInterval(this.timer)
   }
 }
 </script>
@@ -146,12 +284,22 @@ export default {
     font-size: 24px;
     color: #333;
   }
+  &__stats {
+    display: flex;
+    gap: 15px;
+  }
+  
   &__moves {
     font-size: 18px;
     font-weight: bold;
     color: #4CAF50;
   }
-  
+  &__timer {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2196F3;
+    font-family: monospace;
+  }
   &__size-control {
     display: flex;
     align-items: center;
@@ -189,6 +337,43 @@ export default {
     color: #666;
     font-weight: bold;
   }
+  &__mode-control {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  &__mode-button {
+    flex: 1;
+    padding: 10px;
+    font-size: 16px;
+    background: #e0e0e0;
+    color: #333;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      background: #d0d0d0;
+    }
+    
+    &--active {
+      background: #4CAF50;
+      color: white;
+      &:hover {
+        background: #45a049;
+      }
+    }
+  }
+  &__bonus {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #fff3cd;
+    border-radius: 8px;
+    text-align: center;
+    color: #856404;
+    font-weight: bold;
+  }
   &__grid {
     display: grid;
     gap: 8px;
@@ -212,8 +397,7 @@ export default {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     transition: all 0.2s;
     user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    &:active {
+    &:active:not(&--empty):not(&--blocked) {
       transform: scale(0.95);
       background: #f0f0f0;
     }
@@ -222,6 +406,11 @@ export default {
       box-shadow: none;
       cursor: default;
       pointer-events: none;
+    }
+    &--blocked {
+      background: #ffcdd2;
+      cursor: not-allowed;
+      opacity: 0.7;
     }
   }
 
@@ -249,7 +438,31 @@ export default {
     padding: 15px;
     background: #e8f5e9;
     border-radius: 8px;
-    animation: pulse 2s infinite;
+    margin-bottom: 20px;
+  }
+  &__record {
+    color: #ff9800;
+    font-size: 20px;
+    margin-top: 10px;
+  }
+  &__records {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 12px;
+  }
+  &__records-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  &__record-item {
+    padding: 8px;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    font-size: 14px;
   }
 }
 
@@ -265,8 +478,9 @@ export default {
     &__title { 
       font-size: 20px;
     }
-    &__moves {
-      font-size: 16px;
+    &__moves,
+    &__timer {
+      font-size: 14px;
     }
     &__size-control {
       flex-direction: column;
@@ -284,6 +498,10 @@ export default {
     }
     &__size-info {
       font-size: 14px;
+    }
+    &__mode-button {
+      font-size: 14px;
+      padding: 8px;
     }
     &__cell {
       font-size: clamp(12px, 4vw, 24px);
