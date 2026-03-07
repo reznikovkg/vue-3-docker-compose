@@ -1,35 +1,35 @@
 <template>
   <div class="info-panel">
-    <div v-if="selectedEnemy" class="info-panel__controls">
-      <button
-        :disabled="!canMoveUp"
-        class="info-panel__button"
-        @click="() => onMove('up')"
-      >↑</button>
-      <button
-        :disabled="!canMoveDown"
-        class="info-panel__button"
-        @click="() => onMove('down')"
-      >↓</button>
-      <button
-        :disabled="!canMoveLeft"
-        class="info-panel__button"
-        @click="() => onMove('left')"
-      >←</button>
-      <button
-        :disabled="!canMoveRight"
-        class="info-panel__button"
-        @click="() => onMove('right')"
-      >→</button>
-    </div>
+    <div
+      v-if="selectedTower"
+      class="info-panel__tower"
+    >
+      <div class="info-panel__tower-info">
+        <div class="info-panel__tower-info-row">
+          Уровень: {{ selectedTower.level }}
+        </div>
+        <div class="info-panel__tower-info-row">
+          Урон: {{ Math.round(selectedTower.damage) }}
+        </div>
+        <div class="info-panel__tower-info-row">
+          Скорость: {{ selectedTower.attackSpeed.toFixed(1) }}
+        </div>
+        <div class="info-panel__tower-info-row">
+          Радиус: {{ selectedTower.radius }}
+        </div>
+        <div class="info-panel__tower-info-row">
+          Убийств: {{ selectedTower.kills || 0 }}
+        </div>
+      </div>
 
-    <div v-else-if="selectedTower" class="info-panel__tower">
       <button
         v-if="selectedTower.level < 5"
         class="info-panel__upgrade-button"
+        :class="{ 'info-panel__upgrade-button--insufficient': points < upgradeCost }"
         @click="() => onUpgrade()"
       >
-        Улучшить ({{ selectedTower.level + 1 }})
+        Улучшить до {{ selectedTower.level + 1 }} уровня
+        <span class="info-panel__cost">({{ upgradeCost }})</span>
       </button>
 
       <div v-else class="info-panel__no-upgrade">
@@ -40,10 +40,19 @@
     <div v-else class="info-panel__no-selection">
       <p class="info-panel__no-selection-title">Выберите:</p>
       <ul class="info-panel__no-selection-list">
-        <li class="info-panel__no-selection-item">Врага - чтобы управлять</li>
-        <li class="info-panel__no-selection-item">Пустую позицию - чтобы построить</li>
-        <li class="info-panel__no-selection-item">Башню - чтобы улучшить</li>
+        <li class="info-panel__no-selection-item">
+          Пустую позицию - построить башню ({{ towerCost }} очков)
+        </li>
+        <li class="info-panel__no-selection-item">
+          Башню - чтобы улучшить
+        </li>
       </ul>
+      <div
+        class="info-panel__points"
+        :class="{ 'info-panel__points--insufficient': points < towerCost }"
+      >
+        Доступно очков: {{ points }}
+      </div>
     </div>
   </div>
 </template>
@@ -51,19 +60,14 @@
 <script>
 export default {
   name: 'InfoPanel',
-  emits: ['move', 'upgrade-tower'],
+  emits: ['upgrade-tower'],
   props: {
-    selectedEnemy: Object,
     selectedTower: Object,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-    canMoveLeft: Boolean,
-    canMoveRight: Boolean
+    points: Number,
+    towerCost: Number,
+    upgradeCost: Number
   },
   methods: {
-    onMove (direction) {
-      this.$emit('move', direction)
-    },
     onUpgrade () {
       this.$emit('upgrade-tower')
     }
@@ -79,28 +83,19 @@ export default {
   min-height: 120px;
   padding: 15px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  position: relative;
 
-  &__controls {
-    display: flex;
-    gap: 5px;
+  &__tower-info {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
   }
 
-  &__button {
-    width: 45px;
-    height: 45px;
-    font-size: 24px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-
-    &:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
+  &__tower-info-row {
+    margin: 5px 0;
   }
 
   &__upgrade-button {
@@ -113,6 +108,27 @@ export default {
     font-weight: bold;
     background: #ff9800;
     color: white;
+    transition: background 0.2s;
+
+    &:hover:not(:disabled) {
+      background: #f57c00;
+    }
+
+    &--insufficient {
+      background: #ffb74d;
+      cursor: not-allowed;
+      opacity: 0.7;
+
+      &:hover {
+        background: #ffb74d;
+      }
+    }
+  }
+
+  &__cost {
+    display: block;
+    font-size: 12px;
+    margin-top: 4px;
   }
 
   &__no-upgrade {
@@ -143,6 +159,20 @@ export default {
     margin: 8px 0;
     list-style: none;
     font-size: 14px;
+  }
+
+  &__points {
+    padding: 10px;
+    background: #4caf50;
+    color: white;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: background 0.2s;
+
+    &--insufficient {
+      background: #f44336;
+    }
   }
 }
 </style>

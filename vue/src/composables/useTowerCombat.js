@@ -1,9 +1,11 @@
 export const updateTowers = (ctx) => {
+  const killedEnemies = ctx.enemies.filter(e => e.health <= 0)
+
   ctx.enemies = ctx.enemies.filter(e => e.health > 0)
 
-  if (!ctx.enemies.find(e => e.id === ctx.selectedEnemyId)) {
-    ctx.selectedEnemyId = null
-  }
+  killedEnemies.forEach(enemy => {
+    ctx.rewardForKill?.(enemy)
+  })
 
   ctx.towers.forEach(t => {
     t.cooldown = Math.max(0, (t.cooldown || 0) - 100)
@@ -42,7 +44,6 @@ export const updateTowers = (ctx) => {
     if (target.health <= 0) {
       t.targetId = null
       t.kills = (t.kills || 0) + 1
-      ctx.totalKills++
     }
   })
 }

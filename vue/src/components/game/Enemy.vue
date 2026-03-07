@@ -1,14 +1,12 @@
 <template>
   <div
     class="enemy"
-    :class="{ 'enemy--selected': selected }"
     :style="{
       left: x + 'px',
       top: y + 'px'
     }"
-    @click.stop="() => onClick()"
   >
-    <div class="enemy__circle"></div>
+    <div class="enemy__circle" :style="{ background: color }"></div>
     <div
       class="enemy__health-bar"
       :style="{
@@ -21,19 +19,12 @@
 <script>
 export default {
   name: 'Enemy',
-  emits: ['click'],
   props: {
     x: Number,
     y: Number,
     health: Number,
     maxHealth: Number,
-    selected: Boolean,
-    index: Number
-  },
-  methods: {
-    onClick () {
-      this.$emit('click')
-    }
+    color: String
   }
 }
 </script>
@@ -43,20 +34,13 @@ export default {
   position: absolute;
   transform: translate(-50%, -50%);
   z-index: 3;
-  cursor: pointer;
 
   &__circle {
     width: 25px;
     height: 25px;
-    background: #f44336;
     border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
     border: 2px solid #333;
     transition: all 0.1s;
-  }
-
-  &--selected &__circle {
-    border: 4px solid yellow;
-    transform: scale(1.2);
   }
 
   &__health-bar {

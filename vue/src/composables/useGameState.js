@@ -1,5 +1,7 @@
 import { LEVELS_DATA } from '@/constants/levels'
 
+const TOWER_COST = 100
+
 export const createGameState = () => ({
   levels: LEVELS_DATA,
   currentLevelId: 1,
@@ -7,7 +9,18 @@ export const createGameState = () => ({
   towerPositions: [],
   towers: [],
   enemies: [],
+  shots: [],
   totalKills: 0,
-  selectedEnemyId: null,
-  selectedTowerId: null
+  selectedTowerId: null,
+  enemiesSpawned: 0,
+  
+  gameOver: false,
+  victory: false,
+  maxEnemies: 0,
+  
+  gameLoop: null,
+  spawnInterval: null,
+  showInsufficientFunds: false,
+  
+  TOWER_COST
 })
