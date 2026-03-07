@@ -305,8 +305,6 @@ export default {
         let outside = (direction === 0 && y >= store.state.size) || (direction === 1 && x + width <= 0) ||
         (direction === 2 && y + height <= 0) || (direction === 3 && x >= store.state.size)
 
-        store.dispatch('checkLevel', 1)
-
         if (outside) {
             store.commit(MUTATIONS.SET_CURRENT_PIECE, null)
             if (store.state.gameActive) {
@@ -316,30 +314,37 @@ export default {
             const updatedPiece = { ...piece, x, y }
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
             store.dispatch('drawPieceOnField')
+            store.dispatch('checkLevel', 0)
         }
     },
     checkLevel: (store, level) => {
-      if (level < 0) return false
+      if (level < 0) return
       let { x, y } = store.rootGetters['cube/getCentralCubePosition']
       x--
       y--
       let fieldSize = store.state.size
       if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
         let len = 1 + level * 2
-        let border = Math.floor(len / 2)
-        for (let up = -border; up <= border; up++) {
-          store.dispatch('checkCell', { x: x + up, y: y - 1 })
+        for (let up = -level; up <= level; up++) {
+          store.dispatch('checkCell', { x: x + up, y: y - level })
         }
-        store.dispatch('checkCell', { x: x - 1, y: y })
-        store.dispatch('checkCell', { x: x + 1, y: y })
-        for (let down = -border; down <= border; down++) {
-          store.dispatch('checkCell', { x: x + down, y: y + 1 })
+        
+        for (let down = -level; down <= level; down++) {
+          store.dispatch('checkCell', { x: x + down, y: y + level })
+        }
+
+        for (let right = -level; right <= level; right++) {
+          store.dispatch('checkCell', { x: x - level, y: y + right })
+        }
+        
+        for (let left = -level; left <= level; left++) {
+          store.dispatch('checkCell', { x: x + level, y: y + left })
         }
       }
     },
     checkCell: (store, {x, y}) => { 
       let fieldSize = store.state.size
-      let cur_cell = store.state.field[y][x]
+      let cur_cell = store.getters['getField'][y][x]
       if (cur_cell != 0 && cur_cell != 2) {
         const queue = []
         if (y > 0 && store.state.field[y - 1][x] == 2) {
@@ -359,22 +364,22 @@ export default {
           queue.push({x: x + 1, y: y})
         }
         while (queue.length > 0) {
-          const {cur_x, cur_y} = queue.shift()
-          if (cur_y > 0 && store.state.field[cur_y - 1][cur_x] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: cur_x, y: cur_y - 1}, number: 3})
-            queue.push({x: cur_x, y: cur_y - 1})
+          const { x, y } = queue.shift()
+          if (y > 0 && store.state.field[y - 1][x] == 2) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: 3})
+            queue.push({x: x, y: y - 1})
           }
-          if (cur_y < fieldSize - 1 && store.state.field[cur_y + 1][cur_x] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: cur_x, y: cur_y + 1}, number: 3})
-            queue.push({x: cur_x, y: cur_y + 1})
+          if (y < fieldSize - 1 && store.state.field[y + 1][x] == 2) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: 3})
+            queue.push({x: x, y: y + 1})
           }
-          if (cur_x > 0 && store.state.field[cur_y][cur_x - 1] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: cur_x - 1, y: cur_y}, number: 3})
-            queue.push({x: cur_x - 1, y: cur_y})
+          if (x > 0 && store.state.field[y][x - 1] == 2) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: 3})
+            queue.push({x: x - 1, y: y})
           }
-          if (cur_x < fieldSize - 1 && store.state.field[cur_y][cur_x + 1] == 2) {
-            store.commit(MUTATIONS.SET_NUMBER, {position: {x: cur_x + 1, y: cur_y}, number: 3})
-            queue.push({x: cur_x + 1, y: cur_y})
+          if (x < fieldSize - 1 && store.state.field[y][x + 1] == 2) {
+            store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: 3})
+            queue.push({x: x + 1, y: y})
           }
         }
       }
