@@ -22,7 +22,7 @@ export default {
   },
 
   actions: {
-    setCurrentLocationValue(store, value) {
+    setCurrentLocationValue: (store, value) => {
       store.commit(MUTATIONS.SET_CURRENT_LOCATION_VALUE, value)
     },
   },
