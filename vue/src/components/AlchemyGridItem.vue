@@ -21,10 +21,9 @@ const isSelected = computed(() => store.getters['alchemy/isSelected'](props.elem
 const selectElement = () => store.dispatch('alchemy/selectElement', props.element)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .grid-item {
   background: white;
-  border-radius: 6px;
   padding: 10px 4px;
   display: flex;
   flex-direction: column;
@@ -34,22 +33,21 @@ const selectElement = () => store.dispatch('alchemy/selectElement', props.elemen
   border: 2px solid transparent;
   color: #1e293b;
   aspect-ratio: 1;
-  width: 100;
-}
 
-.grid-item--selected {
-  border-color: #fbbf24;
-  background: #fef9c3;
-}
+  &--selected {
+    border-color: #fbbf24;
+    background: #fef9c3;
+  }
 
-.grid-item__icon {
-  font-size: 28px;
-  margin-bottom: 4px;
-}
+  &__icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
 
-.grid-item__name {
-  font-size: 11px;
-  font-weight: bold;
-  text-align: center;
+  &__name {
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+  }
 }
 </style>

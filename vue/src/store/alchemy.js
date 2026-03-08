@@ -211,7 +211,7 @@ export default {
 const getCombinations = (array, size) => {
   const combinations = []
   
-  function combine(start, current) {
+  const combine = (start, current) => {
     if (current.length === size) {
       combinations.push([...current])
       return

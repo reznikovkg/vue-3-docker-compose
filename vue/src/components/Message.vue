@@ -11,7 +11,7 @@ const emits = defineEmits(['close'])
 const close = () => emits('close')
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .notification {
   position: fixed;
   top: 10px;

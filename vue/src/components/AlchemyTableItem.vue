@@ -28,72 +28,67 @@ const increaseQuantity = () => store.dispatch('alchemy/increaseQuantity', { id: 
 const decreaseQuantity = () => store.dispatch('alchemy/decreaseQuantity', { id: props.item.id })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .workspace-item {
   background: white;
-  border-radius: 6px;
   padding: 8px 12px;
   display: flex;
   align-items: center;
   gap: 12px;
   color: #1e293b;
   width: 100%;
-  flex-shrink: 0;
-}
 
-.workspace-item__icon {
-  font-size: 22px;
-  min-width: 30px;
-  text-align: center;
-}
+  &__icon {
+    font-size: 22px;
+    min-width: 30px;
+    text-align: center;
+  }
 
-.workspace-item__name {
-  font-size: 14px;
-  font-weight: 500;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  &__name {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.workspace-item__controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.workspace-item__button {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  flex-shrink: 0;
-}
+  &__button {
+    width: 30px;
+    height: 30px;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
 
-.workspace-item__button--decrease {
-  background: #ef4444;
-  color: white;
-}
+    &--decrease {
+      background: #ef4444;
+      color: white;
+    }
 
-.workspace-item__button--increase {
-  background: #10b981;
-  color: white;
-}
+    &--increase {
+      background: #10b981;
+      color: white;
+    }
 
-.workspace-item__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
 
-.workspace-item__quantity {
-  font-weight: bold;
-  min-width: 25px;
-  text-align: center;
-  font-size: 16px;
-  color: #1e293b;
+  &__quantity {
+    font-weight: bold;
+    min-width: 25px;
+    text-align: center;
+    font-size: 16px;
+    color: #1e293b;
+  }
 }
 </style>

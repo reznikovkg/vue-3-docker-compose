@@ -18,7 +18,7 @@ const store = useStore()
 const discoveredElements = computed(() => store.getters['alchemy/discoveredElements'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .grid {
   flex: 3;
   display: grid;
@@ -26,11 +26,7 @@ const discoveredElements = computed(() => store.getters['alchemy/discoveredEleme
   gap: 8px;
   overflow-y: auto;
   background: #2d3748;
-  border-radius: 8px;
   padding: 10px;
   border: 1px solid #4a5568;
-  min-height: 0;
-  scrollbar-width: thin;
-  scrollbar-color: #4a5568 #2d3748;
 }
 </style>

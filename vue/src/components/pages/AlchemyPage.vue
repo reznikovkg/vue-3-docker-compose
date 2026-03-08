@@ -29,13 +29,7 @@ const clearMessage = () => {
 }
 </script>
 
-<style scoped>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+<style scoped lang="scss">
 .game {
   position: fixed;
   top: 0;
