@@ -1,7 +1,9 @@
 const MUTATIONS = {
     SET_ISFINISHED: "SET_ISFINISHED",
     SET_ISSTARTED: "SET_ISSTARTED",
-    SET_MOVE_INTERVAL: "SET_MOVE_INTERVAL"
+    SET_MOVE_INTERVAL: "SET_MOVE_INTERVAL",
+    SET_SCORE: "SET_SCORE",
+    ADD_SCORE: "ADD_SCORE"
 }
 
 export default {
@@ -10,12 +12,14 @@ export default {
         return {
             isGameFinished: false,
             isGameStarted: false,
-            moveInterval: null
+            moveInterval: null,
+            score: 0
         }
     },
     getters: {
         getIsFinished: (state) => state.isGameFinished,
-        getIsGameStarted: (state) => state.isGameStarted
+        getIsGameStarted: (state) => state.isGameStarted,
+        getScore: (state) => state.score,
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
@@ -27,11 +31,24 @@ export default {
         [MUTATIONS.SET_MOVE_INTERVAL]: (state, value) => {
             if (!value) clearInterval(state.moveInterval)
             state.moveInterval = value
+        },
+        [MUTATIONS.SET_SCORE]: (state, value) => {
+            state.score = Math.max(value, 0)
+        },
+        [MUTATIONS.ADD_SCORE]: (state, value) => {
+            state.score += value
+            if (state.score < 0) state.score = 0
         }
     },
     actions: {
         changeIsFinished: (store, value) => {
             store.commit(MUTATIONS.SET_ISFINISHED, value)
+        },
+        setScore: (store, value) => {
+            store.commit(MUTATIONS.SET_SCORE, value)
+        },
+        addScore: (store, value) => {
+            store.commit(MUTATIONS.ADD_SCORE, value)
         },
         checkGameEnd: (store) => {
             const centralCubePosition = store.rootGetters['cube/getCentralCubePosition']

@@ -91,6 +91,9 @@ export default {
         store.commit(MUTATIONS.SET_CURRENT_PIECE, null)
         store.commit(MUTATIONS.SET_LAST_SIDE, null)
     },
+    setNumber: (store, {position, number}) => {
+        store.commit(MUTATIONS.SET_NUMBER, {position: position, number: number})
+    },
     clearPieceFromField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
         const piece = store.state.currentPiece
@@ -332,17 +335,111 @@ export default {
             store.dispatch('checkFigureAttachment')
         }
     },
-    checkFigureAttachment: (store) => {
-        for (let level = 0; level < store.state.size; level++)
-            store.dispatch('checkLevel', level)
+    isHomogeneousLevel: (store, {level, number}) => {
+      if (level < 0) return true
+      if (level == 0) return number == OBJECTS.CENTRAL_CUBE
+      let { x, y } = store.rootGetters['cube/getCentralCubePosition']
+      x--
+      y--
+      let fieldSize = store.state.size
+      let isHomogeneous = true
+      if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
+        for (let up = -level; up <= level && isHomogeneous; up++)
+            isHomogeneous &&= store.state.field[y - level][x + up] == number
+        
+        for (let down = -level; down <= level && isHomogeneous; down++)
+            isHomogeneous &&= store.state.field[y + level][x + down] == number
 
+        for (let right = -level; right <= level && isHomogeneous; right++)
+            isHomogeneous &&= store.state.field[y + right][x + level] == number
+        
+        for (let left = -level; left <= level && isHomogeneous; left++)
+            isHomogeneous &&= store.state.field[y + left][x - level] == number
+      }
+      else {
+        isHomogeneous = false
+      }
+      return isHomogeneous
+    },
+    setLevelValues: (store, level, value) => {
+      if (level <= 0) return
+      let { x, y } = store.rootGetters['cube/getCentralCubePosition']
+      x--
+      y--
+      let fieldSize = store.state.size
+      if (y - level >= 0)
+        for (let up = -level; up <= level; up++)
+            if (x + up >= 0 && x + up < fieldSize)
+                store.commit(MUTATIONS.SET_NUMBER, { position: {x: x + up, y: y - level}, number: value })
+        
+      if (y + level < fieldSize)
+        for (let down = -level; down <= level; down++)
+            if (x + down >= 0 && x + down < fieldSize)
+                store.commit(MUTATIONS.SET_NUMBER, { position: { x: x + down, y: y + level }, number: value })
+
+      if (x + level < fieldSize)
+        for (let right = -level; right <= level; right++)
+            if (y + right >= 0 && y + right < fieldSize)
+                store.commit(MUTATIONS.SET_NUMBER, { position: { x: x + level, y: y + right }, number: value })
+        
+      if (x - level >= 0)
+        for (let left = -level; left <= level; left++)
+            if (y + left >= 0 && y + left < fieldSize)
+                store.commit(MUTATIONS.SET_NUMBER, { position: { x: x - level, y: y + left }, number: value })
+    },
+    countLevelValues: (store, level, value) => {
+      if (level < 0) return 0
+      let { x, y } = store.rootGetters['cube/getCentralCubePosition']
+      x--
+      y--
+      let fieldSize = store.state.size
+      let count = 0
+      if (y - level >= 0)
+        for (let up = -level; up <= level; up++)
+            if (x + up >= 0 && x + up < fieldSize)
+                count += store.state.field[y - level][x + up] == value
+        
+      if (y + level < fieldSize)
+        for (let down = -level; down <= level; down++)
+            if (x + down >= 0 && x + down < fieldSize)
+                count += store.state.field[y + level][x + down] == value
+
+      if (x + level < fieldSize)
+        for (let right = -level; right <= level; right++)
+            if (y + right >= 0 && y + right < fieldSize)
+                count += store.state.field[y + right][x + level] == value
+        
+      if (x - level >= 0)
+        for (let left = -level; left <= level; left++)
+            if (y + left >= 0 && y + left < fieldSize)
+                count += store.state.field[y + left][x - level] == value
+    },
+    scoreSquareLevels: (store) => {
+        let minDisappearLevel = -1
+        
         for (let level = 0; level < store.state.size; level++)
             store.dispatch('isHomogeneousLevel', { level: level, number: 3}).then(
                 value => {
-                    if (value)
-                        console.log(level, value)
+                    if (value) {
+                        minDisappearLevel = level
+                        store.dispatch('game/addScore', level * 8 * 5, { root: true })
+                        store.dispatch('cube/removeLevelPieces', level, { root: true })
+                    }
+                    else if (minDisappearLevel != -1) {
+                        store.dispatch('countLevelValues', 3).then(
+                            count => store.dispatch('game/addScore', count, { root: true })
+                        )
+                        store.dispatch('cube/removeLevelPieces', level, { root: true })
+                    }
                 }
             )
+                
+    },
+    checkFigureAttachment: (store) => {
+        for (let level = 0; level < store.state.size; level++)
+            store.dispatch('checkLevel', level)
+            
+        store.dispatch('scoreSquareLevels')
 
         store.dispatch('game/checkGameEnd', null, { root: true })
         if (store.state.currentPiece != null) {
@@ -362,32 +459,6 @@ export default {
             }
         }
     },
-    isHomogeneousLevel: (store, {level, number}) => {
-      if (level < 0) return true
-      if (level == 0) return number == OBJECTS.CENTRAL_CUBE
-      let { x, y } = store.rootGetters['cube/getCentralCubePosition']
-      x--
-      y--
-      let fieldSize = store.state.size
-      let isHomogeneous = true
-      if (x + level < fieldSize && y + level < fieldSize && x - level >= 0 && y - level >= 0) {
-        for (let up = -level; up <= level && isHomogeneous; up++)
-            isHomogeneous &&= store.state.field[y - level][x + up] == number
-        
-        for (let down = -level; down <= level && isHomogeneous; down++)
-            isHomogeneous &&= store.state.field[y + level][x + down] == number
-
-        for (let right = -level; right <= level && isHomogeneous; right++)
-            isHomogeneous &&= store.state.field[y + right][x - level] == number
-        
-        for (let left = -level; left <= level && isHomogeneous; left++)
-            isHomogeneous &&= store.state.field[y + left][x + level] == number
-      }
-      else {
-        isHomogeneous = false
-      }
-      return isHomogeneous
-    },
     checkLevel: (store, level) => {
       if (level < 0) return
       let { x, y } = store.rootGetters['cube/getCentralCubePosition']
@@ -404,15 +475,15 @@ export default {
             if (x + down >= 0 && x + down < fieldSize)
                 store.dispatch('checkCell', { x: x + down, y: y + level })
 
-      if (x - level >= 0)
+      if (x + level < fieldSize)
         for (let right = -level; right <= level; right++)
             if (y + right >= 0 && y + right < fieldSize)
-                store.dispatch('checkCell', { x: x - level, y: y + right })
+                store.dispatch('checkCell', { x: x + level, y: y + right })
         
-      if (x + level < fieldSize)
+      if (x - level >= 0)
         for (let left = -level; left <= level; left++)
             if (y + left >= 0 && y + left < fieldSize)
-                store.dispatch('checkCell', { x: x + level, y: y + left })
+                store.dispatch('checkCell', { x: x - level, y: y + left })
     },
     checkCell: (store, {x, y}) => { 
       let fieldSize = store.state.size
@@ -428,28 +499,27 @@ export default {
     },
     checkNeighboringCells: (store, {queue, x, y}) => {
         let fieldSize = store.state.size
-        const attachedPieces = store.rootGetters['cube/getAttachedPieces']
         let centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
         centralCubePosition = { x: centralCubePosition.x - 1, y: centralCubePosition.y - 1}
         if (y > 0 && store.state.field[y - 1][x] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y - 1}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y - 1})
-          attachedPieces.push({x: x - centralCubePosition.x, y: y - 1 - centralCubePosition.y})
+          store.dispatch('cube/addPiece', {x: x - centralCubePosition.x, y: y - 1 - centralCubePosition.y}, { root: true })
         }
         if (y < fieldSize - 1 && store.state.field[y + 1][x] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y + 1}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y + 1})
-          attachedPieces.push({x: x - centralCubePosition.x, y: y + 1 - centralCubePosition.y})
+          store.dispatch('cube/addPiece', {x: x - centralCubePosition.x, y: y + 1 - centralCubePosition.y}, { root: true })
         }
         if (x > 0 && store.state.field[y][x - 1] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x - 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x - 1, y: y})
-          attachedPieces.push({x: x - 1 - centralCubePosition.x, y: y - centralCubePosition.y})
+          store.dispatch('cube/addPiece', {x: x - 1 - centralCubePosition.x, y: y - centralCubePosition.y}, { root: true })
         }
         if (x < fieldSize - 1 && store.state.field[y][x + 1] == OBJECTS.EXTERNAL_FIGURE) {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x + 1, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x + 1, y: y})
-          attachedPieces.push({x: x + 1 - centralCubePosition.x, y: y - centralCubePosition.y})
+          store.dispatch('cube/addPiece', {x: x + 1 - centralCubePosition.x, y: y - centralCubePosition.y}, { root: true })
         }
     }
   }
