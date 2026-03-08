@@ -336,6 +336,14 @@ export default {
         for (let level = 0; level < store.state.size; level++)
             store.dispatch('checkLevel', level)
 
+        for (let level = 0; level < store.state.size; level++)
+            store.dispatch('isHomogeneousLevel', { level: level, number: 3}).then(
+                value => {
+                    if (value)
+                        console.log(level, value)
+                }
+            )
+
         store.dispatch('game/checkGameEnd', null, { root: true })
         if (store.state.currentPiece != null) {
             let isSpawn = false
@@ -375,6 +383,9 @@ export default {
         for (let left = -level; left <= level && isHomogeneous; left++)
             isHomogeneous &&= store.state.field[y + left][x + level] == number
       }
+      else {
+        isHomogeneous = false
+      }
       return isHomogeneous
     },
     checkLevel: (store, level) => {
@@ -402,9 +413,6 @@ export default {
         for (let left = -level; left <= level; left++)
             if (y + left >= 0 && y + left < fieldSize)
                 store.dispatch('checkCell', { x: x + level, y: y + left })
-      store.dispatch('isHomogeneousLevel', { level: 1, number: 0}).then(
-        value => console.log(value)
-      )
     },
     checkCell: (store, {x, y}) => { 
       let fieldSize = store.state.size

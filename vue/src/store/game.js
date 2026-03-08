@@ -36,13 +36,16 @@ export default {
         checkGameEnd: (store) => {
             const centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
             const attachedPieces = store.rootGetters['cube/getAttachedPieces']
+            const fieldSize = store.rootGetters['field/getFieldSize']
             let attachedPiecesAbroad = false
             attachedPieces.forEach(piece => {
-                attachedPiecesAbroad ||= centralCubePosition.x + piece.x <= 1 || centralCubePosition.x + piece.x >= store.state.size ||
-                centralCubePosition.y + piece.y <= 1 || centralCubePosition.y + piece.y >= store.state.size
+                attachedPiecesAbroad ||= centralCubePosition.x + piece.x <= 1 || centralCubePosition.x + piece.x >= fieldSize ||
+                centralCubePosition.y + piece.y <= 1 || centralCubePosition.y + piece.y >= fieldSize
             })
-            if (attachedPiecesAbroad) {
-                const center = Math.ceil(store.state.size / 2)
+            if (attachedPiecesAbroad || centralCubePosition.x <= 1 || centralCubePosition.x >= fieldSize ||
+                centralCubePosition.y <= 1 || centralCubePosition.y >= fieldSize) {
+                console.log("end")
+                const center = Math.ceil(fieldSize / 2)
                 const oldPosition = {
                     x: centralCubePosition.x,
                     y: centralCubePosition.y
