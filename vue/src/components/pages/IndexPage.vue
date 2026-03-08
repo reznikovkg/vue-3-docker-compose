@@ -13,7 +13,7 @@
             'c-game__cell--wall'
           ]"
         >
-          <transition :name="`c-game__player-move-${getDirection}`">
+          <transition :name="`move--${getDirection}`">
             <div
               v-if="index === getPlayerIndex"
               class="c-game__player"
@@ -22,6 +22,13 @@
               <slot name="player">🔥</slot>
             </div>
           </transition>
+          <Cloud
+            v-if="index === getCloudIndex && getGameStatus === 'active'"
+            :show-cloud="index === getCloudIndex"
+            class="c-game__cloud"
+          >
+            ☁️
+          </Cloud>
           <span v-if="cell.t === 1" class="c-game__emoji">
             <slot name="tree">🌲</slot>
           </span>
@@ -48,6 +55,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import StopWatch from '../StopWatch.vue'
+import Cloud from '../Cloud.vue'
 
 const MOVEMENT_INTERVAL = 300
 const CELL_SIZE = 60
@@ -55,15 +63,17 @@ const CELL_SIZE = 60
 export default {
   name: 'IndexPage',
   components: {
-    StopWatch
+    StopWatch,
+    Cloud
   },
   props: {},
-  emits: ['game-win', 'game-error'],
+  emits: ['game-win', 'game-lose', 'game-error'],
   data() {
     return {
       moveInterval: null,
       pendingDirection: null,
-      victoryData: null
+      victoryData: null,
+      cloudMoveInterval: null
     }
   },
   computed: {
@@ -77,7 +87,10 @@ export default {
       'getRemainingTrees',
       'getTreeCount',
       'getTotalTrees',
-      'getCurrentTime'
+      'getCurrentTime',
+       'getCloudIndex',
+      'getCloudDirection',
+      'isGameOver'
     ]),
     isGameActive() {
       return this.getGameStatus === 'active'
@@ -102,8 +115,8 @@ export default {
   },
   beforeUnmount() {
     this.stopMovement()
-    window.removeEventListener('keydown', this.handleKeyDown)
-    this.stopTimer()
+    this.stopCloudMovement()
+    window.removeEventListener('keydown', this.handleKeyDown) 
     this.setGameStatus('paused')
   },
   methods: {
@@ -114,14 +127,15 @@ export default {
       'setGameStatus',
       'collectTree',
       'resetGame',
-      'startTimer',
-      'stopTimer'
+      'setGameOver',
+      'moveCloud'
     ]),
     initGame() {
       return this.resetGame()
         .then(() => this.setGameStatus('active'))
         .then(() => {
           this.startMovement()
+          this.startCloudMovement()
         })
         .catch((error) => {
           console.error('Game initialization error:', error)
@@ -135,7 +149,24 @@ export default {
     stopMovement() {
       if (this.moveInterval) {
         clearInterval(this.moveInterval)
+        this.stopCloudMovement()
         this.moveInterval = null
+      }
+    },
+    startCloudMovement() {
+      if (this.cloudMoveInterval) return
+      this.cloudMoveInterval = setInterval(() => {
+        this.moveCloud().then(() => {
+          if (this.isGameOver || this.getCloudIndex === this.getPlayerIndex) {
+            this.handleGameOver()
+          }
+        })
+      }, MOVEMENT_INTERVAL * 2)
+    },
+    stopCloudMovement() {
+      if (this.cloudMoveInterval) {
+        clearInterval(this.cloudMoveInterval)
+        this.cloudMoveInterval = null
       }
     },
     movePlayer() {
@@ -148,12 +179,21 @@ export default {
         return
       }
       this.setPlayerIndex(nextIndex)
+      if (nextIndex === this.getCloudIndex) {
+        this.setGameOver(true)
+        this.handleGameOver()
+        return
+      }
       if (this.getGrid[nextIndex].t === 1) {
         this.collectTree(nextIndex).then(() => this.checkVictory())
       }
       if (this.pendingDirection) {
         this.setDirection(this.pendingDirection)
         this.pendingDirection = null
+      }
+       if (this.isGameOver) {
+        this.handleGameOver()
+        return
       }
     },
     showVictoryAlert() {
@@ -180,6 +220,7 @@ export default {
           .then(() => this.setGameStatus('active'))
           .then(() => {
             this.startMovement()
+            this.startCloudMovement()
             this.victoryData = null
           })
           .catch((error) => {
@@ -188,8 +229,32 @@ export default {
           })
       }
     },
+        handleGameOver() {
+      const alertMessage = 'Вы проиграли, попробуйте снова'
+      
+      setTimeout(() => {
+        alert(alertMessage)
+      }, 100)
+      
+      this.$emit('game-lose')
+      this.stopMovement()
+      this.stopCloudMovement()
+      
+      this.setGameStatus('lose')
+        .then(() => this.resetGame())
+        .then(() => this.setGameStatus('active'))
+        .then(() => {
+          this.startMovement()
+          this.startCloudMovement()
+        })
+        .catch((error) => {
+          console.error('Game restart after lose error:', error)
+          this.$emit('game-error', error)
+        })
+    },
     restartGame() {
       this.stopMovement()
+      this.stopCloudMovement()
       return this.initGame()
     },
     getNextIndex(currentIndex, moveDirection) {
@@ -314,82 +379,66 @@ export default {
   &__fade-leave-to {
     opacity: 0;
   }
-  &__player-move-up-enter-active {
+ &__move {
+  &-enter-active {
     transition: all 0.2s ease-out;
   }
-  &__player-move-up-leave-active {
+  &-leave-active {
     transition: all 0.2s ease-in;
     position: absolute;
   }
-  &__player-move-up-enter-from {
-    opacity: 0;
-    transform: translate(-50%, 100%) scale(0.8);
+  
+  &--up, &--down, &--left, &--right {
+    &-enter-from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+    }
+    &-enter-to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    &-leave-to {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.8);
+    }
   }
-  &__player-move-up-enter-to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  
+  &--up {
+    &-enter-from {
+      transform: translate(-50%, 100%) scale(0.8);
+    }
+    &-leave-to {
+      transform: translate(-50%, -200%) scale(0.8);
+    }
   }
-  &__player-move-up-leave-to {
-    opacity: 0;
-    transform: translate(-50%, -200%) scale(0.8);
+  
+  &--down {
+    &-enter-from {
+      transform: translate(-50%, -200%) scale(0.8);
+    }
+    &-leave-to {
+      transform: translate(-50%, 100%) scale(0.8);
+    }
   }
-  &__player-move-down-enter-active {
-    transition: all 0.2s ease-out;
+  
+  &--left {
+    &-enter-from {
+      transform: translate(100%, -50%) scale(0.8);
+    }
+    &-leave-to {
+      transform: translate(-200%, -50%) scale(0.8);
+    }
   }
-  &__player-move-down-leave-active {
-    transition: all 0.2s ease-in;
-    position: absolute;
+  
+  &--right {
+    &-enter-from {
+      transform: translate(-200%, -50%) scale(0.8);
+    }
+    &-leave-to {
+      transform: translate(100%, -50%) scale(0.8);
+    }
   }
-  &__player-move-down-enter-from {
-    opacity: 0;
-    transform: translate(-50%, -200%) scale(0.8);
-  }
-  &__player-move-down-enter-to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  &__player-move-down-leave-to {
-    opacity: 0;
-    transform: translate(-50%, 100%) scale(0.8);
-  }
-  &__player-move-left-enter-active {
-    transition: all 0.2s ease-out;
-  }
-  &__player-move-left-leave-active {
-    transition: all 0.2s ease-in;
-    position: absolute;
-  }
-  &__player-move-left-enter-from {
-    opacity: 0;
-    transform: translate(100%, -50%) scale(0.8);
-  }
-  &__player-move-left-enter-to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  &__player-move-left-leave-to {
-    opacity: 0;
-    transform: translate(-200%, -50%) scale(0.8);
-  }
-  &__player-move-right-enter-active {
-    transition: all 0.2s ease-out;
-  }
-  &__player-move-right-leave-active {
-    transition: all 0.2s ease-in;
-    position: absolute;
-  }
-  &__player-move-right-enter-from {
-    opacity: 0;
-    transform: translate(-200%, -50%) scale(0.8);
-  }
-  &__player-move-right-enter-to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  &__player-move-right-leave-to {
-    opacity: 0;
-    transform: translate(100%, -50%) scale(0.8);
-  }
+}
   &__emoji {
     font-size: 40px;
     line-height: 1;
@@ -398,6 +447,15 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
+  }
+    &__cloud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9;
   }
 }
 </style>
