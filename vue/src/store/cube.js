@@ -1,5 +1,8 @@
 const MUTATIONS = {
-    SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION'
+    SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION',
+    CLEAR_ATTACHED_PIECES: 'CLEAR_ATTACHED_PIECES',
+    ADD_PIECE: 'ADD_PIECE',
+    REMOVE_LEVEL_PIECES: 'REMOVE_LEVEL_PIECES'
 }
 
 export default {
@@ -10,18 +13,45 @@ export default {
             x: 0,
             y: 0    
         },
+        attachedPieces: []
     }
   },
   getters: {
     getCentralCubePosition: (state) => state.centralCubePosition,
+    getAttachedPieces: (state) => state.attachedPieces,
   },
   mutations: {
     [MUTATIONS.SET_CENTRAL_CUBE_POSITION]: (state, newPosition) => 
-        state.centralCubePosition = newPosition
+        state.centralCubePosition = newPosition,
+    [MUTATIONS.CLEAR_ATTACHED_PIECES]: (state) => 
+        state.attachedPieces = [],
+    [MUTATIONS.ADD_PIECE]: (state, piece) => 
+        state.attachedPieces.push(piece),
+    [MUTATIONS.REMOVE_LEVEL_PIECES]: (state, level) => {
+        state.attachedPieces = state.attachedPieces.filter(
+            piece => Math.max(Math.abs(piece.x), Math.abs(piece.y)) != level
+        )
+    }
   },
   actions: {
+    clearAttachedPieces: (store) => {
+        store.commit(MUTATIONS.CLEAR_ATTACHED_PIECES)
+    },
     resetCentralCubePosition: (store) => {
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, { x: 0, y: 0 })
+    },
+    addPiece: (store, piece) => {
+        store.commit(MUTATIONS.ADD_PIECE, piece)
+    },
+    removeLevelPieces: (store, level) => {
+        store.state.attachedPieces.forEach(
+            piece => {
+                if (Math.max(Math.abs(piece.x), Math.abs(piece.y)) == level)
+                    store.dispatch('field/setNumber', {position: {x: store.state.centralCubePosition.x + piece.x - 1,
+                y: store.state.centralCubePosition.y + piece.y - 1}, number: 0}, { root: true })
+            }
+        )
+        store.commit(MUTATIONS.REMOVE_LEVEL_PIECES, level)
     },
     setPositionCentralCubeToDefault: (store) => {
         const size = store.rootGetters['field/getFieldSize']
@@ -34,28 +64,16 @@ export default {
         let edge = store.rootGetters['field/getFieldSize']
         let oldPosition = store.state.centralCubePosition
 
-        if(newPosition.x > 1 && newPosition.x < edge &&
-            newPosition.y > 1 && newPosition.y < edge
-        )
-        {
-            store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
-            store.dispatch('field/changeCentralCubePosition', 
-                { oldPosition, newPosition }, 
-                { root: true })
-        }
-        else
-        {
-            newPosition = {
-                x: center,
-                y: center
-            }
-
-            store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
-            store.dispatch('field/changeCentralCubePosition', 
-                { oldPosition, newPosition }, 
-                { root: true })
-            store.dispatch('game/stopGame', null, { root: true })
-        }
+        let attachedPiecesAbroad = false
+        store.state.attachedPieces.forEach(piece => {
+            attachedPiecesAbroad ||= newPosition.x + piece.x <= 1 || newPosition.x + piece.x >= edge ||
+            newPosition.y + piece.y <= 1 || newPosition.y + piece.y >= edge
+        })
+        store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
+        store.dispatch('field/changeCentralCubePosition', 
+            { oldPosition, newPosition }, 
+            { root: true })
+        store.dispatch('field/checkFigureAttachment', null, { root: true })
     }
   }
 }
