@@ -14,17 +14,26 @@
       <FishingArea
         :background="currentLocation.background"
         :is-waiting="isWaiting"
-        :is-biting="isBiting"
+        :is-mini-game-active="isMiniGameActive"
+        :fish-progress="fishProgress"
+        :line-tension="lineTension"
         :timer="timer"
         :bite-message="biteMessage"
-        :button-text="buttonText"
-        @cast="handleClick"
+        @cast="handleCast"
+        @error="showError"
+        @start-pull="handleStartPull"
+        @pulling="handlePulling"
+        @stop-pull="handleStopPull"
       />
 
       <BiteIndicator
         :last-catch="lastCatch"
         :catch-history="catchHistory"
       />
+
+      <div v-if="errorMessage" class="index__error">
+        {{ errorMessage }}
+      </div>
     </div>
   </div>
 </template>
@@ -65,14 +74,19 @@ export default {
       ],
       selectedLocation: null,
       isWaiting: false,
-      isBiting: false,
+      isMiniGameActive: false,
       timer: 0,
-      biteMessage: 'Забросьте удочку',
+      biteMessage: 'Кликни по воде чтобы забросить',
       lastCatch: '',
       catchHistory: [],
+      errorMessage: '',
       biteTimeout: null,
-      missTimeout: null,
-      timerInterval: null
+      timerInterval: null,
+      fishProgress: 0,
+      lineTension: 0,
+      gameInterval: null,
+      isPullingNow: false,
+      currentFish: null
     }
   },
   computed: {
@@ -81,42 +95,41 @@ export default {
         return this.locations[0]
       }
       return this.selectedLocation
-    },
-    buttonText() {
-      if (this.isWaiting) {
-        return 'Ожидание'
-      }
-      if (this.isBiting) {
-        return 'Подсечь'
-      }
-      return 'Забросить'
     }
   },
   methods: {
+    showError(msg) {
+      this.errorMessage = msg
+      setTimeout(() => {
+        this.errorMessage = ''
+      }, 2000)
+    },
+
     changeLocation(location) {
       this.selectedLocation = location
+      this.resetFishing()
+    },
+
+    resetFishing() {
       this.isWaiting = false
-      this.isBiting = false
+      this.isMiniGameActive = false
       this.timer = 0
-      this.biteMessage = 'Забросьте удочку'
+      this.biteMessage = 'Кликни по воде чтобы забросить'
       this.lastCatch = ''
+      this.currentFish = null
       
       clearTimeout(this.biteTimeout)
-      clearTimeout(this.missTimeout)
       clearInterval(this.timerInterval)
+      this.cleanupMiniGame()
     },
-    handleClick() {
-      if (this.isBiting) {
-        this.catchFish()
-      } else if (!this.isWaiting) {
-        this.startFishing()
-      }
-    },
-    startFishing() {
-      this.isWaiting = true
-      this.biteMessage = 'Ожидание поклевки'
+
+    handleCast() {
+      if (this.isMiniGameActive || this.isWaiting) return
       
-      const timeToBite = Math.floor(Math.random() * 3000) + 2000
+      this.isWaiting = true
+      this.biteMessage = ''
+      
+      const timeToBite = Math.floor(Math.random() * 3000) + 2000 // 2-5 секунд
       this.timer = Math.floor(timeToBite / 1000)
       
       this.timerInterval = setInterval(() => {
@@ -125,53 +138,103 @@ export default {
       
       this.biteTimeout = setTimeout(() => {
         if (this.isWaiting) {
-          this.bite()
+          this.startMiniGame()
         }
       }, timeToBite)
     },
-    bite() {
+
+    startMiniGame() {
       this.isWaiting = false
-      this.isBiting = true
-      this.biteMessage = 'Клюет!'
+      this.isMiniGameActive = true
       clearInterval(this.timerInterval)
       
-      this.missTimeout = setTimeout(() => {
-        if (this.isBiting) {
-          this.missFish()
-        }
-      }, 3000)
-    },
-    catchFish() {
       const fishList = this.currentLocation.fish
       const randomIndex = Math.floor(Math.random() * fishList.length)
-      const fish = fishList[randomIndex]
+      this.currentFish = fishList[randomIndex]
       
-      this.lastCatch = fish
+      this.fishProgress = 10
+      this.lineTension = 0
       
-      const historyItem = fish + ' - ' + this.currentLocation.name
+      // Игровой цикл
+      this.gameInterval = setInterval(() => {
+        if (!this.isMiniGameActive) return
+        
+        if (this.isPullingNow) {
+          // Тянем - рыба плывет быстро, леска натягивается
+          this.fishProgress += 3.0
+          this.lineTension += 5
+          
+          if (this.lineTension >= 100) {
+            this.lineBreak()
+            return
+          }
+        } else {
+          // Не тянем - рыба уплывает медленно, натяжение падает быстро
+          this.fishProgress = Math.max(0, this.fishProgress - 0.8)  // Медленно уплывает
+          this.lineTension = Math.max(0, this.lineTension - 3)     // Быстро падает
+        }
+        
+        if (this.fishProgress >= 100) {
+          this.catchFish()
+        } else if (this.fishProgress <= 0) {
+          this.missFish()
+        }
+      }, 150)
+    },
+
+    handleStartPull() {
+      this.isPullingNow = true
+    },
+
+    handlePulling() {},
+
+    handleStopPull() {
+      this.isPullingNow = false
+    },
+
+    lineBreak() {
+      this.biteMessage = 'Леска порвалась!'
+      this.isMiniGameActive = false
+      this.currentFish = null
+      this.cleanupMiniGame()
+      
+      setTimeout(() => {
+        this.biteMessage = 'Кликни по воде чтобы забросить'
+      }, 1500)
+    },
+
+    catchFish() {
+      this.lastCatch = this.currentFish
+      const historyItem = this.currentFish + ' - ' + this.currentLocation.name
       this.catchHistory.unshift(historyItem)
       if (this.catchHistory.length > 5) {
         this.catchHistory.pop()
       }
       
-      this.biteMessage = 'Поймана рыба'
-      this.isBiting = false
-      
-      clearTimeout(this.biteTimeout)
-      clearTimeout(this.missTimeout)
-      clearInterval(this.timerInterval)
-    },
-    missFish() {
-      this.biteMessage = 'Рыба сорвалась'
-      this.isBiting = false
-      
-      clearTimeout(this.missTimeout)
+      this.biteMessage = 'Рыба поймана!'
+      this.isMiniGameActive = false
+      this.currentFish = null
+      this.cleanupMiniGame()
       
       setTimeout(() => {
-        if (!this.isWaiting && !this.isBiting) {
-          this.biteMessage = 'Забросьте удочку'
-        }
+        this.biteMessage = 'Кликни по воде чтобы забросить'
       }, 1500)
+    },
+
+    missFish() {
+      this.biteMessage = 'Рыба сорвалась'
+      this.isMiniGameActive = false
+      this.currentFish = null
+      this.cleanupMiniGame()
+      
+      setTimeout(() => {
+        this.biteMessage = 'Кликни по воде чтобы забросить'
+      }, 1500)
+    },
+
+    cleanupMiniGame() {
+      clearInterval(this.gameInterval)
+      this.isPullingNow = false
     }
   },
   created() {
@@ -179,8 +242,8 @@ export default {
   },
   beforeDestroy() {
     clearTimeout(this.biteTimeout)
-    clearTimeout(this.missTimeout)
     clearInterval(this.timerInterval)
+    this.cleanupMiniGame()
   }
 }
 </script>
@@ -207,5 +270,14 @@ export default {
 .index__title {
   font-size: 20px;
   font-weight: bold;
+}
+
+.index__error {
+  margin-top: 10px;
+  padding: 10px;
+  background: #ffcccc;
+  border: 1px solid red;
+  color: red;
+  text-align: center;
 }
 </style>
