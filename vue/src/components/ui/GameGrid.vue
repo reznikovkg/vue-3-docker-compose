@@ -1,22 +1,36 @@
 <template>
   <div 
     class="grid" 
-    :class="{ 'grid--disabled': gameOver }"
     :style="{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }"
   >
     <div
       v-for="(cell, index) in flatGrid"
       :key="index"
       class="grid__cell"
-      :class="cell ? `grid__cell--${cell.level}` : 'grid__cell--empty'"
+      :class="[
+        cell ? `grid__cell--${cell.branch}` : 'grid__cell--empty',
+        { 'grid__cell--max': cell && cell.level >= maxLevel }
+      ]"      
       :data-index="index"
-      :draggable="!!cell && !gameOver"
+      :draggable="!!cell"
+      :title="cell && cell.level >= maxLevel ? 'Клик — получить новый элемент (5 очков)' : ''"
       @dragstart="($event) => onDragStart($event, index, cell)"
       @dragover.prevent
       @drop.prevent="($event) => onDrop($event, index)"
+      @click="() => onCellClick(index, cell)"
+      @contextmenu.prevent="($event) => onSell($event, index, cell)"
     >
-      {{ cell ? cell.level : '' }}
-    </div>
+      <div
+        v-if="cell"
+        class="grid__cell-content"
+      >                                     
+        <img
+          class="grid__img"
+          :src="cellEmoji(cell.branch, cell.level)"
+          :alt="`${cell.branch} ${cell.level}`"
+        />
+     </div>
+   </div>
   </div>
 </template>
 
@@ -26,27 +40,33 @@ export default {
   props: {
     grid: Array,
     gridSize: Number,
-    draggedItem: Object,
-    gameOver: Boolean
+    maxLevel: Number,
+    cellEmoji: Function
   },
-  emits: ['drag-start', 'drop'],
+  emits: ['drag-start', 'drop', 'spawn-from-max', 'sell'],
   
   computed: {
     flatGrid() {
       return this.grid || []
     }
   },
-  
   methods: {
      onDragStart(e, index, cell) {
-      if (cell && !this.gameOver) {
+      if (cell) {
         this.$emit('drag-start', { index, cell })
       }
     },
-    
     onDrop(e, index) {
-      if (!this.gameOver) {
         this.$emit('drop', { index })
+    },
+    onCellClick (index, cell) {
+      if (cell && cell.level >= this.maxLevel) {
+        this.$emit('spawn-from-max', index)
+      }
+    },
+    onSell (e, index, cell) {
+      if (cell) {
+        this.$emit('sell', { index, cell })
       }
     }
   }
@@ -62,19 +82,12 @@ export default {
   border-radius: 8px;
   margin: 20px 0;
 
-  &--disabled {
-    opacity: 0.5;
-    pointer-events: none;
-  }
-
   &__cell {
+    position: relative;
     aspect-ratio: 1;
+    width: 100%;         
+    overflow: hidden;
     background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: bold;
     border-radius: 4px;
     border: 1px solid #ccc;
 
@@ -82,16 +95,39 @@ export default {
       background: #f0f0f0;
     }
 
-    &--1 { background: #ffcdd2; color: #c62828; }
-    &--2 { background: #fff9c4; color: #fbc02d; }
-    &--3 { background: #c8e6c9; color: #2e7d32; }
-    &--4 { background: #b3e5fc; color: #0277bd; }
-    &--5 { background: #e1bee7; color: #6a1b9a; }
-    &--6 { background: #c0e8eb; color: #0099ff; }
-    &--7 { background: #cbd17e; color: #f2ff00; }
-    &--8 { background: #9ed4a3; color: #00ff11; }
-    &--9 { background: #b0bbce; color: #0066ff; }
-    &--10 { background: #ad6eb8; color: #9d00ff; }
+    &--fruits {
+      background: #fdecea;
+      color: #c62828;
+    }
+
+    &--spring {
+      background: #eaf4fd;
+      color: #0277bd;
+    }
+
+    &--max {
+      box-shadow: 0 0 8px 2px gold;
+      cursor: zoom-in;
+    }
+    
+    &-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+    
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;     
+    image-rendering: auto;
   }
 }
 </style>
