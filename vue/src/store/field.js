@@ -22,7 +22,7 @@ export default {
   namespaced: true,
   state () {
     return {
-        size: 7,
+        size: 15,
         field: null,
         gameActive: false,
         currentPiece: null,

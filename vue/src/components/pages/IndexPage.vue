@@ -2,7 +2,16 @@
   <div>
     <FieldTable class="game-field" ref="gridRef" tabindex="0"/>
     <div class="start-size-menu">
-      <button class="start-button" @click="handleStart" :disabled="isGameActive">Start</button>
+      <button class="start-button button" @click="handleStart" :disabled="isGameActive">Start</button>
+      <button
+        class="speed-button button"
+        :disabled="!isGameActive"
+        @mousedown="handleSpeedButtonDown"
+        @mouseup="handleSpeedButtonUp"
+        @mouseleave="handleSpeedUp"
+      >
+        Speed Up
+      </button>
       <input
         class="field-size-input"
         v-model.number="fieldSize"
@@ -28,7 +37,8 @@ export default {
   components: { FieldTable },
   data() {
     return {
-      fieldSize: 7
+      fieldSize: 15,
+      isSpeedPressed: false
     }
   },
   computed: {
@@ -52,7 +62,9 @@ export default {
     ]),
     ...mapActions('game', [
       'startGame',
-      'stopGame'
+      'stopGame',
+      'startSpeedUp',
+      'stopSpeedUp'
     ]),
 
     updateFieldSize() {
@@ -62,6 +74,22 @@ export default {
     handleStart() {
       if (this.isGameActive) return
       this.startGame()
+      this.$refs.gridRef?.$el?.focus()
+    },
+    handleSpeedButtonDown() {
+      if (!this.isGameActive || this.isSpeedPressed) 
+        return
+
+      this.isSpeedPressed = true
+      this.startSpeedUp()
+    },
+    handleSpeedButtonUp() {
+      if (!this.isSpeedPressed) 
+        return
+
+      this.isSpeedPressed = false
+      this.stopSpeedUp()
+
       this.$refs.gridRef?.$el?.focus()
     }
   }
@@ -81,9 +109,7 @@ export default {
   font-size: 3vmin;
   gap: 1vmin;
 }
-.start-button {
-  width: 11vmin;
-  height: 4vmin;
+.button {
   font-size: 3vmin;
 }
 .game-field {
