@@ -6,11 +6,15 @@ const MUTATIONS = {
     ADD_SCORE: "ADD_SCORE",
     DECREASE_TIMER: "DECREASE_TIMER",
     INCREASE_TIMER: "INCREASE_TIMER",
-    SET_TIMER: "SET_TIMER"
+    SET_TIMER: "SET_TIMER",
+    SET_TIMER_INTERVAL: "SET_TIMER_INTERVAL",
+    SET_SPEED_UP: "SET_SPEED_UP"
 }
 
 export const DECREASE_TIMER_VALUE_DEFAULT = 0.5
 export const INCREASE_TIMER_VALUE_DEFAULT = 60
+const BASE_GAME_SPEED = 500
+const BASE_SPEED_KOEF = 7
 
 export default {
     namespaced: true,
@@ -18,7 +22,9 @@ export default {
         return {
             isGameFinished: false,
             isGameStarted: false,
+            isSpeedUp: false,
             moveInterval: null,
+            timerInterval: null,
             score: 0,
             timer: 60
         }
@@ -27,7 +33,8 @@ export default {
         getIsFinished: (state) => state.isGameFinished,
         getIsGameStarted: (state) => state.isGameStarted,
         getScore: (state) => state.score,
-        getTimer: state => state.timer
+        getTimer: state => state.timer,
+        getIsSpeedUp: state => state.isSpeedUp
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
@@ -55,6 +62,13 @@ export default {
         },
         [MUTATIONS.SET_TIMER]: (state, value) => {
             state.timer = value
+        },
+        [MUTATIONS.SET_TIMER_INTERVAL]: (state, value) => {
+            if (!value) clearInterval(state.timerInterval)
+            state.timerInterval = value
+        },
+        [MUTATIONS.SET_SPEED_UP]: (state, value) => {
+            state.isSpeedUp = value
         }
     },
     actions: {
@@ -112,23 +126,49 @@ export default {
             store.commit(MUTATIONS.SET_ISFINISHED, true)
             store.commit(MUTATIONS.SET_ISSTARTED, false)
             store.commit(MUTATIONS.SET_TIMER, 60)
+            store.commit(MUTATIONS.SET_TIMER_INTERVAL, null)
             store.dispatch("field/initStopGame", null, { root: true })
             store.dispatch("cube/resetCentralCubePosition", null, {root: true})
             store.dispatch("cube/clearAttachedPieces", null, { root: true })
             store.dispatch("field/clearField", null, { root: true })
         },
+
+        startSpeedUp: store => {
+            if (!store.state.isGameStarted) return
+
+            store.commit(MUTATIONS.SET_SPEED_UP, true)
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
+                store.dispatch("field/movePiece", null, { root: true })
+            }, BASE_GAME_SPEED / BASE_SPEED_KOEF))
+        },
+
+        stopSpeedUp: store => {
+            if (!store.state.isGameStarted) return
+
+            store.commit(MUTATIONS.SET_SPEED_UP, false)
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
+                store.dispatch("field/movePiece", null, { root: true })
+            }, BASE_GAME_SPEED))
+        },
+
         startGame: (store) => {
             store.commit(MUTATIONS.SET_ISSTARTED, true)
             store.commit(MUTATIONS.SET_ISFINISHED, false)
             store.commit(MUTATIONS.SET_TIMER, 60)
+
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })
+            }, BASE_GAME_SPEED))
+
+            store.commit(MUTATIONS.SET_TIMER_INTERVAL, setInterval(() => {
                 store.dispatch('updateTimer', {
                     isIncrease: false,
                     decreaseValue: DECREASE_TIMER_VALUE_DEFAULT,
                     increaseValue: INCREASE_TIMER_VALUE_DEFAULT
                 })
-            }, 500))
+            }, BASE_GAME_SPEED))
             store.dispatch("field/initStartGame", null, { root: true })
             store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
         }

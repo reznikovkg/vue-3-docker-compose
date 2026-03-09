@@ -1,8 +1,8 @@
 <template>
   <div>
-    <FieldTable class="game-field" ref="gridRef" tabindex="0"/>
+    <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
     <div class="start-size-menu">
-      <button class="start-button" @click="handleStart" :disabled="isGameActive">Start</button>
+      <button class="start-button button" @click="handleStart" :disabled="isGameActive">Start</button>
       <input
         class="field-size-input"
         v-model.number="fieldSize"
@@ -28,7 +28,8 @@ export default {
   components: { FieldTable },
   data() {
     return {
-      fieldSize: 7
+      fieldSize: 15,
+      isSpeedPressed: false
     }
   },
   computed: {
@@ -41,9 +42,13 @@ export default {
   },
   mounted() {
     this.updateFieldSize()
+    window.addEventListener('keydown', this.handleKeyDown)
+    window.addEventListener('keyup', this.handleKeyUp)
   },
   beforeUnmount() {
     this.stopGame()
+    window.removeEventListener('keydown', this.handleKeyDown)
+    window.removeEventListener('keyup', this.handleKeyUp)
   },
   methods: {
     ...mapActions('field', [
@@ -52,7 +57,9 @@ export default {
     ]),
     ...mapActions('game', [
       'startGame',
-      'stopGame'
+      'stopGame',
+      'startSpeedUp',
+      'stopSpeedUp'
     ]),
 
     updateFieldSize() {
@@ -63,6 +70,20 @@ export default {
       if (this.isGameActive) return
       this.startGame()
       this.$refs.gridRef?.$el?.focus()
+    },
+    handleKeyDown(event) {
+      if (event.code === 'Space' && !this.isSpeedPressed && this.isGameActive) {
+        event.preventDefault()
+        this.isSpeedPressed = true
+        this.startSpeedUp()
+      }
+    },
+    handleKeyUp(event) {
+      if (event.code === 'Space' && this.isSpeedPressed) {
+        event.preventDefault()
+        this.isSpeedPressed = false
+        this.stopSpeedUp()
+      }
     }
   }
 }
@@ -81,9 +102,7 @@ export default {
   font-size: 3vmin;
   gap: 1vmin;
 }
-.start-button {
-  width: 11vmin;
-  height: 4vmin;
+.button {
   font-size: 3vmin;
 }
 .game-field {

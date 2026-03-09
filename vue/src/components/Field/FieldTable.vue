@@ -28,6 +28,9 @@ import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'FieldTable',
+  props: {
+    isSpeedUp: false
+  },
   computed: {
     ...mapGetters('field', ['getFieldSize', 'getField']),
     ...mapGetters('cube', ['getCentralCubePosition']),
