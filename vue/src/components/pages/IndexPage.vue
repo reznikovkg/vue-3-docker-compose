@@ -1,6 +1,6 @@
 <template>
   <div>
-    <FieldTable class="game-field" ref="gridRef" tabindex="0"/>
+    <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
     <div class="start-size-menu">
       <button class="start-button button" @click="handleStart" :disabled="isGameActive">Start</button>
       <input
@@ -72,13 +72,15 @@ export default {
       this.$refs.gridRef?.$el?.focus()
     },
     handleKeyDown(event) {
-      if (event.key === 'Shift' && !this.isSpeedPressed && this.isGameActive) {
+      if (event.code === 'Space' && !this.isSpeedPressed && this.isGameActive) {
+        event.preventDefault()
         this.isSpeedPressed = true
         this.startSpeedUp()
       }
     },
     handleKeyUp(event) {
-      if (event.key === 'Shift' && this.isSpeedPressed) {
+      if (event.code === 'Space' && this.isSpeedPressed) {
+        event.preventDefault()
         this.isSpeedPressed = false
         this.stopSpeedUp()
       }
