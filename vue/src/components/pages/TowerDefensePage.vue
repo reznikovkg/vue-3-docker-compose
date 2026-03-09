@@ -161,6 +161,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import { KEY_BINDINGS } from '@/store/towerDefense'
+import TowerDefensePageClass from '@/components/pages/towerDefense/TowerDefensePageClass'
 
 const TICK_MS = 120
 const MOVE_STEP = 16
@@ -256,139 +257,20 @@ const toBoardPoint = (event) => {
   }
 }
 
-class TowerDefensePageClass {
-  focusBoard = () => {
-    if (!boardElement.value) {
-      return
-    }
-    boardElement.value.focus()
-  }
-
-  resetSlotSelection = () => {
-    const firstSlot = currentLevel.value.towerSlots[0]
-    selectedSlotId.value = firstSlot ? firstSlot.id : null
-  }
-
-  resetEnemySpawnPoint = () => {
-    enemySpawnX.value = Math.round(currentLevel.value.enemySpawn.x)
-    enemySpawnY.value = Math.round(currentLevel.value.enemySpawn.y)
-  }
-
-  selectLevel = (levelId) => {
-    store.dispatch('towerDefense/selectLevel', levelId)
-    this.resetSlotSelection()
-    this.resetEnemySpawnPoint()
-    this.focusBoard()
-  }
-
-  selectSlot = (slotId) => {
-    selectedSlotId.value = slotId
-    this.focusBoard()
-  }
-
-  addTower = () => {
-    if (!selectedSlotId.value) {
-      return
-    }
-    store.dispatch('towerDefense/addTowerAtSlot', selectedSlotId.value)
-    this.focusBoard()
-  }
-
-  upgradeTower = () => {
-    if (!selectedSlotId.value) {
-      return
-    }
-    store.dispatch('towerDefense/upgradeTowerAtSlot', selectedSlotId.value)
-    this.focusBoard()
-  }
-
-  removeTower = () => {
-    if (!selectedSlotId.value) {
-      return
-    }
-    store.dispatch('towerDefense/removeTowerAtSlot', selectedSlotId.value)
-    this.focusBoard()
-  }
-
-  spawnEnemyAtCustomPoint = () => {
-    const level = currentLevel.value
-    const point = {
-      x: normalizeSpawnCoordinate(enemySpawnX.value, level.enemySpawn.x, level.width),
-      y: normalizeSpawnCoordinate(enemySpawnY.value, level.enemySpawn.y, level.height),
-    }
-    store.dispatch('towerDefense/addEnemyAtPoint', point)
-    this.focusBoard()
-  }
-
-  selectEnemy = (enemyId) => {
-    store.dispatch('towerDefense/selectEnemy', enemyId)
-    this.focusBoard()
-  }
-
-  onBoardKeyDown = (event) => {
-    const delta = KEY_TO_DELTA[event.key]
-    if (!delta) {
-      return
-    }
-    event.preventDefault()
-    store.dispatch('towerDefense/moveSelectedEnemyByDelta', delta)
-  }
-
-  startEnemyDrag = (event, enemyId) => {
-    event.preventDefault()
-    draggingEnemyId.value = enemyId
-    store.dispatch('towerDefense/selectEnemy', enemyId)
-    const point = toBoardPoint(event)
-    if (!point) {
-      return
-    }
-    store.dispatch('towerDefense/moveEnemyToPoint', {
-      enemyId,
-      point,
-    })
-    this.focusBoard()
-  }
-
-  dragEnemy = (event) => {
-    if (!draggingEnemyId.value) {
-      return
-    }
-    const point = toBoardPoint(event)
-    if (!point) {
-      return
-    }
-    store.dispatch('towerDefense/moveEnemyToPoint', {
-      enemyId: draggingEnemyId.value,
-      point,
-    })
-  }
-
-  stopEnemyDrag = () => {
-    draggingEnemyId.value = null
-  }
-
-  runTick = () => {
-    store.dispatch('towerDefense/runSimulationTick', TICK_MS)
-  }
-
-  mount = () => {
-    this.resetSlotSelection()
-    this.resetEnemySpawnPoint()
-    this.focusBoard()
-    simulationIntervalId.value = window.setInterval(() => this.runTick(), TICK_MS)
-    window.addEventListener('mouseup', this.stopEnemyDrag)
-  }
-
-  unmount = () => {
-    if (simulationIntervalId.value) {
-      window.clearInterval(simulationIntervalId.value)
-      simulationIntervalId.value = null
-    }
-    window.removeEventListener('mouseup', this.stopEnemyDrag)
-  }
-}
-
-const page = new TowerDefensePageClass()
+const page = new TowerDefensePageClass({
+  store,
+  boardElement,
+  currentLevel,
+  draggingEnemyId,
+  enemySpawnX,
+  enemySpawnY,
+  keyToDelta: KEY_TO_DELTA,
+  normalizeSpawnCoordinate,
+  selectedSlotId,
+  simulationIntervalId,
+  tickMs: TICK_MS,
+  toBoardPoint,
+})
 
 onMounted(() => page.mount())
 onBeforeUnmount(() => page.unmount())
