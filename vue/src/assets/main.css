@@ -5,6 +5,7 @@ html, body, #project {
   width: 100%;
   margin: 0;
   padding: 0;
+  font-family: 'Tiny5';
 }
 
 body {
@@ -13,4 +14,9 @@ body {
 
 #project {
   font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Tiny5';
+  src: url('../src/assets/fonts/Tiny5-Regular.ttf') format('truetype');
 }
