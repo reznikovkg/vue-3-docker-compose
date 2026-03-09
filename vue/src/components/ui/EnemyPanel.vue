@@ -41,23 +41,19 @@
 </template>
 
 <script>
-import { computed } from 'vue'
-import { useStore } from 'vuex'
 import CustomButton from '@/components/ui/CustomButton.vue'
 
 export default {
   name: 'EnemyPanel',
   components: { CustomButton },
 
-  setup () {
-    const store = useStore()
+  computed: {
+    enemies () { return this.$store.state.enemies },
+  },
 
-    const enemies = computed(() => store.state.enemies)
-
-    const addEnemy = () => store.dispatch('addEnemy')
-    const removeEnemy = (id) => store.dispatch('removeEnemy', id)
-
-    return { enemies, addEnemy, removeEnemy }
+  methods: {
+    addEnemy () { this.$store.dispatch('addEnemy') },
+    removeEnemy (id) { this.$store.dispatch('removeEnemy', id) },
   },
 }
 </script>

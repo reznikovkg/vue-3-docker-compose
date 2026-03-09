@@ -73,67 +73,79 @@
 </template>
 
 <script>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useStore } from 'vuex'
-
 let _bulletId = 1
+const STEP = 10
 
 export default {
   name: 'GameMap',
+  
+  data () {
+    return {
+      bullets: [],
+      lastShot: {},
+      focusedEnemyId: null,
+      animFrameId: null,
+    }
+  },
 
-  setup () {
-    const store = useStore()
-    const svgRef = ref(null)
-    const focusedEnemyId = ref(null)
-    const bullets = ref([])
-    const lastShot = ref({})
+  computed: {
+    level () { return this.$store.getters.currentLevel },
+    enemies () { return this.$store.state.enemies },
+    towers () { return this.$store.state.towers },
+    selectedSlotId () { return this.$store.getters.selectedSlotId },
+    draggingEnemyId () { return this.$store.state.draggingEnemyId },
+    pathPoints () {
+      return this.level.path.map(p => `${p.x},${p.y}`).join(' ')
+    },
+  },
 
-    let animFrameId = null
+  mounted () {
+    this.animFrameId = requestAnimationFrame((now) => this.gameLoop(now))
+  },
 
-    const level = computed(() => store.getters.currentLevel)
-    const enemies = computed(() => store.state.enemies)
-    const towers = computed(() => store.state.towers)
-    const selectedSlotId = computed(() => store.getters.selectedSlotId)
-    const draggingEnemyId = computed(() => store.state.draggingEnemyId)
+  beforeUnmount () {
+    cancelAnimationFrame(this.animFrameId)
+  },
 
-    const pathPoints = computed(() =>
-      level.value.path.map(p => `${p.x},${p.y}`).join(' ')
-    )
+  methods: {
+    towerInSlot (slotId) {
+      return this.$store.getters.towerInSlot(slotId)
+    },
 
-    const towerInSlot = (slotId) => store.getters.towerInSlot(slotId)
-
-    const towerIcon = (lvl) => {
+    towerIcon (lvl) {
       const icons = ['1', '2', '3', '4', '5']
       return icons[lvl - 1] ?? '^'
-    }
+    },
 
-    const slotFill = (slotId) => {
-      if (towerInSlot(slotId)) return selectedSlotId.value === slotId ? '#3a3a1a' : '#2a2a12'
-      return selectedSlotId.value === slotId ? '#1a3a1a' : '#1a2a1a'
-    }
+    slotFill (slotId) {
+      if (this.towerInSlot(slotId)) return this.selectedSlotId === slotId ? '#3a3a1a' : '#2a2a12'
+      return this.selectedSlotId === slotId ? '#1a3a1a' : '#1a2a1a'
+    },
 
-    const slotStroke = (slotId) => {
-      if (selectedSlotId.value === slotId) return '#f0c040'
-      if (towerInSlot(slotId)) return '#886622'
+    slotStroke (slotId) {
+      if (this.selectedSlotId === slotId) return '#f0c040'
+      if (this.towerInSlot(slotId)) return '#886622'
       return '#446644'
-    }
+    },
 
-    const dist = (ax, ay, bx, by) => Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2)
+    dist (ax, ay, bx, by) {
+      return Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2)
+    },
 
-    const gameLoop = (now) => {
-      const slots = level.value?.towerSlots ?? []
+    gameLoop (now) {
+      const slots = this.level?.towerSlots ?? []
 
       slots.forEach(slot => {
-        const tower = towers.value[slot.id]
+        const tower = this.towers[slot.id]
         if (!tower) return
 
-        const last = lastShot.value[slot.id] ?? 0
+        const last = this.lastShot[slot.id] ?? 0
         if (now - last < tower.fireRate) return
 
         let target = null
         let minD = Infinity
-        enemies.value.forEach(e => {
-          const d = dist(slot.x, slot.y, e.x, e.y)
+        this.enemies.forEach(e => {
+          const d = this.dist(slot.x, slot.y, e.x, e.y)
           if (d <= tower.range && d < minD) {
             minD = d
             target = e
@@ -142,8 +154,8 @@ export default {
 
         if (!target) return
 
-        lastShot.value[slot.id] = now
-        bullets.value.push({
+        this.lastShot[slot.id] = now
+        this.bullets.push({
           id: _bulletId++,
           x: slot.x,
           y: slot.y,
@@ -153,19 +165,20 @@ export default {
         })
       })
 
-      bullets.value = bullets.value.filter(b => {
-        const enemy = enemies.value.find(e => e.id === b.enemyId)
+      this.bullets = this.bullets.filter(b => {
+        const enemy = this.enemies.find(e => e.id === b.enemyId)
         if (!enemy) return false
+
         const dx = enemy.x - b.x
         const dy = enemy.y - b.y
         const d = Math.sqrt(dx * dx + dy * dy)
 
         if (d < b.speed) {
-          store.dispatch('damageEnemy', { id: b.enemyId, damage: b.damage })
-          const updated = store.state.enemies.find(e => e.id === b.enemyId)
+          this.$store.dispatch('damageEnemy', { id: b.enemyId, damage: b.damage })
+          const updated = this.$store.state.enemies.find(e => e.id === b.enemyId)
           if (updated && updated.hp <= 0) {
-            store.dispatch('removeEnemy', b.enemyId)
-            store.commit('KILL_REWARD', 50)
+            this.$store.dispatch('removeEnemy', b.enemyId)
+            this.$store.commit('KILL_REWARD', 50)
           }
           return false
         }
@@ -175,40 +188,35 @@ export default {
         return true
       })
 
-      animFrameId = requestAnimationFrame(gameLoop)
-    }
+      this.animFrameId = requestAnimationFrame((now) => this.gameLoop(now))
+    },
 
-    onMounted(() => {
-      animFrameId = requestAnimationFrame(gameLoop)
-    })
+    onSlotClick (slotId) {
+      this.$store.dispatch('selectSlot', slotId)
+    },
 
-    onUnmounted(() => {
-      cancelAnimationFrame(animFrameId)
-    })
-
-    const onSlotClick = (slotId) => store.dispatch('selectSlot', slotId)
-
-    const onEnemyMouseDown = (e, id) => {
+    onEnemyMouseDown (e, id) {
       e.preventDefault()
-      store.dispatch('setDraggingEnemy', id)
-      selectEnemy(id)
-    }
+      this.$store.dispatch('setDraggingEnemy', id)
+      this.selectEnemy(id)
+    },
 
-    const onMouseMove = (e) => {
-      if (!draggingEnemyId.value) return
-      const rect = svgRef.value.getBoundingClientRect()
-      store.dispatch('moveEnemyDrag', {
-        id: draggingEnemyId.value,
+    onMouseMove (e) {
+      if (!this.draggingEnemyId) return
+      const rect = this.$refs.svgRef.getBoundingClientRect()
+      this.$store.dispatch('moveEnemyDrag', {
+        id: this.draggingEnemyId,
         x: e.clientX - rect.left,
         y: e.clientY - rect.top,
       })
-    }
+    },
 
-    const onMouseUp = () => store.dispatch('setDraggingEnemy', null)
+    onMouseUp () {
+      this.$store.dispatch('setDraggingEnemy', null)
+    },
 
-    const STEP = 10
-    const onKeyDown = (e) => {
-      if (!focusedEnemyId.value) return
+    onKeyDown (e) {
+      if (!this.focusedEnemyId) return
       const map = {
         ArrowUp:    { dx: 0,     dy: -STEP },
         ArrowDown:  { dx: 0,     dy: STEP  },
@@ -218,21 +226,13 @@ export default {
       const delta = map[e.key]
       if (!delta) return
       e.preventDefault()
-      store.dispatch('moveEnemyKeyboard', { id: focusedEnemyId.value, ...delta })
-    }
+      this.$store.dispatch('moveEnemyKeyboard', { id: this.focusedEnemyId, ...delta })
+    },
 
-    const selectEnemy = (id) => {
-      focusedEnemyId.value = id
-      svgRef.value?.focus()
-    }
-
-    return {
-      svgRef, level, enemies, pathPoints, selectedSlotId,
-      draggingEnemyId, focusedEnemyId, bullets,
-      towerInSlot, towerIcon, slotFill, slotStroke,
-      onSlotClick, onEnemyMouseDown, onMouseMove, onMouseUp,
-      onKeyDown, selectEnemy,
-    }
+    selectEnemy (id) {
+      this.focusedEnemyId = id
+      this.$refs.svgRef?.focus()
+    },
   },
 }
 </script>

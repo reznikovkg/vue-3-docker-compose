@@ -76,50 +76,33 @@
 </template>
 
 <script>
-import { computed } from 'vue'
-import { useStore } from 'vuex'
 import CustomButton from '@/components/ui/CustomButton.vue'
 
 export default {
   name: 'TowerPanel',
   components: { CustomButton },
 
-  setup () {
-    const store = useStore()
+  computed: {
+    gold () { return this.$store.state.gold },
+    selectedSlotId () { return this.$store.getters.selectedSlotId },
+    selectedTower () { return this.$store.getters.selectedTower },
+    towerLevelsConfig () { return this.$store.getters.towerLevelsConfig },
+    baseTower () { return this.towerLevelsConfig[0] },
+    baseCost () { return this.towerLevelsConfig[0].cost },
+    nextTower () {
+      if (!this.selectedTower) return null
+      return this.towerLevelsConfig[this.selectedTower.level] ?? null
+    },
+  },
 
-    const gold = computed(() => store.state.gold)
-    const selectedSlotId = computed(() => store.getters.selectedSlotId)
-    const selectedTower = computed(() => store.getters.selectedTower)
-    const allLevels = computed(() => store.getters.towerLevelsConfig)
-    const baseTower = computed(() => allLevels.value[0])
-    const baseCost = computed(() => allLevels.value[0].cost)
-
-    const nextTower = computed(() => {
-      if (!selectedTower.value) return null
-      return allLevels.value[selectedTower.value.level] ?? null
-    })
-
-    const towerIcon = (lvl) => {
+  methods: {
+    towerIcon (lvl) {
       const icons = ['1', '2', '3', '4', '5']
-      return icons[(lvl - 1)] ?? '^'
-    }
-
-    const buildTower = (slotId) => store.dispatch('buildTower', slotId)
-    const upgradeTower = (slotId) => store.dispatch('upgradeTower', slotId)
-    const removeTower = (slotId) => store.dispatch('removeTower', slotId)
-
-    return {
-      gold,
-      selectedSlotId,
-      selectedTower,
-      baseTower,
-      baseCost,
-      nextTower,
-      towerIcon,
-      buildTower,
-      upgradeTower,
-      removeTower,
-    }
+      return icons[lvl - 1] ?? '^'
+    },
+    buildTower (slotId) { this.$store.dispatch('buildTower', slotId) },
+    upgradeTower (slotId) { this.$store.dispatch('upgradeTower', slotId) },
+    removeTower (slotId) { this.$store.dispatch('removeTower', slotId) },
   },
 }
 </script>

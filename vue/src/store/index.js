@@ -187,41 +187,17 @@ export default createStore({
   },
 
   actions: {
-    loadLevel ({ commit }, levelId) {
-      commit('SET_LEVEL', levelId)
-    },
-    buildTower ({ commit }, slotId) {
-      commit('BUILD_TOWER', slotId)
-    },
-    upgradeTower ({ commit }, slotId) {
-      commit('UPGRADE_TOWER', slotId)
-    },
-    removeTower ({ commit }, slotId) {
-      commit('REMOVE_TOWER', slotId)
-    },
-    selectSlot ({ commit }, slotId) {
-      commit('SELECT_SLOT', slotId)
-    },
-    moveEnemyKeyboard ({ commit }, payload) {
-      commit('MOVE_ENEMY_KEYBOARD', payload)
-    },
-    moveEnemyDrag ({ commit }, payload) {
-      commit('MOVE_ENEMY_DRAG', payload)
-    },
-    setDraggingEnemy ({ commit }, id) {
-      commit('SET_DRAGGING_ENEMY', id)
-    },
-    addEnemy ({ commit }) {
-      commit('ADD_ENEMY')
-    },
-    removeEnemy ({ commit }, id) {
-      commit('REMOVE_ENEMY', id)
-    },
-    damageEnemy ({ commit }, payload) {
-      commit('DAMAGE_ENEMY', payload)
-    },
-    cheatGold ({ commit }) {
-      commit('ADD_GOLD', 200)
-    },
+    loadLevel: ({ commit }, levelId) => commit('SET_LEVEL', levelId),
+    buildTower: ({ commit }, slotId) => commit('BUILD_TOWER', slotId),
+    upgradeTower: ({ commit }, slotId) => commit('UPGRADE_TOWER', slotId),
+    removeTower: ({ commit }, slotId) => commit('REMOVE_TOWER', slotId),
+    selectSlot: ({ commit }, slotId) => commit('SELECT_SLOT', slotId),
+    moveEnemyKeyboard: ({ commit }, payload) => commit('MOVE_ENEMY_KEYBOARD', payload),
+    moveEnemyDrag: ({ commit }, payload) => commit('MOVE_ENEMY_DRAG', payload),
+    setDraggingEnemy: ({ commit }, id) => commit('SET_DRAGGING_ENEMY', id),
+    addEnemy: ({ commit }) => commit('ADD_ENEMY'),
+    removeEnemy: ({ commit }, id) => commit('REMOVE_ENEMY', id),
+    damageEnemy: ({ commit }, payload) => commit('DAMAGE_ENEMY', payload),
+    cheatGold: ({ commit }) => commit('ADD_GOLD', 200),
   },
 })

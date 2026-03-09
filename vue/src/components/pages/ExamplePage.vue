@@ -47,10 +47,8 @@
   </div>
 </template>
 
+
 <script>
-import { computed } from 'vue'
-import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
 import GameMap from '@/components/ui/GameMap.vue'
 import TowerPanel from '@/components/ui/TowerPanel.vue'
 import EnemyPanel from '@/components/ui/EnemyPanel.vue'
@@ -59,30 +57,18 @@ export default {
   name: 'ExamplePage',
   components: { GameMap, TowerPanel, EnemyPanel },
 
-  setup () {
-    const store = useStore()
-    const router = useRouter()
+  computed: {
+    gold () { return this.$store.state.gold },
+    currentLevelId () { return this.$store.state.currentLevelId },
+    level () { return this.$store.getters.currentLevel },
+    allLevels () { return this.$store.getters.allLevels },
+    enemies () { return this.$store.state.enemies },
+  },
 
-    const level = computed(() => store.getters.currentLevel)
-    const gold = computed(() => store.state.gold)
-    const enemies = computed(() => store.state.enemies)
-    const allLevels = computed(() => store.getters.allLevels)
-    const currentLevelId = computed(() => store.state.currentLevelId)
-
-    const goHome = () => router.push('/')
-    const switchLevel = (id) => store.dispatch('loadLevel', id)
-    const cheatGold = () => store.dispatch('cheatGold')
-
-    return {
-      level,
-      gold,
-      enemies,
-      allLevels,
-      currentLevelId,
-      goHome,
-      switchLevel,
-      cheatGold,
-    }
+  methods: {
+    goHome () { this.$router.push('/') },
+    switchLevel (id) { this.$store.dispatch('loadLevel', id) },
+    cheatGold () { this.$store.dispatch('cheatGold') },
   },
 }
 </script>

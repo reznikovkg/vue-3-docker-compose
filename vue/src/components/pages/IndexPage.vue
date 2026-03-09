@@ -19,24 +19,18 @@
 </template>
 
 <script>
-import { useStore } from 'vuex'
-import { useRouter } from 'vue-router'
-import { computed } from 'vue'
-
 export default {
   name: 'IndexPage',
-  setup () {
-    const store = useStore()
-    const router = useRouter()
 
-    const allLevels = computed(() => store.getters.allLevels)
+  computed: {
+    allLevels () { return this.$store.getters.allLevels },
+  },
 
-    const startLevel = (levelId) => {
-      store.dispatch('loadLevel', levelId)
-      router.push('/game')
-    }
-
-    return { allLevels, startLevel }
+  methods: {
+    startLevel (levelId) {
+      this.$store.dispatch('loadLevel', levelId)
+      this.$router.push('/game')
+    },
   },
 }
 </script>
