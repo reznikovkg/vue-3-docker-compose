@@ -14,6 +14,7 @@
         @input="updateFieldSize"
       >
       <div>Размер: {{ getFieldSize }}</div>
+      <div class="timer">Таймер: {{ timerValue }}</div>
     </div>
   </div>
 </template>
@@ -31,7 +32,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('field', ['getFieldSize', 'isGameActive'])
+    ...mapGetters('field', ['getFieldSize', 'isGameActive']),
+    ...mapGetters('game', ['getTimer']),
+
+    timerValue() {
+      return Math.ceil(this.getTimer)
+    }
   },
   mounted() {
     this.updateFieldSize()
@@ -48,6 +54,7 @@ export default {
       'startGame',
       'stopGame'
     ]),
+
     updateFieldSize() {
       this.changeFieldSize(this.fieldSize)
       this.fieldSize = this.getFieldSize

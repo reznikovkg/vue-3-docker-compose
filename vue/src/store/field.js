@@ -1,4 +1,5 @@
 import { ALL_ORIENTATIONS } from './pieces'
+import { DECREASE_TIMER_VALUE_DEFAULT, INCREASE_TIMER_VALUE_DEFAULT } from './game'
 
 const MUTATIONS = {
     CHANGE_FIELD_SIZE: 'CHANGE_FIELD_SIZE',
@@ -424,6 +425,11 @@ export default {
                         minDisappearLevel = level
                         store.dispatch('game/addScore', level * 8 * 5, { root: true })
                         store.dispatch('cube/removeLevelPieces', level, { root: true })
+                        store.dispatch('game/updateTimer', {
+                            isIncrease: true,
+                            decreaseValue: DECREASE_TIMER_VALUE_DEFAULT,
+                            increaseValue: INCREASE_TIMER_VALUE_DEFAULT
+                        }, { root: true })
                     }
                     else if (minDisappearLevel != -1) {
                         store.dispatch('countLevelValues', 3).then(
@@ -433,7 +439,6 @@ export default {
                     }
                 }
             )
-                
     },
     checkFigureAttachment: (store) => {
         for (let level = 0; level < store.state.size; level++)
