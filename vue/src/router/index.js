@@ -1,23 +1,44 @@
-import { createWebHistory, createRouter } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 
-import IndexPage from './../components/pages/IndexPage.vue'
-import ExamplePage from './../components/pages/ExamplePage.vue'
+import AppFrame from '@/components/AppFrame.vue'
+import BattlePage from '@/pages/BattlePage.vue'
+import HandbookPage from '@/pages/HandbookPage.vue'
+import HomePage from '@/pages/HomePage.vue'
+import MissionsPage from '@/pages/MissionsPage.vue'
 
 export const ROUTES = {
-  EXAMPLE: 'EXAMPLE',
-  INDEX: 'INDEX',
+  HOME: 'HOME',
+  MISSIONS: 'MISSIONS',
+  BATTLE: 'BATTLE',
+  HANDBOOK: 'HANDBOOK',
 }
 
 const routes = [
   {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
-  },
-  {
-    name: ROUTES.INDEX,
     path: '/',
-    component: IndexPage
+    component: AppFrame,
+    children: [
+      {
+        name: ROUTES.HOME,
+        path: '',
+        component: HomePage,
+      },
+      {
+        name: ROUTES.MISSIONS,
+        path: 'missions',
+        component: MissionsPage,
+      },
+      {
+        name: ROUTES.BATTLE,
+        path: 'battle/:missionId',
+        component: BattlePage,
+      },
+      {
+        name: ROUTES.HANDBOOK,
+        path: 'handbook',
+        component: HandbookPage,
+      },
+    ],
   },
 ]
 
