@@ -5,7 +5,8 @@ const MUTATIONS = {
     SET_SCORE: "SET_SCORE",
     ADD_SCORE: "ADD_SCORE",
     DECREASE_TIMER: "DECREASE_TIMER",
-    INCREASE_TIMER: "INCREASE_TIMER"
+    INCREASE_TIMER: "INCREASE_TIMER",
+    SET_TIMER: "SET_TIMER"
 }
 
 const DECREASE_TIMER_VALUE = 0.5
@@ -51,6 +52,9 @@ export default {
         },
         [MUTATIONS.INCREASE_TIMER]: (state, value) => {
             state.timer += value
+        },
+        [MUTATIONS.SET_TIMER]: (state, value) => {
+            state.timer = value
         }
     },
     actions: {
@@ -91,7 +95,7 @@ export default {
                 store.dispatch('game/stopGame', null, { root: true })
             }
         },
-        updateTimer: (store, isIncrease, decreaseValue, increaseValue) => {
+        updateTimer: (store, { isIncrease, decreaseValue, increaseValue }) => {
             let timer = store.state.timer
 
             if (!isIncrease) {
@@ -107,6 +111,7 @@ export default {
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
             store.commit(MUTATIONS.SET_ISFINISHED, true)
             store.commit(MUTATIONS.SET_ISSTARTED, false)
+            store.commit(MUTATIONS.SET_TIMER, 60)
             store.dispatch("field/initStopGame", null, { root: true })
             store.dispatch("cube/resetCentralCubePosition", null, {root: true})
             store.dispatch("cube/clearAttachedPieces", null, { root: true })
@@ -115,8 +120,7 @@ export default {
         startGame: (store) => {
             store.commit(MUTATIONS.SET_ISSTARTED, true)
             store.commit(MUTATIONS.SET_ISFINISHED, false)
-            store.dispatch("field/initStartGame", null, { root: true })
-            store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
+            store.commit(MUTATIONS.SET_TIMER, 60)
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })
                 store.dispatch('updateTimer', {
@@ -125,6 +129,8 @@ export default {
                     increaseValue: INCREASE_TIMER_VALUE
                 })
             }, 500))
+            store.dispatch("field/initStartGame", null, { root: true })
+            store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
         }
     }
 }
