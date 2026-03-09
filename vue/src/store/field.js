@@ -11,7 +11,7 @@ const MUTATIONS = {
     CLEAR_FIELD: 'CLEAR_FIELD',
 }
 
-const OBJECTS = {
+export const OBJECTS = {
   NONE: 0,
   CENTRAL_CUBE: 1,
   EXTERNAL_FIGURE: 2,
@@ -82,6 +82,9 @@ export default {
     }
   },
   actions: {
+    setField: (store, newField) => {
+        store.commit(MUTATIONS.SET_FIELD, newField)
+    },
     changeFieldSize: (store, newSize) => {
       store.commit(MUTATIONS.CHANGE_FIELD_SIZE, newSize)
     },
@@ -187,6 +190,9 @@ export default {
         }
 
         const newPiece = { shape, x, y, direction }
+
+        console.log(newPiece)
+
         store.commit(MUTATIONS.SET_CURRENT_PIECE, newPiece)
         store.dispatch('drawPieceOnField')
     },
