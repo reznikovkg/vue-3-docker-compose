@@ -281,6 +281,8 @@ export default {
         y,
         r,
         size,
+        impX: typeof params.impX === 'number' ? params.impX : 0,
+        impY: typeof params.impY === 'number' ? params.impY : 0,
         vx: typeof params.vx === 'number' ? params.vx : Math.random() * 0.7 - 0.35 //при создании +-дрейф ... связь с nextX
       }
 
@@ -382,8 +384,8 @@ export default {
         const ny = dy / distance
         const moved = {
           ...bubble,
-          x: bubble.x + nx * shift,
-          y: bubble.y + ny * shift
+          impX: (bubble.impX || 0) + nx * shift * 0.22,
+          impY: (bubble.impY || 0) + ny * shift * 0.22
         }
         return this.fitPos(moved, fieldWidth, fieldHeight)
       })
@@ -397,8 +399,8 @@ export default {
             const speedY = Math.random() * 0.8 + 0.4
             let vx = typeof bubble.vx === 'number' ? bubble.vx : Math.random() * 2 - 1
             const maxX = Math.max(0, fieldWidth - bubble.r * 2)
-            let nextX = bubble.x + vx
-            const nextY = bubble.y + speedY
+            let nextX = bubble.x + vx + (bubble.impX || 0)
+            const nextY = bubble.y + speedY + (bubble.impY || 0)
 
             // рикошет от левой/правой стены
             if (nextX <= 0) {
@@ -413,6 +415,8 @@ export default {
               ...bubble,
               x: nextX,
               y: nextY,
+              impX: (bubble.impX || 0) * 0.84,
+              impY: (bubble.impY || 0) * 0.84,
               vx
             }
           })
