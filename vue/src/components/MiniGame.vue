@@ -97,7 +97,7 @@ onUnmounted(() => {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 10;
+  z-index: 3;
 
   width: 300px;
 
@@ -135,6 +135,8 @@ onUnmounted(() => {
   background-color: rgb(10, 10, 100);
 
   left: 0;
+
+  z-index: 5;
 }
 
 .minigame__target {
@@ -147,5 +149,7 @@ onUnmounted(() => {
   height: 100%;
 
   background-color: rgb(100, 10, 10);
+
+  z-index: 4;
 }
 </style>

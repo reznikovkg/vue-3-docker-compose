@@ -36,7 +36,7 @@ const inventory = computed(() => store.getters['game/getInventory'])
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 10;
+  z-index: 3;
 
   width: 300px;
 
