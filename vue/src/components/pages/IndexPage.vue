@@ -3,15 +3,6 @@
     <FieldTable class="game-field" ref="gridRef" tabindex="0"/>
     <div class="start-size-menu">
       <button class="start-button button" @click="handleStart" :disabled="isGameActive">Start</button>
-      <button
-        class="speed-button button"
-        :disabled="!isGameActive"
-        @mousedown="handleSpeedButtonDown"
-        @mouseup="handleSpeedButtonUp"
-        @mouseleave="handleSpeedUp"
-      >
-        Speed Up
-      </button>
       <input
         class="field-size-input"
         v-model.number="fieldSize"
@@ -51,9 +42,13 @@ export default {
   },
   mounted() {
     this.updateFieldSize()
+    window.addEventListener('keydown', this.handleKeyDown)
+    window.addEventListener('keyup', this.handleKeyUp)
   },
   beforeUnmount() {
     this.stopGame()
+    window.removeEventListener('keydown', this.handleKeyDown)
+    window.removeEventListener('keyup', this.handleKeyUp)
   },
   methods: {
     ...mapActions('field', [
@@ -76,21 +71,17 @@ export default {
       this.startGame()
       this.$refs.gridRef?.$el?.focus()
     },
-    handleSpeedButtonDown() {
-      if (!this.isGameActive || this.isSpeedPressed) 
-        return
-
-      this.isSpeedPressed = true
-      this.startSpeedUp()
+    handleKeyDown(event) {
+      if (event.key === 'Shift' && !this.isSpeedPressed && this.isGameActive) {
+        this.isSpeedPressed = true
+        this.startSpeedUp()
+      }
     },
-    handleSpeedButtonUp() {
-      if (!this.isSpeedPressed) 
-        return
-
-      this.isSpeedPressed = false
-      this.stopSpeedUp()
-
-      this.$refs.gridRef?.$el?.focus()
+    handleKeyUp(event) {
+      if (event.key === 'Shift' && this.isSpeedPressed) {
+        this.isSpeedPressed = false
+        this.stopSpeedUp()
+      }
     }
   }
 }
