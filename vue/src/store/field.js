@@ -48,10 +48,16 @@ export default {
           state.size += 1
       }
 
-      state.field = Array(state.size).fill(null).map(() => Array(state.size).fill(0))
+      state.field = Array(state.size).fill(null).map(
+            () => Array(state.size).fill(OBJECTS.NONE)
+        )
       state.gameActive = false
       state.currentPiece = null
       state.lastSide = null
+
+      let center = Math.floor(state.size / 2)
+
+      state.field[center][center] = OBJECTS.CENTRAL_CUBE
     },
     [MUTATIONS.CLEAR_FIELD]: (state) => {
       state.field = Array(state.size).fill(null).map(() => Array(state.size).fill(0))
