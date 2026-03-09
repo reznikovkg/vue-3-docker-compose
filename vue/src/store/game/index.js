@@ -5,7 +5,8 @@ const MUTATIONS = {
   FISHING: 'FISHING',
   ADD_FISH: 'ADD_FISH',
   GENERATE_ZONES: 'GENERATE_ZONES',
-  SAVE: 'SAVE'
+  SAVE: 'SAVE',
+  REMOVE_ZONE: 'REMOVE_ZONE'
 }
 
 const defaultState = {
@@ -76,6 +77,10 @@ export default {
     },
     [MUTATIONS.GENERATE_ZONES]: (state, zones) => {
       state.zones = zones 
+    },
+    [MUTATIONS.REMOVE_ZONE]: (state) => {
+      const boat = state.boat
+      state.zones = state.zones.filter(zone => !(zone.x - 25 <= boat.x && zone.x + 25 >= boat.x && zone.y - 25 <= boat.y && zone.y + 25 >= boat.y))
     }
   },
   actions: {
@@ -125,6 +130,10 @@ export default {
     },
     save: (store) => {
       localStorage.setItem('game_state', JSON.stringify(store.state))
+    },
+    removeZone: (store) => {
+      store.commit(MUTATIONS.REMOVE_ZONE);
+      store.dispatch('save')
     }
   }
 }

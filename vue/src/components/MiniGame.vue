@@ -53,6 +53,7 @@ const handleSpace = (e) => {
 
       console.log(randomVal)
 
+      store.dispatch('game/removeZone')
       store.dispatch('game/addFish', fishType)
     }
     stopMiniGame()
