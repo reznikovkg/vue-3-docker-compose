@@ -39,14 +39,14 @@ export default {
 
       for (const zone of state.zones) {
         if (zone.type === 'high') {
-          if (boat.x >= zone.x - 75 && boat.x <= zone.x + 75 && boat.y >= zone.y - 75 && boat.y <= zone.y + 75) 
+          if (boat.x >= zone.x - 10 && boat.x <= zone.x + 10 && boat.y >= zone.y - 10 && boat.y <= zone.y + 10) 
             return 'Высокий'
         }
       }
 
       for (const zone of state.zones) {
         if (zone.type === 'medium') {
-          if (boat.x >= zone.x - 150 && boat.x <= zone.x + 150 && boat.y >= zone.y - 150 && boat.y <= zone.y + 150) 
+          if (boat.x >= zone.x - 25 && boat.x <= zone.x + 25 && boat.y >= zone.y - 25 && boat.y <= zone.y + 25) 
             return 'Средний'
         }
       }
@@ -102,18 +102,18 @@ export default {
     generateZones: (store) => {
       const zones = []
 
-      for (let i = 0; i < 100; i++) {
-        const x = Math.floor(Math.random() * 2500 - 1750)
-        const y = Math.floor(Math.random() * 2500 - 1750)
+      for (let i = 0; i < 500; i++) {
+        const x = Math.floor(Math.random() * 2500 - 1250)
+        const y = Math.floor(Math.random() * 2500 - 1250)
         zones.push({
           type: 'medium',
           x, y
         })
       }
 
-      for (let i = 0; i < 50; i++) {
-        const x = Math.floor(Math.random() * 2500 - 1750)
-        const y = Math.floor(Math.random() * 2500 - 1750)
+      for (let i = 0; i < 100; i++) {
+        const x = Math.floor(Math.random() * 2500 - 1250)
+        const y = Math.floor(Math.random() * 2500 - 1250)
         zones.push({
           type: 'high',
           x, y
