@@ -5,7 +5,27 @@
 
       <div v-if="isWin" class="puzzle__win">ПОБЕДА!</div>
 
-      <div class="puzzle__status">Ходы: {{ moves }}</div>
+      <div class="puzzle__stats">
+        <div class="puzzle__stat">
+          <span class="puzzle__stat-label">Ходы:</span>
+          <span class="puzzle__stat-value">{{ moves }}</span>
+        </div>
+
+        <div class="puzzle__stat">
+          <span class="puzzle__stat-label">Время:</span>
+          <span class="puzzle__stat-value">{{ formatTime(timer) }}</span>
+        </div>
+
+        <div class="puzzle__stat" v-if="recordTime">
+          <span class="puzzle__stat-label">Рекорд:</span>
+          <span class="puzzle__stat-value puzzle__stat-value--record">{{ formatTime(recordTime) }}</span>
+        </div>
+
+        <div class="puzzle__stat puzzle__stat--special" v-if="specialMoves > 0">
+          <span class="puzzle__stat-label">Спец-ходы:</span>
+          <span class="puzzle__stat-value puzzle__stat-value--special">{{ specialMoves }}</span>
+        </div>
+      </div>
 
       <div class="puzzle__board" :style="boardStyle">
         <PuzzleTile
@@ -14,7 +34,9 @@
             :value="tile.value"
             :is-empty="tile.isEmpty"
             :is-win="isWin"
+            :is-blocked="tile.isBlocked"
             :tile-style="tileStyle"
+            :allow-any-move="specialMoves > 0"
             @click="() => handleTileClick(tile.index)"
         />
       </div>
@@ -42,6 +64,10 @@
           +
         </button>
       </div>
+
+      <div v-if="specialMoves > 0" class="puzzle__hint">
+        💥 Спец-ход доступен! Кликните на любую плитку
+      </div>
     </div>
   </div>
 </template>
@@ -60,6 +86,12 @@ export default {
       minGridSize: 3,
       tiles: [],
       moves: 0,
+      timer: 0,
+      timerInterval: null,
+      specialMoves: 0,
+      specialMoveInterval: null,
+      blockedIndex: null,
+      records: {},
     }
   },
   computed: {
@@ -73,6 +105,7 @@ export default {
           index: index,
           value: value,
           isEmpty: value === 0,
+          isBlocked: index === this.blockedIndex,
         }
       })
     },
@@ -96,8 +129,52 @@ export default {
         fontSize: `${fontSize}px`,
       }
     },
+
+    recordTime() {
+      const key = `${this.gridSize}x${this.gridSize}`
+      return this.records[key] || null
+    },
   },
   methods: {
+    formatTime(seconds) {
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    },
+
+    loadRecords() {
+      const saved = localStorage.getItem('puzzleRecords')
+      if (saved) {
+        this.records = JSON.parse(saved)
+      }
+    },
+
+    saveRecord() {
+      const key = `${this.gridSize}x${this.gridSize}`
+      const currentRecord = this.records[key]
+
+      if (!currentRecord || this.timer < currentRecord) {
+        this.records[key] = this.timer
+        localStorage.setItem('puzzleRecords', JSON.stringify(this.records))
+      }
+    },
+
+    blockRandomMove() {
+      const emptyIndex = this.tiles.indexOf(0)
+      const neighbors = this.getNeighbors(emptyIndex)
+
+      if (neighbors.length > 0) {
+        const randomIndex = Math.floor(Math.random() * neighbors.length)
+        this.blockedIndex = neighbors[randomIndex]
+      } else {
+        this.blockedIndex = null
+      }
+    },
+
+    clearBlockedMove() {
+      this.blockedIndex = null
+    },
+
     checkWin() {
       const total = this.gridSize * this.gridSize
 
@@ -122,7 +199,13 @@ export default {
     },
 
     initGame() {
+      this.stopTimer()
+      this.stopSpecialMoveTimer()
+
       this.moves = 0
+      this.timer = 0
+      this.specialMoves = 0
+      this.blockedIndex = null
 
       const total = this.gridSize * this.gridSize
 
@@ -134,6 +217,35 @@ export default {
       )
 
       this.shuffleBoard()
+      this.loadRecords()
+      this.startTimer()
+      this.startSpecialMoveTimer()
+    },
+
+    startTimer() {
+      this.timerInterval = setInterval(() => {
+        this.timer++
+      }, 1000)
+    },
+
+    stopTimer() {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval)
+        this.timerInterval = null
+      }
+    },
+
+    startSpecialMoveTimer() {
+      this.specialMoveInterval = setInterval(() => {
+        this.specialMoves++
+      }, 60000)
+    },
+
+    stopSpecialMoveTimer() {
+      if (this.specialMoveInterval) {
+        clearInterval(this.specialMoveInterval)
+        this.specialMoveInterval = null
+      }
     },
 
     shuffleBoard() {
@@ -151,6 +263,8 @@ export default {
         this.swapTiles(emptyIndex, randomNeighbor)
         previousIndex = emptyIndex
       }
+
+      this.blockRandomMove()
     },
 
     getNeighbors(index) {
@@ -183,11 +297,39 @@ export default {
       }
 
       const emptyIndex = this.tiles.indexOf(0)
+
+      if (this.specialMoves > 0) {
+        if (this.tiles[index] !== 0) {
+          this.swapTiles(index, emptyIndex)
+          this.specialMoves--
+          this.moves++
+          this.clearBlockedMove()
+          this.blockRandomMove()
+          this.checkWinAndSave()
+        }
+        return
+      }
+
+      if (index === this.blockedIndex) {
+        return
+      }
+
       const neighbors = this.getNeighbors(emptyIndex)
 
       if (neighbors.includes(index)) {
         this.swapTiles(emptyIndex, index)
         this.moves++
+        this.clearBlockedMove()
+        this.blockRandomMove()
+        this.checkWinAndSave()
+      }
+    },
+
+    checkWinAndSave() {
+      if (this.isWin) {
+        this.stopTimer()
+        this.stopSpecialMoveTimer()
+        this.saveRecord()
       }
     },
 
@@ -199,6 +341,10 @@ export default {
   },
   mounted() {
     this.initGame()
+  },
+  beforeUnmount() {
+    this.stopTimer()
+    this.stopSpecialMoveTimer()
   },
 }
 </script>
@@ -230,12 +376,47 @@ export default {
     font-family: sans-serif;
   }
 
-  &__status {
-    color: #888;
-    font-size: 18px;
-    font-weight: bold;
+  &__stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
     margin-bottom: 20px;
-    font-family: sans-serif;
+    flex-wrap: wrap;
+  }
+
+  &__stat {
+    background: #222;
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    &--special {
+      background: #4CAF50;
+      animation: pulse 2s infinite;
+    }
+  }
+
+  &__stat-label {
+    color: #888;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+
+  &__stat-value {
+    color: #fff;
+    font-size: 20px;
+    font-weight: bold;
+
+    &--record {
+      color: #FFD700;
+    }
+
+    &--special {
+      color: #fff;
+      font-size: 24px;
+    }
   }
 
   &__win {
@@ -289,6 +470,37 @@ export default {
       cursor: not-allowed;
     }
   }
+
+  &__hint {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 15px;
+    animation: glow 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
+  }
 }
 
 @media (max-width: 500px) {
@@ -299,7 +511,15 @@ export default {
       font-size: 28px;
     }
 
-    &__status {
+    &__stats {
+      gap: 10px;
+    }
+
+    &__stat {
+      padding: 8px 12px;
+    }
+
+    &__stat-value {
       font-size: 16px;
     }
 

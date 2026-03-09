@@ -6,6 +6,7 @@
       @click="() => handleClick()"
   >
     <span v-if="!isEmpty">{{ value }}</span>
+    <span v-if="isBlocked" class="puzzle__tile__blocked">🚫</span>
   </div>
 </template>
 
@@ -25,9 +26,17 @@ export default {
       type: Boolean,
       default: false,
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
     tileStyle: {
       type: Object,
       default: () => ({}),
+    },
+    allowAnyMove: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['click'],
@@ -36,6 +45,8 @@ export default {
       return {
         'puzzle__tile--empty': this.isEmpty,
         'puzzle__tile--win': this.isWin,
+        'puzzle__tile--blocked': this.isBlocked,
+        'puzzle__tile--special': this.allowAnyMove && !this.isEmpty,
       }
     },
   },
@@ -51,6 +62,7 @@ export default {
 
 <style scoped lang="scss">
 .puzzle__tile {
+  position: relative;
   width: 100%;
   height: 100%;
   background-color: #333;
@@ -78,6 +90,43 @@ export default {
 
   &--win {
     background-color: #4CAF50;
+  }
+
+  &--blocked {
+    background-color: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+
+    &::after {
+      content: '🚫';
+      position: absolute;
+      font-size: 20px;
+      opacity: 0.8;
+    }
+  }
+
+  &--special {
+    background-color: #667eea;
+    animation: specialGlow 1.5s ease-in-out infinite;
+
+    &:active {
+      background-color: #764ba2;
+    }
+  }
+
+  &__blocked {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0.8;
+  }
+}
+
+@keyframes specialGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.8);
   }
 }
 </style>
