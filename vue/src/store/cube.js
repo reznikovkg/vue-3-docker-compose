@@ -5,6 +5,11 @@ const MUTATIONS = {
     REMOVE_LEVEL_PIECES: 'REMOVE_LEVEL_PIECES'
 }
 
+export const ROTATE_DIRECTION = {
+    LEFT: 0,
+    RIGHT: 1
+}
+
 export default {
   namespaced: true,
   state () {
@@ -74,6 +79,13 @@ export default {
             { oldPosition, newPosition }, 
             { root: true })
         store.dispatch('field/checkFigureAttachment', null, { root: true })
+    },
+    rotateIsland: (store, rotateDirection) => {
+        let xs = store.state.attachedPieces.map(pieceCoord => pieceCoord.x)
+        let ys = store.state.attachedPieces.map(pieceCoord => pieceCoord.y)
+
+        console.log(xs)
+        console.log(ys)
     }
   }
 }
