@@ -89,6 +89,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleSpace)
+  clearInterval(intervalID.value)
 })
 </script>
 
