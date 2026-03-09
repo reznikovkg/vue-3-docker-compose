@@ -9,8 +9,8 @@ const MUTATIONS = {
     SET_TIMER: "SET_TIMER"
 }
 
-const DECREASE_TIMER_VALUE = 0.5
-const INCREASE_TIMER_VALUE = 60
+export const DECREASE_TIMER_VALUE_DEFAULT = 0.5
+export const INCREASE_TIMER_VALUE_DEFAULT = 60
 
 export default {
     namespaced: true,
@@ -125,8 +125,8 @@ export default {
                 store.dispatch("field/movePiece", null, { root: true })
                 store.dispatch('updateTimer', {
                     isIncrease: false,
-                    decreaseValue: DECREASE_TIMER_VALUE,
-                    increaseValue: INCREASE_TIMER_VALUE
+                    decreaseValue: DECREASE_TIMER_VALUE_DEFAULT,
+                    increaseValue: INCREASE_TIMER_VALUE_DEFAULT
                 })
             }, 500))
             store.dispatch("field/initStartGame", null, { root: true })

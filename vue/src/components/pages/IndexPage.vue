@@ -54,6 +54,7 @@ export default {
       'startGame',
       'stopGame'
     ]),
+
     updateFieldSize() {
       this.changeFieldSize(this.fieldSize)
       this.fieldSize = this.getFieldSize
