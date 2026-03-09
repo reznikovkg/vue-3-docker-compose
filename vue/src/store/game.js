@@ -13,7 +13,7 @@ const MUTATIONS = {
 export const DECREASE_TIMER_VALUE_DEFAULT = 0.5
 export const INCREASE_TIMER_VALUE_DEFAULT = 60
 const BASE_GAME_SPEED = 500
-const BASE_SPEED_KOEF = 3.5
+const BASE_SPEED_KOEF = 7
 
 export default {
     namespaced: true,
