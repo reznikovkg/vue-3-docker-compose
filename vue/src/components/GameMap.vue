@@ -7,13 +7,23 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { useStore } from 'vuex'
 import Boat from './Boat.vue'
 
 const store = useStore()
 
+const zones = computed(() => store.getters['game/getZones'])
+
+console.log(zones)
+
 const speed = 1
+
+const fishing = (e) => {
+  if (e.key === ' ') {
+    store.dispatch('game/addFish', 'legendary')
+  }
+}
 
 const move = (e) => {
   if (e.key === 'ArrowUp' || e.key === 'w') {
@@ -52,12 +62,17 @@ const stopMove = (e) => {
 }
 
 onMounted(() => {
+  store.dispatch('game/generateZones')
+
+  window.addEventListener('keydown', fishing)
   window.addEventListener('keydown', move)
   window.addEventListener('keyup', stopMove)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', move)
+  window.removeEventListener('keydown', fishing)
+  window.removeEventListener('keyup', stopMove)
 })
 
 </script>
@@ -75,7 +90,7 @@ onUnmounted(() => {
 
 .game-map__world {
   position: absolute;
-  width: 5000px;
-  height: 5000px;
+  width: 2500px;
+  height: 2500px;
 }
 </style>

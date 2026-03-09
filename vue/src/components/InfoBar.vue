@@ -1,7 +1,7 @@
 <template>
   <div class="infobar">
     <span class="infobar__text">Координаты (X: {{ boat.x }}, Y: {{ boat.y }})</span>
-    <span class="infobar__text">Тип области: Какая-то область</span>
+    <span class="infobar__text">Тип области: {{ currentZone }}</span>
   </div>
 </template>
 
@@ -11,6 +11,8 @@ import { useStore } from 'vuex'
 
 const store = useStore()
 const boat = computed(() => store.getters['game/getBoat'])
+
+const currentZone = computed(() => store.getters['game/getCurrentZone'])
 </script>
 
 <style scoped>
@@ -22,7 +24,10 @@ const boat = computed(() => store.getters['game/getBoat'])
 
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 20px;
+
+  width: 800px;
 
   padding: 18px;
   background-color: rgb(200, 200, 200);
@@ -33,6 +38,7 @@ const boat = computed(() => store.getters['game/getBoat'])
 
 .infobar__text {
   color: rgb(10, 10, 100);
-  font-size: 20px;
+  font-size: 24px;
+  white-space: nowrap;
 }
 </style>
