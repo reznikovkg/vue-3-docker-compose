@@ -16,6 +16,9 @@ const store = useStore()
 const speed = 1
 
 const move = (e) => {
+  const fishing = computed(() => store.getters['game/getIsFishing'])
+  if (fishing.value) return
+
   if (e.key === 'ArrowUp' || e.key === 'w') {
     store.dispatch('game/moveBoat', {x: 0, y: -speed})
     store.dispatch('game/setRowing', true)
