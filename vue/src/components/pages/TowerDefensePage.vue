@@ -7,7 +7,7 @@
           :key="level.id"
           type="button"
           class="towerDefensePage__levelButton"
-          :class="{ towerDefensePage__levelButton_active: level.id === currentLevel.id }"
+          :class="{ 'towerDefensePage__levelButton--active': level.id === currentLevel.id }"
           @click="() => page.selectLevel(level.id)"
         >
           {{ level.name }}
@@ -49,8 +49,8 @@
             :r="18"
             class="towerDefensePage__slot"
             :class="{
-              towerDefensePage__slot_active: slot.id === selectedSlotId,
-              towerDefensePage__slot_busy: Boolean(towerBySlotId[slot.id]),
+              'towerDefensePage__slot--active': slot.id === selectedSlotId,
+              'towerDefensePage__slot--busy': Boolean(towerBySlotId[slot.id]),
             }"
             @click.stop="() => page.selectSlot(slot.id)"
           />
@@ -71,7 +71,7 @@
             :cy="enemy.y"
             :r="enemy.radius"
             class="towerDefensePage__enemy"
-            :class="{ towerDefensePage__enemy_active: enemy.id === selectedEnemyId }"
+            :class="{ 'towerDefensePage__enemy--active': enemy.id === selectedEnemyId }"
             @click.stop="() => page.selectEnemy(enemy.id)"
             @mousedown.stop="(event) => page.startEnemyDrag(event, enemy.id)"
           />
@@ -105,7 +105,7 @@
             </button>
             <button
               type="button"
-              class="towerDefensePage__actionButton towerDefensePage__actionButton_danger"
+              class="towerDefensePage__actionButton towerDefensePage__actionButton--danger"
               :disabled="!selectedTower"
               @click="() => page.removeTower()"
             >
@@ -281,187 +281,187 @@ onBeforeUnmount(() => page.unmount())
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
 
-.towerDefensePage__topBar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+  &__topBar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
 
-.towerDefensePage__levelList {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+  &__levelList {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 
-.towerDefensePage__levelButton,
-.towerDefensePage__actionButton {
-  border: 1px solid #bac7bf;
-  background: #ffffff;
-  color: #1d2b22;
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
+  &__levelButton,
+  &__actionButton {
+    border: 1px solid #bac7bf;
+    background: #ffffff;
+    color: #1d2b22;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
 
-.towerDefensePage__levelButton_active {
-  background: #d8f0de;
-  border-color: #5f9d74;
-}
+  &__levelButton--active {
+    background: #d8f0de;
+    border-color: #5f9d74;
+  }
 
-.towerDefensePage__layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 290px;
-  gap: 12px;
-}
+  &__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 290px;
+    gap: 12px;
+  }
 
-.towerDefensePage__boardFrame {
-  border: 1px solid #c3d0c8;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #eef5f2;
-  outline: none;
-}
+  &__boardFrame {
+    border: 1px solid #c3d0c8;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #eef5f2;
+    outline: none;
 
-.towerDefensePage__boardFrame:focus {
-  box-shadow: 0 0 0 2px #5f9d74;
-}
+    &:focus {
+      box-shadow: 0 0 0 2px #5f9d74;
+    }
+  }
 
-.towerDefensePage__board {
-  width: 100%;
-  display: block;
-  aspect-ratio: 16 / 9;
-}
+  &__board {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16 / 9;
+  }
 
-.towerDefensePage__path {
-  fill: none;
-  stroke: #4f6369;
-  stroke-width: 18;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
+  &__path {
+    fill: none;
+    stroke: #4f6369;
+    stroke-width: 18;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
 
-.towerDefensePage__towerRange {
-  fill: rgba(58, 125, 74, 0.12);
-  stroke: rgba(58, 125, 74, 0.35);
-  stroke-width: 1;
-  pointer-events: none;
-}
+  &__towerRange {
+    fill: rgba(58, 125, 74, 0.12);
+    stroke: rgba(58, 125, 74, 0.35);
+    stroke-width: 1;
+    pointer-events: none;
+  }
 
-.towerDefensePage__slot {
-  fill: #f1ebd7;
-  stroke: #9a936d;
-  stroke-width: 2;
-  cursor: pointer;
-}
+  &__slot {
+    fill: #f1ebd7;
+    stroke: #9a936d;
+    stroke-width: 2;
+    cursor: pointer;
+  }
 
-.towerDefensePage__slot_busy {
-  fill: #ddd4b0;
-}
+  &__slot--busy {
+    fill: #ddd4b0;
+  }
 
-.towerDefensePage__slot_active {
-  stroke: #2a7d45;
-}
+  &__slot--active {
+    stroke: #2a7d45;
+  }
 
-.towerDefensePage__tower {
-  fill: #336f53;
-  stroke: #103e28;
-  stroke-width: 2;
-}
+  &__tower {
+    fill: #336f53;
+    stroke: #103e28;
+    stroke-width: 2;
+  }
 
-.towerDefensePage__enemy {
-  fill: #a33636;
-  stroke: #631212;
-  stroke-width: 2;
-  cursor: grab;
-}
+  &__enemy {
+    fill: #a33636;
+    stroke: #631212;
+    stroke-width: 2;
+    cursor: grab;
+  }
 
-.towerDefensePage__enemy_active {
-  stroke: #ffe17d;
-  stroke-width: 3;
-}
+  &__enemy--active {
+    stroke: #ffe17d;
+    stroke-width: 3;
+  }
 
-.towerDefensePage__projectile {
-  fill: #f4c841;
-  stroke: #7a6018;
-  stroke-width: 1;
-  pointer-events: none;
-}
+  &__projectile {
+    fill: #f4c841;
+    stroke: #7a6018;
+    stroke-width: 1;
+    pointer-events: none;
+  }
 
-.towerDefensePage__panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-.towerDefensePage__panelSection {
-  border: 1px solid #c3d0c8;
-  border-radius: 8px;
-  padding: 10px;
-  background: #f8fbf9;
-}
+  &__panelSection {
+    border: 1px solid #c3d0c8;
+    border-radius: 8px;
+    padding: 10px;
+    background: #f8fbf9;
+  }
 
-.towerDefensePage__sectionTitle {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  color: #000000;
-}
+  &__sectionTitle {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #000000;
+  }
 
-.towerDefensePage__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
-}
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
 
-.towerDefensePage__pointInputs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
+  &__pointInputs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
 
-.towerDefensePage__pointLabel {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: #30443a;
-  font-size: 12px;
-}
+  &__pointLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #30443a;
+    font-size: 12px;
+  }
 
-.towerDefensePage__pointInput {
-  border: 1px solid #bac7bf;
-  border-radius: 6px;
-  padding: 4px 6px;
-  width: 90px;
-}
+  &__pointInput {
+    border: 1px solid #bac7bf;
+    border-radius: 6px;
+    padding: 4px 6px;
+    width: 90px;
+  }
 
-.towerDefensePage__actionButton_danger {
-  border-color: #cb9999;
-  color: #7f2323;
-}
+  &__actionButton--danger {
+    border-color: #cb9999;
+    color: #7f2323;
+  }
 
-.towerDefensePage__statsList,
-.towerDefensePage__text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: #26382f;
-  font-size: 13px;
-}
+  &__statsList,
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #26382f;
+    font-size: 13px;
+  }
 
-.towerDefensePage__hint {
-  margin-top: 8px;
-  color: #4b6257;
-  font-size: 12px;
-  line-height: 1.3;
-}
+  &__hint {
+    margin-top: 8px;
+    color: #4b6257;
+    font-size: 12px;
+    line-height: 1.3;
+  }
 
-@media (max-width: 1040px) {
-  .towerDefensePage__layout {
-    grid-template-columns: minmax(0, 1fr);
+  @media (max-width: 1040px) {
+    &__layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 </style>
