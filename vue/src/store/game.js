@@ -3,8 +3,13 @@ const MUTATIONS = {
     SET_ISSTARTED: "SET_ISSTARTED",
     SET_MOVE_INTERVAL: "SET_MOVE_INTERVAL",
     SET_SCORE: "SET_SCORE",
-    ADD_SCORE: "ADD_SCORE"
+    ADD_SCORE: "ADD_SCORE",
+    DECREASE_TIMER: "DECREASE_TIMER",
+    INCREASE_TIMER: "INCREASE_TIMER"
 }
+
+const DECREASE_TIMER_VALUE = 0.5
+const INCREASE_TIMER_VALUE = 60
 
 export default {
     namespaced: true,
@@ -13,13 +18,15 @@ export default {
             isGameFinished: false,
             isGameStarted: false,
             moveInterval: null,
-            score: 0
+            score: 0,
+            timer: 60
         }
     },
     getters: {
         getIsFinished: (state) => state.isGameFinished,
         getIsGameStarted: (state) => state.isGameStarted,
         getScore: (state) => state.score,
+        getTimer: state => state.timer
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
@@ -38,6 +45,12 @@ export default {
         [MUTATIONS.ADD_SCORE]: (state, value) => {
             state.score += value
             if (state.score < 0) state.score = 0
+        },
+        [MUTATIONS.DECREASE_TIMER]: (state, value) => {
+            state.timer -= value
+        },
+        [MUTATIONS.INCREASE_TIMER]: (state, value) => {
+            state.timer += value
         }
     },
     actions: {
@@ -78,6 +91,18 @@ export default {
                 store.dispatch('game/stopGame', null, { root: true })
             }
         },
+        updateTimer: (store, isIncrease, decreaseValue, increaseValue) => {
+            let timer = store.state.timer
+
+            if (!isIncrease) {
+                if(timer >= decreaseValue)
+                    store.commit(MUTATIONS.DECREASE_TIMER, decreaseValue)
+                else
+                    store.dispatch('stopGame')
+            } 
+            else 
+                store.commit(MUTATIONS.INCREASE_TIMER, increaseValue)
+        },
         stopGame: (store) => {
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
             store.commit(MUTATIONS.SET_ISFINISHED, true)
@@ -94,6 +119,11 @@ export default {
             store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })
+                store.dispatch('updateTimer', {
+                    isIncrease: false,
+                    decreaseValue: DECREASE_TIMER_VALUE,
+                    increaseValue: INCREASE_TIMER_VALUE
+                })
             }, 500))
         }
     }
