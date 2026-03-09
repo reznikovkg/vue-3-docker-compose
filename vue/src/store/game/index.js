@@ -4,7 +4,8 @@ const MUTATIONS = {
   SET_ROWING: 'SET_ROWING',
   FISHING: 'FISHING',
   ADD_FISH: 'ADD_FISH',
-  GENERATE_ZONES: 'GENERATE_ZONES'
+  GENERATE_ZONES: 'GENERATE_ZONES',
+  SAVE: 'SAVE'
 }
 
 const defaultState = {
@@ -26,7 +27,8 @@ const defaultState = {
 export default {
   namespaced: true,
   state () {
-    return defaultState
+    const savedState = localStorage.getItem('game_state')
+    return (savedState !== null) ? JSON.parse(savedState) : defaultState
   },
   getters: {
     getBoat: (state) => state.boat,
@@ -79,18 +81,23 @@ export default {
   actions: {
     moveBoat: (store, payload) => {
       store.commit(MUTATIONS.MOVE_BOAT, payload)
+      store.dispatch('save')
     },
     setDirection: (store, direction) => {
       store.commit(MUTATIONS.SET_DIRECTION, direction)
+      store.dispatch('save')
     },
     setRowing: (store, value) => {
       store.commit(MUTATIONS.SET_ROWING, value)
+      store.dispatch('save')
     },
     fishing: (store) => {
       store.commit(MUTATIONS.FISHING)
+      store.dispatch('save')
     },
     addFish: (store, type) => {
       store.commit(MUTATIONS.ADD_FISH, type)
+      store.dispatch('save')
     },
     generateZones: (store) => {
       const zones = []
@@ -114,6 +121,10 @@ export default {
       }
       
       store.commit(MUTATIONS.GENERATE_ZONES, zones)
+      store.dispatch('save')
+    },
+    save: (store) => {
+      localStorage.setItem('game_state', JSON.stringify(store.state))
     }
   }
 }
