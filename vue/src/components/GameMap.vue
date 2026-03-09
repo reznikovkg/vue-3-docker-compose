@@ -22,6 +22,7 @@ const speed = 1
 const fishing = (e) => {
   if (e.key === ' ') {
     store.dispatch('game/addFish', 'legendary')
+    store.dispatch('game/fishing')
   }
 }
 

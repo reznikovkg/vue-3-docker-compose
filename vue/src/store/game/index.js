@@ -2,8 +2,7 @@ const MUTATIONS = {
   MOVE_BOAT: 'MOVE_BOAT',
   SET_DIRECTION: 'SET_DIRECTION',
   SET_ROWING: 'SET_ROWING',
-  START_FISHING: 'START_FISHING',
-  STOP_FISHING: 'STOP_FISHING',
+  FISHING: 'FISHING',
   ADD_FISH: 'ADD_FISH',
   GENERATE_ZONES: 'GENERATE_ZONES'
 }
@@ -63,11 +62,8 @@ export default {
     [MUTATIONS.SET_DIRECTION]: (state, direction) => {
       state.boat.direction = direction
     },
-    [MUTATIONS.START_FISHING]: (state) => {
-      state.isFishing = true
-    },
-    [MUTATIONS.STOP_FISHING]: (state) => {
-      state.isFishing = false
+    [MUTATIONS.FISHING]: (state) => {
+      state.isFishing = !state.isFishing
     },
     [MUTATIONS.ADD_FISH]: (state, type) => {
       if (state.inventory[type] !== undefined)
@@ -90,11 +86,8 @@ export default {
     setRowing: (store, value) => {
       store.commit(MUTATIONS.SET_ROWING, value)
     },
-    startFishing: (store) => {
-      store.commit(MUTATIONS.START_FISHING)
-    },
-    stopFishing: (store) => {
-      store.commit(MUTATIONS.STOP_FISHING)
+    fishing: (store) => {
+      store.commit(MUTATIONS.FISHING)
     },
     addFish: (store, type) => {
       store.commit(MUTATIONS.ADD_FISH, type)
