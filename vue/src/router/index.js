@@ -4,16 +4,16 @@ import IndexPage from './../components/pages/IndexPage.vue'
 import ExamplePage from './../components/pages/ExamplePage.vue'
 
 export const ROUTES = {
-  EXAMPLE: 'EXAMPLE',
+  //EXAMPLE: 'EXAMPLE',
   INDEX: 'INDEX',
 }
 
 const routes = [
-  {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
-  },
+  //{
+    //name: ROUTES.EXAMPLE,
+    //path: '/example',
+    //component: ExamplePage
+  //},
   {
     name: ROUTES.INDEX,
     path: '/',
