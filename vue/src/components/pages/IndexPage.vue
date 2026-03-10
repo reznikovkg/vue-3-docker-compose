@@ -79,17 +79,15 @@ export default {
         this.isSpeedPressed = true
         this.startSpeedUp()
       }
-      else if (event.key.toLowerCase() === 'q' && this.isGameActive)
+      else if (event.key.toLowerCase() === 'a' && this.isGameActive)
       {
         event.preventDefault()
-        console.log("q")
         this.rotateIsland(ROTATE_DIRECTION.LEFT)
 
       }
-      else if (event.key.toLowerCase() === 'e' && this.isGameActive)
+      else if (event.key.toLowerCase() === 'd' && this.isGameActive)
       {
         event.preventDefault()
-        console.log("e")
         this.rotateIsland(ROTATE_DIRECTION.RIGHT)
 
       }
