@@ -14,8 +14,8 @@
     "preview": "vite preview",
     "prepare": "cd .. && husky vue/.husky",
     "precommit:check": "lint-staged",
-    "lint": "eslint . --max-warnings 10",
-    "lint:fix": "eslint . --fix --max-warnings 10",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check"
   },

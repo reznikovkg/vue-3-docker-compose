@@ -60,12 +60,15 @@
         >
           <p>{{ resultPanel.message }}</p>
           <article v-if="showCatchCard" class="fishing-page__catch-card">
-            <img
-              class="fishing-page__catch-image"
-              :src="catchImageSrc"
-              :alt="`${resultEncounter.fishName} illustration`"
-              @error="(event) => onCatchImageError(event)"
-            />
+            <div class="fishing-page__catch-media">
+              <img
+                class="fishing-page__catch-image"
+                :src="catchImageSrc"
+                :alt="`${resultEncounter.fishName} illustration`"
+                width="1536"
+                height="1024"
+              />
+            </div>
             <div class="fishing-page__catch-details">
               <h3>{{ resultEncounter.fishName }}</h3>
               <p class="fishing-page__catch-row">
@@ -158,7 +161,6 @@ import LocationSelector from '@/components/fishing/LocationSelector.vue';
 import PersistenceDebugPanel from '@/components/testing/PersistenceDebugPanel.vue';
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game';
-const FISH_IMAGE_FALLBACK = '/images/fish/fish-placeholder.svg';
 const PHASE_PAGE_TITLES = Object.freeze({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
@@ -172,11 +174,6 @@ export default {
     FishingScene,
     LocationSelector,
     PersistenceDebugPanel,
-  },
-  data() {
-    return {
-      useFallbackCatchImage: false,
-    };
   },
   computed: {
     isDevMode() {
@@ -254,11 +251,11 @@ export default {
       );
     },
     catchImageSrc() {
-      if (!this.resultEncounter || this.useFallbackCatchImage) {
-        return FISH_IMAGE_FALLBACK;
+      if (!this.resultEncounter) {
+        return '';
       }
 
-      return `/images/fish/${this.resultEncounter.fishId}.png`;
+      return `/images/fish/${this.resultEncounter.fishId}.webp`;
     },
     catchSizeLabel() {
       if (!this.resultEncounter) {
@@ -353,9 +350,6 @@ export default {
       }
 
       this.applyPageTitle(nextPhase);
-    },
-    resultEncounter() {
-      this.useFallbackCatchImage = false;
     },
   },
   mounted() {
@@ -462,13 +456,6 @@ export default {
     onReelingStop() {
       this.$store.dispatch('gameSession/setReeling', false);
     },
-    onCatchImageError() {
-      if (this.useFallbackCatchImage) {
-        return;
-      }
-
-      this.useFallbackCatchImage = true;
-    },
     closeResultPanel() {
       this.$store.dispatch('ui/hideResultPanel');
     },
@@ -477,6 +464,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@use '@/styles/mixins' as mixins;
+
+$fishing-page-catch-media-width-min: 120px;
+$fishing-page-catch-media-width-max: 160px;
+$fishing-page-catch-media-bg: #f2f6fb;
+$fishing-page-catch-media-border: #c6d1de;
+$fishing-page-catch-media-radius: 8px;
+
 .fishing-page {
   box-sizing: border-box;
   display: flex;
@@ -587,26 +582,37 @@ export default {
   border-color: #b12f2f;
 }
 
-.fishing-page__catch-card {
-  align-items: center;
-  border: 1px solid #c8d2df;
-  border-radius: 10px;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 160px 1fr;
-  margin: 10px 0;
-  padding: 10px;
-}
+.fishing-page {
+  &__catch-card {
+    align-items: center;
+    border: 1px solid #c8d2df;
+    border-radius: 10px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 160px 1fr;
+    margin: 10px 0;
+    padding: 10px;
+  }
 
-.fishing-page__catch-image {
-  background: #f2f6fb;
-  border: 1px solid #c6d1de;
-  border-radius: 8px;
-  display: block;
-  aspect-ratio: 16 / 9;
-  height: auto;
-  object-fit: cover;
-  width: 160px;
+  &__catch-media {
+    @include mixins.catch-frame(
+      $fishing-page-catch-media-bg,
+      $fishing-page-catch-media-border,
+      $fishing-page-catch-media-radius
+    );
+    width: clamp(
+      $fishing-page-catch-media-width-min,
+      22vw,
+      $fishing-page-catch-media-width-max
+    );
+  }
+
+  &__catch-image {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    width: 100%;
+  }
 }
 
 .fishing-page__catch-details h3 {
@@ -710,10 +716,10 @@ export default {
     grid-template-columns: 1fr;
   }
 
-  .fishing-page__catch-image {
-    aspect-ratio: 16 / 9;
-    height: auto;
-    width: 100%;
+  .fishing-page {
+    &__catch-media {
+      width: 100%;
+    }
   }
 }
 </style>

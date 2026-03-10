@@ -1,5 +1,6 @@
 # OS
 .DS_Store
+*.md
 
 # local env files
 .env.local
@@ -17,3 +18,7 @@
 
 # Vue
 **/components/archive/*
+*lock*.yaml
+
+# Assets
+*.png
