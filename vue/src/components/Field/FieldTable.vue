@@ -1,26 +1,19 @@
 <template>
-  <table 
-    class="field-table"
-    @keydown.up="move(0, -1)"
-    @keydown.down="move(0, 1)"
-    @keydown.left="move(-1, 0)"
-    @keydown.right="move(1, 0)">
-    <tbody>
-      <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
-        <td 
-        class="field-td" 
-        :style="{ '--grid-size': this.getFieldSize }"
-        :class="{
-          'is-central': isCentral(rowIdx + 1, colIdx + 1),
-          'piece': cell === 2,
-          'attached-piece': cell === 3
-        }"
-        v-for="(cell, colIdx) in row"
-        :key="colIdx">
-        </td>
-      </tr>
-    </tbody>
-  </table>
+    <table class="field-table">
+      <tbody>
+        <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
+          <td class="field-td" :style="{ '--grid-size': this.getFieldSize }" v-for="(cell, colIdx) in row" :key="colIdx">
+            <div 
+              class="cell"
+              :class="{
+                'is-central': isCentral(rowIdx + 1, colIdx + 1),
+                'piece': cell === 2,
+                'attached-piece': cell === 3
+            }"></div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 </template>
 
 <script>
@@ -74,6 +67,12 @@ export default {
   width: calc(80vmin / var(--grid-size));
   height: calc(80vmin / var(--grid-size));
   background-color: white;
+}
+.cell {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
 }
 
 .piece {
