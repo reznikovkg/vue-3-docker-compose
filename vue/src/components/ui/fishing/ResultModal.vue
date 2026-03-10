@@ -34,21 +34,21 @@ defineProps(['isOpen', 'message', 'onClose'])
   }
 
   &__content {
-    min-width: 20rem;
+    min-width: 320px;
     background: rgb(45, 45, 45);
-    padding: 2rem;
-    border-radius: 1rem;
+    padding: 32px;
+    border-radius: 16px;
     text-align: center;
     z-index: 10;
   }
 
   &__title {
-    margin-bottom: 1.5rem;
+    margin-bottom: 24px;
   }
 
   &__button {
-    padding: 0.5rem 1.5rem;
-    border-radius: 0.5rem;
+    padding: 8px 24px;
+    border-radius: 8px;
     background: #008bd1;
     font-size: inherit;
     cursor: pointer;

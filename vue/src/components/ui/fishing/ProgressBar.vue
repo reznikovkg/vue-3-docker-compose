@@ -11,10 +11,10 @@ defineProps(['show', 'style', 'type'])
 <style scoped lang="scss">
 .progress-bar {
   width: 100%;
-  height: 1rem;
-  margin-bottom: 1rem;
+  height: 16px;
+  margin-bottom: 16px;
   background: #a6a6a6;
-  border-radius: 1rem;
+  border-radius: 16px;
   overflow: hidden;
   transition: width 0.1s linear;
 

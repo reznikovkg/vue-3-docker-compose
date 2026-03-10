@@ -13,9 +13,12 @@ import { getLocation } from '../../utils'
 import InfoItem from './InfoItem.vue'
 
 const store = useStore()
+const currentLocationValue = computed(
+  () => store.getters['game/getCurrentLocationValue'],
+)
+
 const currentLocationText = computed(() => {
-  const currentLocationValue = store.getters['game/getCurrentLocationValue']
-  const { label } = getLocation(currentLocationValue)
+  const { label } = getLocation(currentLocationValue.value)
 
   return label
 })
@@ -23,7 +26,7 @@ const currentLocationText = computed(() => {
 
 <style scoped lang="scss">
 .info-container {
-  margin: 0.5rem;
+  margin: 8px;
   position: absolute;
   right: 0;
   top: 0;
@@ -32,7 +35,7 @@ const currentLocationText = computed(() => {
   display: flex;
   flex-direction: column;
 
-  border-radius: 0.25rem;
+  border-radius: 4px;
   background: rgb(45, 45, 45);
   border: 1px solid rgb(100, 100, 100);
 }

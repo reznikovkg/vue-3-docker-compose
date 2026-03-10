@@ -1,12 +1,9 @@
 <template>
-  <div
-    :class="['fishing-area', { 'fishing-area--rod-cursor': showRodCursor }]"
-    @click="() => onClick()"
-  ></div>
+  <div class="fishing-area" @click="(event) => onClick(event)"></div>
 </template>
 
 <script setup>
-defineProps(['onClick', 'showRodCursor'])
+defineProps(['onClick'])
 </script>
 
 <style scoped lang="scss">
@@ -14,10 +11,8 @@ defineProps(['onClick', 'showRodCursor'])
   position: absolute;
   inset: 50% 0 0 0;
 
-  &--rod-cursor {
-    cursor:
-      url('/rod-cursor.webp') 12 12,
-      pointer;
-  }
+  cursor:
+    url('/rod-cursor.webp') 12 12,
+    pointer;
 }
 </style>

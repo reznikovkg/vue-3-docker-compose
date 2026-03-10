@@ -16,9 +16,12 @@ import InfoContainer from '../ui/info/InfoContainer.vue'
 import FishingComponent from '../ui/fishing/FishingComponent.vue'
 
 const store = useStore()
+const currentLocationValue = computed(
+  () => store.getters['game/getCurrentLocationValue'],
+)
+
 const backgroundStyle = computed(() => {
-  const currentLocationValue = store.getters['game/getCurrentLocationValue']
-  const { icon } = getLocation(currentLocationValue)
+  const { icon } = getLocation(currentLocationValue.value)
 
   return {
     background: `url(${icon}) center / cover no-repeat`,

@@ -11,7 +11,7 @@ defineProps(['label', 'text'])
 
 <style scoped lang="scss">
 .info-item {
-  padding: 0.5rem;
+  padding: 8px;
 
   &:not(:last-child) {
     border-bottom: 1px solid rgb(100, 100, 100);

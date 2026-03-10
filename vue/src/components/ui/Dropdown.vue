@@ -51,7 +51,7 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .dropdown {
-  margin: 0.5rem;
+  margin: 8px;
   position: absolute;
   left: 0;
   top: 0;
@@ -59,9 +59,9 @@ onUnmounted(() => {
 
   &__button {
     cursor: pointer;
-    font-size: 1.25rem;
+    font-size: 20px;
     background: rgb(45, 45, 45);
-    border-radius: 0.25rem;
+    border-radius: 4px;
     user-select: none;
     transition: background-color 0.2s ease;
 
@@ -71,21 +71,21 @@ onUnmounted(() => {
   }
 
   &__menu {
-    margin-top: 0.5rem;
+    margin-top: 8px;
     background: rgb(45, 45, 45);
-    border-radius: 0.5rem;
+    border-radius: 8px;
     overflow: hidden;
     border: 1px solid rgb(100, 100, 100);
   }
 
   &__title {
     font-weight: bold;
-    padding: 0.5rem;
+    padding: 8px;
     border-bottom: 1px solid rgb(200, 200, 200);
   }
 
   &__item {
-    padding: 0.25rem 0.5rem;
+    padding: 4px 8px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 
