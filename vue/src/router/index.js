@@ -1,7 +1,7 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
 import HomePage from '@/components/pages/HomePage.vue'
-import ExamplePage from '@/components/pages/ExamplePage.vue'
+import GamePage from '@/components/pages/GamePage.vue'
 import ResultPage from '@/components/pages/ResultPage.vue'
 
 export const ROUTES = {
@@ -20,11 +20,10 @@ const routes = [
     path: '/home',
     component: HomePage
   },
-  // TODO edit to GamePage
   {
     name: ROUTES.GAME,
     path: '/game',
-    component: ExamplePage
+    component: GamePage
   },
   {
     name: ROUTES.RESULT,
