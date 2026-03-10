@@ -106,10 +106,12 @@ export default {
     },
     generateZones: (store) => {
       const zones = []
+      
+      const {x: bx, y: by} = store.state.boat
 
       for (let i = 0; i < 500; i++) {
-        const x = Math.floor(Math.random() * 2500 - 1250)
-        const y = Math.floor(Math.random() * 2500 - 1250)
+        const x = Math.floor(Math.random() * 2500 - 1250) + bx
+        const y = Math.floor(Math.random() * 2500 - 1250) + by
         zones.push({
           type: 'medium',
           x, y
@@ -117,8 +119,8 @@ export default {
       }
 
       for (let i = 0; i < 100; i++) {
-        const x = Math.floor(Math.random() * 2500 - 1250)
-        const y = Math.floor(Math.random() * 2500 - 1250)
+        const x = Math.floor(Math.random() * 2500 - 1250) + bx
+        const y = Math.floor(Math.random() * 2500 - 1250) + by
         zones.push({
           type: 'high',
           x, y
