@@ -7,18 +7,8 @@
         <span class="home__subtitle">Уворачивайся от машин!</span>
       </header>
 
-      <div v-if="bestScore > 0" class="home__score-card">
-        <div class="home__score-value">
-          <span class="home__icon-trophy">🏆</span>
-          <span class="home__score-number">{{ bestScore }}м</span>
-        </div>
-        <p class="home__score-label">Лучший результат</p>
-      </div>
-
-      <RouterLink :to="{ name: $routes.GAME }" class="home__start-link"> 
-        <span class="home__icon-play">▶</span>
-        <span>Начать игру</span>
-      </RouterLink>
+      <StatsCard v-if="bestScore > 0" :score="bestScore" label="Лучший результат" variant="small" />
+      <BaseLink :to="{ name: $routes.GAME }" title="▶ Начать игру" variant="primary" />
 
       <section class="home__rules rules">
         <h2 class="rules__title">Как играть:</h2>
@@ -63,11 +53,19 @@
 </template>
 
 <script setup lang="ts">
+import BaseLink from '@/components/ui/BaseLink.vue';
+import StatsCard from '@/components/ui/StatsCard.vue';
+
 interface Props {
   bestScore: number;
 }
 
-defineProps<Props>();
+// todo прокидывать настоящие значения
+const props = withDefaults(defineProps<Props>(), {
+  bestScore: 1500
+});
+
+
 </script>
 
 <style scoped lang="scss">
@@ -82,8 +80,6 @@ defineProps<Props>();
 
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     row-gap: 32px;
   }
 
@@ -103,52 +99,6 @@ defineProps<Props>();
   &__subtitle {
     font-size: 20px;
     color: var(--vt-c-blue-soft);
-  }
-
-  &__score-card {
-    background-color: var(--color-background-soft);
-    backdrop-filter: var(--vt-blur-default);
-    border-radius: var(--vt-radius-default);
-    padding: 16px;
-    border: 2px solid var(--color-border);
-  }
-
-  &__score-value {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: var(--vt-c-yellow);
-    font-size: 24px;
-    font-weight: 700;
-  }
-
-  &__score-label {
-    font-size: 14px;
-    color: var(--vt-c-blue-soft);
-  }
-
-  &__start-link {
-    width: 100%;
-    padding: 24px 128px;
-    font-size: 18px;
-    font-weight: 600;
-    text-decoration: none;
-    background-color: var(--vt-c-green);
-    color: var(--vt-c-white);
-    border: none;
-    border-radius: var(--vt-radius-default);
-    cursor: pointer;
-    box-shadow: var(--vt-shadow-default);
-    transition: background-color 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    &:hover {
-      background-color: var(--vt-c-green-hover);
-    }
   }
 }
 

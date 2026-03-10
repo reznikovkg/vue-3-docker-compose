@@ -18,7 +18,9 @@
 
   --vt-blur-default: blur(4px);
 
-  --vt-shadow-default: "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+  --vt-shadow-default: 0 10px 15px rgba(0, 0, 0, 0.2);
+
+  --vt-transition-default: all 0.2s ease-out;
 }
 
 :root {
@@ -104,4 +106,22 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+a,
+button,
+input,
+textarea,
+svg * {
+  transition: var(--vt-transition-default);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  border: none;
+  cursor: pointer;
 }
