@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <div class="controls">
-      <div class="score-text">Счет: {{ score }}</div>
+      <div class="controls__score">Счет: {{ score }}</div>
       <button class="controls__button" @click="() => start()">Начать игру</button>
     </div>
 
@@ -69,7 +69,10 @@ export default {
   padding: 10px 20px;
   border-radius: 30px;
   backdrop-filter: blur(5px);
-
+  &__score {
+  font-weight: bold;
+  font-size: 18px;
+  }
   &__button {
     background-color: #f07db6;
     color: white;

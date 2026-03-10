@@ -5,6 +5,7 @@
       :key="bubble.id"
       class="bubble"
       :style="bubbleStyle(bubble)"
+      @click.stop="() => popBubble(bubble)"
     />
   </div>
 </template>
@@ -52,17 +53,13 @@ export default {
       this.bubbles = []
       this.lastSpawn = performance.now()
       this.startTime = performance.now()
-      
       const interval = 1000 / this.intensity
       this.spawnTimer = setInterval(() => this.addBubble(), interval)
-      
       this.animate()
     },
     animate() {
       if (!this.running) return
-
       const now = performance.now()
-      
       if ((now - this.startTime) / 1000 >= this.duration) {
         this.finishGame()
         return
@@ -73,33 +70,98 @@ export default {
     addBubble() {
       if (!this.running) return
       const colorIndex = Math.floor(Math.random() * this.colorsCount)
-      const angle = (Math.random() - 0.5) * Math.PI / 4
       this.bubbles.push({
         id: crypto.randomUUID(),
         x: Math.random() * 90 + 5,
         y: -10,
-        dx: Math.sin(angle) * 0.15,
-        dy: 0.2 + Math.random() * 0.3,
-        color: colorIndex
+        dx: 0,
+        dy: 0.08 + Math.random() * 0.08,
+        color: colorIndex,
+        size: ['small','medium','large'][Math.floor(Math.random() * 3)]
       })
     },
     updateBubbles() {
       this.bubbles.forEach(b => {
+        b.dy += 0.008
         b.x += b.dx
         b.y += b.dy
-        b.dx += (Math.random() - 0.5) * 0.01
-        if (b.x < 0 || b.x > 100) {
-          b.dx *= -0.8
-        }
-        b.x = Math.max(0, Math.min(100, b.x))
+        b.dx *= 0.99
+        b.dy *= 0.99
       })
-      this.bubbles = this.bubbles.filter(b => b.y < 110)
+      this.bubbles = this.bubbles.filter(b => {
+        if(b.y >= 110){
+          if(b.color === this.targetColor){
+            const penalty =
+              b.size === 'large' ? -10 :
+              b.size === 'medium' ? -6 : -3
+            this.score += penalty
+            this.$emit('score', this.score)
+          }
+          return false
+        }
+        return true
+      })
     },
     popBubble(bubble) {
+      this.pushNearby(bubble)
+      this.spawnChildren(bubble)
       const hit = bubble.color === this.targetColor
-      this.score += hit ? this.scoreHit : this.scoreMiss
+      const penalty = bubble.size === 'large' ? -5 : bubble.size === 'medium' ? -3 : -1
+      this.score += hit ? this.scoreHit : penalty
       this.$emit('score', this.score)
       this.bubbles = this.bubbles.filter(b => b.id !== bubble.id)
+    },
+    spawnChildren(bubble){
+      const count =
+        bubble.size === 'large' ? 3 :
+        bubble.size === 'medium' ? 5 : 0
+      if(count === 0) return
+      const newSize = bubble.size === 'large' ? 'medium' : 'small'
+      const parentRadiusPx = this.sizePx(bubble.size) / 2
+      const parentRadiusPercent = parentRadiusPx / (this.$el.clientWidth / 100)
+      const spawnRadius = parentRadiusPercent * 2
+      for(let i = 0; i < count; i++){
+        const angle = (Math.PI * 2 / count) * i
+        const color =
+          i === 0
+            ? bubble.color
+            : Math.floor(Math.random() * this.colorsCount)
+        this.bubbles.push({
+          id: crypto.randomUUID(),
+          x: bubble.x + Math.cos(angle) * spawnRadius,
+          y: bubble.y + Math.sin(angle) * spawnRadius,
+          dx: Math.cos(angle) * 0.05,
+          dy: 0.15 + Math.random() * 0.05,
+          color,
+          size: newSize
+        })
+      }
+    },
+    pushNearby(bubble){
+      const radiusMap = {
+        large: { large: 1, medium: 1.5, small: 2 },
+        medium: { large: 0.5, medium: 1, small: 1.5 },
+        small: { large: 0.25, medium: 0.5, small: 1 }
+      }
+      const parentRadiusPx = this.sizePx(bubble.size) / 2
+      const parentRadiusPercent = parentRadiusPx / (this.$el.clientWidth / 100)
+      const effectRadius = parentRadiusPercent * 4
+      this.bubbles.forEach(b => {
+        if(b.id === bubble.id) return
+        const dx = b.x - bubble.x
+        const dy = b.y - bubble.y
+        const dist = Math.hypot(dx, dy)
+        if(dist > effectRadius || dist === 0) return
+        const multiplier = radiusMap[bubble.size][b.size]
+        const pushDistance = parentRadiusPercent * multiplier
+        const angle = Math.atan2(dy, dx)
+        const pushX = Math.cos(angle) * pushDistance
+        const pushY = Math.sin(angle) * pushDistance
+        b.x += pushX
+        b.y += pushY
+        b.dx += pushX * 0.03
+        b.dy += pushY * 0.03
+      })
     },
     onAreaClick(e) {
       const rect = this.$el.getBoundingClientRect()
@@ -108,7 +170,7 @@ export default {
       const hitBubbles = this.bubbles.filter(b => {
         const bubbleX = rect.left + (b.x / 100) * rect.width
         const bubbleY = rect.top + (b.y / 100) * rect.height
-        const radius = this.bubbleSize / 2
+        const radius = this.sizePx(b.size) / 2
         const distance = Math.hypot(bubbleX - clickX, bubbleY - clickY)
         return distance <= radius
       })
@@ -118,9 +180,7 @@ export default {
         return
       }
       hitBubbles.forEach(bubble => {
-        const hit = bubble.color === this.targetColor
-        this.score += hit ? this.scoreHit : this.scoreMiss
-        this.bubbles = this.bubbles.filter(b => b.id !== bubble.id)
+        this.popBubble(bubble)
       })
       this.$emit('score', this.score)
     },
@@ -138,12 +198,16 @@ export default {
       return {
         left: bubble.x + '%',
         top: bubble.y + '%',
-        width: this.bubbleSize + 'px',
-        height: this.bubbleSize + 'px',
+        width: this.sizePx(bubble.size) + 'px',
+        height: this.sizePx(bubble.size) + 'px',
         backgroundColor: this.colorByIndex(bubble.color),
-        transform: 'translate(-50%, -50%)',
-        pointerEvents: 'none'
+        transform: 'translate(-50%, -50%)'
       }
+    },
+    sizePx(size){
+      if(size === 'large') return this.bubbleSize * 1.4
+      if(size === 'small') return this.bubbleSize * 0.6
+      return this.bubbleSize
     },
     colorByIndex(index) {
       const palette = ['#ff4444', '#4444ff', '#44ff44', '#ff8844', '#9944ff', '#44ffff']
@@ -171,7 +235,7 @@ export default {
   opacity: 0.9;
   box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
   transition: transform 0.1s;
-  pointer-events: none;
+  pointer-events: auto;
 
   &:hover {
     transform: translate(-50%, -50%) scale(1.1);
