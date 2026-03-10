@@ -2,47 +2,36 @@
   <div 
     class="card"
     draggable="true"
-    @dragstart="dragStart"
-    @click="() => $emit('select', name)"
+    @dragstart="(event) => dragStart(event)"
+    @click="() => select()"
   >
-    <div class="card__icon">{{ icons[name] || '✨' }}</div>
-    <div class="card__name">{{ name }}</div>
+    <div class="card__icon">{{element.icon}}</div>
+    <div class="card__name">{{element.name}}</div>
   </div>
 </template>
 
 <script>
+import { ELEMENTS } from '../../config/elements'
+
 export default {
-  name: 'ElementCard',
-  props: {
-    name: String
+  props:{ 
+    id:Number 
   },
-  computed: {
-    icons() {
-      return {
-        fire: '🔥',
-        water: '💧', 
-        earth: '🌍', 
-        air: '🌪',
-        steam: '☁️', 
-        mud: '🟫', 
-        lava: '🌋',
-        dust: '🌫', 
-        metal: '⚙️', 
-        plant: '🌿', 
-        energy: '⚡',
-        ice: '❄️', 
-        cloud: '☁️', 
-        sand: '🏜', 
-        crystal: '💎',
-        metallic_lava: '🌋⚙️', 
-        snow: '❄️☁️'
-      }
+  computed:{
+    element(){
+      return ELEMENTS[this.id]
     }
   },
-  methods: {
-    dragStart(event) {
+
+  methods:{
+    dragStart(event){
+
       event.dataTransfer.effectAllowed = "copy";
-      event.dataTransfer.setData("text/plain", this.name);
+      event.dataTransfer.setData("text/plain",this.id);
+    },
+
+    select() {
+      this.$emit('select', this.id)
     }
   }
 }

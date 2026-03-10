@@ -1,73 +1,61 @@
 <template>
     <div class="slots">
-        <div v-for="(row, i) in slots" 
-            :key="i" 
-            class="slots__row">
-            <div 
-                v-for="(slot, j) in row" 
-                :key="j" 
-                class="slots__cell" 
-                @dragover.prevent
-                @drop="(event) => drop(i, j, event)"
+        <div v-for="(slot, index) in slots"
+            :key="index"
+            class="slots__cell"
+            @dragover.prevent
+            @drop="event => drop(index, event)"
+        >
+            <button 
+                v-if="slot" 
+                class="slots__remove" 
+                @click.stop="() => remove(index)"
             >
-                <button 
-                    v-if="slot" 
-                    class="slots__remove" 
-                    @click.stop="() => remove(i, j)"
-            >
-                 ✕
-                </button>
-                <span v-if="slot">{{ icons[slot] || '✨' }}</span>
-            </div>
+                ✕
+            </button>
+            <span v-if="slot">{{ elements[slot]?.icon }}</span>
         </div>
     </div>
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters,mapActions } from 'vuex'
+import { ELEMENTS } from '../../config/elements'
 
-export default {
-    computed: {
-        ...mapGetters(['slots']),
-        icons() {
-            return {
-                fire: '🔥', water: '💧', earth: '🌍', air: '🌪',
-                steam: '☁️', mud: '🟫', lava: '🌋',
-                dust: '🌫', metal: '⚙️', plant: '🌿', energy: '⚡',
-                ice: '❄️', cloud: '☁️', sand: '🏜', crystal: '💎',
-                metallic_lava: '🌋⚙️', snow: '❄️☁️'
-            }
-        }
-    },
-    methods: {
-        ...mapActions(['setSlot']),
+export default{
 
-        drop(row, col, event) {
-            const element = event.dataTransfer.getData("text/plain");
-            if (element) {
-                this.setSlot({ row, col, el: element })
-            }
-        },
+   computed: {
+    ...mapGetters(['slots']),
 
-        remove(row, col) {
-            this.setSlot({ row, col, el: null })
-        }
+    elements(){
+        return ELEMENTS
     }
+  },
+  methods: {
+    ...mapActions(['setSlot']),
+
+    drop(index, event) {
+      const id = Number(event.dataTransfer.getData("text/plain"))
+      if (id) {
+        this.setSlot({ index: index, el: id })
+      }
+    },
+
+    remove(index) {
+      this.setSlot({ index: index, el: null })
+    }
+  }
 }
 </script>
 
 <style scoped lang="scss">
 .slots {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     width: 100%;
-
-    &__row {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-    }
+    max-width: 240px;
+    margin: 0 auto;
 
     &__cell {
         position: relative;
@@ -86,6 +74,12 @@ export default {
         &:hover {
             background: #f0f0f0;
             border-color: #4ecdc4;
+        }
+
+        @media (max-width: 600px) {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
         }
     }
 
@@ -110,16 +104,6 @@ export default {
 
         &:hover {
             transform: scale(1.1);
-        }
-    }
-}
-
-@media (max-width: 600px) {
-    .slots {
-        &__cell {
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
         }
     }
 }

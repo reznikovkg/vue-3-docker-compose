@@ -1,28 +1,35 @@
 <template>
   <div class="field">
     <ElementCard
-      v-for="el in elements"
-      :key="el"
-      :name="el"
-      @click="() => add(el)"
+      v-for="id in elements"
+      :key="id"
+      :id="id"
+      @select="add"
     />
   </div>
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapGetters,mapActions } from 'vuex'
 import ElementCard from './ElementCard.vue'
 
-export default {
-  name: 'ElementsField',
-  components: { ElementCard },
-  computed: {
+export default{
+
+  components:{ElementCard},
+
+  computed:{
     ...mapGetters(['discoveredElements']),
-    elements() { return this.discoveredElements }
+    elements(){
+      return this.discoveredElements
+    }
   },
-  methods: {
+
+  methods:{
     ...mapActions(['addToTable']),
-    add(el) { this.addToTable(el) }
+
+    add(id){
+      this.addToTable(id)
+    }
   }
 }
 </script>

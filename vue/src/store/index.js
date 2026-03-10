@@ -1,64 +1,33 @@
 import { createStore } from 'vuex'
+import { SLOT_RECIPES, TABLE_RECIPES } from '../config/recipes'
 
-const slotRecipes = [
-  { 
-    pattern: [
-      ['fire', 'water', null],
-      ['earth', 'air', null],
-      [null, null, null]
-    ],
-    result: 'crystal',
-  },
-  { 
-    pattern: [
-      ['air', null, null],
-      ['water', null, null],
-      ['earth', null, null]
-    ],
-    result: 'plant',
-  },
-  { 
-    pattern: [
-      ['fire', null, 'air'],
-      [null, null, null],
-      [null, null, null]
-    ],
-    result: 'energy',
-  },
-  { 
-    pattern: [
-      ['fire', null, null],
-      [null, 'water', null],
-      [null, null, 'earth']
-    ],
-    result: 'metal', 
-  },
-  { 
-    pattern: [
-      ['water', null, null],
-      [null, 'air', null],
-      [null, null, 'fire']
-    ],
-    result: 'ice',
-  },
-  { 
-    pattern: [
-      ['earth', 'water', null],
-      [null, 'fire', null],
-      [null, null, null]
-    ],
-    result: 'sand',
-  }
-]
+export const MUTATIONS = {
+  ADD_TO_TABLE: 'ADD_TO_TABLE',
+  DECREASE_FROM_TABLE: 'DECREASE_FROM_TABLE',
+  REMOVE_ELEMENT_COMPLETELY: 'REMOVE_ELEMENT_COMPLETELY',
+  CLEAR_TABLE: 'CLEAR_TABLE',
+  SET_SLOT: 'SET_SLOT',
+  CLEAR_SLOTS: 'CLEAR_SLOTS',
+  ADD_DISCOVERED: 'ADD_DISCOVERED'
+}
 
-const tableRecipes = [
-  { ingredients: { fire: 1, water: 1 }, result: 'steam' },
-  { ingredients: { earth: 1, water: 1 }, result: 'mud' },
-  { ingredients: { fire: 1, earth: 1 }, result: 'lava' },
-  { ingredients: { lava: 1, metal: 1 }, result: 'metallic_lava' },
-]
+export const ACTIONS = {
+  ADD_TO_TABLE: 'addToTable',
+  DECREASE_FROM_TABLE: 'decreaseFromTable',
+  REMOVE_ELEMENT_COMPLETELY: 'removeElementCompletely',
+  CLEAR_TABLE: 'clearTable',
+  SET_SLOT: 'setSlot',
+  CHECK_SLOT_RECIPES: 'checkSlotRecipes',
+  MIX: 'mix'
+}
 
-function containsPattern(matrix, pattern, startRow = 0, startCol = 0) {
+export const GETTERS = {
+  DISCOVERED_ELEMENTS: 'discoveredElements',
+  TABLE_ELEMENTS: 'tableElements',
+  SLOTS: 'slots'
+}
+
+const containsPattern = (matrix, pattern, startRow = 0, startCol = 0) => {
   const rows = matrix.length
   const cols = matrix[0].length
   const pRows = pattern.length
@@ -67,7 +36,7 @@ function containsPattern(matrix, pattern, startRow = 0, startCol = 0) {
   if (startRow > rows - pRows) {
     return false
   }
-  
+
   if (startCol > cols - pCols) {
     return containsPattern(matrix, pattern, startRow + 1, 0)
   }
@@ -85,130 +54,134 @@ function containsPattern(matrix, pattern, startRow = 0, startCol = 0) {
   return isMatch || containsPattern(matrix, pattern, startRow, startCol + 1)
 }
 
+const toMatrix = (arr) => [
+  arr.slice(0,3),
+  arr.slice(3,6),
+  arr.slice(6,9)
+]
+
 export const store = createStore({
   state: {
-    discovered: ['fire', 'water', 'earth', 'air'],
+    discovered:[1,2,3,4],
     table: {},
-    slots: Array(3).fill(null).map(() => Array(3).fill(null))
+    slots: Array(9).fill(null)
   },
 
   getters: {
-    discoveredElements: s => s.discovered,
-    tableElements: s => s.table,
-    slots: s => s.slots
+    [GETTERS.DISCOVERED_ELEMENTS]: (state) => state.discovered,
+    [GETTERS.TABLE_ELEMENTS]: (state) => state.table,
+    [GETTERS.SLOTS]: (state) => state.slots
   },
 
-  mutations: {
-    ADD_TO_TABLE(state, element) {
+  mutations:{
+    [MUTATIONS.ADD_TO_TABLE]: (state, id) => {
       state.table = {
         ...state.table,
-        [element]: (state.table[element] || 0) + 1
+        [id]:(state.table[id]||0)+1
       }
     },
 
-    DECREASE_FROM_TABLE(state, element) {
-      if (!state.table[element]) {
+    [MUTATIONS.DECREASE_FROM_TABLE]: (state, id) => {
+      if (!state.table[id]) {
         return
       }
 
-      const newCount = state.table[element] - 1
+      const newCount = state.table[id] - 1
       if (newCount <= 0) {
-        const { [element]: removed, ...rest } = state.table
+        const {[id]:removed,...rest} = state.table
         state.table = rest
       } else {
         state.table = {
           ...state.table,
-          [element]: newCount
+          [id]: newCount
         }
       }
     },
 
-    REMOVE_ELEMENT_COMPLETELY(state, element) {
-      delete state.table[element]
-    },
-
-    REMOVE_ELEMENT(state, element) {
-      const { [element]: removed, ...rest } = state.table
+    [MUTATIONS.REMOVE_ELEMENT_COMPLETELY]: (state, id) => {
+      const {[id]:removed, ...rest} = state.table
       state.table = rest
     },
 
-    CLEAR_TABLE(state) {
+    [MUTATIONS.CLEAR_TABLE]: (state) => {
       state.table = {}
     },
 
-    SET_SLOT(state, { row, col, el }) { 
-      state.slots = state.slots.map((r, i) => 
-        i === row 
-          ? r.map((c, j) => j === col ? el : c)
-          : r
+    [MUTATIONS.SET_SLOT]: (state, { index, el }) => {
+      state.slots = state.slots.map((s, i) =>
+        i === index ? el : s
       )
     },
-    
-    CLEAR_SLOTS(state) { 
-      state.slots = Array(3).fill(null).map(() => Array(3).fill(null)) 
+
+    [MUTATIONS.CLEAR_SLOTS]: (state) => {
+      state.slots = Array(9).fill(null)
     },
-    
-    ADD_DISCOVERED(state, el) {
-      if (!state.discovered.includes(el)) {
-        state.discovered = [...state.discovered, el]
+
+    [MUTATIONS.ADD_DISCOVERED]: (state, id) => {
+      if (!state.discovered.includes(id)) {
+        state.discovered = [...state.discovered,id]
       }
     }
   },
 
   actions: {
-    addToTable({ commit }, element) {
-      commit('ADD_TO_TABLE', element)
-    },
-    decreaseFromTable({ commit }, element) {
-      commit('DECREASE_FROM_TABLE', element)
+    [ACTIONS.ADD_TO_TABLE]: ({ commit }, id) => {
+      commit(MUTATIONS.ADD_TO_TABLE, id)
     },
 
-    removeElementCompletely({ commit }, element) {
-      commit('REMOVE_ELEMENT_COMPLETELY', element)
+    [ACTIONS.DECREASE_FROM_TABLE]: ({ commit }, id) => {
+      commit(MUTATIONS.DECREASE_FROM_TABLE, id)
     },
 
-    clearTable({ commit }) {
-      commit('CLEAR_TABLE')
+    [ACTIONS.REMOVE_ELEMENT_COMPLETELY]: ({ commit }, id) => {
+      commit(MUTATIONS.REMOVE_ELEMENT_COMPLETELY, id)
     },
 
-    setSlot({ commit, dispatch }, payload) {
-      commit('SET_SLOT', payload)
-      dispatch('checkSlotRecipes')
+    [ACTIONS.CLEAR_TABLE]: ({ commit }) => {
+      commit(MUTATIONS.CLEAR_TABLE)
     },
 
-    checkSlotRecipes({ state, commit }) {
-      const foundRecipe = slotRecipes.find(recipe => containsPattern(state.slots, recipe.pattern))
-      
+    [ACTIONS.SET_SLOT]: ({ commit, dispatch }, payload) => {
+      commit(MUTATIONS.SET_SLOT, payload)
+      dispatch(ACTIONS.CHECK_SLOT_RECIPES)
+    },
+
+    [ACTIONS.CHECK_SLOT_RECIPES]: ({ state, commit }) => {
+      const matrix = toMatrix(state.slots)
+      const foundRecipe = SLOT_RECIPES.find(recipe => 
+        containsPattern(matrix, recipe.pattern)
+      )
+
       if (foundRecipe) {
-        commit('ADD_DISCOVERED', foundRecipe.result)
-        commit('CLEAR_SLOTS')
-        commit('ADD_TO_TABLE', foundRecipe.result)
+        commit(MUTATIONS.ADD_DISCOVERED, foundRecipe.result)
+        commit(MUTATIONS.CLEAR_SLOTS)
+        commit(MUTATIONS.ADD_TO_TABLE, foundRecipe.result)
         return true
       }
 
       return false
     },
 
-    mix({ state, commit }) {
+    [ACTIONS.MIX]: ({ state, commit }) => {
       const table = state.table
       const tableKeys = Object.keys(table)
-      
-      const foundRecipe = tableRecipes.find(recipe => {
+
+      const foundRecipe = TABLE_RECIPES.find(recipe => {
         const recipeKeys = Object.keys(recipe.ingredients)
-        
+
         if (recipeKeys.length !== tableKeys.length) {
           return false
         }
-        
+
         return recipeKeys.every(key => 
           table[key] === recipe.ingredients[key]
         )
       })
-      
+
       if (foundRecipe) {
-        commit('ADD_DISCOVERED', foundRecipe.result)
-        commit('CLEAR_TABLE')
-        commit('ADD_TO_TABLE', foundRecipe.result)
+        commit(MUTATIONS.ADD_DISCOVERED, foundRecipe.result)
+        commit(MUTATIONS.CLEAR_TABLE)
+        commit(MUTATIONS.ADD_TO_TABLE, foundRecipe.result)
       }
     }
   }

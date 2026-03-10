@@ -2,7 +2,7 @@
   <div class="table-wrapper">
     <transition name="craft">
       <div v-if="craftVisible" class="craft-container">
-        <div class="craft-slot-wrapper">
+        <div class="craft-container__wrapper">
           <SlotCraft />
         </div>
       </div>
@@ -11,24 +11,24 @@
     <div class="table">
       <div class="table__items">
         <div
-          v-for="(count, name) in table"
-          :key="name"
+          v-for="(count, id) in table"
+          :key="id"
           class="table__item"
         >
           <button
             class="table__remove"
-            @click.stop="() => removeAll(name)"
+            @click.stop="() => removeAll(id)"
           >
             ✕
           </button>
 
-          <span class="table__icon">{{ icons[name] || '✨' }}</span>
-          <span class="table__name">{{ name }}</span>
+          <span class="table__icon">{{elements[id].icon}}</span>
+          <span class="table__name">{{elements[id].name}}</span>
           <span class="table__count">x{{ count }}</span>
 
           <div class="table__controls">
-            <button @click="() => decrease(name)">−</button>
-            <button @click="() => add(name)">+</button>
+            <button @click="() => decrease(id)">−</button>
+            <button @click="() => add(id)">+</button>
           </div>
         </div>
       </div>
@@ -39,8 +39,8 @@
           :class="{ active: craftVisible }"
           @click="() => toggleCraft()"
         >
-          <span class="craft-icon">⚗️</span>
-          <span class="craft-text">{{ craftVisible ? 'Скрыть' : 'Крафт' }}</span>
+          <span class="craft-toggle__icon">⚗️</span>
+          <span class="craft-toggle__text">{{ craftVisible ? 'Скрыть' : 'Крафт' }}</span>
         </button>
         
         <button class="reset" @click="() => clear()">Сброс</button>
@@ -52,6 +52,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import { ELEMENTS } from '../../config/elements'
 import SlotCraft from './SlotCraft.vue'
 
 export default {
@@ -67,26 +68,8 @@ export default {
   computed: {
     ...mapGetters(['tableElements']),
     table() { return this.tableElements },
-    icons() {
-      return {
-        fire: '🔥',
-        water: '💧',
-        earth: '🌍',
-        air: '🌪',
-        steam: '☁️',
-        mud: '🟫',
-        lava: '🌋',
-        dust: '🌫',
-        metal: '⚙️',
-        plant: '🌿',
-        energy: '⚡',
-        ice: '❄️',
-        cloud: '☁️',
-        sand: '🏜',
-        crystal: '💎',
-        metallic_lava: '🌋⚙️',
-        snow: '❄️☁️'
-      }
+    elements(){
+      return ELEMENTS
     }
   },
   methods: {
@@ -98,11 +81,26 @@ export default {
       'mix'
     ]),
 
-    add(name) { this.addToTable(name) },
-    decrease(name) { this.decreaseFromTable(name) },
-    removeAll(name) { this.removeElementCompletely(name) },
-    clear() { this.clearTable() },
-    toggleCraft() { this.craftVisible = !this.craftVisible}
+    add(id){
+      this.addToTable(id)
+    },
+
+    decrease(id){
+      this.decreaseFromTable(id)
+    },
+
+    removeAll(id){
+      this.removeElementCompletely(id)
+    },
+
+    clear(){
+      this.clearTable()
+    },
+
+    toggleCraft(){
+      this.craftVisible=!this.craftVisible
+    }
+
   }
 }
 </script>
@@ -119,6 +117,12 @@ export default {
   position: relative;
   align-items: stretch;
   background: transparent;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+    overflow: auto;
+  }
 }
 
 .table {
@@ -151,6 +155,12 @@ export default {
     align-content: flex-start;
     height: 100%;
     max-height: 100%;
+
+    @media (max-width: 600px) {
+      max-height: 250px;
+      width: 100%;
+      height: 250px;
+    }
   }
 
   &__item {
@@ -170,6 +180,12 @@ export default {
 
     &:hover {
       transform: translateY(-3px);
+    }
+
+    @media (max-width: 600px) {
+      flex: 0 1 60px;
+      font-size: 14px;
+      padding: 8px;
     }
   }
 
@@ -268,6 +284,12 @@ export default {
     background: #4ecdc4;
     color: white;
   }
+
+  @media (max-width: 600px) {
+      flex-direction: row;
+      width: 100%;
+      min-height: 60px;
+  }
 }
 
 .craft-toggle {
@@ -295,12 +317,25 @@ export default {
       box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
     }
 
-    .craft-icon {
+    &__icon {
       font-size: 24px;
     }
 
-    .craft-text {
+    &__text {
       font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      flex-direction: row;
+      padding: 8px;
+
+      &__icon {
+        font-size: 20px;
+      }
+
+      &__text {
+        font-size: 12px;
+      }
     }
   }
   
@@ -320,98 +355,44 @@ export default {
   flex-direction: column;
   min-height: 200px;
 
-  .craft-slot-wrapper {
+  &_wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
     width: 100%;
     height: 100%;
   }
-}
 
-.craft-enter-active,
-.craft-leave-active {
-  transition: all 0.3s ease;
-}
-
-.craft-enter-from {
-  opacity: 0;
-  transform: translateX(-20px);
-  width: 0;
-  padding-left: 0;
-  padding-right: 0;
-  margin-right: 0;
-}
-
-.craft-leave-to {
-  opacity: 0;
-  transform: translateX(-20px);
-  width: 0;
-  padding-left: 0;
-  padding-right: 0;
-  margin-right: 0;
-}
-
-@media (max-width: 600px) {
-  .table-wrapper {
-    flex-direction: column;
-    align-items: stretch;
-    overflow: auto;
-  }
-
-  .table {
-    flex-direction: column;
-    width: 100%;
-    height: auto;
-    min-height: 300px;
-
-    &__items {
-      max-height: 250px;
-      width: 100%;
-      height: 250px;
-    }
-
-    &__buttons {
-      flex-direction: row;
-      width: 100%;
-      min-height: 60px;
-    }
-
-    .craft-toggle {
-      flex-direction: row;
-      padding: 8px;
-      
-      .craft-icon {
-        font-size: 20px;
-      }
-      
-      .craft-text {
-        font-size: 12px;
-      }
-    }
-
-    &__item {
-      flex: 0 1 60px;
-      font-size: 14px;
-      padding: 8px;
-    }
-  }
-
-  .craft-container {
+  @media (max-width: 600px) {
     width: 100%;
     margin: 0 0 10px 0;
     align-self: stretch;
     padding: 10px;
   }
+}
 
-  .craft-enter-from,
-  .craft-leave-to {
-    transform: translateY(-20px);
-    width: 100%;
-    height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-bottom: 0;
+.craft-animate {
+  &-enter-active,
+  &-leave-active {
+    transition: all 0.3s ease;
+  }
+
+  &-enter-from {
+    opacity: 0;
+    transform: translateX(-20px);
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    margin-right: 0;
+  }
+
+  &-leave-to {
+    opacity: 0;
+    transform: translateX(-20px);
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    margin-right: 0;
   }
 }
 </style>
