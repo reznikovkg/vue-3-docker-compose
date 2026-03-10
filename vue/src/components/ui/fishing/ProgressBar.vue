@@ -19,7 +19,6 @@ defineProps(['show', 'style', 'type'])
   transition: width 0.1s linear;
 
   &__fill {
-    width: 0%;
     height: 100%;
   }
 }
