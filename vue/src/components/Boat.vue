@@ -23,47 +23,47 @@ const boatStyle = computed(() => ({
 }))
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .boat {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   z-index: 2;
-}
 
-.boat__images {
-  position: relative;
-  transition: transfrom 0.15s linear;
-}
+  &__images {
+    position: relative;
+    transition: transfrom 0.15s linear;
+  }
 
-.boat__sailor {
-  position: absolute;
+  &__sailor {
+    position: absolute;
 
-  left: 40px;
-  top: -82px;
+    left: 40px;
+    top: -82px;
 
-  width: 150px;
-  height: 150px;
+    width: 150px;
+    height: 150px;
 
-  background-image: url(../assets/images/SailorRowing.png);
-  background-repeat: no-repeat;
-  background-position: 0 0;
-}
+    background-image: url(../assets/images/SailorRowing.png);
+    background-repeat: no-repeat;
+    background-position: 0 0;
 
-.boat__sailor--rowing {
-  background-image: url(../assets/images/SailorRowing.png);
-  animation: sailor-row 0.6s steps(4) infinite;
-}
+    &--rowing {
+      background-image: url(../assets/images/SailorRowing.png);
+      animation: sailor-row 0.6s steps(4) infinite;
+    }
 
-.boat__sailor--fishing {
-  background-image: url(../assets/images/SailorFishing.png);
-  animation: sailor-row 0.6s steps(4) infinite;
+    &--fishing {
+      background-image: url(../assets/images/SailorFishing.png);
+      animation: sailor-row 0.6s steps(4) infinite;
 
-  
-  top: -135px;
-  left: -20px;
-  transform: scaleX(-1);
+      
+      top: -135px;
+      left: -20px;
+      transform: scaleX(-1);
+    }
+  }
 }
 
 @keyframes sailor-row {
