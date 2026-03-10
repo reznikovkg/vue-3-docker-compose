@@ -170,117 +170,134 @@ const modeHint = computed(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+$panel-border: 1px solid rgba(255, 255, 255, 0.08);
+$panel-bg: rgba(10, 20, 29, 0.8);
+$panel-gap: 16px;
+$panel-highlight-border: rgba(239, 167, 91, 0.38);
+$panel-highlight-bg: rgba(239, 167, 91, 0.14);
+$panel-button-bg: rgba(255, 255, 255, 0.04);
+$panel-button-bg-ghost: rgba(255, 255, 255, 0.05);
+$panel-spec-bg: rgba(255, 255, 255, 0.04);
+
 .panel {
   display: grid;
-  gap: 16px;
+  gap: $panel-gap;
   position: sticky;
   top: 18px;
-}
 
-.panel__block {
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  background: rgba(10, 20, 29, 0.8);
-}
+  &__block {
+    padding: 18px;
+    border: $panel-border;
+    border-radius: 24px;
+    background: $panel-bg;
+  }
 
-.panel__eyebrow {
-  margin-bottom: 12px;
-  color: var(--text-muted);
-  font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
+  &__eyebrow {
+    margin-bottom: 12px;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
 
-.panel__budget,
-.panel__wave {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  &__budget,
+  &__wave {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-.panel__budget strong,
-.panel__wave strong,
-.panel__specs dd {
-  font-family: var(--font-accent);
-  color: var(--accent-soft);
-}
+  &__budget strong,
+  &__wave strong,
+  &__specs dd {
+    font-family: var(--font-accent);
+    color: var(--accent-soft);
+  }
 
-.panel__wave {
-  margin-top: 8px;
-}
+  &__wave {
+    margin-top: 8px;
+  }
 
-.panel__toolbox,
-.panel__materials,
-.panel__actions {
-  display: grid;
-  gap: 10px;
-}
+  &__toolbox,
+  &__materials,
+  &__actions {
+    display: grid;
+    gap: 10px;
+  }
 
-.panel button {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-main);
-  cursor: pointer;
-  text-align: left;
-}
+  button {
+    width: 100%;
+    padding: 12px 14px;
+    border: $panel-border;
+    border-radius: 16px;
+    background: $panel-button-bg;
+    color: var(--text-main);
+    cursor: pointer;
+    text-align: left;
 
-.panel button.active,
-.panel__actions button:first-child,
-.panel__squad {
-  border-color: rgba(239, 167, 91, 0.38);
-  background: rgba(239, 167, 91, 0.14);
-}
+    &.active {
+      border-color: $panel-highlight-border;
+      background: $panel-highlight-bg;
+    }
+  }
 
-.panel__actions {
-  margin-top: 14px;
-  grid-template-columns: 1fr 1fr;
-}
+  &__actions {
+    margin-top: 14px;
+    grid-template-columns: 1fr 1fr;
 
-.panel__actions .ghost {
-  background: rgba(255, 255, 255, 0.05);
-}
+    button:first-child {
+      border-color: $panel-highlight-border;
+      background: $panel-highlight-bg;
+    }
 
-.panel__specs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+    .ghost {
+      background: $panel-button-bg-ghost;
+    }
+  }
 
-.panel__specs div {
-  padding: 10px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-}
+  &__squad {
+    border-color: $panel-highlight-border;
+    background: $panel-highlight-bg;
+  }
 
-.panel__specs dt {
-  margin-bottom: 4px;
-  color: var(--text-muted);
-  font-size: 0.76rem;
-}
+  &__specs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 
-.panel__hint {
-  color: var(--text-muted);
-}
+    div {
+      padding: 10px;
+      border-radius: 14px;
+      background: $panel-spec-bg;
+    }
 
-.panel__guide {
-  margin-top: 12px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
+    dt {
+      margin-bottom: 4px;
+      color: var(--text-muted);
+      font-size: 0.76rem;
+    }
+  }
+
+  &__hint {
+    color: var(--text-muted);
+  }
+
+  &__guide {
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 960px) {
   .panel {
     position: static;
-  }
 
-  .panel__specs,
-  .panel__actions {
-    grid-template-columns: 1fr;
+    &__specs,
+    &__actions {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

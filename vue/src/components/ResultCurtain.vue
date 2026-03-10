@@ -27,7 +27,13 @@ defineProps({
 defineEmits(['restart'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+$curtain-bg: rgba(3, 8, 14, 0.76);
+$panel-border: 1px solid rgba(255, 255, 255, 0.08);
+$panel-bg: linear-gradient(180deg, rgba(249, 198, 133, 0.18), rgba(10, 18, 26, 0.96));
+$panel-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
+$action-bg: rgba(255, 255, 255, 0.09);
+
 .curtain {
   position: absolute;
   inset: 0;
@@ -35,58 +41,58 @@ defineEmits(['restart'])
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(3, 8, 14, 0.76);
+  background: $curtain-bg;
   backdrop-filter: blur(8px);
   pointer-events: auto;
-}
 
-.curtain__panel {
-  max-width: 420px;
-  padding: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 28px;
-  background: linear-gradient(180deg, rgba(249, 198, 133, 0.18), rgba(10, 18, 26, 0.96));
-  text-align: center;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
-}
+  &__panel {
+    max-width: 420px;
+    padding: 28px;
+    border: $panel-border;
+    border-radius: 28px;
+    background: $panel-bg;
+    text-align: center;
+    box-shadow: $panel-shadow;
+  }
 
-.curtain__label {
-  color: var(--accent-soft);
-  font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
+  &__label {
+    color: var(--accent-soft);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
 
-.curtain h2 {
-  margin: 14px 0 10px;
-  font-size: 1.9rem;
-}
+  h2 {
+    margin: 14px 0 10px;
+    font-size: 1.9rem;
+  }
 
-.curtain p {
-  color: var(--text-muted);
-}
+  p {
+    color: var(--text-muted);
+  }
 
-.curtain__actions {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 20px;
-}
+  &__actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
 
-.curtain__actions a,
-.curtain__actions button {
-  padding: 12px 16px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.09);
-  color: var(--text-main);
-  cursor: pointer;
-}
+    a,
+    button {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 999px;
+      background: $action-bg;
+      color: var(--text-main);
+      cursor: pointer;
+    }
 
-.curtain__actions button {
-  background: var(--accent-strong);
-  color: #101820;
-  font-weight: 700;
+    button {
+      background: var(--accent-strong);
+      color: #101820;
+      font-weight: 700;
+    }
+  }
 }
 </style>

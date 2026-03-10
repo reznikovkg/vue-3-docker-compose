@@ -18,64 +18,69 @@
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+$shell-border: 1px solid rgba(255, 255, 255, 0.12);
+$shell-link-bg: rgba(6, 19, 28, 0.55);
+$shell-link-active-border: rgba(239, 167, 91, 0.45);
+$shell-link-active-bg: rgba(235, 128, 52, 0.14);
+
 .shell {
   min-height: 100vh;
   padding: 24px;
-}
 
-.shell__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
-}
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
 
-.shell__brand {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-accent);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
+  &__brand {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 
-.shell__brand-name {
-  font-size: 1.8rem;
-}
+    &-name {
+      font-size: 1.8rem;
+    }
+  }
 
-.shell__nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
+  &__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 
-.shell__nav-link {
-  padding: 10px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  background: rgba(6, 19, 28, 0.55);
-  color: var(--text-main);
-}
+  &__nav-link {
+    padding: 10px 14px;
+    border: $shell-border;
+    border-radius: 999px;
+    background: $shell-link-bg;
+    color: var(--text-main);
 
-.shell__nav-link.router-link-active {
-  border-color: rgba(239, 167, 91, 0.45);
-  background: rgba(235, 128, 52, 0.14);
-  color: var(--accent-soft);
-}
+    &.router-link-active {
+      border-color: $shell-link-active-border;
+      background: $shell-link-active-bg;
+      color: var(--accent-soft);
+    }
+  }
 
-.shell__content {
-  min-height: calc(100vh - 130px);
+  &__content {
+    min-height: calc(100vh - 130px);
+  }
 }
 
 @media (max-width: 840px) {
   .shell {
     padding: 16px;
-  }
 
-  .shell__header {
-    flex-direction: column;
-    align-items: flex-start;
+    &__header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 }
 </style>

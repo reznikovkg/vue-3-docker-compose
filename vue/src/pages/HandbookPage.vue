@@ -15,39 +15,43 @@
   </section>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+$handbook-border: 1px solid rgba(255, 255, 255, 0.08);
+$handbook-bg: (
+  linear-gradient(180deg, rgba(70, 135, 173, 0.18), rgba(10, 20, 29, 0.95)),
+  rgba(10, 20, 29, 0.95)
+);
+
 .handbook {
   display: grid;
   place-items: start;
-}
 
-.handbook__card {
-  max-width: 880px;
-  padding: 32px;
-  border-radius: 30px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(180deg, rgba(70, 135, 173, 0.18), rgba(10, 20, 29, 0.95)),
-    rgba(10, 20, 29, 0.95);
-}
+  &__card {
+    max-width: 880px;
+    padding: 32px;
+    border-radius: 30px;
+    border: $handbook-border;
+    background: $handbook-bg;
+  }
 
-.handbook__eyebrow {
-  margin-bottom: 12px;
-  color: var(--accent-soft);
-  font-size: 0.76rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
+  &__eyebrow {
+    margin-bottom: 12px;
+    color: var(--accent-soft);
+    font-size: 0.76rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
 
-.handbook h1 {
-  margin-bottom: 18px;
-  font-size: clamp(2rem, 4vw, 3.2rem);
-}
+  h1 {
+    margin-bottom: 18px;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+  }
 
-.handbook__list {
-  display: grid;
-  gap: 14px;
-  padding-left: 18px;
-  color: var(--text-muted);
+  &__list {
+    display: grid;
+    gap: 14px;
+    padding-left: 18px;
+    color: var(--text-muted);
+  }
 }
 </style>

@@ -17,37 +17,39 @@ import { MISSIONS } from '@/game/missionCatalog'
 const missions = MISSIONS
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .missions {
   display: grid;
   gap: 24px;
-}
 
-.missions__intro {
-  max-width: 820px;
-}
+  &__intro {
+    max-width: 820px;
+  }
 
-.missions__eyebrow {
-  margin-bottom: 12px;
-  color: var(--accent-soft);
-  font-size: 0.76rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-}
+  &__eyebrow {
+    margin-bottom: 12px;
+    color: var(--accent-soft);
+    font-size: 0.76rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
 
-.missions h1 {
-  font-size: clamp(2rem, 4vw, 3.5rem);
-}
+  h1 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+  }
 
-.missions__grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
 }
 
 @media (max-width: 1080px) {
-  .missions__grid {
-    grid-template-columns: 1fr;
+  .missions {
+    &__grid {
+      grid-template-columns: 1fr;
+    }
   }
 }
 </style>

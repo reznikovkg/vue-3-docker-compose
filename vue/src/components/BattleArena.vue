@@ -275,212 +275,243 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+$arena-border: 1px solid rgba(245, 227, 198, 0.08);
+$arena-bg: (
+  radial-gradient(circle at top left, rgba(250, 177, 105, 0.18), transparent 32%),
+  radial-gradient(circle at bottom right, rgba(59, 114, 150, 0.24), transparent 28%),
+  linear-gradient(180deg, #142330, #0a141e 44%, #10151b)
+);
+$route-stroke: rgba(245, 211, 154, 0.8);
+$route-shadow: drop-shadow(0 0 18px rgba(242, 171, 89, 0.24));
+$trace-stroke: rgba(155, 226, 255, 0.88);
+$trace-enemy: rgba(255, 98, 98, 0.88);
+$trace-friendly: rgba(255, 241, 193, 0.92);
+$pad-bg: rgba(255, 233, 197, 0.18);
+$pad-border: 1px solid rgba(245, 211, 154, 0.24);
+$pad-color: rgba(255, 233, 197, 0.88);
+$pad-busy: rgba(90, 135, 164, 0.3);
+$pad-selected: rgba(255, 196, 122, 0.4);
+$slot-bg: rgba(255, 255, 255, 0.12);
+$slot-busy: rgba(255, 204, 145, 0.18);
+$bar-bg: rgba(255, 255, 255, 0.12);
+$bar-fg: linear-gradient(90deg, #ffbf70, #ffe4b8);
+$bar-hostile: linear-gradient(90deg, #ff6b57, #ffb08b);
+$bar-friendly: linear-gradient(90deg, #a9d4ff, #ebf5ff);
+$barrier-bg: linear-gradient(90deg, #c9d27e, #eef7b7);
+
 .arena {
   position: relative;
   isolation: isolate;
   min-height: 620px;
-  border: 1px solid rgba(245, 227, 198, 0.08);
+  border: $arena-border;
   border-radius: 34px;
   overflow: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(250, 177, 105, 0.18), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(59, 114, 150, 0.24), transparent 28%),
-    linear-gradient(180deg, #142330, #0a141e 44%, #10151b);
-}
+  background: $arena-bg;
 
-.arena_locked .arena__pad,
-.arena_locked .arena__slot,
-.arena_locked .arena__turret {
-  pointer-events: none;
-}
+  &_locked {
+    .arena__pad,
+    .arena__slot,
+    .arena__turret {
+      pointer-events: none;
+    }
+  }
 
-.arena__svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
+  &__svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
 
-.arena__route {
-  fill: none;
-  stroke: rgba(245, 211, 154, 0.8);
-  stroke-width: 28;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 18px rgba(242, 171, 89, 0.24));
-}
+  &__route {
+    fill: none;
+    stroke: $route-stroke;
+    stroke-width: 28;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: $route-shadow;
+  }
 
-.arena__route-node {
-  fill: #ffe0af;
-}
+  &__route-node {
+    fill: #ffe0af;
+  }
 
-.arena__trace {
-  stroke: rgba(155, 226, 255, 0.88);
-  stroke-width: 2.4;
-  stroke-dasharray: 6 8;
-}
+  &__trace {
+    stroke: $trace-stroke;
+    stroke-width: 2.4;
+    stroke-dasharray: 6 8;
 
-.arena__trace_enemy {
-  stroke: rgba(255, 98, 98, 0.88);
-}
+    &_enemy {
+      stroke: $trace-enemy;
+    }
 
-.arena__trace_friendly {
-  stroke: rgba(255, 241, 193, 0.92);
-}
+    &_friendly {
+      stroke: $trace-friendly;
+    }
+  }
 
-.arena__pad,
-.arena__slot {
-  position: absolute;
-  border: 0;
-  cursor: pointer;
-}
+  &__pad,
+  &__slot {
+    position: absolute;
+    border: 0;
+    cursor: pointer;
+  }
 
-.arena__pad {
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 233, 197, 0.18);
-  border: 1px solid rgba(245, 211, 154, 0.24);
-  color: rgba(255, 233, 197, 0.88);
-  transform: translate(-50%, -50%);
-}
+  &__pad {
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $pad-bg;
+    border: $pad-border;
+    color: $pad-color;
+    transform: translate(-50%, -50%);
 
-.arena__pad_busy {
-  background: rgba(90, 135, 164, 0.3);
-}
+    &_busy {
+      background: $pad-busy;
+    }
 
-.arena__pad_selected {
-  box-shadow: 0 0 0 3px rgba(255, 196, 122, 0.4);
-}
+    &_selected {
+      box-shadow: 0 0 0 3px $pad-selected;
+    }
+  }
 
-.arena__slot {
-  z-index: 5;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-}
+  &__slot {
+    z-index: 5;
+    height: 18px;
+    border-radius: 999px;
+    background: $slot-bg;
 
-.arena__slot_busy {
-  background: rgba(255, 204, 145, 0.18);
-}
+    &_busy {
+      background: $slot-busy;
+    }
+  }
 
-.arena__turret,
-.arena__barrier-status,
-.arena__hostile,
-.arena__squad,
-.arena__shell {
-  position: absolute;
-  transform: translate(-50%, -50%);
-}
+  &__turret,
+  &__barrier-status,
+  &__hostile,
+  &__squad,
+  &__shell {
+    position: absolute;
+    transform: translate(-50%, -50%);
+  }
 
-.arena__barrier-status {
-  z-index: 6;
-  pointer-events: none;
-}
+  &__barrier-status {
+    z-index: 6;
+    pointer-events: none;
+  }
 
-.arena__turret {
-  z-index: 4;
-}
+  &__turret {
+    z-index: 4;
+  }
 
-.arena__turret-body {
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #d6c7a3, #8d7850);
-  color: #101820;
-  font-family: var(--font-accent);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
-}
+  &__turret-body {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #d6c7a3, #8d7850);
+    color: #101820;
+    font-family: var(--font-accent);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
+  }
 
-.arena__turret-range {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  border: 1px dashed rgba(255, 240, 202, 0.18);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
+  &__turret-range {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border: 1px dashed rgba(255, 240, 202, 0.18);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
 
-.arena__hostile,
-.arena__squad {
-  width: 26px;
-  height: 26px;
-}
+  &__hostile,
+  &__squad {
+    width: 26px;
+    height: 26px;
 
-.arena__hostile::after,
-.arena__squad::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-}
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+  }
 
-.arena__hostile::after {
-  border-radius: 10px;
-  background: var(--hostile-tint);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
-}
+  &__hostile {
+    &::after {
+      border-radius: 10px;
+      background: var(--hostile-tint);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+    }
 
-.arena__hostile_ranged::after {
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-}
+    &_ranged::after {
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    }
 
-.arena__hostile_heavy::after {
-  border-radius: 50%;
-}
+    &_heavy::after {
+      border-radius: 50%;
+    }
+  }
 
-.arena__squad::after {
-  border-radius: 6px;
-  background: linear-gradient(180deg, #e8f2ff, #94b7d8);
-}
+  &__squad {
+    &::after {
+      border-radius: 6px;
+      background: linear-gradient(180deg, #e8f2ff, #94b7d8);
+    }
+  }
 
-.arena__bar {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 6px);
-  width: 34px;
-  height: 6px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.12);
-  transform: translateX(-50%);
-  pointer-events: none;
-}
+  &__bar {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    width: 34px;
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: $bar-bg;
+    transform: translateX(-50%);
+    pointer-events: none;
 
-.arena__bar span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #ffbf70, #ffe4b8);
-}
+    span {
+      display: block;
+      height: 100%;
+      background: $bar-fg;
+    }
 
-.arena__bar_hostile span {
-  background: linear-gradient(90deg, #ff6b57, #ffb08b);
-}
+    &_hostile span {
+      background: $bar-hostile;
+    }
 
-.arena__bar_friendly span {
-  background: linear-gradient(90deg, #a9d4ff, #ebf5ff);
-}
+    &_friendly span {
+      background: $bar-friendly;
+    }
 
-.arena__bar_barrier {
-  width: 46px;
-  bottom: 16px;
-}
+    &_barrier {
+      width: 46px;
+      bottom: 16px;
 
-.arena__bar_barrier span {
-  background: linear-gradient(90deg, #c9d27e, #eef7b7);
-}
+      span {
+        background: $barrier-bg;
+      }
+    }
+  }
 
-.arena__shell {
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 232, 176, 0.9), rgba(255, 126, 65, 0.35), transparent 70%);
-  box-shadow: 0 0 36px rgba(255, 142, 81, 0.46);
-  pointer-events: none;
+  &__shell {
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(255, 232, 176, 0.9),
+      rgba(255, 126, 65, 0.35),
+      transparent 70%
+    );
+    box-shadow: 0 0 36px rgba(255, 142, 81, 0.46);
+    pointer-events: none;
+  }
 }
 
 @media (max-width: 960px) {

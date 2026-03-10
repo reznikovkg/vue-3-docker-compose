@@ -98,53 +98,57 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+$back-bg: rgba(255, 255, 255, 0.06);
+
 .battle-page {
   display: grid;
   gap: 18px;
-}
 
-.battle-page__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: flex-start;
-}
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: flex-start;
+  }
 
-.battle-page__eyebrow {
-  margin-bottom: 8px;
-  color: var(--accent-soft);
-  font-size: 0.76rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
+  &__eyebrow {
+    margin-bottom: 8px;
+    color: var(--accent-soft);
+    font-size: 0.76rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
 
-.battle-page h1 {
-  margin-bottom: 10px;
-  font-size: clamp(2rem, 4vw, 3.3rem);
-}
+  h1 {
+    margin-bottom: 10px;
+    font-size: clamp(2rem, 4vw, 3.3rem);
+  }
 
-.battle-page__back {
-  padding: 12px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  white-space: nowrap;
-}
+  &__back {
+    padding: 12px 16px;
+    border-radius: 999px;
+    background: $back-bg;
+    white-space: nowrap;
+  }
 
-.battle-page__layout {
-  display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
-  gap: 18px;
-  align-items: start;
+  &__layout {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
 }
 
 @media (max-width: 1160px) {
-  .battle-page__layout {
-    grid-template-columns: 1fr;
-  }
+  .battle-page {
+    &__layout {
+      grid-template-columns: 1fr;
+    }
 
-  .battle-page__header {
-    flex-direction: column;
+    &__header {
+      flex-direction: column;
+    }
   }
 }
 </style>
