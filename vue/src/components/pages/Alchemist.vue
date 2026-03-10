@@ -1,20 +1,24 @@
 <template>
   <div class="alchemist">
     <ElementsGrid/>
-    <AlchemistTable/>
+    <div class="alchemist__tables">
+      <CraftTable/>
+      <AlchemistTable/>
+    </div>
   </div>
 </template>
 
 <script>
 import ElementsGrid from "@/components/pages/Elements.vue"
 import AlchemistTable from "@/components/pages/Table.vue"
-
+import CraftTable from "@/components/pages/CraftTable.vue"
 
 export default {
   name: 'AlchemistGame',
   components: {
     ElementsGrid,
-    AlchemistTable
+    AlchemistTable,
+    CraftTable
   }
 }
 </script>
@@ -24,5 +28,12 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.alchemist__tables{
+  display:flex;
+  gap:40px;
+  justify-content:center;
+  padding:20px;
 }
 </style>

@@ -4,7 +4,9 @@
       class="elements__item" 
       v-for="elem in openedElements" 
       :key="elem.id" 
+      draggable="true"
       @click="() => addToTable(elem.id)"
+      @dragstart="(e) => dragStart(e, elem.id)"
     >
     <div class="elements__picture">
       <img :src="elem.picture" class="elements__image"/>
@@ -25,8 +27,12 @@ export default {
   },
 
   methods: {
-    ...mapActions(['addToTable'])
+    ...mapActions(['addToTable']),
+    dragStart:(e,id)=>{
+      e.dataTransfer.setData('elementId',id)
+    }
   }
+  
 }
 </script>
 
@@ -34,13 +40,13 @@ export default {
 .elements {
   flex: 8;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
   padding: 12px;
   align-content: start;
 
   &__item {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1;
     background: #ffffff;
     border-radius: 12px;
     display: flex;
@@ -49,6 +55,7 @@ export default {
     justify-content: center;
     box-shadow: 0 2px 4px rgb(181, 67, 185);
     cursor: pointer;
+    user-select: none;
 
     &:hover {
       transform: scale(1.05);
