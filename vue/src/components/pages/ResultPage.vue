@@ -10,8 +10,17 @@
       </header>
 
       <section class="result__stats">
-        <StatsCard :score="distance" label="Ты проехал" variant="main" />
-        <StatsCard v-if="bestScore > 0 && !isNewRecord" :score="bestScore" label="Лучший результат" variant="small" />
+        <StatsCard
+          :score="distance"
+          label="Ты проехал"
+          variant="main"
+        />
+        <StatsCard
+          v-if="bestScore > 0 && !isNewRecord"
+          :score="bestScore"
+          label="Лучший результат"
+          variant="small"
+        />
       </section>
 
       <footer class="result__actions">
@@ -24,22 +33,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import BaseLink from '@/components/ui/BaseLink.vue';
-import StatsCard from '@/components/ui/StatsCard.vue';
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+import BaseLink from '@/components/ui/BaseLink.vue'
+import StatsCard from '@/components/ui/StatsCard.vue'
 
-interface Props {
-  distance: number;
-  bestScore: number;
-}
+const store = useStore()
 
-// todo прокидывать настоящие значения
-const props = withDefaults(defineProps<Props>(), {
-  distance: 1250,
-  bestScore: 1500
-});
+const distance = computed(
+  () => store.getters.getCurrentScore,
+)
 
-const isNewRecord = computed(() => props.distance > props.bestScore);
+const bestScore = computed(
+  () => store.getters.getBestScore,
+)
+
+const isNewRecord = computed(
+  () => distance.value > bestScore.value,
+)
 </script>
 
 <style lang="scss" scoped>
