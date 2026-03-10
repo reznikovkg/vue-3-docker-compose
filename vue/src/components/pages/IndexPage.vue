@@ -15,6 +15,7 @@
       >
       <div>Размер: {{ getFieldSize }}</div>
       <div class="timer">Таймер: {{ timerValue }}</div>
+      <div class="timer">Очки: {{ getScore }}</div>
     </div>
   </div>
 </template>
@@ -35,7 +36,7 @@ export default {
   },
   computed: {
     ...mapGetters('field', ['getFieldSize', 'isGameActive']),
-    ...mapGetters('game', ['getTimer']),
+    ...mapGetters('game', ['getTimer','getScore']),
 
     timerValue() {
       return Math.ceil(this.getTimer)
