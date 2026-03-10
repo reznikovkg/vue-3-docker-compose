@@ -7,17 +7,17 @@
     <div class="inventory__list">
       <div class="inventory__item">
         <span class="inventory__label">Окунь</span>
-        <span class="inventory_value">{{ inventory.common }}</span>
+        <span class="inventory__value">{{ inventory.common }}</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Карп</span>
-        <span class="inventory_value">{{ inventory.rare }}</span>
+        <span class="inventory__value">{{ inventory.rare }}</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Язь (здоровенный)</span>
-        <span class="inventory_value">{{ inventory.legendary }}</span>
+        <span class="inventory__value">{{ inventory.legendary }}</span>
       </div>
     </div>
   </div>
@@ -31,7 +31,7 @@ const store = useStore()
 const inventory = computed(() => store.getters['game/getInventory'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .inventory {
   position: absolute;
   top: 50%;
@@ -45,37 +45,37 @@ const inventory = computed(() => store.getters['game/getInventory'])
   border: 8px dashed rgb(10, 10, 100);
   box-shadow: 0 4px 10px rgb(0, 0, 0);
   right: 20px;
-}
 
-.inventory__title {
-  color: rgb(10, 10, 100);
-  font-size: 24px;
-  font-style: bold;
-}
+  &__title {
+    color: rgb(10, 10, 100);
+    font-size: 24px;
+    font-style: bold;
+  }
 
-.inventory_list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
-.inventory__item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
 
-.inventory__label {
-  color: rgb(10, 10, 100);
-  font-size: 20px;
-  font-style: italic;
-}
+  &__label {
+    color: rgb(10, 10, 100);
+    font-size: 20px;
+    font-style: italic;
+  }
 
-.inventory_value {
-  color: rgb(10, 10, 100);
-  font-size: 20px;
-  font-style: bold;
-  text-align: center;
+  &__value {
+    color: rgb(10, 10, 100);
+    font-size: 20px;
+    font-style: bold;
+    text-align: center;
+  }
 }
 </style>

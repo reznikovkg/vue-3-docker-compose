@@ -68,7 +68,7 @@ onUnmounted(() => {
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .game-map {
   width: 100%;
   height: 100%;
@@ -77,11 +77,11 @@ onUnmounted(() => {
   z-index: 1;
   
   background-color: rgb(50, 50, 100);
-}
 
-.game-map__world {
-  position: absolute;
-  width: 2500px;
-  height: 2500px;
+  &__world {
+    position: absolute;
+    width: 2500px;
+    height: 2500px;
+  }
 }
 </style>

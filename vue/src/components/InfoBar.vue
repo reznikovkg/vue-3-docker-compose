@@ -15,7 +15,7 @@ const boat = computed(() => store.getters['game/getBoat'])
 const currentZone = computed(() => store.getters['game/getCurrentZone'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .infobar {
   position: absolute;
   left: 50%;
@@ -34,11 +34,13 @@ const currentZone = computed(() => store.getters['game/getCurrentZone'])
   border: 8px dashed rgb(10, 10, 100);
   box-shadow: 0 4px 10px rgb(0, 0, 0);
   top: 20px;
+
+  &__text {
+    color: rgb(10, 10, 100);
+    font-size: 24px;
+    white-space: nowrap;
+  }
 }
 
-.infobar__text {
-  color: rgb(10, 10, 100);
-  font-size: 24px;
-  white-space: nowrap;
-}
+
 </style>

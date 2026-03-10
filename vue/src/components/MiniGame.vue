@@ -4,9 +4,9 @@
       Мини-игра
     </div>
 
-    <div class="minigame__bar-container" v-if="active">
-      <div class="minigame__bar" :style="{ left: barPosition + '%'}"></div>
-      <div class="minigame__target"></div>
+    <div class="minigame__bar" v-if="active">
+      <div class="minigame__bar__bar" :style="{ left: barPosition + '%'}"></div>
+      <div class="minigame__bar__target"></div>
     </div>
 
     <span class="minigame__invite" v-if="!fishing">Нажмите ПРОБЕЛ чтобы ловить</span>
@@ -94,7 +94,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .minigame {
   position: absolute;
   top: 50%;
@@ -108,50 +108,50 @@ onUnmounted(() => {
   border: 8px dashed rgb(10, 10, 100);
   box-shadow: 0 4px 10px rgb(0, 0, 0);
   left: 20px;
-}
 
-.minigame__title {
-  color: rgb(10, 10, 100);
-  font-size: 24px;
-  font-style: bold;
-}
+  &__title {
+    color: rgb(10, 10, 100);
+    font-size: 24px;
+    font-style: bold;
+  }
 
-.minigame__invite {
-  color: rgb(10, 10, 100);
-  font-size: 16px;
-  font-style: italic;
-}
+  &__invite {
+    color: rgb(10, 10, 100);
+    font-size: 16px;
+    font-style: italic;
+  }
 
-.minigame__bar-container {
-  position: relative;
-  width: 100%;
-  height: 24px;
-  background-color: rgb(200, 200, 200);
-  border: 4px dashed rgb(10, 10, 100);
-}
+  &__bar {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    background-color: rgb(200, 200, 200);
+    border: 4px dashed rgb(10, 10, 100);
 
-.minigame__bar {
-  position: absolute;
-  width: 10%;
-  height: 100%;
-  background-color: rgb(10, 10, 100);
+    &__bar {
+      position: absolute;
+      width: 10%;
+      height: 100%;
+      background-color: rgb(10, 10, 100);
 
-  left: 0;
+      left: 0;
 
-  z-index: 5;
-}
+      z-index: 5;
+    }
 
-.minigame__target {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+    &__target {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
 
-  width: 20%;
-  height: 100%;
+      width: 20%;
+      height: 100%;
 
-  background-color: rgb(100, 10, 10);
+      background-color: rgb(100, 10, 10);
 
-  z-index: 4;
+      z-index: 4;
+    }
+  }
 }
 </style>
