@@ -112,6 +112,7 @@ export default {
     },
     clearPieceFromField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
+        const fieldSize = store.state.size
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
         for (let r = 0; r < shape.length; r++) {
@@ -119,7 +120,7 @@ export default {
                 if (shape[r][c] === 1) {
                     const nx = x + c
                     const ny = y + r
-                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size)
+                    if (nx >= 0 && nx < fieldSize && ny >= 0 && ny < fieldSize)
                         if (store.state.field[ny][nx] === OBJECTS.EXTERNAL_FIGURE)
                             store.dispatch('clearCell', {x: nx, y: ny})
                 }
@@ -131,6 +132,7 @@ export default {
     },
     drawPieceOnField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
+        const fieldSize = store.state.size
         const piece = state.currentPiece
         const { shape, x, y } = piece
         for (let r = 0; r < shape.length; r++) {
@@ -138,7 +140,7 @@ export default {
                 if (shape[r][c] === 1) {
                     const nx = x + c
                     const ny = y + r
-                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size)
+                    if (nx >= 0 && nx < fieldSize && ny >= 0 && ny < fieldSize)
                         store.commit(MUTATIONS.SET_NUMBER, { position: {x: nx, y: ny}, number: OBJECTS.EXTERNAL_FIGURE })
                 }
             }
@@ -227,6 +229,7 @@ export default {
     },
     clearPieceFromField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
+        const fieldSize = store.state.size
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
         for (let r = 0; r < shape.length; r++) {
@@ -234,7 +237,7 @@ export default {
                 if (shape[r][c] === 1) {
                     const nx = x + c
                     const ny = y + r
-                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size) {
+                    if (nx >= 0 && nx < fieldSize && ny >= 0 && ny < fieldSize) {
                         if (store.state.field[ny][nx] === 2) {
                             store.commit(MUTATIONS.SET_NUMBER, { position: {x: nx, y: ny}, number: OBJECTS.NONE })
                         }
@@ -245,6 +248,7 @@ export default {
     },
     drawPieceOnField: (store) => {
         if (!store.state.currentPiece || !store.state.field) return
+        const fieldSize = store.state.size
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
 
@@ -255,7 +259,7 @@ export default {
                 if (shape[r][c] === 1) {
                     const nx = x + c
                     const ny = y + r
-                    if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size) {
+                    if (nx >= 0 && nx < fieldSize && ny >= 0 && ny < fieldSize) {
                         store.commit(MUTATIONS.SET_NUMBER, { position: {x: nx, y: ny}, number: OBJECTS.EXTERNAL_FIGURE })
 
                         figureCoords.push({
