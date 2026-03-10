@@ -21,6 +21,7 @@
 
 <script>
 import FieldTable from '@/components/Field/FieldTable.vue'
+import { ROTATE_DIRECTION } from "@/store/cube"
 import { mapActions, mapGetters } from 'vuex'
 
 export default {
@@ -61,6 +62,7 @@ export default {
       'startSpeedUp',
       'stopSpeedUp'
     ]),
+    ...mapActions('cube', ['rotateIsland']),
 
     updateFieldSize() {
       this.changeFieldSize(this.fieldSize)
@@ -76,6 +78,18 @@ export default {
         event.preventDefault()
         this.isSpeedPressed = true
         this.startSpeedUp()
+      }
+      else if (event.key.toLowerCase() === 'a' && this.isGameActive)
+      {
+        event.preventDefault()
+        this.rotateIsland(ROTATE_DIRECTION.LEFT)
+
+      }
+      else if (event.key.toLowerCase() === 'd' && this.isGameActive)
+      {
+        event.preventDefault()
+        this.rotateIsland(ROTATE_DIRECTION.RIGHT)
+
       }
     },
     handleKeyUp(event) {
