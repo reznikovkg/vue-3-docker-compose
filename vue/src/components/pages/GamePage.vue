@@ -240,20 +240,6 @@ export default {
       }
       addNextItem(count)
     },
-    addItemAfterMove() {
-        const emptyIndices = []
-        this.grid.forEach((cell, index) => {
-        if (!cell) emptyIndices.push(index)
-    })
-    if (emptyIndices.length > 0) {
-        const randomIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)]
-        const branch = this.getRandomBranch()
-        const newGrid = [...this.grid]
-        newGrid[randomIndex] = { branch, level: 0 }
-        this.grid = newGrid
-        this.saveToStorage()
-        }
-    }, 
     resetGame() {
       this.newGame()
     },
@@ -311,9 +297,6 @@ export default {
             moveHappened = true
         }
         this.grid = newGrid
-        if (moveHappened) {
-            this.addItemAfterMove()
-        }
         this.draggedItem = null
         this.saveToStorage()
     } 
