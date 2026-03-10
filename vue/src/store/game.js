@@ -92,7 +92,6 @@ export default {
             })
             if (attachedPiecesAbroad || centralCubePosition.x <= 1 || centralCubePosition.x >= fieldSize ||
                 centralCubePosition.y <= 1 || centralCubePosition.y >= fieldSize) {
-                console.log("end")
                 const center = Math.ceil(fieldSize / 2)
                 const oldPosition = {
                     x: centralCubePosition.x,
@@ -157,6 +156,7 @@ export default {
             store.commit(MUTATIONS.SET_ISSTARTED, true)
             store.commit(MUTATIONS.SET_ISFINISHED, false)
             store.commit(MUTATIONS.SET_TIMER, 60)
+            store.commit(MUTATIONS.SET_SCORE, 0)
 
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })

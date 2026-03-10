@@ -197,8 +197,6 @@ export default {
 
         const newPiece = { shape, x, y, direction }
 
-        console.log(newPiece)
-
         store.commit(MUTATIONS.SET_CURRENT_PIECE, newPiece)
         store.dispatch('drawPieceOnField')
     },
@@ -415,7 +413,7 @@ export default {
             if (y + left >= 0 && y + left < fieldSize)
                 store.commit(MUTATIONS.SET_NUMBER, { position: { x: x - level, y: y + left }, number: value })
     },
-    countLevelValues: (store, level, value) => {
+    countLevelValues: (store, {level, value}) => {
       if (level < 0) return 0
       let { x, y } = store.rootGetters['cube/getCentralCubePosition']
       x--
@@ -441,6 +439,7 @@ export default {
         for (let left = -level; left <= level; left++)
             if (y + left >= 0 && y + left < fieldSize)
                 count += store.state.field[y + left][x - level] == value
+      return count
     },
     scoreSquareLevels: (store) => {
         let minDisappearLevel = -1
@@ -459,8 +458,10 @@ export default {
                         }, { root: true })
                     }
                     else if (minDisappearLevel != -1) {
-                        store.dispatch('countLevelValues', 3).then(
-                            count => store.dispatch('game/addScore', count, { root: true })
+                        store.dispatch('countLevelValues', {level: level, value: 3}).then(
+                            count => {
+                                store.dispatch('game/addScore', count, { root: true })
+                            }
                         )
                         store.dispatch('cube/removeLevelPieces', level, { root: true })
                     }
