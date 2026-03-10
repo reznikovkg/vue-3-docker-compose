@@ -157,18 +157,20 @@ export default {
         let fieldSize = store.rootGetters["field/getFieldSize"]
 
         // Новая область фигуры не выходит за границы поля
-        if ((!newEdgeXLeft > 1 && newEdgeXRight < fieldSize &&
-            newEdgeYTop > 1 && newEdgeYBottom < fieldSize
+        if (!(newEdgeXLeft > 0 && newEdgeXRight < fieldSize &&
+            newEdgeYTop > 0 && newEdgeYBottom < fieldSize
         ))
             return
 
-        let currentPiece = store.rootGetters["field/getCurrentPiece"]
+        let currentPieceCoords = store.rootGetters["field/getCurrentFigureCoords"]
 
         // Надвигающиеся фигура вне старой и новой области фигуры
-        // if (!(
-        //     () && ()
-        // ))
-        //     return
+        if (currentPieceCoords.some(
+            ({x, y}) => 
+                (x >= edgeXLeft && x <= edgeXRight && y >= edgeYTop && y <= edgeYBottom) || 
+                (x >= newEdgeXLeft && x <= newEdgeXRight && y >= newEdgeYTop && y <= newEdgeYBottom))
+        )
+            return
 
         // поворот
 
@@ -181,22 +183,30 @@ export default {
             }
         }
 
-        console.log('RotateDirection: ' + rotateDirection)
-
         let fieldCopy = store.rootGetters['field/getField'].map(row => [...row])
+        
         let attachedPiecesCopy = store.state.attachedPieces.map(oldCoords => {
             let newCoordLocal = rotate(rotateDirection, oldCoords)
-            let newCoordAbsolute = {x: newCoordLocal.x + xCenter, y: newCoordLocal.y + yCenter}
-            let oldCoordAbsolute = {x: oldCoords.x + xCenter, y: oldCoords.y + yCenter}
-
-            fieldCopy[oldCoordAbsolute.y][oldCoordAbsolute.x] = OBJECTS.NONE
-            fieldCopy[newCoordAbsolute.y][newCoordAbsolute.x] = OBJECTS.ATTACHED_CUBE
-
-            return newCoordLocal
+            return { oldCoords, newCoordLocal }
         })
 
-        store.commit(MUTATIONS.SET_ATTACHED_PIECES, attachedPiecesCopy)
-        store.dispatch('field/setField', fieldCopy, {root: true})
+        attachedPiecesCopy.forEach(({ oldCoords }) => {
+            let oldCoordAbsolute = {x: oldCoords.x + xCenter, y: oldCoords.y + yCenter}
+            
+            if (oldCoordAbsolute.x !== xCenter || oldCoordAbsolute.y !== yCenter) {
+                fieldCopy[oldCoordAbsolute.y][oldCoordAbsolute.x] = OBJECTS.NONE
+            }
+        })
+
+        attachedPiecesCopy.forEach(({ newCoordLocal }) => {
+            let newCoordAbsolute = {x: newCoordLocal.x + xCenter, y: newCoordLocal.y + yCenter}
+            fieldCopy[newCoordAbsolute.y][newCoordAbsolute.x] = OBJECTS.ATTACHED_CUBE
+        })
+
+        attachedPiecesCopy = attachedPiecesCopy.map(({ newCoordLocal }) => newCoordLocal)
+
+        store.dispatch('field/setField', fieldCopy, {root: true}).then(() =>
+        store.commit(MUTATIONS.SET_ATTACHED_PIECES, attachedPiecesCopy))
     }
   }
 }

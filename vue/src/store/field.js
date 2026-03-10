@@ -9,6 +9,7 @@ const MUTATIONS = {
     SET_LAST_SIDE: 'SET_LAST_SIDE',
     SET_FIELD: 'SET_FIELD',
     CLEAR_FIELD: 'CLEAR_FIELD',
+    SET_CURRENT_FIGURE_COORDS: 'SET_CURRENT_FIGURE_COORDS',
 }
 
 export const OBJECTS = {
@@ -26,6 +27,7 @@ export default {
         field: null,
         gameActive: false,
         currentPiece: null,
+        currentFigureCoords: null,
         lastSide: null,
     }
   },
@@ -34,6 +36,7 @@ export default {
     getFieldSize: (state) => state.size,
     isGameActive: (state) => state.gameActive,
     getCurrentPiece: (state) => state.currentPiece,
+    getCurrentFigureCoords: state => state.currentFigureCoords
   },
   mutations: {
     [MUTATIONS.CHANGE_FIELD_SIZE]: (state, newSize) => {
@@ -79,6 +82,9 @@ export default {
     },
     [MUTATIONS.SET_FIELD]: (state, newField) => {
         state.field = newField
+    },
+    [MUTATIONS.SET_CURRENT_FIGURE_COORDS]: (state, value) => {
+        state.currentFigureCoords = value
     }
   },
   actions: {
@@ -246,6 +252,9 @@ export default {
         const piece = store.state.currentPiece
         const { shape, x, y } = piece
         const newField = store.state.field.map(row => [...row])
+
+        const figureCoords = []
+
         for (let r = 0; r < shape.length; r++) {
             for (let c = 0; c < shape[0].length; c++) {
                 if (shape[r][c] === 1) {
@@ -253,11 +262,17 @@ export default {
                     const ny = y + r
                     if (nx >= 0 && nx < store.state.size && ny >= 0 && ny < store.state.size) {
                         newField[ny][nx] = 2
+
+                        figureCoords.push({
+                            x: nx,
+                            y: ny
+                        })
                     }
                 }
             }
         }
         store.commit(MUTATIONS.SET_FIELD, newField)
+        store.commit(MUTATIONS.SET_CURRENT_FIGURE_COORDS, figureCoords)
     },
     spawnPiece: (store) => {
         if (!store.state.gameActive) return
