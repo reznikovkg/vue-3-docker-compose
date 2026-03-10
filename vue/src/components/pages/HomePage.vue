@@ -7,8 +7,17 @@
         <span class="home__subtitle">Уворачивайся от машин!</span>
       </header>
 
-      <StatsCard v-if="bestScore > 0" :score="bestScore" label="Лучший результат" variant="small" />
-      <BaseLink :to="{ name: $routes.GAME }" title="▶ Начать игру" variant="primary" />
+      <StatsCard
+        v-if="bestScore > 0"
+        :score="bestScore"
+        label="Лучший результат"
+        variant="small"
+      />
+      <BaseLink
+        :to="{ name: $routes.GAME }"
+        title="▶ Начать игру"
+        variant="primary"
+      />
 
       <section class="home__rules rules">
         <h2 class="rules__title">Как играть:</h2>
@@ -53,19 +62,16 @@
 </template>
 
 <script setup lang="ts">
-import BaseLink from '@/components/ui/BaseLink.vue';
-import StatsCard from '@/components/ui/StatsCard.vue';
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+import BaseLink from '@/components/ui/BaseLink.vue'
+import StatsCard from '@/components/ui/StatsCard.vue'
 
-interface Props {
-  bestScore: number;
-}
+const store = useStore()
 
-// todo прокидывать настоящие значения
-const props = withDefaults(defineProps<Props>(), {
-  bestScore: 1500
-});
-
-
+const bestScore = computed(
+  () => store.getters.getBestScore,
+)
 </script>
 
 <style scoped lang="scss">

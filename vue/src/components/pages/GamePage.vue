@@ -9,6 +9,27 @@
           </span>
         </div>
 
+        <div class="hud__lives">
+          <span
+            v-for="index in maxLives"
+            :key="index"
+            class="hud__life"
+          >
+            <span
+              v-if="index <= lives"
+              class="hud__life-icon"
+            >
+              ❤️
+            </span>
+            <span
+              v-else
+              class="hud__life-icon hud__life-icon--empty"
+            >
+              🤍
+            </span>
+          </span>
+        </div>
+
         <button
           type="button"
           class="hud__pause-button"
@@ -34,6 +55,12 @@
             ПАУЗА
           </div>
         </div>
+
+        <div v-if="isGameOver" class="game__overlay game__overlay--over">
+          <div class="game__overlay-text">
+            ИГРА ОКОНЧЕНА
+          </div>
+        </div>
       </div>
 
       <div class="game__hint hint">
@@ -50,13 +77,21 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ROUTES } from '@/router'
+import { ACTIONS } from '@/store'
 
 const ROAD_WIDTH = 400
 const LANE_COUNT = 3
 const INITIAL_SPEED = 3
 const SPEED_INCREASE = 0.0005
+const INITIAL_LIVES = 3
+const ENEMY_WIDTH = 40
+const ENEMY_HEIGHT = 70
+const ENEMY_SPEED_FACTOR = 0.9
+const ENEMY_SPAWN_DISTANCE_STEP = 40
+const GAME_OVER_REDIRECT_DELAY = 800
 
 const KEY_LEFT_VALUES = ['ArrowLeft', 'a', 'A', 'ф', 'Ф']
 const KEY_RIGHT_VALUES = ['ArrowRight', 'd', 'D', 'в', 'В']
@@ -76,8 +111,10 @@ interface Car {
 
 interface GameState {
   playerCar: Car
+  enemies: Car[]
   speed: number
   distance: number
+  lives: number
   keys: {
     left: boolean
     right: boolean
@@ -93,12 +130,16 @@ interface CanvasSize {
 const gameCanvas = ref<HTMLCanvasElement | null>(null)
 const distance = ref(0)
 const isPaused = ref(false)
+const isGameOver = ref(false)
+const lives = ref(INITIAL_LIVES)
+const maxLives = INITIAL_LIVES
 const canvasSize = reactive<CanvasSize>({
   width: 0,
   height: 0,
   scale: 1,
 })
 
+const store = useStore()
 const router = useRouter()
 
 const gameState = reactive<GameState>({
@@ -109,8 +150,10 @@ const gameState = reactive<GameState>({
     height: 70,
     speed: 0,
   },
+  enemies: [],
   speed: INITIAL_SPEED,
   distance: 0,
+  lives: INITIAL_LIVES,
   keys: {
     left: false,
     right: false,
@@ -118,6 +161,7 @@ const gameState = reactive<GameState>({
 })
 
 let gameLoopId: number | null = null
+let nextEnemySpawnDistance = ENEMY_SPAWN_DISTANCE_STEP
 
 const getCanvasSize = () => {
   const isMobile = window.innerWidth < 768
@@ -221,6 +265,88 @@ const drawCar = (
   )
 }
 
+const getRandomLaneX = () => {
+  const laneWidth = ROAD_WIDTH / LANE_COUNT
+  const laneIndex = Math.floor(Math.random() * LANE_COUNT)
+
+  return laneWidth * laneIndex + laneWidth / 2
+}
+
+const spawnEnemy = () => {
+  const enemyCar: Car = {
+    x: getRandomLaneX(),
+    y: -ENEMY_HEIGHT,
+    width: ENEMY_WIDTH,
+    height: ENEMY_HEIGHT,
+    speed: gameState.speed * ENEMY_SPEED_FACTOR,
+  }
+
+  gameState.enemies.push(enemyCar)
+}
+
+const detectCollisions = () => {
+  const player = gameState.playerCar
+
+  const playerLeft = player.x - player.width / 2
+  const playerRight = player.x + player.width / 2
+  const playerTop = player.y
+  const playerBottom = player.y + player.height
+
+  const remainingEnemies: Car[] = []
+
+  let hasCollision = false
+
+  gameState.enemies.forEach((enemy) => {
+    const enemyLeft = enemy.x - enemy.width / 2
+    const enemyRight = enemy.x + enemy.width / 2
+    const enemyTop = enemy.y
+    const enemyBottom = enemy.y + enemy.height
+
+    const isOverlapHorizontal = playerLeft < enemyRight && playerRight > enemyLeft
+    const isOverlapVertical = playerTop < enemyBottom && playerBottom > enemyTop
+
+    if (isOverlapHorizontal && isOverlapVertical) {
+      hasCollision = true
+
+      return
+    }
+
+    remainingEnemies.push(enemy)
+  })
+
+  gameState.enemies = remainingEnemies
+
+  if (!hasCollision) {
+    return
+  }
+
+  if (gameState.lives === 0) {
+    return
+  }
+
+  gameState.lives = gameState.lives - 1
+  lives.value = gameState.lives
+
+  if (gameState.lives === 0) {
+    isGameOver.value = true
+    stopGameLoop()
+
+    window.setTimeout(
+      () => {
+        store.dispatch(
+          ACTIONS.SAVE_SCORE,
+          distance.value,
+        )
+
+        router.push({
+          name: ROUTES.RESULT,
+        })
+      },
+      GAME_OVER_REDIRECT_DELAY,
+    )
+  }
+}
+
 const gameLoop = () => {
   const canvasElement = gameCanvas.value
 
@@ -280,6 +406,11 @@ const gameLoop = () => {
   gameState.distance = gameState.distance + gameState.speed * 0.1
   distance.value = Math.floor(gameState.distance)
 
+  if (gameState.distance >= nextEnemySpawnDistance) {
+    spawnEnemy()
+    nextEnemySpawnDistance = nextEnemySpawnDistance + ENEMY_SPAWN_DISTANCE_STEP
+  }
+
   const playerMoveSpeed = 5 * canvasScale
 
   if (gameState.keys.left) {
@@ -302,6 +433,31 @@ const gameLoop = () => {
     '#3b82f6',
     true,
   )
+
+  gameState.enemies.forEach((enemy) => {
+    enemy.y = enemy.y + enemy.speed
+  })
+
+  const visibleEnemies: Car[] = []
+
+  gameState.enemies.forEach((enemy) => {
+    if (enemy.y * canvasScale < canvasElement.height + enemy.height * canvasScale) {
+      visibleEnemies.push(enemy)
+    }
+  })
+
+  gameState.enemies = visibleEnemies
+
+  gameState.enemies.forEach((enemy) => {
+    drawCar(
+      context,
+      enemy,
+      '#9ca3af',
+      false,
+    )
+  })
+
+  detectCollisions()
 }
 
 const startGameLoop = () => {
@@ -325,6 +481,10 @@ const stopGameLoop = () => {
 }
 
 const togglePause = () => {
+  if (isGameOver.value) {
+    return
+  }
+
   isPaused.value = !isPaused.value
 }
 
@@ -460,6 +620,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   column-gap: 16px;
+  position: relative;
 
   &__distance {
     display: flex;
@@ -472,6 +633,28 @@ onUnmounted(() => {
 
   &__distance-icon {
     font-size: 20px;
+  }
+
+  &__lives {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    column-gap: 4px;
+  }
+
+  &__life {
+    display: inline-flex;
+  }
+
+  &__life-icon {
+    font-size: 18px;
+
+    &--empty {
+      opacity: 0.4;
+    }
   }
 
   &__pause-button {
