@@ -1,50 +1,50 @@
 export const SLOT_RECIPES = [
   {
-    pattern: [
-      [1, 2, null],
-      [3, 4, null],
-      [null, null, null]
-    ],
+    pattern: {
+      0: 1, 
+      1: 2,  
+      3: 3,  
+      4: 4
+    },
     result: 13
   },
   {
-    pattern: [
-      [4, null, null],
-      [2, null, null],
-      [3, null, null]
-    ],
+    pattern: {
+      0: 4,
+      3: 2,
+      6: 3
+    },
     result: 8
   },
   {
-    pattern: [
-      [1, null, 4],
-      [null, null, null],
-      [null, null, null]
-    ],
+    pattern: {
+      0: 1,
+      2: 4
+    },
     result: 9
   },
   {
-    pattern: [
-      [1, null, null],
-      [null, 2, null],
-      [null, null, 3]
-    ],
+    pattern: {
+      0: 1,
+      4: 2,
+      8: 3
+    },
     result: 10
   },
   {
-    pattern: [
-      [2, null, null],
-      [null, 4, null],
-      [null, null, 1]
-    ],
+    pattern: {
+      0: 2,
+      4: 4,
+      8: 1
+    },
     result: 11
   },
   {
-    pattern: [
-      [3, 2, null],
-      [null, 1, null],
-      [null, null, null]
-    ],
+    pattern: {
+      0: 3,
+      1: 2,
+      4: 1
+    },
     result: 12
   }
 ]

@@ -54,12 +54,6 @@ const containsPattern = (matrix, pattern, startRow = 0, startCol = 0) => {
   return isMatch || containsPattern(matrix, pattern, startRow, startCol + 1)
 }
 
-const toMatrix = (arr) => [
-  arr.slice(0,3),
-  arr.slice(3,6),
-  arr.slice(6,9)
-]
-
 export const store = createStore({
   state: {
     discovered:[1,2,3,4],
@@ -147,10 +141,12 @@ export const store = createStore({
     },
 
     [ACTIONS.CHECK_SLOT_RECIPES]: ({ state, commit }) => {
-      const matrix = toMatrix(state.slots)
-      const foundRecipe = SLOT_RECIPES.find(recipe => 
-        containsPattern(matrix, recipe.pattern)
-      )
+      const slots = state.slots
+      const foundRecipe = SLOT_RECIPES.find(recipe => {
+        return Object.entries(recipe.pattern).every(([position, requiredElement]) => {
+          return slots[position] === requiredElement
+        })
+      })
 
       if (foundRecipe) {
         commit(MUTATIONS.ADD_DISCOVERED, foundRecipe.result)
