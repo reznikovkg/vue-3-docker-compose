@@ -1,6 +1,7 @@
 # OS
 .DS_Store
 *.md
+*.txt
 
 # local env files
 .env.local
@@ -22,3 +23,6 @@
 
 # Assets
 *.png
+
+# Ops
+*.sh
