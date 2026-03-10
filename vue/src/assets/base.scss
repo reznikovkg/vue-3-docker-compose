@@ -1,0 +1,84 @@
+$colors: (
+  bg-deep: #071019,
+  bg-main: #0d1822,
+  panel: #102030,
+  panel-strong: #122737,
+  text-main: #f4efe5,
+  text-muted: #b9c6d2,
+  accent-strong: #ef9d52,
+  accent-soft: #ffd6a6
+);
+
+$accent-cool: #5292bf;
+$color-scheme: dark;
+$font-main: 'Trebuchet MS', 'Segoe UI', sans-serif;
+$font-accent: 'Bahnschrift', 'Franklin Gothic Medium', 'Arial Narrow', sans-serif;
+$inherit-font-elements: button, input, textarea, select;
+$media-elements: img, svg;
+$body-min-height: 100vh;
+$body-text-color: var(--text-main);
+$body-font-family: var(--font-main);
+$body-line-height: 1.5;
+$anchor-color: inherit;
+$anchor-decoration: none;
+$media-max-width: 100%;
+$body-background: (
+  radial-gradient(circle at top left, rgba(map-get($colors, accent-strong), 0.12), transparent 26%),
+  radial-gradient(circle at bottom right, rgba($accent-cool, 0.12), transparent 24%),
+  linear-gradient(180deg, var(--bg-main), var(--bg-deep))
+);
+
+%box-reset {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+@mixin font-smoothing {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  @each $name, $value in $colors {
+    --#{$name}: #{$value};
+  }
+  --font-main: #{$font-main};
+  --font-accent: #{$font-accent};
+}
+
+* {
+  @extend %box-reset;
+
+  &::before,
+  &::after {
+    @extend %box-reset;
+  }
+}
+
+html {
+  color-scheme: $color-scheme;
+}
+
+body {
+  min-height: $body-min-height;
+  background: $body-background;
+  color: $body-text-color;
+  font-family: $body-font-family;
+  line-height: $body-line-height;
+  @include font-smoothing;
+}
+
+#{$inherit-font-elements} {
+  font: inherit;
+}
+
+a {
+  color: $anchor-color;
+  text-decoration: $anchor-decoration;
+}
+
+#{$media-elements} {
+  display: block;
+  max-width: $media-max-width;
+}

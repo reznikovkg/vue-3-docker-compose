@@ -1,0 +1,7 @@
+@use './base.scss';
+
+$project-min-height: 100vh;
+
+#project {
+  min-height: $project-min-height;
+}
