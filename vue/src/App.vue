@@ -1,9 +1,9 @@
 <template>
-  <RouterView />
+  <div class = "app"> 
+    <router-view></router-view>
+  </div>
 </template>
 
-<script setup>
-</script>
+<script></script>
 
-<style scoped lang="scss">
-</style>
+<style></style>
