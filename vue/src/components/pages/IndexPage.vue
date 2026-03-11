@@ -1,17 +1,24 @@
 <template>
-  Index
-
-  <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
+  <div class="layout">
+    <GameMap/>
+    <InfoBar/>
+    <MiniGame/>
+    <Inventory/>
   </div>
 </template>
 
-<script setup lang="ts">
-
+<script setup>
+import GameMap from '../GameMap.vue';
+import InfoBar from '../InfoBar.vue';
+import Inventory from '../Inventory.vue';
+import MiniGame from '../MiniGame.vue';
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+.layout {
+  width: 100%;
+  height: 100%;
+  overflow:hidden;
+  position: relative;
+}
 </style>
