@@ -49,10 +49,7 @@ export default {
     border: solid;
     border-radius: 5px;
     padding: 20px;
-}
-
-.base>* {
-    margin-top: 10px;
+    gap: 10px;
 }
 
 .header {
