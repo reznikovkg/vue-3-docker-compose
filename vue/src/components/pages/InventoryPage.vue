@@ -117,19 +117,19 @@ export default {
 
   methods: {
     selectRod(id) { 
-      this.$store.dispatch('inventory/setActiveRod', id) 
+      this.$store.commit('inventory/SET_ACTIVE_ROD', id) 
     },
     selectBait(id) { 
-      this.$store.dispatch('inventory/setActiveBait', id) 
+      this.$store.commit('inventory/SET_ACTIVE_BAIT', id) 
     },
     sellItem(id) {
-      this.$store.dispatch('inventory/sellItem', id)
+      this.$store.commit('inventory/SELL_ITEM', id)
     },
     sellFish(index) { 
-      this.$store.dispatch('inventory/sellFish', index) 
+      this.$store.commit('inventory/SELL_FISH', index) 
     },
     sellAllFish() { 
-      this.$store.dispatch('inventory/sellAllFish')
+      this.$store.commit('inventory/SELL_ALL_FISH')
     },
     back() { 
       this.$router.push({ name: this.$routes.INDEX }) 

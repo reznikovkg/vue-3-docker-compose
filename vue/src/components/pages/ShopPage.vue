@@ -60,7 +60,7 @@ export default {
         alert('Недостаточно денег')
         return
       }
-      this.$store.dispatch('inventory/addItem', item)
+      this.$store.commit('inventory/ADD_ITEM', item)
       this.$store.commit('inventory/REMOVE_MONEY', item.price)
     },
     back() {

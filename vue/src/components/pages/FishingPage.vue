@@ -6,18 +6,11 @@
     ref="area"
   >
     <div class="fishing__buttons">
-      <button class="fishing__button" @click.stop="() => back()">
-        Назад
-      </button>
-
-      <button class="fishing__button" @click.stop="() => shop()">
-        Магазин
-      </button>
-
-      <button class="fishing__button" @click.stop="() => inventory()">
-        Инвентарь
-      </button>
+      <button class="fishing__button" @click.stop="() => back()">Назад</button>
+      <button class="fishing__button" @click.stop="() => shop()">Магазин</button>
+      <button class="fishing__button" @click.stop="() => inventory()">Инвентарь</button>
     </div>
+
     <img
       v-if="floatPosition"
       class="fishing__float"
@@ -43,9 +36,7 @@
       </button>
     </div>
 
-    <div v-if="message" class="fishing__message">
-      {{ message }}
-    </div>
+    <div v-if="message" class="fishing__message">{{ message }} </div>
 
   </div>
 </template>
@@ -103,7 +94,6 @@ export default {
         multiplier: 2
       }
     },
-
     getHotSpotBonus() {
       if (!this.floatPosition || !this.hotSpot) {
         return 1
@@ -120,7 +110,6 @@ export default {
 
       return 1
     },
-
     back() {
       this.clearAllTimeouts()
       this.clearAllIntervals()
@@ -187,7 +176,6 @@ export default {
         }
       }, delay)
     },
-
     startPull() {
       if (this.fishingState !== 'fighting' || !this.currentFish) {
         return
@@ -222,7 +210,7 @@ export default {
         }
 
         if (this.tension >= 100) {
-          this.breakRod()
+         this.breakRod()
         }
       }, 100)
     },
@@ -271,7 +259,7 @@ export default {
       this.clearAllIntervals()
       this.clearAllTimeouts()
 
-      this.$store.dispatch('inventory/addFish', this.currentFish)
+      this.$store.commit('inventory/ADD_FISH', this.currentFish)
       this.fishingState = 'idle'
       this.tension = 0
       this.floatPosition = null
