@@ -94,6 +94,7 @@ export default {
         multiplier: 2
       }
     },
+
     getHotSpotBonus() {
       if (!this.floatPosition || !this.hotSpot) {
         return 1
@@ -110,21 +111,25 @@ export default {
 
       return 1
     },
+
     back() {
       this.clearAllTimeouts()
       this.clearAllIntervals()
       this.$router.push({ name: this.$routes.LOCATIONS })
     },
+
     shop() {
       this.clearAllTimeouts()
       this.clearAllIntervals()
       this.$router.push({ name: this.$routes.SHOP })
     },
+
     inventory() {
       this.clearAllTimeouts()
       this.clearAllIntervals()
       this.$router.push({ name: this.$routes.INVENTORY })
     },
+
     cast(event) {
       if (this.fishingState !== 'idle') {
         return
@@ -176,6 +181,7 @@ export default {
         }
       }, delay)
     },
+    
     startPull() {
       if (this.fishingState !== 'fighting' || !this.currentFish) {
         return
