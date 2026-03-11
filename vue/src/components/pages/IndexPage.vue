@@ -18,20 +18,17 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'IndexPage',
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 
-  computed: {
-    allLevels () { return this.$store.getters.allLevels },
-  },
-
-  methods: {
-    startLevel (levelId) {
-      this.$store.dispatch('loadLevel', levelId)
-      this.$router.push('/game')
-    },
-  },
+const store = useStore()
+const router = useRouter()
+const allLevels = computed(() => store.getters.allLevels)
+const startLevel = (levelId: number) => {
+  store.dispatch('loadLevel', levelId)
+  router.push('/game')
 }
 </script>
 
