@@ -57,14 +57,17 @@ import SlotCraft from './SlotCraft.vue'
 
 export default {
   name: 'CraftTable',
+
   components: {
     SlotCraft
   },
+
   data() {
     return {
       craftVisible: false
     }
   },
+
   computed: {
     ...mapGetters(['tableElements']),
     table() { return this.tableElements },
@@ -72,6 +75,7 @@ export default {
       return ELEMENTS
     }
   },
+  
   methods: {
     ...mapActions([
       'addToTable',

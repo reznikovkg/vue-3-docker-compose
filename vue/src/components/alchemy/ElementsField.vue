@@ -4,7 +4,7 @@
       v-for="id in elements"
       :key="id"
       :id="id"
-      @select="add"
+      @select="() => add(id)"
     />
   </div>
 </template>

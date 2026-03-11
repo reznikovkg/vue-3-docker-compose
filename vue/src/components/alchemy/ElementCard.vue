@@ -17,6 +17,7 @@ export default {
   props:{ 
     id:Number 
   },
+  
   computed:{
     element(){
       return ELEMENTS[this.id]

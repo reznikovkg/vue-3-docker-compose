@@ -23,7 +23,6 @@ import { mapGetters,mapActions } from 'vuex'
 import { ELEMENTS } from '../../config/elements'
 
 export default{
-
    computed: {
     ...mapGetters(['slots']),
 
@@ -31,6 +30,7 @@ export default{
         return ELEMENTS
     }
   },
+  
   methods: {
     ...mapActions(['setSlot']),
 
