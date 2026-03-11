@@ -43,9 +43,11 @@ export default {
     items() {
       return items
     },
+
     money() {
       return this.$store.getters['inventory/money']
     },
+
     inventoryItems() {
       return this.$store.getters['inventory/items']
     }
@@ -55,6 +57,7 @@ export default {
     hasItem(item) {
       return this.inventoryItems.some(i => i.id === item.id)
     },
+
     buy(item) {
       if (this.money < item.price) {
         alert('Недостаточно денег')
@@ -63,6 +66,7 @@ export default {
       this.$store.commit('inventory/ADD_ITEM', item)
       this.$store.commit('inventory/REMOVE_MONEY', item.price)
     },
+    
     back() {
       this.$router.push({ name: this.$routes.INDEX })
     }

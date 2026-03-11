@@ -2,6 +2,7 @@
   <button class="locations__back" @click.stop="() => back()">Назад</button>
   <div class="locations">
     <h1 class="locations__title">Выберите локацию</h1>
+
     <div class="locations__grid">
       <LocationCard
         v-for="loc in list"
@@ -16,6 +17,7 @@
 <script>
 import LocationCard from '../fishing/LocationCard.vue'
 import { locations } from '@/config/locations'
+
 export default {
   name: 'LocationsPage',
   components: { LocationCard },
@@ -29,6 +31,7 @@ export default {
         params: { locationId: location.id }
       })
     },
+
     back() {
       this.$router.push({ name: this.$routes.INDEX })
     },
