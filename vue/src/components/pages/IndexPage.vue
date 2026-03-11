@@ -13,12 +13,12 @@
 
         <div class="puzzle__stat">
           <span class="puzzle__stat-label">Время:</span>
-          <span class="puzzle__stat-value">{{ formatTime(timer) }}</span>
+          <span class="puzzle__stat-value">{{ formatTimeDisplay }}</span>
         </div>
 
         <div class="puzzle__stat" v-if="recordTime">
           <span class="puzzle__stat-label">Рекорд:</span>
-          <span class="puzzle__stat-value puzzle__stat-value--record">{{ formatTime(recordTime) }}</span>
+          <span class="puzzle__stat-value puzzle__stat-value--record">{{ recordTimeDisplay }}</span>
         </div>
 
         <div class="puzzle__stat puzzle__stat--special" v-if="specialMoves > 0">
@@ -52,7 +52,7 @@
 
         <button
             class="puzzle__restart"
-            @click="() => initGame()"
+            @click="() => restartGame()"
         >
           Перемешать
         </button>
@@ -73,6 +73,7 @@
 </template>
 
 <script>
+import { mapGetters, mapState, mapActions } from 'vuex'
 import PuzzleTile from './PuzzleTile.vue'
 
 export default {
@@ -82,33 +83,23 @@ export default {
   },
   data() {
     return {
-      gridSize: 4,
-      minGridSize: 3,
-      tiles: [],
-      moves: 0,
-      timer: 0,
       timerInterval: null,
-      specialMoves: 0,
       specialMoveInterval: null,
-      blockedIndex: null,
-      records: {},
     }
   },
   computed: {
-    isWin() {
-      return this.checkWin()
-    },
+    ...mapState('puzzle', [
+      'gridSize',
+      'moves',
+      'timer',
+      'specialMoves',
+    ]),
 
-    tileList() {
-      return this.tiles.map((value, index) => {
-        return {
-          index: index,
-          value: value,
-          isEmpty: value === 0,
-          isBlocked: index === this.blockedIndex,
-        }
-      })
-    },
+    ...mapGetters('puzzle', [
+      'isWin',
+      'tileList',
+      'recordTime',
+    ]),
 
     boardStyle() {
       return {
@@ -130,101 +121,40 @@ export default {
       }
     },
 
-    recordTime() {
-      const key = `${this.gridSize}x${this.gridSize}`
-      return this.records[key] || null
-    },
-  },
-  methods: {
-    formatTime(seconds) {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
+    formatTimeDisplay() {
+      const mins = Math.floor(this.timer / 60)
+      const secs = this.timer % 60
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
     },
 
-    loadRecords() {
-      const saved = localStorage.getItem('puzzleRecords')
-      if (saved) {
-        this.records = JSON.parse(saved)
+    recordTimeDisplay() {
+      if (this.recordTime) {
+        const mins = Math.floor(this.recordTime / 60)
+        const secs = this.recordTime % 60
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
       }
+      return null
     },
+  },
+  methods: {
+    ...mapActions('puzzle', [
+      'initGame',
+      'handleTileClick',
+      'changeGridSize',
+      'shuffleBoard',
+    ]),
 
-    saveRecord() {
-      const key = `${this.gridSize}x${this.gridSize}`
-      const currentRecord = this.records[key]
-
-      if (!currentRecord || this.timer < currentRecord) {
-        this.records[key] = this.timer
-        localStorage.setItem('puzzleRecords', JSON.stringify(this.records))
-      }
-    },
-
-    blockRandomMove() {
-      const emptyIndex = this.tiles.indexOf(0)
-      const neighbors = this.getNeighbors(emptyIndex)
-
-      if (neighbors.length > 0) {
-        const randomIndex = Math.floor(Math.random() * neighbors.length)
-        this.blockedIndex = neighbors[randomIndex]
-      } else {
-        this.blockedIndex = null
-      }
-    },
-
-    clearBlockedMove() {
-      this.blockedIndex = null
-    },
-
-    checkWin() {
-      const total = this.gridSize * this.gridSize
-
-      for (let i = 0; i < total; i++) {
-        const expectedValue = (i < total - 1) ? (i + 1) : 0
-
-        if (this.tiles[i] !== expectedValue) {
-          return false
-        }
-      }
-
-      return true
-    },
-
-    changeSize(delta) {
-      const newSize = this.gridSize + delta
-
-      if (newSize >= this.minGridSize) {
-        this.gridSize = newSize
-        this.initGame()
-      }
-    },
-
-    initGame() {
-      this.stopTimer()
-      this.stopSpecialMoveTimer()
-
-      this.moves = 0
-      this.timer = 0
-      this.specialMoves = 0
-      this.blockedIndex = null
-
-      const total = this.gridSize * this.gridSize
-
-      this.tiles = Array.from(
-          { length: total },
-          (_, i) => {
-            return (i + 1) % total
-          }
-      )
-
-      this.shuffleBoard()
-      this.loadRecords()
-      this.startTimer()
-      this.startSpecialMoveTimer()
+    restartGame() {
+      this.initGame()
+      setTimeout(() => {
+        this.shuffleBoard()
+      }, 50)
     },
 
     startTimer() {
+      this.stopTimer()
       this.timerInterval = setInterval(() => {
-        this.timer++
+        this.$store.commit('puzzle/INCREMENT_TIMER')
       }, 1000)
     },
 
@@ -236,8 +166,9 @@ export default {
     },
 
     startSpecialMoveTimer() {
+      this.stopSpecialMoveTimer()
       this.specialMoveInterval = setInterval(() => {
-        this.specialMoves++
+        this.$store.commit('puzzle/INCREMENT_SPECIAL_MOVES')
       }, 60000)
     },
 
@@ -248,99 +179,19 @@ export default {
       }
     },
 
-    shuffleBoard() {
-      let previousIndex = -1
-      const shuffleMoves = this.gridSize * this.gridSize * 10
+    changeSize(delta) {
+      const newSize = this.gridSize + delta
 
-      for (let i = 0; i < shuffleMoves; i++) {
-        const emptyIndex = this.tiles.indexOf(0)
-        const neighbors = this.getNeighbors(emptyIndex)
-        const validNeighbors = neighbors.filter((n) => {
-          return n !== previousIndex
-        })
-        const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)]
-
-        this.swapTiles(emptyIndex, randomNeighbor)
-        previousIndex = emptyIndex
+      if (newSize >= 3) {
+        this.changeGridSize(newSize)
+        this.restartGame()
       }
-
-      this.blockRandomMove()
-    },
-
-    getNeighbors(index) {
-      const neighbors = []
-      const row = Math.floor(index / this.gridSize)
-      const col = index % this.gridSize
-
-      if (row > 0) {
-        neighbors.push(index - this.gridSize)
-      }
-
-      if (row < this.gridSize - 1) {
-        neighbors.push(index + this.gridSize)
-      }
-
-      if (col > 0) {
-        neighbors.push(index - 1)
-      }
-
-      if (col < this.gridSize - 1) {
-        neighbors.push(index + 1)
-      }
-
-      return neighbors
-    },
-
-    handleTileClick(index) {
-      if (this.isWin) {
-        return
-      }
-
-      const emptyIndex = this.tiles.indexOf(0)
-
-      if (this.specialMoves > 0) {
-        if (this.tiles[index] !== 0) {
-          this.swapTiles(index, emptyIndex)
-          this.specialMoves--
-          this.moves++
-          this.clearBlockedMove()
-          this.blockRandomMove()
-          this.checkWinAndSave()
-        }
-        return
-      }
-
-      if (index === this.blockedIndex) {
-        return
-      }
-
-      const neighbors = this.getNeighbors(emptyIndex)
-
-      if (neighbors.includes(index)) {
-        this.swapTiles(emptyIndex, index)
-        this.moves++
-        this.clearBlockedMove()
-        this.blockRandomMove()
-        this.checkWinAndSave()
-      }
-    },
-
-    checkWinAndSave() {
-      if (this.isWin) {
-        this.stopTimer()
-        this.stopSpecialMoveTimer()
-        this.saveRecord()
-      }
-    },
-
-    swapTiles(idx1, idx2) {
-      const temp = this.tiles[idx1]
-      this.tiles[idx1] = this.tiles[idx2]
-      this.tiles[idx2] = temp
     },
   },
   mounted() {
-    this.initGame()
+    this.restartGame()
+    this.startTimer()
+    this.startSpecialMoveTimer()
   },
   beforeUnmount() {
     this.stopTimer()

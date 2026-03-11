@@ -1,8 +1,9 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
+import { createStore } from 'vuex'
 import App from './App.vue'
-import store from './store'
+import puzzle from './store/puzzle'
 import { router, ROUTES } from '@/router/index.js'
 
 const routes = {
@@ -12,8 +13,14 @@ const routes = {
   }
 }
 
+const store = createStore({
+  modules: {
+    puzzle,
+  },
+})
+
 createApp(App)
-  .use(router)
-  .use(routes)
-  .use(store)
-  .mount('#project')
+    .use(router)
+    .use(routes)
+    .use(store)
+    .mount('#project')
