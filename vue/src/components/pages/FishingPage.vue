@@ -5,8 +5,19 @@
     @click="(event) => cast(event)"
     ref="area"
   >
-    <button class="fishing__back" @click.stop="() => back()">Назад</button>
+    <div class="fishing__buttons">
+      <button class="fishing__button" @click.stop="() => back()">
+        Назад
+      </button>
 
+      <button class="fishing__button" @click.stop="() => shop()">
+        Магазин
+      </button>
+
+      <button class="fishing__button" @click.stop="() => inventory()">
+        Инвентарь
+      </button>
+    </div>
     <img
       v-if="floatPosition"
       class="fishing__float"
@@ -32,13 +43,16 @@
       </button>
     </div>
 
-    <div v-if="message" class="fishing__message">{{ message }}</div>
+    <div v-if="message" class="fishing__message">
+      {{ message }}
+    </div>
+
   </div>
 </template>
 
 <script>
 import { locations } from '@/config/locations'
-
+import { fish } from '@/config/fish'
 export default {
   name: 'FishingPage',
   data() {
@@ -53,54 +67,144 @@ export default {
       targetY: 0,
       message: '',
       biteTimeout: null,
-      messageTimeout: null
+      messageTimeout: null,
+      currentFish: null,
+      hotSpot: null
+    }
+  },
+  computed: {
+    items() {
+      return this.$store.getters['inventory/items']
+    },
+    activeRod() {
+      return this.$store.getters['inventory/activeRod']
+    },
+    activeBait() {
+      return this.$store.getters['inventory/activeBait'] 
     }
   },
   mounted() {
     const id = Number(this.$route.params.locationId)
     this.location = locations.find(l => l.id === id)
+    this.generateHotSpot()
   },
   methods: {
-    back() {
-      this.$router.push({ name: this.$routes.LOCATIONS })
+    generateHotSpot() {
+      const rect = this.$refs.area?.getBoundingClientRect()
+      if (!rect) {
+        setTimeout(() => this.generateHotSpot(), 100)
+        return
+      }
+
+      this.hotSpot = {
+        x: 50 + Math.random() * (rect.width - 100),
+        y: 50 + Math.random() * (rect.height - 200),
+        radius: 80,
+        multiplier: 2
+      }
     },
 
+    getHotSpotBonus() {
+      if (!this.floatPosition || !this.hotSpot) {
+        return 1
+      }
+
+      const dx = this.floatPosition.x - this.hotSpot.x
+      const dy = this.floatPosition.y - this.hotSpot.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance < this.hotSpot.radius) {
+        const proximity = 1 - (distance / this.hotSpot.radius)
+        return 1 + (this.hotSpot.multiplier - 1) * proximity
+      }
+
+      return 1
+    },
+
+    back() {
+      this.clearAllTimeouts()
+      this.clearAllIntervals()
+      this.$router.push({ name: this.$routes.LOCATIONS })
+    },
+    shop() {
+      this.clearAllTimeouts()
+      this.clearAllIntervals()
+      this.$router.push({ name: this.$routes.SHOP })
+    },
+    inventory() {
+      this.clearAllTimeouts()
+      this.clearAllIntervals()
+      this.$router.push({ name: this.$routes.INVENTORY })
+    },
     cast(event) {
       if (this.fishingState !== 'idle') {
         return
       }
 
-      const rect = this.$refs.area.getBoundingClientRect()
-      this.floatPosition = {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+      if (!this.activeRod) {
+        this.message = 'Купите и выберите удочку в инвентаре'
+        setTimeout(() => { this.message = '' }, 2000)
+        return
       }
+
+      if (!this.activeBait) {
+        this.message = 'Выберите наживку в инвентаре'
+        setTimeout(() => { this.message = '' }, 2000)
+        return
+      }
+
+      const available = fish.filter(f => f.baitId === this.activeBait)
+
+      if (!available.length) {
+        this.message = 'На эту наживку никто не клюёт'
+        setTimeout(() => { this.message = '' }, 2000)
+        return
+      }
+
+      const selected = available[Math.floor(Math.random() * available.length)]
+      const size = Math.floor(Math.random() * (selected.max - selected.min) + selected.min)
+      this.currentFish = { ...selected, size }
+      const rect = this.$refs.area.getBoundingClientRect()
+
+      let x = event.clientX - rect.left
+      let y = event.clientY - rect.top
+      x = Math.max(30, Math.min(rect.width - 30, x))
+      y = Math.max(30, Math.min(rect.height - 100, y))
+
+      this.floatPosition = { x, y }
       this.targetX = rect.width / 2
       this.targetY = rect.height - 60
       this.fishingState = 'waiting'
-      this.message = 'Ждем...'
+      this.message = 'Ждем поклевки...'
+      
+      const bonus = this.getHotSpotBonus()
+      const delay = (2000 + (size / 10)) / bonus
+
       this.biteTimeout = setTimeout(() => {
         if (this.fishingState === 'waiting') {
           this.fishingState = 'fighting'
-          this.message = 'Клюет!'
+          this.message = `Клюет ${this.currentFish.name}!`
         }
-      }, 2000)
+      }, delay)
     },
 
     startPull() {
-      if (this.fishingState !== 'fighting') {
+      if (this.fishingState !== 'fighting' || !this.currentFish) {
         return
       }
-      
+
       clearInterval(this.releaseInterval)
       this.releaseInterval = null
       this.message = ''
+      const difficulty = this.currentFish.size / 200
       this.pullInterval = setInterval(() => {
-        this.tension = Math.min(100, this.tension + 4.5)
+
+        this.tension = Math.min(100, this.tension + 4 + difficulty / 2)
 
         if (this.floatPosition) {
           const dx = (this.targetX - this.floatPosition.x) * 0.1
           const dy = (this.targetY - this.floatPosition.y) * 0.1
+
           this.floatPosition.x += dx
           this.floatPosition.y += dy
 
@@ -110,8 +214,15 @@ export default {
           }
         }
 
+        const breakChance = this.tension / 200
+
+        if (this.tension > 90 && Math.random() < breakChance) {
+          this.breakRod()
+          return
+        }
+
         if (this.tension >= 100) {
-         this.breakRod()
+          this.breakRod()
         }
       }, 100)
     },
@@ -125,29 +236,27 @@ export default {
       this.pullInterval = null
 
       this.releaseInterval = setInterval(() => {
-        this.tension = Math.max(0, this.tension - 4.5)
+        this.tension = Math.max(0, this.tension - 4)
 
         if (this.floatPosition) {
-          this.floatPosition.y = Math.max(0, this.floatPosition.y - 1)
+          this.floatPosition.y = Math.max(0, this.floatPosition.y - 0.5)
         }
       }, 100)
     },
 
     breakRod() {
-      clearInterval(this.pullInterval)
-      clearInterval(this.releaseInterval)
-      clearTimeout(this.biteTimeout)
-      clearTimeout(this.messageTimeout)
-      
-      this.pullInterval = null
-      this.releaseInterval = null
-      this.biteTimeout = null
-      this.messageTimeout = null
-      
+      this.clearAllIntervals()
+      this.clearAllTimeouts()
+
       this.fishingState = 'idle'
       this.floatPosition = null
       this.tension = 0
-      this.message = 'Удочка сломалась'
+      this.message = 'Удочка сломалась!'
+      
+      const rodItem = this.items.find(i => i.id === this.activeRod)
+      if (rodItem) {
+        this.$store.commit('inventory/REMOVE_ITEM', rodItem.id)
+      }
 
       this.messageTimeout = setTimeout(() => {
         this.message = ''
@@ -155,29 +264,48 @@ export default {
     },
 
     catchFish() {
-      if (this.fishingState !== 'fighting') {
+      if (this.fishingState !== 'fighting' || !this.currentFish) {
         return
       }
 
-      clearInterval(this.pullInterval)
-      clearInterval(this.releaseInterval)
-      clearTimeout(this.biteTimeout)
-      clearTimeout(this.messageTimeout)
-      
-      this.pullInterval = null
-      this.releaseInterval = null
-      this.biteTimeout = null
-      this.messageTimeout = null
-      this.message = ''
+      this.clearAllIntervals()
+      this.clearAllTimeouts()
+
+      this.$store.dispatch('inventory/addFish', this.currentFish)
       this.fishingState = 'idle'
       this.tension = 0
       this.floatPosition = null
-      this.message = 'Рыба поймана!'
+      this.message = `${this.currentFish.name} ${Math.round(this.currentFish.size)}г`
 
       this.messageTimeout = setTimeout(() => {
         this.message = ''
+      }, 2000)
+
+      this.currentFish = null
+    },
+
+    clearAllIntervals() {
+      if (this.pullInterval) {
+        clearInterval(this.pullInterval)
+        this.pullInterval = null
+      }
+      
+      if (this.releaseInterval) {
+        clearInterval(this.releaseInterval)
+        this.releaseInterval = null
+      }
+    },
+
+    clearAllTimeouts() {
+      if (this.biteTimeout) {
+        clearTimeout(this.biteTimeout)
+        this.biteTimeout = null
+      }
+      
+      if (this.messageTimeout) {
+        clearTimeout(this.messageTimeout)
         this.messageTimeout = null
-      }, 1500)
+      }
     }
   }
 }
@@ -190,10 +318,17 @@ export default {
   background-size: cover;
   background-position: center;
 
-  &__back {
+  &__buttons {
     position: absolute;
     top: 20px;
     left: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+    flex-wrap: wrap;
+  }
+
+  &__button {
     font-size: 20px;
     padding: 10px 20px;
     border-radius: 12px;
@@ -215,6 +350,7 @@ export default {
     transform: translate(-50%, -50%);
     pointer-events: none;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    z-index: 10;
   }
 
   &__panel {
@@ -279,7 +415,7 @@ export default {
     padding: 8px 24px;
     border-radius: 40px;
     backdrop-filter: blur(4px);
-    z-index: 10;
+    z-index: 20;
   }
 }
 </style>
