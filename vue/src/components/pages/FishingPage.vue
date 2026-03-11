@@ -2,8 +2,10 @@
   <div class="page">
     <h2 class="page__counter">Всего поймано: {{ totalBiteCount }}</h2>
 
-    <div class="bg" :style="{ backgroundImage: `url(/images/${location.image})` }">
-    </div>
+    <div
+      class="bg"
+      :style="{ backgroundImage: `url(/images/${location.image})` }"
+    ></div>
 
     <button class="menu-button" @click="() => goToHomePage()">
       <span class="menu-button__text">ДОМОЙ</span>
@@ -14,12 +16,28 @@
       <div class="score-panel__value">{{ totalBiteCount }}</div>
     </div>
 
-    <div class="rod">
+    <div class="rod" ref="rodRef">
+      <div
+        class="fishing-line"
+        :style="lineStyle"
+        v-if="isCasting || isBiting"
+      ></div>
+
+      <div
+        class="float"
+        :class="{ 'float--biting': isBiting }"
+        :style="floatStyle"
+        v-if="isCasting || isBiting"
+      >
+        <div class="float__body"></div>
+        <div class="float__tip"></div>
+      </div>
     </div>
 
-    <button class="fish-button" 
-      v-if="canStartFish"
-      @click="() => startFish()"
+    <button
+      class="fish-button"
+      v-if="canStartFish && !selectingPosition"
+      @click="() => startSelectFishPosition()"
     >
       Закинуть
     </button>
@@ -28,16 +46,18 @@
       <div class="progress-wrapper">
         <div class="progress-wrapper__label">🎣 УДОЧКА</div>
         <div class="progress-wrapper__bar">
-          <div 
-            class="progress-wrapper__fill" 
+          <div
+            class="progress-wrapper__fill"
             :style="{ width: progress + '%' }"
           >
-            <span class="progress-wrapper__text">{{ Math.floor(progress) }}%</span>
+            <span class="progress-wrapper__text"
+              >{{ Math.floor(progress) }}%</span
+            >
           </div>
         </div>
       </div>
 
-      <button 
+      <button
         class="reel-button"
         @mousedown="() => startReeling()"
         @mouseup="() => stopReeling()"
@@ -55,50 +75,127 @@
       :message="notification"
       @action="() => closeNotification()"
     />
+
+    <div
+      v-if="selectingPosition"
+      class="fishing-click-area"
+      @click="($event) => startFish($event)"
+    ></div>
   </div>
 </template>
 
 <script setup>
-import { useStore } from 'vuex'
-import { onUnmounted, ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import Notification from '../Notification.vue';
+import { useStore } from "vuex";
+import { onUnmounted, ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import Notification from "../Notification.vue";
 
-const props = defineProps(['location'])
-const location = computed(() => props.location)
+const props = defineProps(["location"]);
+const location = computed(() => props.location);
 
-const router = useRouter()
+const router = useRouter();
 const goToHomePage = () => {
-  router.push("/")
-}
+  router.push("/");
+};
 
-const store = useStore()
-const isCasting = computed(() => store.getters['game/isCasting'])
-const isBiting = computed(() => store.getters['game/isBiting'])
-const totalBiteCount = computed(() => store.getters['game/totalBiteCount'])
-const notification = computed(() => store.getters['game/notification'])
-const progress = computed(() => store.getters['game/progress'])
-const isReeling = computed(() => store.getters['game/isReeling'])
+const store = useStore();
+const isCasting = computed(() => store.getters["game/isCasting"]);
+const isBiting = computed(() => store.getters["game/isBiting"]);
+const totalBiteCount = computed(() => store.getters["game/totalBiteCount"]);
+const notification = computed(() => store.getters["game/notification"]);
+const progress = computed(() => store.getters["game/progress"]);
+const isReeling = computed(() => store.getters["game/isReeling"]);
+const canStartFish = computed(() => !isCasting.value && !isBiting.value);
 
-const canStartFish = computed(() => !isCasting.value && !isBiting.value)
-const startFish = () => {
-  store.dispatch('game/startCasting')
-}
+const floatPosition = ref({ x: 0, y: 0 });
+
+const selectingPosition = ref(false);
+const startSelectFishPosition = () => {
+  selectingPosition.value = true;
+};
+
+const startFish = (event) => {
+  floatPosition.value.x = event.clientX;
+  floatPosition.value.y = event.clientY;
+  selectingPosition.value = false;
+  store.dispatch("game/startCasting");
+};
 
 const startReeling = () => {
-  store.dispatch('game/startReeling')
-}
+  store.dispatch("game/startReeling");
+};
 
 const stopReeling = () => {
-  store.dispatch('game/stopReeling')
-}
+  store.dispatch("game/stopReeling");
+};
 const closeNotification = () => {
-  store.dispatch('game/closeNotification')
-}
+  store.dispatch("game/closeNotification");
+};
+
+const rodRef = ref(null);
+const rodTipPosition = computed(() => {
+  const rodRect = rodRef.value.getBoundingClientRect();
+  return {
+    x: rodRect.left + 485,
+    y: rodRect.top + 15,
+  };
+});
+
+const lineStyle = computed(() => {
+  if (!rodRef.value) return { display: "none" };
+
+  const startX = rodTipPosition.value.x;
+  const startY = rodTipPosition.value.y;
+
+  const endX = floatPosition.value.x;
+  const endY = floatPosition.value.y - 15;
+
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const maxLength = Math.sqrt(dx * dx + dy * dy);
+  const currentLength = (maxLength * (100 - progress.value)) / 100;
+  const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+  return {
+    position: "fixed",
+    top: "0",
+    left: "0",
+    width: currentLength + "px",
+    height: "3px",
+    background: "white",
+    transformOrigin: "0 0",
+    transform: `translate(${startX}px, ${startY}px) rotate(${angle}deg)`,
+    pointerEvents: "none",
+  };
+});
+
+const floatStyle = computed(() => {
+  if (!rodRef.value) return { display: "none" };
+
+  const rodX = rodTipPosition.value.x;
+  const rodY = rodTipPosition.value.y;
+
+  const floatX = floatPosition.value.x;
+  const floatY = floatPosition.value.y;
+
+  const t = progress.value / 100;
+
+  const x = floatX + (rodX - floatX) * t;
+  const y = floatY + (rodY - floatY) * t;
+
+  return {
+    position: "fixed",
+    left: x + "px",
+    top: y + "px",
+    transform: "translate(-50%, -50%)",
+    pointerEvents: "none",
+    zIndex: 30,
+  };
+});
 
 onUnmounted(() => {
-  store.dispatch('game/reset')
-})
+  store.dispatch("game/reset");
+});
 </script>
 
 <style scoped>
@@ -126,11 +223,22 @@ onUnmounted(() => {
   max-width: 90vw;
 }
 
+.fishing-click-area {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  top: 40%;
+  bottom: 10%;
+  border-radius: 3px 3px 0 0;
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
 .rod {
   position: fixed;
   top: 400px;
   left: 500px;
-  background-image: url('/images/rod.png');
+  background-image: url("/images/rod.png");
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
@@ -138,6 +246,42 @@ onUnmounted(() => {
   height: 600px;
   z-index: 10;
   pointer-events: none;
+}
+
+.float {
+  position: fixed;
+  width: 20px;
+  height: 30px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.float__body {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 28px;
+  background: linear-gradient(135deg, #ff6b6b, #ff4757);
+  border-radius: 50% 50% 40% 40%;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.float__tip {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 10px;
+  background: linear-gradient(135deg, #ffff8f, #ffff00);
+  border-radius: 4px 4px 0 0;
+  border: 1px solid #fff;
 }
 
 .fish-button {
