@@ -1,45 +1,69 @@
 <template>
   <div class="fishing-area">
-    <div class="fishing-area__water" :style="{ backgroundImage: 'url(' + background + ')' }" @click="onWaterClick">
+    <div
+      class="fishing-area__water"
+      :style="{ backgroundImage: 'url(' + background + ')' }"
+      @click="onWaterClick"
+    >
       <div class="fishing-area__overlay"></div>
 
-      <!-- Ожидание поклевки (маленькое снизу) -->
-      <div v-if="isWaiting" class="fishing-area__waiting">
-        ⏳ Ожидание поклевки... {{ timer }} сек
-      </div>
-
-      <!-- Мини-игра (маленькое снизу) -->
-      <div v-if="isMiniGameActive" class="fishing-area__minigame" @click.stop>
+      <div
+        v-if="isFishHooked"
+        class="fishing-area__minigame"
+        @click.stop
+      >
         <div class="fishing-area__progress">
           <span class="fishing-area__label">Рыба:</span>
           <div class="fishing-area__bar">
-            <div class="fishing-area__bar-fill" :style="{ width: fishProgress + '%' }"></div>
+            <div
+              class="fishing-area__bar-fill"
+              :style="{ width: 100 - fishDistance + '%' }"
+            ></div>
           </div>
         </div>
 
         <div class="fishing-area__progress">
-          <span class="fishing-area__label">Леска:</span>
+          <span class="fishing-area__label">Удочка:</span>
           <div class="fishing-area__bar">
-            <div class="fishing-area__bar-fill" :style="{ width: lineTension + '%', background: lineTension > 80 ? 'red' : '#4CAF50' }"></div>
+            <div
+              class="fishing-area__bar-fill"
+              :style="{ width: rodLoad + '%', background: rodLoad > 80 ? 'red' : '#4CAF50' }"
+            ></div>
           </div>
         </div>
+      </div>
 
-        <button 
-          class="fishing-area__action-button" 
-          @mousedown="startPulling"
-          @mouseup="stopPulling"
-          @mouseleave="stopPulling"
-          @touchstart="startPulling"
-          @touchend="stopPulling"
-          @touchcancel="stopPulling"
+      <div class="fishing-area__message">
+        {{ message }}
+      </div>
+
+      <div
+        v-if="isFishing"
+        class="fishing-area__float"
+        :style="{
+          left: floatX + '%',
+          top: floatY + '%'
+        }"
+      >
+        <img
+          class="fishing-area__float-image"
+          :src="floatImage"
+          alt="Поплавок"
         >
-          Тащи!
-        </button>
       </div>
 
-      <div class="fishing-area__message" v-if="!isWaiting && !isMiniGameActive">
-        {{ biteMessage }}
-      </div>
+      <button
+        v-if="isFishHooked"
+        class="fishing-area__action-button"
+        @mousedown="startPull"
+        @mouseup="stopPull"
+        @mouseleave="stopPull"
+        @touchstart.prevent="startPull"
+        @touchend="stopPull"
+        @touchcancel="stopPull"
+      >
+        Тащи!
+      </button>
     </div>
   </div>
 </template>
@@ -48,57 +72,74 @@
 export default {
   name: 'FishingArea',
   props: {
-    background: { type: String, required: true },
-    isWaiting: { type: Boolean, required: true },
-    isMiniGameActive: { type: Boolean, required: true },
-    fishProgress: { type: Number, required: true },
-    lineTension: { type: Number, required: true },
-    timer: { type: Number, required: true },
-    biteMessage: { type: String, required: true }
+    background: {
+      type: String,
+      required: true
+    },
+    message: {
+      type: String,
+      required: true
+    },
+    isFishing: {
+      type: Boolean,
+      required: true
+    },
+    isWaitingBite: {
+      type: Boolean,
+      required: true
+    },
+    isFishHooked: {
+      type: Boolean,
+      required: true
+    },
+    floatX: {
+      type: Number,
+      required: true
+    },
+    floatY: {
+      type: Number,
+      required: true
+    },
+    rodLoad: {
+      type: Number,
+      required: true
+    },
+    fishDistance: {
+      type: Number,
+      required: true
+    }
   },
   data() {
     return {
-      isPulling: false,
-      pullInterval: null
-    }
-  },
-  watch: {
-    isMiniGameActive(active) {
-      if (!active) this.stopPulling()
+      floatImage: '/img/float.png'
     }
   },
   methods: {
     onWaterClick(event) {
-      if (this.isMiniGameActive || this.isWaiting) {
-        event.stopPropagation()
+      if (this.isFishing || this.isWaitingBite || this.isFishHooked) {
         return
       }
-      
+
       const rect = event.currentTarget.getBoundingClientRect()
-      const clickY = event.clientY - rect.top
-      const waterHeight = rect.height
-      
-      if (clickY < waterHeight / 2) {
-        this.$emit('error', 'Можно бросать только в воду')
+      const x = ((event.clientX - rect.left) / rect.width) * 100
+      const y = ((event.clientY - rect.top) / rect.height) * 100
+
+      if (y < 50) {
+        this.$emit('error', 'Нужно бросать в воду')
         return
       }
-      
-      this.$emit('cast')
+
+      this.$emit('cast', {
+        x: Math.round(x),
+        y: Math.round(y)
+      })
     },
-    startPulling() {
-      if (!this.isMiniGameActive) return
-      this.isPulling = true
+
+    startPull() {
       this.$emit('start-pull')
-      
-      this.pullInterval = setInterval(() => {
-        if (this.isPulling) {
-          this.$emit('pulling')
-        }
-      }, 100)
     },
-    stopPulling() {
-      this.isPulling = false
-      clearInterval(this.pullInterval)
+
+    stopPull() {
       this.$emit('stop-pull')
     }
   }
@@ -106,14 +147,19 @@ export default {
 </script>
 
 <style scoped>
+.fishing-area {
+  margin-bottom: 10px;
+}
+
 .fishing-area__water {
+  position: relative;
+  height: 420px;
   border: 1px solid black;
-  height: 400px;
   margin-bottom: 10px;
   padding: 10px;
   background-size: cover;
   background-position: center;
-  position: relative;
+  overflow: hidden;
   cursor: crosshair;
 }
 
@@ -123,34 +169,17 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  pointer-events: none;
-}
-
-.fishing-area__waiting {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid black;
-  padding: 8px;
-  text-align: center;
-  font-size: 14px;
-  z-index: 15;
+  background: rgba(0, 0, 0, 0.15);
   pointer-events: none;
 }
 
 .fishing-area__minigame {
   position: absolute;
-  bottom: 20px;
+  bottom: 70px;
   left: 20px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid black;
-  padding: 10px;
   z-index: 20;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .fishing-area__progress {
@@ -163,7 +192,9 @@ export default {
 .fishing-area__label {
   font-size: 12px;
   font-weight: bold;
-  min-width: 45px;
+  min-width: 50px;
+  color: white;
+  text-shadow: 1px 1px 2px black;
 }
 
 .fishing-area__bar {
@@ -180,8 +211,42 @@ export default {
   transition: width 0.1s;
 }
 
-.fishing-area__action-button {
+.fishing-area__message {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 220px;
+  background: white;
+  border: 1px solid black;
+  padding: 5px;
+  z-index: 5;
+  pointer-events: none;
+  text-align: center;
+}
+
+.fishing-area__float {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.fishing-area__float-image {
+  display: block;
   width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.fishing-area__action-button {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 35px;
   padding: 10px;
   font-size: 16px;
   font-weight: bold;
@@ -190,22 +255,10 @@ export default {
   border: 1px solid black;
   cursor: pointer;
   user-select: none;
-  margin-top: 5px;
+  z-index: 20;
 }
 
 .fishing-area__action-button:active {
   background: #45a049;
-}
-
-.fishing-area__message {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  border: 1px solid black;
-  padding: 5px;
-  z-index: 5;
-  pointer-events: none;
 }
 </style>

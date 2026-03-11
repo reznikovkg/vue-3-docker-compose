@@ -1,14 +1,14 @@
 <template>
   <div class="location-selector">
-    <select 
-      class="location-selector__select" 
+    <select
+      class="location-selector__select"
+      :value="selected.id"
       @change="onChange"
     >
-      <option 
-        v-for="item in locations" 
-        :key="item.id" 
+      <option
+        v-for="item in locations"
+        :key="item.id"
         :value="item.id"
-        :selected="item.id === selected.id"
       >
         {{ item.name }}
       </option>
@@ -31,9 +31,10 @@ export default {
   },
   methods: {
     onChange(event) {
-      const selectedId = parseInt(event.target.value)
-      const location = this.locations.find(l => l.id === selectedId)
-      this.$emit('change-location', location)
+      const selectedId = Number(event.target.value)
+      const currentLocation = this.locations.find(item => item.id === selectedId)
+
+      this.$emit('change-location', currentLocation)
     }
   }
 }
@@ -46,8 +47,8 @@ export default {
 
 .location-selector__select {
   width: 100%;
-  padding: 5px;
-  border: 1px solid black;
-  background: white;
+  padding: 8px;
+  border: 1px solid #000000;
+  background: #ffffff;
 }
 </style>

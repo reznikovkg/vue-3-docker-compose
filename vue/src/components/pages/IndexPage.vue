@@ -5,7 +5,7 @@
         <div class="index__title">Русская рыбалка</div>
       </div>
 
-      <LocationSelector 
+      <LocationSelector
         :locations="locations"
         :selected="selectedLocation"
         @change-location="changeLocation"
@@ -13,17 +13,18 @@
 
       <FishingArea
         :background="currentLocation.background"
-        :is-waiting="isWaiting"
-        :is-mini-game-active="isMiniGameActive"
-        :fish-progress="fishProgress"
-        :line-tension="lineTension"
-        :timer="timer"
-        :bite-message="biteMessage"
+        :message="message"
+        :is-fishing="isFishing"
+        :is-waiting-bite="isWaitingBite"
+        :is-fish-hooked="isFishHooked"
+        :float-x="floatX"
+        :float-y="floatY"
+        :rod-load="rodLoad"
+        :fish-distance="fishDistance"
         @cast="handleCast"
-        @error="showError"
         @start-pull="handleStartPull"
-        @pulling="handlePulling"
         @stop-pull="handleStopPull"
+        @error="showError"
       />
 
       <BiteIndicator
@@ -63,7 +64,7 @@ export default {
           id: 2,
           name: 'Река',
           background: '/img/river.jpg',
-          fish: ['Щука', 'Окунь', 'Плотва']
+          fish: ['Щука', 'Плотва', 'Окунь']
         },
         {
           id: 3,
@@ -73,33 +74,39 @@ export default {
         }
       ],
       selectedLocation: null,
-      isWaiting: false,
-      isMiniGameActive: false,
-      timer: 0,
-      biteMessage: 'Кликни по воде чтобы забросить',
+      isFishing: false,
+      isWaitingBite: false,
+      isFishHooked: false,
+      isPulling: false,
+      floatX: 0,
+      floatY: 0,
+      rodLoad: 0,
+      fishDistance: 0,
+      currentFish: '',
       lastCatch: '',
       catchHistory: [],
+      message: 'Кликни по воде чтобы забросить',
       errorMessage: '',
       biteTimeout: null,
-      timerInterval: null,
-      fishProgress: 0,
-      lineTension: 0,
-      gameInterval: null,
-      isPullingNow: false,
-      currentFish: null
+      fishInterval: null,
+      pullInterval: null,
+      loadInterval: null,
+      fishPowerInterval: null
     }
   },
   computed: {
     currentLocation() {
-      if (!this.selectedLocation) {
-        return this.locations[0]
+      if (this.selectedLocation) {
+        return this.selectedLocation
       }
-      return this.selectedLocation
+
+      return this.locations[0]
     }
   },
   methods: {
-    showError(msg) {
-      this.errorMessage = msg
+    showError(message) {
+      this.errorMessage = message
+
       setTimeout(() => {
         this.errorMessage = ''
       }, 2000)
@@ -110,156 +117,289 @@ export default {
       this.resetFishing()
     },
 
-    resetFishing() {
-      this.isWaiting = false
-      this.isMiniGameActive = false
-      this.timer = 0
-      this.biteMessage = 'Кликни по воде чтобы забросить'
-      this.lastCatch = ''
-      this.currentFish = null
-      
-      clearTimeout(this.biteTimeout)
-      clearInterval(this.timerInterval)
-      this.cleanupMiniGame()
-    },
+    handleCast(position) {
+      if (this.isFishing || this.isWaitingBite || this.isFishHooked) {
+        return
+      }
 
-    handleCast() {
-      if (this.isMiniGameActive || this.isWaiting) return
-      
-      this.isWaiting = true
-      this.biteMessage = ''
-      
-      const timeToBite = Math.floor(Math.random() * 3000) + 2000 // 2-5 секунд
-      this.timer = Math.floor(timeToBite / 1000)
-      
-      this.timerInterval = setInterval(() => {
-        this.timer = this.timer - 1
-      }, 1000)
-      
+      this.clearFishingTimers()
+
+      this.isFishing = true
+      this.isWaitingBite = true
+      this.isFishHooked = false
+      this.isPulling = false
+      this.rodLoad = 0
+      this.fishDistance = 90
+      this.currentFish = ''
+      this.floatX = position.x
+      this.floatY = position.y
+      this.message = 'Ожидание поклевки...'
+
+      const timeToBite = Math.floor(Math.random() * 3000) + 2000
+
       this.biteTimeout = setTimeout(() => {
-        if (this.isWaiting) {
-          this.startMiniGame()
-        }
+        this.startBite()
       }, timeToBite)
     },
 
-    startMiniGame() {
-      this.isWaiting = false
-      this.isMiniGameActive = true
-      clearInterval(this.timerInterval)
-      
+    startBite() {
+      if (!this.isFishing) {
+        return
+      }
+
       const fishList = this.currentLocation.fish
       const randomIndex = Math.floor(Math.random() * fishList.length)
+
       this.currentFish = fishList[randomIndex]
-      
-      this.fishProgress = 10
-      this.lineTension = 0
-      
-      // Игровой цикл
-      this.gameInterval = setInterval(() => {
-        if (!this.isMiniGameActive) return
-        
-        if (this.isPullingNow) {
-          // Тянем - рыба плывет быстро, леска натягивается
-          this.fishProgress += 3.0
-          this.lineTension += 5
-          
-          if (this.lineTension >= 100) {
-            this.lineBreak()
-            return
-          }
-        } else {
-          // Не тянем - рыба уплывает медленно, натяжение падает быстро
-          this.fishProgress = Math.max(0, this.fishProgress - 0.8)  // Медленно уплывает
-          this.lineTension = Math.max(0, this.lineTension - 3)     // Быстро падает
+      this.isWaitingBite = false
+      this.isFishHooked = true
+      this.message = 'Клюет! Подтяни поплавок к себе!'
+
+      this.startFishMove()
+      this.startFishEscape()
+    },
+
+    startFishMove() {
+      clearInterval(this.fishInterval)
+
+      this.fishInterval = setInterval(() => {
+        if (!this.isFishHooked) {
+          return
         }
-        
-        if (this.fishProgress >= 100) {
-          this.catchFish()
-        } else if (this.fishProgress <= 0) {
+
+        if (this.isPulling) {
+          return
+        }
+
+        const centerX = 50
+
+        if (this.floatX <= centerX) {
+          this.floatX = this.floatX - 2.5
+        } else {
+          this.floatX = this.floatX + 2.5
+        }
+
+        this.floatY = this.floatY - 1.5
+
+        if (this.floatX < 8) {
+          this.floatX = 8
+        }
+
+        if (this.floatX > 92) {
+          this.floatX = 92
+        }
+
+        if (this.floatY < 52) {
+          this.floatY = 52
+        }
+
+        if (this.floatY > 88) {
+          this.floatY = 88
+        }
+      }, 210)
+    },
+
+    startFishEscape() {
+      clearInterval(this.fishPowerInterval)
+
+      this.fishPowerInterval = setInterval(() => {
+        if (!this.isFishHooked) {
+          return
+        }
+
+        if (!this.isPulling) {
+          this.fishDistance = this.fishDistance + 2.2
+        } else {
+          this.fishDistance = this.fishDistance - 0.7
+        }
+
+        if (this.fishDistance < 0) {
+          this.fishDistance = 0
+        }
+
+        if (this.fishDistance >= 100) {
           this.missFish()
         }
-      }, 150)
+      }, 230)
     },
 
     handleStartPull() {
-      this.isPullingNow = true
-    },
+      if (!this.isFishHooked) {
+        return
+      }
 
-    handlePulling() {},
+      this.isPulling = true
+      this.message = 'Тяни осторожно!'
+
+      clearInterval(this.pullInterval)
+      clearInterval(this.loadInterval)
+
+      this.pullInterval = setInterval(() => {
+        if (!this.isPulling || !this.isFishHooked) {
+          return
+        }
+
+        const centerX = 50
+
+        if (this.floatX < centerX) {
+          this.floatX = this.floatX + 2.0
+        } else if (this.floatX > centerX) {
+          this.floatX = this.floatX - 2.0
+        }
+
+        this.floatY = this.floatY + 2.0
+        this.fishDistance = this.fishDistance - 2.2
+
+        if (this.floatX < 8) {
+          this.floatX = 8
+        }
+
+        if (this.floatX > 92) {
+          this.floatX = 92
+        }
+
+        if (this.floatY > 84) {
+          this.floatY = 84
+        }
+
+        if (this.fishDistance < 0) {
+          this.fishDistance = 0
+        }
+
+        if (this.floatY >= 80 && this.floatX >= 43 && this.floatX <= 57 && this.fishDistance <= 8) {
+          this.catchFish()
+        }
+      }, 180)
+
+      this.loadInterval = setInterval(() => {
+        if (!this.isPulling || !this.isFishHooked) {
+          return
+        }
+
+        this.rodLoad = this.rodLoad + 7
+
+        if (this.rodLoad >= 100) {
+          this.breakRod()
+        }
+      }, 210)
+    },
 
     handleStopPull() {
-      this.isPullingNow = false
+      this.isPulling = false
+
+      clearInterval(this.pullInterval)
+      clearInterval(this.loadInterval)
+
+      if (this.isFishHooked) {
+        this.message = 'Рыба тянет поплавок в сторону'
+        this.startRodRelax()
+      }
     },
 
-    lineBreak() {
-      this.biteMessage = 'Леска порвалась!'
-      this.isMiniGameActive = false
-      this.currentFish = null
-      this.cleanupMiniGame()
-      
-      setTimeout(() => {
-        this.biteMessage = 'Кликни по воде чтобы забросить'
-      }, 1500)
+    startRodRelax() {
+      clearInterval(this.loadInterval)
+
+      this.loadInterval = setInterval(() => {
+        if (this.isPulling || !this.isFishHooked) {
+          clearInterval(this.loadInterval)
+          return
+        }
+
+        this.rodLoad = this.rodLoad - 8
+
+        if (this.rodLoad <= 0) {
+          this.rodLoad = 0
+          clearInterval(this.loadInterval)
+        }
+      }, 170)
     },
 
     catchFish() {
       this.lastCatch = this.currentFish
-      const historyItem = this.currentFish + ' - ' + this.currentLocation.name
-      this.catchHistory.unshift(historyItem)
+
+      const catchItem = this.currentFish + ' - ' + this.currentLocation.name
+      this.catchHistory.unshift(catchItem)
+
       if (this.catchHistory.length > 5) {
         this.catchHistory.pop()
       }
-      
-      this.biteMessage = 'Рыба поймана!'
-      this.isMiniGameActive = false
-      this.currentFish = null
-      this.cleanupMiniGame()
-      
-      setTimeout(() => {
-        this.biteMessage = 'Кликни по воде чтобы забросить'
-      }, 1500)
+
+      this.message = 'Рыба поймана!'
+      this.finishFishing()
     },
 
     missFish() {
-      this.biteMessage = 'Рыба сорвалась'
-      this.isMiniGameActive = false
-      this.currentFish = null
-      this.cleanupMiniGame()
-      
+      this.message = 'Рыба сорвалась'
+      this.finishFishing()
+    },
+
+    breakRod() {
+      this.message = 'Удочка сломалась!'
+      this.finishFishing()
+    },
+
+    finishFishing() {
+      this.clearFishingTimers()
+      this.isFishing = false
+      this.isWaitingBite = false
+      this.isFishHooked = false
+      this.isPulling = false
+      this.rodLoad = 0
+      this.fishDistance = 0
+      this.currentFish = ''
+
       setTimeout(() => {
-        this.biteMessage = 'Кликни по воде чтобы забросить'
+        if (!this.isFishing && !this.isFishHooked) {
+          this.message = 'Кликни по воде чтобы забросить'
+        }
       }, 1500)
     },
 
-    cleanupMiniGame() {
-      clearInterval(this.gameInterval)
-      this.isPullingNow = false
+    resetFishing() {
+      this.clearFishingTimers()
+      this.isFishing = false
+      this.isWaitingBite = false
+      this.isFishHooked = false
+      this.isPulling = false
+      this.floatX = 0
+      this.floatY = 0
+      this.rodLoad = 0
+      this.fishDistance = 0
+      this.currentFish = ''
+      this.lastCatch = ''
+      this.message = 'Кликни по воде чтобы забросить'
+    },
+
+    clearFishingTimers() {
+      clearTimeout(this.biteTimeout)
+      clearInterval(this.fishInterval)
+      clearInterval(this.pullInterval)
+      clearInterval(this.loadInterval)
+      clearInterval(this.fishPowerInterval)
     }
   },
   created() {
     this.selectedLocation = this.locations[0]
   },
-  beforeDestroy() {
-    clearTimeout(this.biteTimeout)
-    clearInterval(this.timerInterval)
-    this.cleanupMiniGame()
+  beforeUnmount() {
+    this.clearFishingTimers()
   }
 }
 </script>
 
 <style scoped>
 .index {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   padding: 10px;
-  background: white;
+  background: #ffffff;
 }
 
 .index__container {
   max-width: 400px;
   margin: 0 auto;
-  border: 1px solid black;
+  border: 1px solid #000000;
   padding: 10px;
+  background: #ffffff;
 }
 
 .index__header {
@@ -268,16 +408,16 @@ export default {
 }
 
 .index__title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
 }
 
 .index__error {
   margin-top: 10px;
   padding: 10px;
-  background: #ffcccc;
-  border: 1px solid red;
-  color: red;
+  border: 1px solid #cc0000;
+  background: #ffd9d9;
+  color: #cc0000;
   text-align: center;
 }
 </style>

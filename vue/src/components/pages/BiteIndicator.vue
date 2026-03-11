@@ -1,13 +1,18 @@
 <template>
-  <div>
-    <div class="bite-indicator__catch" v-if="lastCatch">
+  <div class="bite-indicator">
+    <div v-if="lastCatch" class="bite-indicator__catch">
       Поймано: {{ lastCatch }}
     </div>
 
-    <div class="bite-indicator__history" v-if="catchHistory.length > 0">
-      <div class="bite-indicator__history-title">История улова:</div>
-      <div class="bite-indicator__history-list">
-        <div v-for="(item, idx) in catchHistory" :key="idx" class="bite-indicator__history-item">
+    <div v-if="catchHistory.length > 0" class="bite-indicator__history">
+      <div class="bite-indicator__title">История улова:</div>
+
+      <div class="bite-indicator__list">
+        <div
+          v-for="(item, index) in catchHistory"
+          :key="index"
+          class="bite-indicator__item"
+        >
           {{ item }}
         </div>
       </div>
@@ -25,7 +30,9 @@ export default {
     },
     catchHistory: {
       type: Array,
-      default: () => []
+      default() {
+        return []
+      }
     }
   }
 }
@@ -33,38 +40,37 @@ export default {
 
 <style scoped>
 .bite-indicator__catch {
-  border: 1px solid black;
-  padding: 5px;
-  text-align: center;
-  background: #e0e0e0;
   margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #000000;
+  background: #e8e8e8;
+  text-align: center;
 }
 
 .bite-indicator__history {
-  border: 1px solid black;
   padding: 10px;
-  background: #f9f9f9;
+  border: 1px solid #000000;
+  background: #f8f8f8;
 }
 
-.bite-indicator__history-title {
+.bite-indicator__title {
+  margin-bottom: 6px;
   font-weight: bold;
-  margin-bottom: 5px;
+}
+
+.bite-indicator__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bite-indicator__item {
+  padding-bottom: 4px;
+  border-bottom: 1px dotted #bbbbbb;
   font-size: 14px;
 }
 
-.bite-indicator__history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.bite-indicator__history-item {
-  font-size: 12px;
-  padding: 2px 0;
-  border-bottom: 1px dotted #ccc;
-}
-
-.bite-indicator__history-item:last-child {
+.bite-indicator__item:last-child {
   border-bottom: none;
 }
 </style>
