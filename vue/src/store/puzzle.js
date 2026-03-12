@@ -13,9 +13,23 @@ export default {
     }),
 
     getters: {
+        gridSize: (state) => state.gridSize,
+        moves: (state) => state.moves,
+        timer: (state) => state.timer,
+        specialMoves: (state) => state.specialMoves,
+        blockedIndex: (state) => state.blockedIndex,
+        records: (state) => state.records,
+        isGameActive: (state) => state.isGameActive,
+        tiles: (state) => state.tiles,
+
         isWin: (state) => {
-            if (!state.tiles || state.tiles.length === 0) return false
-            if (!state.isGameActive) return false
+            if (!state.tiles || state.tiles.length === 0) {
+                return false
+            }
+
+            if (!state.isGameActive) {
+                return false
+            }
 
             const total = state.gridSize * state.gridSize
 
@@ -31,7 +45,9 @@ export default {
         },
 
         tileList: (state) => {
-            if (!state.tiles || state.tiles.length === 0) return []
+            if (!state.tiles || state.tiles.length === 0) {
+                return []
+            }
 
             return state.tiles.map((value, index) => {
                 return {
@@ -50,51 +66,51 @@ export default {
     },
 
     mutations: {
-        SET_GRID_SIZE(state, size) {
+        SET_GRID_SIZE: (state, size) => {
             state.gridSize = size
         },
 
-        SET_TILES(state, tiles) {
+        SET_TILES: (state, tiles) => {
             state.tiles = tiles
         },
 
-        SET_MOVES(state, moves) {
+        SET_MOVES: (state, moves) => {
             state.moves = moves
         },
 
-        SET_TIMER(state, timer) {
+        SET_TIMER: (state, timer) => {
             state.timer = timer
         },
 
-        SET_SPECIAL_MOVES(state, count) {
+        SET_SPECIAL_MOVES: (state, count) => {
             state.specialMoves = count
         },
 
-        SET_BLOCKED_INDEX(state, index) {
+        SET_BLOCKED_INDEX: (state, index) => {
             state.blockedIndex = index
         },
 
-        SET_RECORDS(state, records) {
+        SET_RECORDS: (state, records) => {
             state.records = records
         },
 
-        SET_GAME_ACTIVE(state, active) {
+        SET_GAME_ACTIVE: (state, active) => {
             state.isGameActive = active
         },
 
-        SWAP_TILES(state, { idx1, idx2 }) {
+        SWAP_TILES: (state, { idx1, idx2 }) => {
             const temp = state.tiles[idx1]
             state.tiles[idx1] = state.tiles[idx2]
             state.tiles[idx2] = temp
         },
 
-        INCREMENT_TIMER(state) {
+        INCREMENT_TIMER: (state) => {
             if (state.isGameActive) {
                 state.timer++
             }
         },
 
-        INCREMENT_SPECIAL_MOVES(state) {
+        INCREMENT_SPECIAL_MOVES: (state) => {
             if (state.isGameActive) {
                 state.specialMoves++
             }
@@ -102,20 +118,20 @@ export default {
     },
 
     actions: {
-        formatTime({ state }, seconds) {
+        formatTime: ({ state }, seconds) => {
             const mins = Math.floor(seconds / 60)
             const secs = seconds % 60
             return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
         },
 
-        loadRecords({ commit }) {
+        loadRecords: ({ commit }) => {
             const saved = localStorage.getItem('puzzleRecords')
             if (saved) {
                 commit('SET_RECORDS', JSON.parse(saved))
             }
         },
 
-        saveRecord({ state, commit }) {
+        saveRecord: ({ state, commit }) => {
             const key = `${state.gridSize}x${state.gridSize}`
             const currentRecord = state.records[key]
 
@@ -126,7 +142,7 @@ export default {
             }
         },
 
-        initGame({ commit, state }) {
+        initGame: ({ commit, state }) => {
             commit('SET_MOVES', 0)
             commit('SET_TIMER', 0)
             commit('SET_SPECIAL_MOVES', 0)
@@ -145,7 +161,7 @@ export default {
             commit('SET_TILES', tiles)
         },
 
-        shuffleBoard({ commit, state }) {
+        shuffleBoard: ({ commit, state }) => {
             let previousIndex = -1
             const shuffleMoves = state.gridSize * state.gridSize * 10
 
@@ -155,12 +171,25 @@ export default {
                 const col = emptyIndex % state.gridSize
                 const neighbors = []
 
-                if (row > 0) neighbors.push(emptyIndex - state.gridSize)
-                if (row < state.gridSize - 1) neighbors.push(emptyIndex + state.gridSize)
-                if (col > 0) neighbors.push(emptyIndex - 1)
-                if (col < state.gridSize - 1) neighbors.push(emptyIndex + 1)
+                if (row > 0) {
+                    neighbors.push(emptyIndex - state.gridSize)
+                }
 
-                const validNeighbors = neighbors.filter((n) => n !== previousIndex)
+                if (row < state.gridSize - 1) {
+                    neighbors.push(emptyIndex + state.gridSize)
+                }
+
+                if (col > 0) {
+                    neighbors.push(emptyIndex - 1)
+                }
+
+                if (col < state.gridSize - 1) {
+                    neighbors.push(emptyIndex + 1)
+                }
+
+                const validNeighbors = neighbors.filter((n) => {
+                    return n !== previousIndex
+                })
                 const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)]
 
                 commit('SWAP_TILES', { idx1: emptyIndex, idx2: randomNeighbor })
@@ -172,10 +201,21 @@ export default {
             const col = emptyIndex % state.gridSize
             const neighbors = []
 
-            if (row > 0) neighbors.push(emptyIndex - state.gridSize)
-            if (row < state.gridSize - 1) neighbors.push(emptyIndex + state.gridSize)
-            if (col > 0) neighbors.push(emptyIndex - 1)
-            if (col < state.gridSize - 1) neighbors.push(emptyIndex + 1)
+            if (row > 0) {
+                neighbors.push(emptyIndex - state.gridSize)
+            }
+
+            if (row < state.gridSize - 1) {
+                neighbors.push(emptyIndex + state.gridSize)
+            }
+
+            if (col > 0) {
+                neighbors.push(emptyIndex - 1)
+            }
+
+            if (col < state.gridSize - 1) {
+                neighbors.push(emptyIndex + 1)
+            }
 
             if (neighbors.length > 0) {
                 const randomIndex = Math.floor(Math.random() * neighbors.length)
@@ -187,11 +227,7 @@ export default {
             commit('SET_GAME_ACTIVE', true)
         },
 
-        clearBlockedMove({ commit }) {
-            commit('SET_BLOCKED_INDEX', null)
-        },
-
-        handleTileClick({ commit, state }, index) {
+        handleTileClick: ({ commit, state }, index) => {
             if (!state.isGameActive) {
                 return false
             }
@@ -208,10 +244,21 @@ export default {
                 const col = emptyIndex % state.gridSize
                 const neighbors = []
 
-                if (row > 0) neighbors.push(emptyIndex - state.gridSize)
-                if (row < state.gridSize - 1) neighbors.push(emptyIndex + state.gridSize)
-                if (col > 0) neighbors.push(emptyIndex - 1)
-                if (col < state.gridSize - 1) neighbors.push(emptyIndex + 1)
+                if (row > 0) {
+                    neighbors.push(emptyIndex - state.gridSize)
+                }
+
+                if (row < state.gridSize - 1) {
+                    neighbors.push(emptyIndex + state.gridSize)
+                }
+
+                if (col > 0) {
+                    neighbors.push(emptyIndex - 1)
+                }
+
+                if (col < state.gridSize - 1) {
+                    neighbors.push(emptyIndex + 1)
+                }
 
                 if (neighbors.length > 0) {
                     const randomIndex = Math.floor(Math.random() * neighbors.length)
@@ -220,8 +267,10 @@ export default {
 
                 const total = state.gridSize * state.gridSize
                 let isWin = true
+
                 for (let i = 0; i < total; i++) {
                     const expectedValue = (i < total - 1) ? (i + 1) : 0
+
                     if (state.tiles[i] !== expectedValue) {
                         isWin = false
                         break
@@ -243,10 +292,21 @@ export default {
             const col = emptyIndex % state.gridSize
             const neighbors = []
 
-            if (row > 0) neighbors.push(emptyIndex - state.gridSize)
-            if (row < state.gridSize - 1) neighbors.push(emptyIndex + state.gridSize)
-            if (col > 0) neighbors.push(emptyIndex - 1)
-            if (col < state.gridSize - 1) neighbors.push(emptyIndex + 1)
+            if (row > 0) {
+                neighbors.push(emptyIndex - state.gridSize)
+            }
+
+            if (row < state.gridSize - 1) {
+                neighbors.push(emptyIndex + state.gridSize)
+            }
+
+            if (col > 0) {
+                neighbors.push(emptyIndex - 1)
+            }
+
+            if (col < state.gridSize - 1) {
+                neighbors.push(emptyIndex + 1)
+            }
 
             if (neighbors.includes(index)) {
                 commit('SWAP_TILES', { idx1: emptyIndex, idx2: index })
@@ -257,10 +317,21 @@ export default {
                 const newCol = index % state.gridSize
                 const newNeighbors = []
 
-                if (newRow > 0) newNeighbors.push(index - state.gridSize)
-                if (newRow < state.gridSize - 1) newNeighbors.push(index + state.gridSize)
-                if (newCol > 0) newNeighbors.push(index - 1)
-                if (newCol < state.gridSize - 1) newNeighbors.push(index + 1)
+                if (newRow > 0) {
+                    newNeighbors.push(index - state.gridSize)
+                }
+
+                if (newRow < state.gridSize - 1) {
+                    newNeighbors.push(index + state.gridSize)
+                }
+
+                if (newCol > 0) {
+                    newNeighbors.push(index - 1)
+                }
+
+                if (newCol < state.gridSize - 1) {
+                    newNeighbors.push(index + 1)
+                }
 
                 if (newNeighbors.length > 0) {
                     const randomIndex = Math.floor(Math.random() * newNeighbors.length)
@@ -269,8 +340,10 @@ export default {
 
                 const total = state.gridSize * state.gridSize
                 let isWin = true
+
                 for (let i = 0; i < total; i++) {
                     const expectedValue = (i < total - 1) ? (i + 1) : 0
+
                     if (state.tiles[i] !== expectedValue) {
                         isWin = false
                         break
@@ -287,7 +360,7 @@ export default {
             return false
         },
 
-        changeGridSize({ commit }, newSize) {
+        changeGridSize: ({ commit }, newSize) => {
             commit('SET_GRID_SIZE', newSize)
         },
     },

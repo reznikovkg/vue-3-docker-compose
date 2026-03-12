@@ -73,7 +73,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 import PuzzleTile from './PuzzleTile.vue'
 
 export default {
@@ -88,14 +88,11 @@ export default {
     }
   },
   computed: {
-    ...mapState('puzzle', [
+    ...mapGetters('puzzle', [
       'gridSize',
       'moves',
       'timer',
       'specialMoves',
-    ]),
-
-    ...mapGetters('puzzle', [
       'isWin',
       'tileList',
       'recordTime',
@@ -139,9 +136,9 @@ export default {
   methods: {
     ...mapActions('puzzle', [
       'initGame',
+      'shuffleBoard',
       'handleTileClick',
       'changeGridSize',
-      'shuffleBoard',
     ]),
 
     restartGame() {
@@ -149,6 +146,15 @@ export default {
       setTimeout(() => {
         this.shuffleBoard()
       }, 50)
+    },
+
+    changeSize(delta) {
+      const newSize = this.gridSize + delta
+
+      if (newSize >= 3) {
+        this.changeGridSize(newSize)
+        this.restartGame()
+      }
     },
 
     startTimer() {
@@ -176,15 +182,6 @@ export default {
       if (this.specialMoveInterval) {
         clearInterval(this.specialMoveInterval)
         this.specialMoveInterval = null
-      }
-    },
-
-    changeSize(delta) {
-      const newSize = this.gridSize + delta
-
-      if (newSize >= 3) {
-        this.changeGridSize(newSize)
-        this.restartGame()
       }
     },
   },
