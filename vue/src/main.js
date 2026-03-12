@@ -1,19 +1,18 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import App from './App.vue'
+import router from './router'
 import store from './store'
-import { router, ROUTES } from '@/router/index.js'
 
-const routes = {
-  install(app, options) {
-    console.log(ROUTES)
-    app.config.globalProperties.$routes = ROUTES
-  }
+const mount = () => {
+  store.dispatch('loadLevel', 1)
+  createApp(App)
+    .use(router)
+    .use(store)
+    .mount('#project')
 }
 
-createApp(App)
-  .use(router)
-  .use(routes)
-  .use(store)
-  .mount('#project')
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', mount)
+} else {
+  mount()
+}
