@@ -8,7 +8,7 @@
       <LocationSelector
         :locations="locations"
         :selected="selectedLocation"
-        @change-location="changeLocation"
+        @change-location="(location) => changeLocation(location)"
       />
 
       <FishingArea
@@ -21,10 +21,10 @@
         :float-y="floatY"
         :rod-load="rodLoad"
         :fish-distance="fishDistance"
-        @cast="handleCast"
-        @start-pull="handleStartPull"
-        @stop-pull="handleStopPull"
-        @error="showError"
+        @cast="(position) => handleCast(position)"
+        @start-pull="() => handleStartPull()"
+        @stop-pull="() => handleStopPull()"
+        @error="(message) => showError(message)"
       />
 
       <BiteIndicator
@@ -38,7 +38,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import LocationSelector from './LocationSelector.vue'
 import FishingArea from './FishingArea.vue'
@@ -242,12 +241,12 @@ export default {
         const centerX = 50
 
         if (this.floatX < centerX) {
-          this.floatX = this.floatX + 2.0
+          this.floatX = this.floatX + 2
         } else if (this.floatX > centerX) {
-          this.floatX = this.floatX - 2.0
+          this.floatX = this.floatX - 2
         }
 
-        this.floatY = this.floatY + 2.0
+        this.floatY = this.floatY + 2
         this.fishDistance = this.fishDistance - 2.2
 
         if (this.floatX < 8) {
@@ -386,38 +385,37 @@ export default {
   }
 }
 </script>
-
-<style scoped>
+<style scoped lang="scss">
 .index {
   font-family: Arial, sans-serif;
   padding: 10px;
   background: #ffffff;
-}
 
-.index__container {
-  max-width: 400px;
-  margin: 0 auto;
-  border: 1px solid #000000;
-  padding: 10px;
-  background: #ffffff;
-}
+  &__container {
+    max-width: 400px;
+    margin: 0 auto;
+    border: 1px solid #000000;
+    padding: 10px;
+    background: #ffffff;
+  }
 
-.index__header {
-  text-align: center;
-  margin-bottom: 10px;
-}
+  &__header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
 
-.index__title {
-  font-size: 22px;
-  font-weight: bold;
-}
+  &__title {
+    font-size: 22px;
+    font-weight: bold;
+  }
 
-.index__error {
-  margin-top: 10px;
-  padding: 10px;
-  border: 1px solid #cc0000;
-  background: #ffd9d9;
-  color: #cc0000;
-  text-align: center;
+  &__error {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #cc0000;
+    background: #ffd9d9;
+    color: #cc0000;
+    text-align: center;
+  }
 }
 </style>

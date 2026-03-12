@@ -19,7 +19,6 @@
     </div>
   </div>
 </template>
-
 <script>
 export default {
   name: 'BiteIndicator',
@@ -37,40 +36,41 @@ export default {
   }
 }
 </script>
+<style scoped lang="scss">
+.bite-indicator {
+  &__catch {
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #000000;
+    background: #e8e8e8;
+    text-align: center;
+  }
 
-<style scoped>
-.bite-indicator__catch {
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid #000000;
-  background: #e8e8e8;
-  text-align: center;
-}
+  &__history {
+    padding: 10px;
+    border: 1px solid #000000;
+    background: #f8f8f8;
+  }
 
-.bite-indicator__history {
-  padding: 10px;
-  border: 1px solid #000000;
-  background: #f8f8f8;
-}
+  &__title {
+    margin-bottom: 6px;
+    font-weight: bold;
+  }
 
-.bite-indicator__title {
-  margin-bottom: 6px;
-  font-weight: bold;
-}
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
 
-.bite-indicator__list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+  &__item {
+    padding-bottom: 4px;
+    border-bottom: 1px dotted #bbbbbb;
+    font-size: 14px;
 
-.bite-indicator__item {
-  padding-bottom: 4px;
-  border-bottom: 1px dotted #bbbbbb;
-  font-size: 14px;
-}
-
-.bite-indicator__item:last-child {
-  border-bottom: none;
+    &:last-child {
+      border-bottom: none;
+    }
+  }
 }
 </style>

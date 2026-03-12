@@ -3,14 +3,14 @@
     <div
       class="fishing-area__water"
       :style="{ backgroundImage: 'url(' + background + ')' }"
-      @click="onWaterClick"
+      @click="(event) => onWaterClick(event)"
     >
       <div class="fishing-area__overlay"></div>
 
       <div
         v-if="isFishHooked"
         class="fishing-area__minigame"
-        @click.stop
+        @click="(event) => event.stopPropagation()"
       >
         <div class="fishing-area__progress">
           <span class="fishing-area__label">Рыба:</span>
@@ -27,7 +27,8 @@
           <div class="fishing-area__bar">
             <div
               class="fishing-area__bar-fill"
-              :style="{ width: rodLoad + '%', background: rodLoad > 80 ? 'red' : '#4CAF50' }"
+              :class="{ 'fishing-area__bar-fill--danger': rodLoad > 80 }"
+              :style="{ width: rodLoad + '%' }"
             ></div>
           </div>
         </div>
@@ -55,19 +56,18 @@
       <button
         v-if="isFishHooked"
         class="fishing-area__action-button"
-        @mousedown="startPull"
-        @mouseup="stopPull"
-        @mouseleave="stopPull"
-        @touchstart.prevent="startPull"
-        @touchend="stopPull"
-        @touchcancel="stopPull"
+        @mousedown="() => startPull()"
+        @mouseup="() => stopPull()"
+        @mouseleave="() => stopPull()"
+        @touchstart.prevent="() => startPull()"
+        @touchend="() => stopPull()"
+        @touchcancel="() => stopPull()"
       >
         Тащи!
       </button>
     </div>
   </div>
 </template>
-
 <script>
 export default {
   name: 'FishingArea',
@@ -145,120 +145,123 @@ export default {
   }
 }
 </script>
-
-<style scoped>
+<style scoped lang="scss">
 .fishing-area {
   margin-bottom: 10px;
-}
 
-.fishing-area__water {
-  position: relative;
-  height: 420px;
-  border: 1px solid black;
-  margin-bottom: 10px;
-  padding: 10px;
-  background-size: cover;
-  background-position: center;
-  overflow: hidden;
-  cursor: crosshair;
-}
+  &__water {
+    position: relative;
+    height: 420px;
+    border: 1px solid black;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    cursor: crosshair;
+  }
 
-.fishing-area__overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.15);
-  pointer-events: none;
-}
+  &__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+  }
 
-.fishing-area__minigame {
-  position: absolute;
-  bottom: 70px;
-  left: 20px;
-  right: 20px;
-  z-index: 20;
-  pointer-events: none;
-}
+  &__minigame {
+    position: absolute;
+    bottom: 70px;
+    left: 20px;
+    right: 20px;
+    z-index: 20;
+    pointer-events: none;
+  }
 
-.fishing-area__progress {
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  &__progress {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-.fishing-area__label {
-  font-size: 12px;
-  font-weight: bold;
-  min-width: 50px;
-  color: white;
-  text-shadow: 1px 1px 2px black;
-}
+  &__label {
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 50px;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+  }
 
-.fishing-area__bar {
-  flex: 1;
-  height: 16px;
-  background: #ddd;
-  border: 1px solid black;
-  overflow: hidden;
-}
+  &__bar {
+    flex: 1;
+    height: 16px;
+    background: #dddddd;
+    border: 1px solid black;
+    overflow: hidden;
+  }
 
-.fishing-area__bar-fill {
-  height: 100%;
-  background: #4CAF50;
-  transition: width 0.1s;
-}
+  &__bar-fill {
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.1s;
 
-.fishing-area__message {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 220px;
-  background: white;
-  border: 1px solid black;
-  padding: 5px;
-  z-index: 5;
-  pointer-events: none;
-  text-align: center;
-}
+    &--danger {
+      background: #d9534f;
+    }
+  }
 
-.fishing-area__float {
-  position: absolute;
-  width: 34px;
-  height: 34px;
-  margin-left: -17px;
-  margin-top: -17px;
-  z-index: 10;
-  pointer-events: none;
-}
+  &__message {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 220px;
+    background: white;
+    border: 1px solid black;
+    padding: 5px;
+    z-index: 5;
+    pointer-events: none;
+    text-align: center;
+  }
 
-.fishing-area__float-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
+  &__float {
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    margin-left: -17px;
+    margin-top: -17px;
+    z-index: 10;
+    pointer-events: none;
+  }
 
-.fishing-area__action-button {
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: 35px;
-  padding: 10px;
-  font-size: 16px;
-  font-weight: bold;
-  background: #4CAF50;
-  color: white;
-  border: 1px solid black;
-  cursor: pointer;
-  user-select: none;
-  z-index: 20;
-}
+  &__float-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 
-.fishing-area__action-button:active {
-  background: #45a049;
+  &__action-button {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 35px;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #4caf50;
+    color: white;
+    border: 1px solid black;
+    cursor: pointer;
+    user-select: none;
+    z-index: 20;
+
+    &:active {
+      background: #45a049;
+    }
+  }
 }
 </style>
