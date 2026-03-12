@@ -1,57 +1,49 @@
 <template>
   <div class="home-page">
-
     <div class="home-page__bg"></div>
 
-    <button 
-      class="fish-button"
-      @click="() => clickFishButton()"
-    >
+    <button class="fish-button" @click="() => clickFishButton()">
       На рыбалку
     </button>
 
-    <div 
-      class="locations-container"
-      v-if="showLocationList"
-    >
-      <LocationsList @close="() => closeLocationList()">
-      </LocationsList>
+    <div class="locations-container" v-if="showLocationList">
+      <LocationsList @close="() => closeLocationList()"> </LocationsList>
     </div>
   </div>
 </template>
 
 <script setup>
-import {ref} from 'vue'
-import LocationsList from '../LocationsList.vue';
+import { ref } from "vue";
+import LocationsList from "../LocationsList.vue";
 
-const showLocationList = ref(false)
+const showLocationList = ref(false);
 
 const clickFishButton = () => {
-  showLocationList.value = true
-}
+  showLocationList.value = true;
+};
 
 const closeLocationList = () => {
-  showLocationList.value = false
-}
+  showLocationList.value = false;
+};
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .home-page {
   width: 100%;
   height: 100vh;
-}
 
-.home-page__bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('/images/home_background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  &__bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("/images/home_background.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
 }
 
 .fish-button {

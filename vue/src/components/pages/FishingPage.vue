@@ -147,13 +147,21 @@ const lineStyle = computed(() => {
   const startX = rodTipPosition.value.x;
   const startY = rodTipPosition.value.y;
 
-  const endX = floatPosition.value.x;
-  const endY = floatPosition.value.y - 15;
+  const endBeginX = floatPosition.value.x;
+  const endBeginY = floatPosition.value.y - 15;
+
+  const rodRect = rodRef.value.getBoundingClientRect();
+  const endTargetX = rodTipPosition.value.x;
+  const endTargetY = rodRect.top + 500;
+
+  const t = progress.value / 100;
+
+  const endX = endBeginX + (endTargetX - endBeginX) * t;
+  const endY = endBeginY + (endTargetY - endBeginY) * t;
 
   const dx = endX - startX;
   const dy = endY - startY;
-  const maxLength = Math.sqrt(dx * dx + dy * dy);
-  const currentLength = (maxLength * (100 - progress.value)) / 100;
+  const currentLength = Math.sqrt(dx * dx + dy * dy);
   const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
 
   return {
@@ -172,16 +180,17 @@ const lineStyle = computed(() => {
 const floatStyle = computed(() => {
   if (!rodRef.value) return { display: "none" };
 
-  const rodX = rodTipPosition.value.x;
-  const rodY = rodTipPosition.value.y;
+  const startX = floatPosition.value.x;
+  const startY = floatPosition.value.y;
 
-  const floatX = floatPosition.value.x;
-  const floatY = floatPosition.value.y;
+  const rodRect = rodRef.value.getBoundingClientRect();
+  const endX = rodTipPosition.value.x;
+  const endY = rodRect.top + 500;
 
   const t = progress.value / 100;
 
-  const x = floatX + (rodX - floatX) * t;
-  const y = floatY + (rodY - floatY) * t;
+  const x = startX + (endX - startX) * t;
+  const y = startY + (endY - startY) * t;
 
   return {
     position: "fixed",
@@ -198,7 +207,7 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .bg {
   position: fixed;
   top: 0;
@@ -257,31 +266,31 @@ onUnmounted(() => {
   background-repeat: no-repeat;
   z-index: 10;
   pointer-events: none;
-}
 
-.float__body {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 28px;
-  background: linear-gradient(135deg, #ff6b6b, #ff4757);
-  border-radius: 50% 50% 40% 40%;
-  border: 2px solid #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
+  &__body {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 28px;
+    background: linear-gradient(135deg, #ff6b6b, #ff4757);
+    border-radius: 50% 50% 40% 40%;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
 
-.float__tip {
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 10px;
-  background: linear-gradient(135deg, #ffff8f, #ffff00);
-  border-radius: 4px 4px 0 0;
-  border: 1px solid #fff;
+  &__tip {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 10px;
+    background: linear-gradient(135deg, #ffff8f, #ffff00);
+    border-radius: 4px 4px 0 0;
+    border: 1px solid #fff;
+  }
 }
 
 .fish-button {
@@ -318,38 +327,38 @@ onUnmounted(() => {
   background: #1a1a1a;
   padding: 12px;
   border-radius: 20px;
-}
 
-.progress-wrapper__label {
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  padding-left: 5px;
-  letter-spacing: 1px;
-}
+  &__label {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    padding-left: 5px;
+    letter-spacing: 1px;
+  }
 
-.progress-wrapper__bar {
-  width: 100%;
-  height: 30px;
-  background: #2c3e50;
-  border-radius: 15px;
-  overflow: hidden;
-}
+  &__bar {
+    width: 100%;
+    height: 30px;
+    background: #2c3e50;
+    border-radius: 15px;
+    overflow: hidden;
+  }
 
-.progress-wrapper__fill {
-  height: 100%;
-  background: green;
-  transition: width 0.1s linear;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 10px;
-}
+  &__fill {
+    height: 100%;
+    background: green;
+    transition: width 0.1s linear;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+  }
 
-.progress-wrapper__text {
-  color: white;
-  font-size: 14px;
+  &__text {
+    color: white;
+    font-size: 14px;
+  }
 }
 
 .reel-button {
@@ -361,11 +370,11 @@ onUnmounted(() => {
   font-size: 32px;
   cursor: pointer;
   border-radius: 30px;
-}
 
-.reel-button--active {
-  transform: scale(0.98);
-  background: linear-gradient(135deg, #cc0000, #990000);
+  &--active {
+    transform: scale(0.98);
+    background: linear-gradient(135deg, #cc0000, #990000);
+  }
 }
 
 .score-panel {
@@ -382,23 +391,23 @@ onUnmounted(() => {
   z-index: 1000;
   min-width: 250px;
   border-radius: 30px;
-}
 
-.score-panel__label {
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  margin-bottom: 5px;
-  text-transform: uppercase;
-}
+  &_label {
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
 
-.score-panel__value {
-  color: white;
-  font-size: 42px;
-  font-weight: bold;
-  line-height: 1;
-  text-shadow: 2px 2px 4px black;
+  &__value {
+    color: white;
+    font-size: 42px;
+    font-weight: bold;
+    line-height: 1;
+    text-shadow: 2px 2px 4px black;
+  }
 }
 
 .menu-button {
@@ -414,9 +423,9 @@ onUnmounted(() => {
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-}
 
-.menu-button__text {
-  color: white;
+  &__text {
+    color: white;
+  }
 }
 </style>
