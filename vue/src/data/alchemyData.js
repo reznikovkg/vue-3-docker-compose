@@ -14,22 +14,23 @@ export const elementsMap = {
   6: { id: 6, name: 'Грязь', icon: '💩' },
   7: { id: 7, name: 'Лава', icon: '🌋' },
   8: { id: 8, name: 'Туман', icon: '🌫️' },
-  9: { id: 9, name: 'Энергия', icon: '⚡' },
   10: { id: 10, name: 'Пыль', icon: '🏜️' },
   11: { id: 11, name: 'Глина', icon: '🏺' },
-  12: { id: 12, name: 'Дождь', icon: '🌧️' },
   13: { id: 13, name: 'Гейзер', icon: '⛲' },
   14: { id: 14, name: 'Камень', icon: '🪨' },
   15: { id: 15, name: 'Спирт', icon: '🥃' },
-  16: { id: 16, name: 'Жизнь', icon: '🧬' },
   17: { id: 17, name: 'Облако', icon: '☁️' },
   18: { id: 18, name: 'Кремень', icon: '🔪' },
   19: { id: 19, name: 'Керамика', icon: '🍶' },
   20: { id: 20, name: 'Лекарство', icon: '💊' },
-  21: { id: 21, name: 'Душа', icon: '👻' },
   22: { id: 22, name: 'Инструменты', icon: '🔧' },
   23: { id: 23, name: 'Бактерии', icon: '🦠' },
-  24: { id: 24, name: 'Дождь', icon: '🌧️' }
+
+  //элементы через крафт 3х3
+  9: { id: 9, name: 'Энергия', icon: '⚡' },
+  12: { id: 12, name: 'Дождь', icon: '🌧️' },
+  16: { id: 16, name: 'Жизнь', icon: '🧬' },
+  21: { id: 21, name: 'Душа', icon: '👻' },
 }
 
 export const recipes = [
@@ -54,11 +55,6 @@ export const recipes = [
     output: 8 // Туман
   },
   {
-    id: 5,
-    inputs: [1, 4], // Огонь + Воздух
-    output: 9 // Энергия
-  },
-  {
     id: 6,
     inputs: [3, 4], // Земля + Воздух
     output: 10 // Пыль
@@ -67,11 +63,6 @@ export const recipes = [
     id: 7,
     inputs: [1, 2, 3], // Огонь + Вода + Земля
     output: 11 // Глина
-  },
-  {
-    id: 8,
-    inputs: [1, 4, 2], // Огонь + Воздух + Вода
-    output: 12 // Дождь
   },
   {
     id: 9,
@@ -87,11 +78,6 @@ export const recipes = [
     id: 11,
     inputs: [9, 2], // Энергия + Вода
     output: 15 // Спирт
-  },
-  {
-    id: 12,
-    inputs: [1, 2, 3, 4], // Все базовые элементы
-    output: 16 // Жизнь
   },
   {
     id: 13,
@@ -114,11 +100,6 @@ export const recipes = [
     output: 20 // Лекарство
   },
   {
-    id: 17,
-    inputs: [16, 9], // Жизнь + Энергия
-    output: 21 // Душа
-  },
-  {
     id: 18,
     inputs: [14, 18], // Камень + Кремень
     output: 22 // Инструменты
@@ -127,6 +108,45 @@ export const recipes = [
     id: 19,
     inputs: [16, 15], // Жизнь + Спирт
     output: 23 // Бактерии
+  },
+]
+
+export const craftRecipes = [
+  {
+    id: 1001,
+    pattern: [
+      [1, null, null],
+      [null, 2, null],
+      [null, null, 3]
+    ],
+    output: 9 // Энергия
+  },
+  {
+    id: 1002,
+    pattern: [
+      [1, 4, 2],
+      [4, null, 4],
+      [2, 4, 1]
+    ],
+    output: 12 // Дождь
+  },
+  {
+    id: 1003,
+    pattern: [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 1]
+    ],
+    output: 16 // Жизнь
+  },
+  {
+    id: 1004,
+    pattern: [
+      [16, null, 16],
+      [null, 9, null],
+      [16, null, 16]
+    ],
+    output: 21 // Душа
   },
 ]
 
@@ -157,4 +177,54 @@ export const getElementById = (id) => {
 
 export const getAllElements = () => {
   return Object.values(elementsMap)
+}
+
+export const findCraftRecipeByPattern = (slots) => {
+  if (!slots || slots.length !== 9) {
+    return null
+  }
+  
+  const pattern = []
+  
+  for (let i = 0; i < 3; i++) {
+    const row = []
+    for (let j = 0; j < 3; j++) {
+      const index = i * 3 + j
+      row.push(slots[index] ? slots[index].id : null)
+    }
+    pattern.push(row)
+  }
+  
+  const recipe = craftRecipes.find(recipe => {
+    if (!recipe.pattern) {
+      return false
+    }
+    
+    for (let i = 0; i < 3; i++) {
+      if (!recipe.pattern[i]) {
+        return false
+      }
+      
+      for (let j = 0; j < 3; j++) {
+        if (recipe.pattern[i][j] !== pattern[i][j]) {
+          return false
+        }
+      }
+    }
+    return true
+  })
+  
+  if (recipe) {
+    const outputElement = elementsMap[recipe.output]
+    if (!outputElement) {
+      return false
+    }
+    
+    return {
+      ...recipe,
+      outputElement
+    }
+  }
+  
+  return false
 }

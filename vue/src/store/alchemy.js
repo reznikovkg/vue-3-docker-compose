@@ -3,7 +3,8 @@ import {
   recipes, 
   findRecipeByInputs, 
   elementsMap,
-  getElementById 
+  getElementById,
+  findCraftRecipeByPattern
 } from '../data/alchemyData.js'
 
 
@@ -15,6 +16,10 @@ const MUTATIONS = {
   SET_SELECTED_ELEMENT: 'SET_SELECTED_ELEMENT',
   SET_MESSAGE: 'SET_MESSAGE',
   UPDATE_ITEM_QUANTITY: 'UPDATE_ITEM_QUANTITY',
+  SET_CRAFT_SLOT: 'SET_CRAFT_SLOT',
+  CLEAR_CRAFT_SLOTS: 'CLEAR_CRAFT_SLOTS',
+  SET_CRAFT_MODE: 'SET_CRAFT_MODE',
+  SET_ELEMENT_FOR_CRAFT: 'SET_ELEMENT_FOR_CRAFT',
 }
 
 export default {
@@ -25,7 +30,10 @@ export default {
       tableItems: [],
       selectedElement: null,
       recipes: [...recipes],
-      message: null
+      message: null,
+      craftSlots: new Array(9).fill(null),
+      craftMode: false,
+      elementForCraft: null
     }
   },
   getters: {
@@ -58,6 +66,83 @@ export default {
           outputElement: getters.getElementById(recipe.output)
         }))
     },
+
+    craftSlots: (state) => state.craftSlots,
+    
+    craftMode: (state) => state.craftMode,
+    
+    elementForCraft: (state) => state.elementForCraft,
+    
+    craftRecipe: (state) => {
+      if (!state.craftSlots) {
+        return null
+      }
+      return findCraftRecipeByPattern(state.craftSlots)
+    },
+    
+    craftResult: (state) => {
+      if (!state.craftSlots) {
+        return null
+      }
+      const recipe = findCraftRecipeByPattern(state.craftSlots)
+      return recipe ? recipe.outputElement : null
+    },
+    
+    canCraft: (state, getters) => {
+      const recipe = getters.craftRecipe
+      if (!recipe) {
+        return false
+      }
+      
+      if (!recipe.pattern) {
+        return false
+      }
+      
+      const requiredIds = []
+      
+      for (let i = 0; i < recipe.pattern.length; i++) {
+        const row = recipe.pattern[i]
+        
+        if (!row) {
+          return false
+        }
+        
+        for (let j = 0; j < row.length; j++) {
+          const elementId = row[j]
+          if (elementId !== null && elementId !== undefined) {
+            requiredIds.push(elementId)
+          }
+        }
+      }
+      
+      const requiredMap = new Map()
+      requiredIds.forEach(id => {
+        requiredMap.set(id, (requiredMap.get(id) || 0) + 1)
+      })
+      
+      for (const [id, quantity] of requiredMap) {
+        const tableItem = state.discoveredElements.find(item => item.id === id)
+        
+        if (!tableItem) {
+          return false
+        }
+        
+        if (tableItem.quantity < quantity) {
+          return false
+        }
+      }
+      
+      return true
+    },
+    
+    craftResult: (state, getters) => {
+      const recipe = getters.craftRecipe
+      
+      if (!recipe) 
+        return null
+      
+      return getters.getElementById(recipe.output)
+    }
   },
   mutations: {
     [MUTATIONS.ADD_DISCOVERED_ELEMENT](state, element) {
@@ -116,13 +201,40 @@ export default {
           state.tableItems.splice(index, 1)
         }
       }
+    },
+
+    [MUTATIONS.SET_CRAFT_SLOT](state, { index, element }) {
+      if (index >= 0 && index < 9) {
+        state.craftSlots[index] = element
+      }
+    },
+    
+    [MUTATIONS.CLEAR_CRAFT_SLOTS](state) {
+      state.craftSlots = new Array(9).fill(null)
+    },
+    
+    [MUTATIONS.SET_CRAFT_MODE](state, mode) {
+      state.craftMode = mode
+      
+      if (!mode) {
+        state.elementForCraft = null
+      }
+    },
+    
+    [MUTATIONS.SET_ELEMENT_FOR_CRAFT](state, element) {
+      state.elementForCraft = element
     }
   },
   actions: {
-    selectElement({ commit, getters }, element) {
+    selectElement({ commit, getters, state }, element) {
       commit(MUTATIONS.SET_SELECTED_ELEMENT, element)
-      commit(MUTATIONS.ADD_TO_TABLE, element)
-      commit(MUTATIONS.SET_MESSAGE, null)
+      if (state.craftMode) {
+        commit(MUTATIONS.SET_ELEMENT_FOR_CRAFT, element)
+        commit(MUTATIONS.SET_MESSAGE, `Выберите слот для ${element.name}`)
+      } else {
+        commit(MUTATIONS.ADD_TO_TABLE, element)
+        commit(MUTATIONS.SET_MESSAGE, null)
+      }
     },
     
     increaseQuantity({ commit }, { id }) {
@@ -196,6 +308,8 @@ export default {
         commit(MUTATIONS.ADD_TO_TABLE, newElement)
         
         commit(MUTATIONS.SET_MESSAGE, `Открыт новый элемент: ${newElement.name}!`)
+
+        commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
       } else {
         commit(MUTATIONS.SET_MESSAGE, 'Ничего не получилось... Попробуйте другую комбинацию!')
       }
@@ -204,6 +318,85 @@ export default {
     clearMessage({ commit }) {
       commit(MUTATIONS.SET_MESSAGE, null)
     },
+
+    toggleCraftMode({ commit, state }) {
+      commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
+      commit(MUTATIONS.SET_CRAFT_MODE, !state.craftMode)
+      commit(MUTATIONS.SET_MESSAGE, state.craftMode ? 'Режим крафта включен' : 'Режим крафта выключен')
+    },
+    
+    handleCraftSlotClick({ commit, state, getters }, slotIndex) {
+      if (state.elementForCraft && !state.craftSlots[slotIndex]) {
+        commit(MUTATIONS.SET_CRAFT_SLOT, { 
+          index: slotIndex, 
+          element: state.elementForCraft 
+        })
+        commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
+        commit(MUTATIONS.SET_ELEMENT_FOR_CRAFT, null)
+        commit(MUTATIONS.SET_MESSAGE, 'Элемент размещен в слоте')
+      } 
+      else if (state.craftSlots[slotIndex]) {
+        commit(MUTATIONS.SET_CRAFT_SLOT, { 
+          index: slotIndex, 
+          element: null 
+        })
+        commit(MUTATIONS.SET_MESSAGE, 'Слот очищен')
+      }
+    },
+    
+    craftElement({ commit, state, getters }) {
+      const recipe = getters.craftRecipe
+      const canCraft = getters.canCraft
+      
+      if (!recipe) {
+        commit(MUTATIONS.SET_MESSAGE, 'Неправильная комбинация для крафта')
+        return
+      }
+      
+      if (!canCraft) {
+        commit(MUTATIONS.SET_MESSAGE, 'Не хватает элементов для крафта')
+        return
+      }
+      
+      const outputElement = getters.getElementById(recipe.output)
+      
+      if (!outputElement) {
+        commit(MUTATIONS.SET_MESSAGE, 'Ошибка: результат не найден')
+        return
+      }
+      
+      const itemsToRemove = []
+      const removeMap = new Map()
+      
+      recipe.pattern.forEach(row => {
+        row.forEach(elementId => {
+          if (elementId !== null) {
+            removeMap.set(elementId, (removeMap.get(elementId) || 0) + 1)
+          }
+        })
+      })
+      
+      removeMap.forEach((quantity, id) => {
+        itemsToRemove.push({ id, quantity })
+      })
+      
+      commit(MUTATIONS.REMOVE_ITEMS_FROM_TABLE, itemsToRemove)
+      commit(MUTATIONS.ADD_DISCOVERED_ELEMENT, outputElement)
+      commit(MUTATIONS.CLEAR_CRAFT_SLOTS)
+      commit(MUTATIONS.SET_MESSAGE, `Создан новый элемент: ${outputElement.name}!`)
+    },
+    
+    clearCraftSlots({ commit }) {
+      commit(MUTATIONS.CLEAR_CRAFT_SLOTS)
+      commit(MUTATIONS.SET_ELEMENT_FOR_CRAFT, null)
+      commit(MUTATIONS.SET_MESSAGE, 'Слоты крафта очищены')
+    },
+    
+    exitCraftMode({ commit }) {
+      commit(MUTATIONS.SET_CRAFT_MODE, false)
+      commit(MUTATIONS.SET_ELEMENT_FOR_CRAFT, null)
+      commit(MUTATIONS.SET_MESSAGE, null)
+    }
   }
 }
 
