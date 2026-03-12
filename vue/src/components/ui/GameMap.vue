@@ -154,8 +154,6 @@ const gameLoop = (now: number) => {
   })
   animFrameId = requestAnimationFrame(gameLoop)
 }
-onMounted(() => { animFrameId = requestAnimationFrame(gameLoop) })
-onUnmounted(() => { cancelAnimationFrame(animFrameId) })
 const onSlotClick = (slotId: string) => store.dispatch('selectSlot', slotId)
 const onEnemyMouseDown = (e: MouseEvent, id: number) => {
   e.preventDefault()
@@ -189,6 +187,8 @@ const selectEnemy = (id: number) => {
   focusedEnemyId.value = id
   svgRef.value?.focus()
 }
+onMounted(() => { animFrameId = requestAnimationFrame(gameLoop) })
+onUnmounted(() => { cancelAnimationFrame(animFrameId) })
 </script>
 
 <style lang="scss" scoped>
