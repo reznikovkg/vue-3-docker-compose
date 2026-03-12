@@ -62,7 +62,7 @@ export default {
 		width: 80px;
 		height: 80px;
 		border: 2px dashed #770059;
-    background-color: rgba(255, 255, 255, 0.041);
+		background-color: rgba(255, 255, 255, 0.041);
 		display: flex;
 		align-items: center;
 		justify-content: center;
