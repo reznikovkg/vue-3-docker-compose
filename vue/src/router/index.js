@@ -1,23 +1,38 @@
 import { createWebHistory, createRouter } from 'vue-router'
-
-import IndexPage from './../components/pages/IndexPage.vue'
-import ExamplePage from './../components/pages/ExamplePage.vue'
+import { getLocations } from '../content/locations'
+import HomePage from './../components/pages/HomePage.vue'
+import FishingPage from '@/components/pages/FishingPage.vue'
 
 export const ROUTES = {
   EXAMPLE: 'EXAMPLE',
-  INDEX: 'INDEX',
+  HOME: 'HOME',
 }
 
 const routes = [
   {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
+    name: ROUTES.HOME,
+    path: '/',
+    component: HomePage
   },
   {
-    name: ROUTES.INDEX,
-    path: '/',
-    component: IndexPage
+    path: '/location/:id',
+    name: 'FishingLocation',
+    component: FishingPage,
+    props: (route) => {
+      const location = getLocations().find(loc => loc.id == route.params.id)
+      if (!location) {
+        route.router.push("/")
+      }
+      return { location }
+    },
+    beforeEnter: (to, from, next) => {
+      const location = getLocations().find(loc => loc.id == to.params.id)
+      if (!location) {
+        next({ name: ROUTES.HOME })
+      } else {
+        next()
+      }
+    }
   },
 ]
 
