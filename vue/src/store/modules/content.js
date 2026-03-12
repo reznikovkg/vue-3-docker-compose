@@ -51,6 +51,16 @@ export default {
             );
           }
 
+          if (
+            !location.bobberAnchor ||
+            !Number.isFinite(location.bobberAnchor.x) ||
+            !Number.isFinite(location.bobberAnchor.y)
+          ) {
+            warnings.push(
+              `Location ${location.name || location.id || index + 1} is missing bobber anchor coordinates.`,
+            );
+          }
+
           if (!location.fishTableId) {
             warnings.push(
               `Location ${location.name || location.id || index + 1} has no fish table id.`,
@@ -80,6 +90,16 @@ export default {
       if (!location.bgImage) {
         warnings.push(
           `Location "${location.name || location.id}" has no background image. Using fallback scene.`,
+        );
+      }
+
+      if (
+        !location.bobberAnchor ||
+        !Number.isFinite(location.bobberAnchor.x) ||
+        !Number.isFinite(location.bobberAnchor.y)
+      ) {
+        warnings.push(
+          `Location "${location.name || location.id}" has no bobber anchor. Hiding bobber.`,
         );
       }
 

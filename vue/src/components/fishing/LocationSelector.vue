@@ -1,24 +1,28 @@
 <template>
   <div class="location-selector">
-    <button
+    <BaseButton
       v-for="location in locations"
       :key="location.id"
-      type="button"
-      class="btn-soft location-selector__item"
+      class="location-selector__item"
       :class="{
         'location-selector__item--active': location.id === selectedLocationId,
       }"
-      :aria-pressed="location.id === selectedLocationId ? 'true' : 'false'"
+      :disabled="disabled"
       @click="() => $emit('select', location.id)"
     >
       {{ location.name }}
-    </button>
+    </BaseButton>
   </div>
 </template>
 
 <script>
+import BaseButton from '@/components/ui/BaseButton.vue';
+
 export default {
   name: 'LocationSelector',
+  components: {
+    BaseButton,
+  },
   props: {
     locations: {
       type: Array,
@@ -28,24 +32,30 @@ export default {
       type: String,
       default: null,
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   emits: ['select'],
 };
 </script>
 
 <style scoped lang="scss">
+@use '@/styles/tokens' as tokens;
+
 .location-selector {
   display: grid;
-  gap: 8px;
-}
+  gap: tokens.$fishing-location-selector-gap;
 
-.location-selector__item {
-  width: 100%;
-  text-align: left;
-}
+  &__item {
+    text-align: left;
+    width: 100%;
 
-.location-selector__item--active {
-  border-color: #1d8f4e;
-  box-shadow: inset 0 0 0 1px #1d8f4e;
+    &--active {
+      border-color: tokens.$fishing-location-selector-active;
+      box-shadow: inset 0 0 0 1px tokens.$fishing-location-selector-active;
+    }
+  }
 }
 </style>

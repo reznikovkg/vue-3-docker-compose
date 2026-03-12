@@ -1,13 +1,18 @@
 <template>
   <section class="index-page">
-    <h1>Gpuslave's Fishing Game</h1>
-    <RouterLink :to="{ name: $routes.FISHING }">Go Fishing</RouterLink>
+    <h1>Gone Fishing</h1>
+    <RouterLink :to="{ name: $routes.FISHING }">To Fishing</RouterLink>
   </section>
 </template>
 
 <script>
+const PAGE_TITLE = 'Gone Fishing';
+
 export default {
   name: 'IndexPage',
+  created() {
+    document.title = PAGE_TITLE;
+  },
 };
 </script>
 

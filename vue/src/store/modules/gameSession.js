@@ -119,6 +119,10 @@ export default {
     },
     [MUTATIONS.SET_PHASE]: (state, phase) => {
       state.phase = phase;
+
+      if (phase !== PHASES.MINIGAME) {
+        state.minigame.isReeling = false;
+      }
     },
     [MUTATIONS.START_CAST]: (state, timestamp) => {
       state.phase = PHASES.CASTING;

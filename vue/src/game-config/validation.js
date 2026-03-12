@@ -1,4 +1,6 @@
 const isFiniteNumber = (value) => Number.isFinite(value);
+const isPercentage = (value) =>
+  isFiniteNumber(value) && value >= 0 && value <= 100;
 
 const validateLocation = (location) => {
   const errors = [];
@@ -33,6 +35,22 @@ const validateLocation = (location) => {
     !isFiniteNumber(location.difficultyMultiplier)
   ) {
     errors.push('location.difficultyMultiplier must be a number');
+  }
+
+  if (!location.bobberAnchor || typeof location.bobberAnchor !== 'object') {
+    errors.push('location.bobberAnchor must be an object');
+  } else {
+    if (!isPercentage(location.bobberAnchor.x)) {
+      errors.push(
+        'location.bobberAnchor.x must be a percentage between 0 and 100',
+      );
+    }
+
+    if (!isPercentage(location.bobberAnchor.y)) {
+      errors.push(
+        'location.bobberAnchor.y must be a percentage between 0 and 100',
+      );
+    }
   }
 
   return errors;

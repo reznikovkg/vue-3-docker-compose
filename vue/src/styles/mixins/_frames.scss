@@ -1,0 +1,36 @@
+@mixin catch-frame($background, $border-color, $radius) {
+  background: $background;
+  border: 1px solid $border-color;
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+@mixin glass-panel(
+  $background,
+  $border-color,
+  $radius,
+  $shadow,
+  $padding,
+  $blur: 10px
+) {
+  backdrop-filter: blur($blur);
+  background: $background;
+  border: 1px solid $border-color;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  padding: $padding;
+}
+
+@mixin warning-panel(
+  $background,
+  $border-color,
+  $text-color,
+  $radius,
+  $padding
+) {
+  background: $background;
+  border: 1px solid $border-color;
+  border-radius: $radius;
+  color: $text-color;
+  padding: $padding;
+}

@@ -5,51 +5,121 @@
       <RouterLink :to="{ name: $routes.INDEX }">Back to Index</RouterLink>
     </header>
 
-    <main class="fishing-page__layout">
-      <aside class="fishing-page__panel">
-        <h2>Locations</h2>
-        <p>Select a location for your next cast.</p>
+    <main class="fishing-page__stage">
+      <div
+        class="fishing-page__play-area"
+        @pointercancel="() => onReelingStop()"
+        @pointerdown="() => onReelingStart()"
+        @pointerleave="() => onReelingStop()"
+        @pointerup="() => onReelingStop()"
+      >
+        <FishingScene :bobber="sceneBobber" :location="selectedLocation" />
+      </div>
+
+      <aside class="fishing-page__hud-panel fishing-page__hud-panel--left">
+        <h2 class="fishing-page__panel-title">Locations</h2>
+        <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
         <LocationSelector
+          :disabled="!canCast"
           :locations="locations"
           :selected-location-id="selectedLocationId"
           @select="(locationId) => selectLocation(locationId)"
         />
       </aside>
 
-      <section class="fishing-page__scene">
-        <h2>Scene</h2>
+      <aside class="fishing-page__hud-panel fishing-page__hud-panel--right">
+        <h2 class="fishing-page__panel-title">Status</h2>
+        <p class="fishing-page__panel-copy">Current fishing session state.</p>
+        <dl class="fishing-page__status-list">
+          <div class="fishing-page__status-row">
+            <dt>Phase</dt>
+            <dd>{{ phase }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Location</dt>
+            <dd>{{ selectedLocationName }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Cast started</dt>
+            <dd>{{ castStartedAtLabel }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Encounter</dt>
+            <dd>{{ encounterLabel }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Reeling</dt>
+            <dd>{{ isReeling ? 'yes' : 'no' }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Barrier</dt>
+            <dd>{{ isBarrierBlocking ? 'blocked' : 'clear' }}</dd>
+          </div>
+        </dl>
         <section
           v-if="sceneWarnings.length"
           class="fishing-page__warning-panel"
-          aria-live="polite"
         >
-          <h3>Scene warnings</h3>
+          <h3 class="fishing-page__warning-title">Scene warnings</h3>
           <ul class="fishing-page__warning-list">
             <li v-for="warning in sceneWarnings" :key="warning">
               {{ warning }}
             </li>
           </ul>
         </section>
-        <div class="fishing-page__cast-row">
-          <button
-            class="btn-soft"
-            :disabled="!canCast"
-            @click="() => startCast()"
-          >
-            Cast
-          </button>
-          <span
-            class="fishing-page__phase-chip"
-            :class="`fishing-page__phase-chip--${phase}`"
-            role="status"
-            aria-live="polite"
-          >
-            {{ phaseMessage }}
-          </span>
+      </aside>
+
+      <section class="fishing-page__hud-tray">
+        <div class="fishing-page__tray-primary">
+          <div class="fishing-page__cast-row">
+            <BaseButton :disabled="!canCast" @click="() => startCast()">
+              Cast
+            </BaseButton>
+            <span
+              class="fishing-page__phase-chip"
+              :class="`fishing-page__phase-chip--${phase}`"
+              role="status"
+            >
+              {{ phaseMessage }}
+            </span>
+          </div>
+          <p class="fishing-page__cast-hint">
+            Cast is available in idle and result phases.
+          </p>
         </div>
-        <p class="fishing-page__cast-hint">
-          Cast is available in idle and result phases.
-        </p>
+
+        <section v-if="phase === 'minigame'" class="fishing-page__minigame-hud">
+          <p v-if="isBarrierBlocking" class="fishing-page__minigame-copy">
+            Mash left mouse button or Q to break barrier.
+          </p>
+          <p v-else class="fishing-page__minigame-copy">
+            Hold left mouse button or Space to reel.
+          </p>
+          <div class="fishing-page__bar" role="img">
+            <div
+              class="fishing-page__bar-fill fishing-page__bar-fill--green"
+              :style="{ width: `${greenProgressPercent}%` }"
+            ></div>
+            <div
+              class="fishing-page__bar-marker fishing-page__bar-marker--red"
+              :style="{ left: `${redProgressPercent}%` }"
+            ></div>
+            <div
+              v-for="barrier in minigameBarriers"
+              :key="barrier.id"
+              class="fishing-page__bar-marker fishing-page__bar-marker--barrier"
+              :class="{
+                'fishing-page__bar-marker--barrier-active':
+                  activeBarrier && barrier.id === activeBarrier.id,
+              }"
+              :style="{ left: `${Math.round(barrier.position * 100)}%` }"
+            ></div>
+          </div>
+          <p v-if="isBarrierBlocking" class="fishing-page__minigame-copy">
+            Clicks remaining: {{ barrierRemainingClicks }}
+          </p>
+        </section>
+
         <section
           v-if="resultPanel.isOpen"
           class="fishing-page__result-panel"
@@ -58,7 +128,12 @@
             'fishing-page__result-panel--fail': !resultPanel.isSuccess,
           }"
         >
-          <p>{{ resultPanel.message }}</p>
+          <div class="fishing-page__result-head">
+            <p class="fishing-page__result-message">
+              {{ resultPanel.message }}
+            </p>
+            <BaseButton @click="() => closeResultPanel()">Close</BaseButton>
+          </div>
           <article v-if="showCatchCard" class="fishing-page__catch-card">
             <div class="fishing-page__catch-media">
               <img
@@ -85,82 +160,19 @@
               </p>
             </div>
           </article>
-          <button class="btn-soft" @click="() => closeResultPanel()">
-            Close
-          </button>
-        </section>
-        <div
-          class="fishing-page__play-area"
-          @pointercancel="() => onReelingStop()"
-          @pointerdown="() => onReelingStart()"
-          @pointerleave="() => onReelingStop()"
-          @pointerup="() => onReelingStop()"
-        >
-          <FishingScene :location="selectedLocation" />
-        </div>
-        <section v-if="phase === 'minigame'" class="fishing-page__minigame-hud">
-          <p v-if="isBarrierBlocking">
-            Mash left mouse button or Q to break barrier.
-          </p>
-          <p v-else>Hold left mouse button or Space to reel.</p>
-          <div
-            class="fishing-page__bar"
-            role="img"
-            :aria-label="`Green ${greenProgressPercent} percent. Red ${redProgressPercent} percent.`"
-          >
-            <div
-              class="fishing-page__bar-fill fishing-page__bar-fill--green"
-              :style="{ width: `${greenProgressPercent}%` }"
-            ></div>
-            <div
-              class="fishing-page__bar-marker fishing-page__bar-marker--red"
-              :style="{ left: `${redProgressPercent}%` }"
-            ></div>
-            <div
-              v-for="barrier in minigameBarriers"
-              :key="barrier.id"
-              class="fishing-page__bar-marker fishing-page__bar-marker--barrier"
-              :class="{
-                'fishing-page__bar-marker--barrier-active':
-                  activeBarrier && barrier.id === activeBarrier.id,
-              }"
-              :style="{ left: `${Math.round(barrier.position * 100)}%` }"
-            ></div>
-          </div>
-          <p>
-            Green: {{ greenProgressPercent }}% | Red: {{ redProgressPercent }}%
-            | Time: {{ elapsedMsLabel }} / {{ maxTimeLabel }}
-          </p>
-          <p v-if="isBarrierBlocking">
-            Clicks remaining: {{ barrierRemainingClicks }}
-          </p>
         </section>
       </section>
-
-      <aside class="fishing-page__panel">
-        <h2>Status</h2>
-        <p>Current fishing session state.</p>
-        <p>Phase: {{ phase }}</p>
-        <p>Selected location: {{ selectedLocationName }}</p>
-        <p>Cast started: {{ castStartedAtLabel }}</p>
-        <p>Encounter: {{ encounterLabel }}</p>
-        <p>Reeling: {{ isReeling ? 'yes' : 'no' }}</p>
-        <p>Barrier blocking: {{ isBarrierBlocking ? 'yes' : 'no' }}</p>
-        <PersistenceDebugPanel
-          v-if="isDevMode"
-          title="Persistence Test Harness"
-        />
-      </aside>
     </main>
   </section>
 </template>
 
 <script>
+import BaseButton from '@/components/ui/BaseButton.vue';
 import FishingScene from '@/components/fishing/FishingScene.vue';
 import LocationSelector from '@/components/fishing/LocationSelector.vue';
-import PersistenceDebugPanel from '@/components/testing/PersistenceDebugPanel.vue';
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game';
+const HOOKED_BOBBER_Y = 92;
 const PHASE_PAGE_TITLES = Object.freeze({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
@@ -171,14 +183,16 @@ const PHASE_PAGE_TITLES = Object.freeze({
 export default {
   name: 'FishingPage',
   components: {
+    BaseButton,
     FishingScene,
     LocationSelector,
-    PersistenceDebugPanel,
+  },
+  data() {
+    return {
+      unsubscribePhaseSubscription: null,
+    };
   },
   computed: {
-    isDevMode() {
-      return import.meta.env.DEV;
-    },
     locations() {
       return this.$store.getters['content/getLocations'];
     },
@@ -220,6 +234,55 @@ export default {
     },
     canCast() {
       return this.phase === 'idle' || this.phase === 'result';
+    },
+    sceneBobber() {
+      if (!this.selectedLocation) {
+        return {
+          isVisible: false,
+        };
+      }
+
+      const anchorPosition = this.selectedLocation.bobberAnchor;
+      if (
+        !anchorPosition ||
+        !Number.isFinite(anchorPosition.x) ||
+        !Number.isFinite(anchorPosition.y)
+      ) {
+        return {
+          isVisible: false,
+        };
+      }
+
+      const targetPosition = {
+        x: anchorPosition.x,
+        y: HOOKED_BOBBER_Y,
+      };
+
+      if (this.phase === 'casting' || this.phase === 'waitingBite') {
+        return {
+          isVisible: true,
+          isEnergized: true,
+          mode: 'waiting',
+          anchorPosition,
+          progress: 0,
+          targetPosition,
+        };
+      }
+
+      if (this.phase === 'minigame') {
+        return {
+          isVisible: true,
+          isEnergized: this.isReeling,
+          mode: 'hooked',
+          anchorPosition,
+          progress: this.minigameState.greenProgress || 0,
+          targetPosition,
+        };
+      }
+
+      return {
+        isVisible: false,
+      };
     },
     castStartedAt() {
       return this.$store.getters['gameSession/getCastStartedAt'];
@@ -343,15 +406,6 @@ export default {
       return `${maxMs}ms`;
     },
   },
-  watch: {
-    phase(nextPhase) {
-      if (nextPhase !== 'minigame') {
-        this.onReelingStop();
-      }
-
-      this.applyPageTitle(nextPhase);
-    },
-  },
   mounted() {
     window.addEventListener('pointerup', this.onReelingStop);
     window.addEventListener('blur', this.onReelingStop);
@@ -363,10 +417,23 @@ export default {
     window.removeEventListener('blur', this.onReelingStop);
     window.removeEventListener('keydown', this.onWindowKeyDown);
     window.removeEventListener('keyup', this.onWindowKeyUp);
+
+    if (this.unsubscribePhaseSubscription) {
+      this.unsubscribePhaseSubscription();
+      this.unsubscribePhaseSubscription = null;
+    }
+
     this.applyPageTitle();
   },
   created() {
     this.applyPageTitle(this.phase);
+    this.unsubscribePhaseSubscription = this.$store.subscribe((mutation) => {
+      if (mutation.type !== 'gameSession/SET_PHASE') {
+        return;
+      }
+
+      this.applyPageTitle(mutation.payload);
+    });
 
     if (!this.selectedLocationId && this.locations.length) {
       this.selectLocation(this.locations[0].id);
@@ -464,146 +531,228 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@use 'sass:map';
 @use '@/styles/mixins' as mixins;
-
-$fishing-page-catch-media-width-min: 120px;
-$fishing-page-catch-media-width-max: 160px;
-$fishing-page-catch-media-bg: #f2f6fb;
-$fishing-page-catch-media-border: #c6d1de;
-$fishing-page-catch-media-radius: 8px;
+@use '@/styles/tokens' as tokens;
 
 .fishing-page {
+  background: tokens.$fishing-page-background;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   padding: 16px;
-}
 
-.fishing-page__header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.fishing-page__layout {
-  display: grid;
-  flex: 1;
-  gap: 12px;
-  grid-template-columns: 240px 1fr 240px;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.fishing-page__panel,
-.fishing-page__scene {
-  border: 1px solid #9da8b7;
-  border-radius: 8px;
-  min-height: 0;
-  overflow: auto;
-  padding: 12px;
-}
-
-.fishing-page__warning-panel {
-  background: #fff3e7;
-  border: 1px solid #d68429;
-  border-radius: 8px;
-  color: #5c2f00;
-  margin-bottom: 10px;
-  padding: 10px;
-}
-
-.fishing-page__warning-panel h3 {
-  font-size: 14px;
-  margin: 0 0 6px;
-}
-
-.fishing-page__warning-list {
-  margin: 0;
-  padding-left: 18px;
-}
-
-.fishing-page__cast-row {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.fishing-page__cast-hint {
-  color: #394555;
-  font-size: 13px;
-  margin: 0 0 10px;
-}
-
-.fishing-page__phase-chip {
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 4px 10px;
-}
-
-.fishing-page__phase-chip--idle,
-.fishing-page__phase-chip--casting {
-  background: #e6ecf4;
-  color: #314155;
-}
-
-.fishing-page__phase-chip--waitingBite {
-  background: #e9f4ff;
-  color: #0f3f75;
-}
-
-.fishing-page__phase-chip--minigame {
-  background: #ffeccc;
-  color: #7a3f00;
-}
-
-.fishing-page__phase-chip--result {
-  background: #ebe6ff;
-  color: #3f2c80;
-}
-
-.fishing-page__result-panel {
-  border: 1px solid #98a4b4;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  padding: 10px;
-}
-
-.fishing-page__result-panel--success {
-  border-color: #187a45;
-}
-
-.fishing-page__result-panel--fail {
-  border-color: #b12f2f;
-}
-
-.fishing-page {
-  &__catch-card {
+  &__header {
     align-items: center;
-    border: 1px solid #c8d2df;
-    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    h1 {
+      color: #f5f8fc;
+      margin: 0;
+    }
+  }
+
+  &__stage {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  &__cast-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__cast-hint {
+    color: tokens.$fishing-panel-text;
+    font-size: clamp(16px, 1.6vw, 20px);
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+    max-width: 38ch;
+  }
+
+  &__phase-chip {
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+
+    @each $phase, $phase-style in tokens.$fishing-phase-chip-styles {
+      &--#{$phase} {
+        background: map.get($phase-style, background);
+        color: map.get($phase-style, color);
+      }
+    }
+  }
+
+  &__result-panel {
+    background: tokens.$fishing-result-background;
+    border: 1px solid tokens.$fishing-result-border;
+    border-radius: tokens.$fishing-result-radius;
+    padding: tokens.$fishing-result-padding;
+
+    &--success {
+      border-color: tokens.$fishing-result-border-success;
+    }
+
+    &--fail {
+      border-color: tokens.$fishing-result-border-fail;
+    }
+  }
+
+  &__play-area {
+    height: 100%;
+    inset: 0;
+    min-height: 0;
+    position: absolute;
+    user-select: none;
+    width: 100%;
+  }
+
+  &__hud-panel {
+    @include mixins.glass-panel(
+      tokens.$fishing-panel-background,
+      tokens.$fishing-panel-border,
+      tokens.$fishing-panel-radius,
+      tokens.$fishing-panel-shadow,
+      tokens.$fishing-panel-padding
+    );
+    color: tokens.$fishing-panel-text;
+    max-height: calc(100% - 176px);
+    overflow: auto;
+    position: absolute;
+    top: 16px;
+    width: min(260px, calc(50% - 28px));
+    z-index: 2;
+
+    &--left {
+      left: 16px;
+    }
+
+    &--right {
+      right: 16px;
+    }
+  }
+
+  &__panel-title {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+  }
+
+  &__panel-copy {
+    color: tokens.$fishing-panel-muted;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0 0 14px;
+  }
+
+  &__status-list {
     display: grid;
     gap: 10px;
-    grid-template-columns: 160px 1fr;
+    margin: 0 0 16px;
+  }
+
+  &__status-row {
+    border-bottom: 1px solid tokens.$fishing-status-border;
+    display: grid;
+    gap: 4px;
+    padding-bottom: 10px;
+
+    dt {
+      color: tokens.$fishing-panel-muted;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+
+  &__warning-panel {
+    @include mixins.warning-panel(
+      tokens.$fishing-warning-background,
+      tokens.$fishing-warning-border,
+      tokens.$fishing-warning-text,
+      tokens.$fishing-warning-radius,
+      tokens.$fishing-warning-padding
+    );
+    margin-bottom: 14px;
+  }
+
+  &__warning-title {
+    font-size: 13px;
+    margin: 0 0 6px;
+    text-transform: uppercase;
+  }
+
+  &__warning-list {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  &__hud-tray {
+    @include mixins.glass-panel(
+      tokens.$fishing-tray-background,
+      tokens.$fishing-tray-border,
+      tokens.$fishing-tray-radius,
+      tokens.$fishing-panel-shadow,
+      tokens.$fishing-tray-padding,
+      14px
+    );
+    bottom: 16px;
+    color: tokens.$fishing-panel-text;
+    display: grid;
+    gap: 14px;
+    left: 50%;
+    max-width: min(1120px, calc(100% - 32px));
+    position: absolute;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    z-index: 3;
+  }
+
+  &__tray-primary {
+    align-items: start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    justify-content: space-between;
+  }
+
+  &__catch-card {
+    align-items: center;
+    border: 1px solid tokens.$fishing-catch-card-border;
+    border-radius: tokens.$fishing-catch-card-radius;
+    display: grid;
+    gap: tokens.$fishing-catch-card-gap;
+    grid-template-columns: tokens.$fishing-catch-card-width 1fr;
     margin: 10px 0;
-    padding: 10px;
+    padding: tokens.$fishing-catch-card-padding;
   }
 
   &__catch-media {
     @include mixins.catch-frame(
-      $fishing-page-catch-media-bg,
-      $fishing-page-catch-media-border,
-      $fishing-page-catch-media-radius
+      tokens.$fishing-catch-media-background,
+      tokens.$fishing-catch-media-border,
+      tokens.$fishing-catch-media-radius
     );
     width: clamp(
-      $fishing-page-catch-media-width-min,
+      tokens.$fishing-catch-media-width-min,
       22vw,
-      $fishing-page-catch-media-width-max
+      tokens.$fishing-catch-media-width-max
     );
   }
 
@@ -613,112 +762,152 @@ $fishing-page-catch-media-radius: 8px;
     max-width: 100%;
     width: 100%;
   }
+
+  &__result-head {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  &__result-message {
+    margin: 0;
+  }
+
+  &__catch-details {
+    h3 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+  }
+
+  &__catch-row {
+    font-size: 13px;
+    margin: 2px 0;
+  }
+
+  &__minigame-hud {
+    display: grid;
+    gap: 10px;
+  }
+
+  &__bar {
+    background: tokens.$fishing-minigame-bar-background;
+    border-radius: tokens.$fishing-minigame-bar-radius;
+    height: tokens.$fishing-minigame-bar-height;
+    overflow: hidden;
+    position: relative;
+  }
+
+  &__bar-fill {
+    height: 100%;
+
+    &--green {
+      background: tokens.$fishing-minigame-fill-green;
+    }
+  }
+
+  &__bar-marker {
+    border-left: tokens.$fishing-minigame-red-width solid
+      tokens.$fishing-minigame-marker-red;
+    bottom: 0;
+    position: absolute;
+    top: 0;
+    transform: translateX(calc(tokens.$fishing-minigame-red-width * -0.5));
+
+    &--red {
+      border-left-color: tokens.$fishing-minigame-marker-red;
+    }
+
+    &--barrier {
+      border-left: tokens.$fishing-minigame-barrier-width dotted
+        tokens.$fishing-minigame-marker-barrier;
+    }
+
+    &--barrier-active {
+      border-left-color: tokens.$fishing-minigame-marker-active;
+    }
+  }
+
+  &__minigame-copy {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  a:focus-visible {
+    @include mixins.focus-ring(tokens.$button-soft-focus);
+  }
 }
 
-.fishing-page__catch-details h3 {
-  font-size: 16px;
-  margin-bottom: 6px;
-}
-
-.fishing-page__catch-row {
-  font-size: 13px;
-  margin: 2px 0;
-}
-
-.fishing-page__play-area {
-  margin: 0 auto;
-  max-width: 980px;
-  user-select: none;
-  width: 100%;
-}
-
-.fishing-page__minigame-hud {
-  margin-top: 10px;
-}
-
-.fishing-page__bar {
-  background: #1f2f44;
-  border-radius: 8px;
-  height: 16px;
-  overflow: hidden;
-  position: relative;
-}
-
-.fishing-page__bar-fill {
-  height: 100%;
-}
-
-.fishing-page__bar-fill--green {
-  background: #20a05b;
-}
-
-.fishing-page__bar-marker {
-  border-left: 2px solid #d52929;
-  bottom: 0;
-  position: absolute;
-  top: 0;
-  transform: translateX(-1px);
-}
-
-.fishing-page__bar-marker--red {
-  border-left-color: #d52929;
-}
-
-.fishing-page__bar-marker--barrier {
-  border-left: 2px dashed #d7e0ef;
-}
-
-.fishing-page__bar-marker--barrier-active {
-  border-left-color: #ffb020;
-}
-
-.fishing-page a:focus-visible {
-  outline: 3px solid #0b57d0;
-  outline-offset: 2px;
-}
-
-@media (max-width: 900px) {
-  .fishing-page__layout {
-    grid-template-columns: 1fr;
+@media (max-width: tokens.$fishing-breakpoint-tablet) {
+  .fishing-page {
+    height: auto;
+    min-height: 100dvh;
     overflow: auto;
-  }
 
-  .fishing-page__panel,
-  .fishing-page__scene {
-    min-height: 0;
+    &__stage {
+      display: grid;
+      gap: 12px;
+      overflow: visible;
+    }
+
+    &__play-area {
+      aspect-ratio: 3 / 2;
+      height: auto;
+      inset: auto;
+      position: relative;
+    }
+
+    &__hud-panel,
+    &__hud-tray {
+      left: auto;
+      max-height: none;
+      max-width: none;
+      position: relative;
+      right: auto;
+      top: auto;
+      transform: none;
+      width: 100%;
+    }
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: tokens.$fishing-breakpoint-mobile) {
   .fishing-page {
     padding: 12px;
-  }
 
-  .fishing-page__header {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
-  }
+    &__header {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-  .fishing-page__cast-row {
-    gap: 8px;
-  }
+    &__hud-panel,
+    &__hud-tray {
+      padding: 14px;
+    }
 
-  .fishing-page__phase-chip {
-    font-size: 12px;
-  }
+    &__cast-row {
+      gap: 8px;
+    }
 
-  .fishing-page__minigame-hud {
-    font-size: 14px;
-  }
+    &__phase-chip {
+      font-size: 12px;
+    }
 
-  .fishing-page__catch-card {
-    grid-template-columns: 1fr;
-  }
+    &__catch-card {
+      grid-template-columns: 1fr;
+    }
 
-  .fishing-page {
     &__catch-media {
       width: 100%;
+    }
+
+    &__result-head {
+      align-items: stretch;
+      flex-direction: column;
     }
   }
 }

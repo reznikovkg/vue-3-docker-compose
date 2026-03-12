@@ -1,6 +1,1 @@
-@mixin catch-frame($background, $border-color, $radius) {
-  background: $background;
-  border: 1px solid $border-color;
-  border-radius: $radius;
-  overflow: hidden;
-}
+@forward 'mixins/index';

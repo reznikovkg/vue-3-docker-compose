@@ -31,7 +31,10 @@ const buildBarriers = (encounter, tuning, rng = Math.random) => {
     const baseClicks =
       clickRange.min + rng() * (clickRange.max - clickRange.min);
     const difficultyClicks = difficultyNorm * 2 + index * 0.5;
-    const requiredClicks = Math.round(baseClicks + difficultyClicks);
+    const requiredClicks = Math.max(
+      1,
+      Math.round((baseClicks + difficultyClicks) / 2.5),
+    );
 
     barriers.push({
       id: `barrier-${index + 1}`,
@@ -70,7 +73,7 @@ const buildMinigameConfig = (encounter, tuning) => {
     redSpeedPerSec: Number(redSpeedPerSec.toFixed(4)),
     maxTimeMs,
     targetProgress: 1,
-    redStartDelayMs: 500,
+    redStartDelayMs: 750,
     difficultyScore,
     barriers: buildBarriers(encounter, tuning),
   };

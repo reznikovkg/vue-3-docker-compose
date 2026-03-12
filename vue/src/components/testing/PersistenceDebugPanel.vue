@@ -4,17 +4,16 @@
     <p>Reusable persistence test panel for save/load/clear verification.</p>
 
     <div class="persistence-debug-panel__row">
-      <button
+      <BaseButton
         v-for="testCase in testCases"
         :key="testCase.id"
-        class="btn-soft"
         @click="() => runTestCase(testCase.id)"
       >
         {{ testCase.label }}
-      </button>
-      <button class="btn-soft" @click="() => refreshSnapshot()">
+      </BaseButton>
+      <BaseButton @click="() => refreshSnapshot()">
         Refresh snapshot
-      </button>
+      </BaseButton>
     </div>
 
     <div
@@ -54,6 +53,7 @@
 </template>
 
 <script>
+import BaseButton from '@/components/ui/BaseButton.vue';
 import {
   TEST_CASES,
   buildProgressSnapshot,
@@ -62,6 +62,9 @@ import {
 
 export default {
   name: 'PersistenceDebugPanel',
+  components: {
+    BaseButton,
+  },
   props: {
     title: {
       type: String,

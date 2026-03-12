@@ -1,0 +1,93 @@
+$fishing-page-background: #07121d;
+
+$fishing-panel-background: rgba(9, 19, 30, 0.72);
+$fishing-panel-border: rgba(205, 220, 235, 0.3);
+$fishing-panel-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
+$fishing-panel-text: #f2f7fb;
+$fishing-panel-muted: rgba(221, 233, 244, 0.82);
+$fishing-status-border: rgba(221, 233, 244, 0.16);
+$fishing-panel-radius: 14px;
+$fishing-panel-padding: 16px;
+
+$fishing-tray-background: rgba(8, 14, 24, 0.78);
+$fishing-tray-border: rgba(228, 236, 247, 0.2);
+$fishing-tray-radius: 16px;
+$fishing-tray-padding: 16px;
+
+$fishing-warning-background: rgba(250, 231, 195, 0.95);
+$fishing-warning-border: #d68429;
+$fishing-warning-text: #5c2f00;
+$fishing-warning-radius: 10px;
+$fishing-warning-padding: 10px;
+
+$fishing-result-background: rgba(6, 14, 23, 0.82);
+$fishing-result-border: #98a4b4;
+$fishing-result-border-success: #187a45;
+$fishing-result-border-fail: #b12f2f;
+$fishing-result-radius: 8px;
+$fishing-result-padding: 10px;
+
+$fishing-catch-media-width-min: 120px;
+$fishing-catch-media-width-max: 160px;
+$fishing-catch-media-background: #f2f6fb;
+$fishing-catch-media-border: #c6d1de;
+$fishing-catch-media-radius: 8px;
+$fishing-catch-card-border: #c8d2df;
+$fishing-catch-card-radius: 10px;
+$fishing-catch-card-gap: 10px;
+$fishing-catch-card-padding: 10px;
+$fishing-catch-card-width: 160px;
+
+$fishing-minigame-bar-background: #1f2f44;
+$fishing-minigame-bar-radius: 10px;
+$fishing-minigame-bar-height: 20px;
+$fishing-minigame-fill-green: #20a05b;
+$fishing-minigame-marker-red: #d52929;
+$fishing-minigame-marker-barrier: #d7e0ef;
+$fishing-minigame-marker-active: #ffb020;
+$fishing-minigame-red-width: 4px;
+$fishing-minigame-barrier-width: 6px;
+
+$fishing-scene-surface-background: #1b3148;
+$fishing-scene-surface-border: rgba(255, 255, 255, 0.35);
+$fishing-scene-image-max-width: 1440px;
+$fishing-scene-viewport-height-offset: 180px;
+$fishing-scene-viewport-padding: 16px;
+$fishing-scene-caption-background: rgba(0, 0, 0, 0.38);
+$fishing-scene-caption-radius: 10px;
+$fishing-scene-caption-offset: 16px;
+$fishing-scene-caption-font-size: 13px;
+$fishing-scene-caption-padding-y: 7px;
+$fishing-scene-caption-padding-x: 12px;
+$fishing-scene-fallback-background: rgba(250, 231, 195, 0.95);
+$fishing-scene-fallback-border: #d68429;
+$fishing-scene-fallback-text: #5c2f00;
+
+$fishing-location-selector-gap: 8px;
+$fishing-location-selector-active: #1d8f4e;
+
+$fishing-breakpoint-tablet: 900px;
+$fishing-breakpoint-mobile: 600px;
+
+$fishing-phase-chip-styles: (
+  idle: (
+    background: #e6ecf4,
+    color: #314155,
+  ),
+  casting: (
+    background: #e6ecf4,
+    color: #314155,
+  ),
+  waitingBite: (
+    background: #e9f4ff,
+    color: #0f3f75,
+  ),
+  minigame: (
+    background: #ffeccc,
+    color: #7a3f00,
+  ),
+  result: (
+    background: #ebe6ff,
+    color: #3f2c80,
+  ),
+);
