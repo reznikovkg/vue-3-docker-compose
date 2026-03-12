@@ -46,7 +46,6 @@ export default createStore({
     tableElements: state => state.table,
     getElementById: state => id => state.elements.find(e => e.id === id),
     craftSlots: state => state.craftGrid,
-
     getElementById: state => id => state.elements.find(e => e.id === id)
   },
 
@@ -80,15 +79,11 @@ export default createStore({
     },
 
     [MUTATIONS.PLACE_IN_SLOT](state,{slot,id}){
-
       state.craftGrid[slot] = id
-
     },
 
     [MUTATIONS.CLEAR_CRAFT](state){
-
       state.craftGrid = Array(9).fill(null)
-
     }
   },
 

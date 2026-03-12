@@ -27,11 +27,9 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
 	name: 'CraftTable',
-
 	computed: {
 		...mapGetters(['craftSlots', 'getElementById'])
 	},
-
 	methods: {
 		...mapActions(['placeInSlot', 'craftMix', 'clearCraft']),
 
@@ -46,7 +44,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .craft {
 	flex: 1;
 	display: flex;

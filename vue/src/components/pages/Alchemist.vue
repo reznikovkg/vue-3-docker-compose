@@ -28,12 +28,13 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  
+  &__tables{
+    display:flex;
+    gap:40px;
+    justify-content:center;
+    padding:20px;
+  }
 }
 
-.alchemist__tables{
-  display:flex;
-  gap:40px;
-  justify-content:center;
-  padding:20px;
-}
 </style>
