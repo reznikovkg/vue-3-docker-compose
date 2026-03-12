@@ -178,7 +178,9 @@ export default {
         this.keysPressed[key] = false
       })
       
-      this.setPlayerPosition({ x: 200, y: 200 })
+      const cX = window.innerWidth / 2
+      const cY = window.innerHeight / 2
+      this.setPlayerPosition({ x: cX, y: cY })
       this.updateEnemies([])
       this.updateBullets([])
       
@@ -213,21 +215,36 @@ export default {
     },
 
     updatePlayerPosition() {
-      const newPos = { ...this.player }
+      //const newPos = { ...this.player }
+      let newX = 0
+      let newY = 0
       
-      if (this.keysPressed.ArrowUp) newPos.y -= this.player.speed
-      if (this.keysPressed.ArrowDown) newPos.y += this.player.speed
-      if (this.keysPressed.ArrowLeft) newPos.x -= this.player.speed
-      if (this.keysPressed.ArrowRight) newPos.x += this.player.speed
-      if (this.keysPressed.w) newPos.y -= this.player.speed
-      if (this.keysPressed.s) newPos.y += this.player.speed
-      if (this.keysPressed.a) newPos.x -= this.player.speed
-      if (this.keysPressed.d) newPos.x += this.player.speed
+      if (this.keysPressed.ArrowUp) newY += this.player.speed
+      if (this.keysPressed.ArrowDown) newY -= this.player.speed
+      if (this.keysPressed.ArrowLeft) newX += this.player.speed
+      if (this.keysPressed.ArrowRight) newX -= this.player.speed
+      if (this.keysPressed.w) newY += this.player.speed
+      if (this.keysPressed.s) newY -= this.player.speed
+      if (this.keysPressed.a) newX += this.player.speed
+      if (this.keysPressed.d) newX -= this.player.speed
       
-      newPos.x = Math.max(20, Math.min(this.worldSize.width - 40, newPos.x))
-      newPos.y = Math.max(20, Math.min(this.worldSize.height - 40, newPos.y))
+      //newPos.x = Math.max(20, Math.min(this.worldSize.width - 40, newPos.x))
+      //newPos.y = Math.max(20, Math.min(this.worldSize.height - 40, newPos.y))
       
-      this.setPlayerPosition(newPos)
+      //this.setPlayerPosition(newPos)
+
+      if (newX !== 0 || newY !== 0) {
+        const shiftedEnemies = this.enemies.map(enemy => ({
+        ...enemy,
+        x: enemy.x + newX,
+        y: enemy.y + newY
+      }))
+    this.updateEnemies(shiftedEnemies)
+    
+      const shiftedBullets = this.bullets.map(bullet => ({...bullet,
+        x: bullet.x + newX, y: bullet.y + newY}))
+      this.updateBullets(shiftedBullets)
+      }
     },
 
     updateGame(currentTime) {
