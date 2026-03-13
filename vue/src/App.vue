@@ -16,6 +16,15 @@
     <div>
       <button @click="resetGame" class="reset-btn">Сброс</button>
     </div>
+    <div class="controls">
+      <div class="controls">
+        <button @click="addFlask" class="setting-btn">Больше колбочек</button>
+        <button @click="delFlask" class="setting-btn">Меньше колбочек</button>
+        <button @click="addLayer" class="setting-btn">Больше слоев</button>
+        <button @click="delLayer" class="setting-btn">Меньше слоев</button>
+      </div>
+      Изменения вступят в силу в начале новой игры
+    </div>
     <div v-if="showWinMessage" class="win-message">
       Победа
     </div>
@@ -127,11 +136,20 @@ export default {
       console.log(mapColors)
       const mapCounts = []
       for (let i = 0; i < this.FLASK_COUNT - 1; i++) {
-        mapCounts.push(4)
+        mapCounts.push(this.LAYERS_PER_FLASK)
       }
       console.log(mapCounts)
 
-      for (let i = 0; i < this.FLASK_COUNT - 2; i++) {
+      let fullFlasks = 0
+      if (this.FLASK_COUNT <= 5) {
+        fullFlasks = this.FLASK_COUNT - 1
+      } else if (this.FLASK_COUNT <= 11) {
+        fullFlasks = this.FLASK_COUNT - 2
+      } else {
+        fullFlasks = this.FLASK_COUNT - 3
+      }
+
+      for (let i = 0; i < fullFlasks - 1; i++) {
         const layers = []
         let fullness = 0
         console.log('Генерация слоев для колбы ', i)
@@ -180,7 +198,10 @@ export default {
       }
       console.log(lastLayers)
       newFlasks.push( {layers: lastLayers} )
-      newFlasks.push( {layers: []} )
+
+      for (let i = 0; i < this.FLASK_COUNT - fullFlasks; i++) {
+        newFlasks.push( {layers: []} )
+      }
 
       return newFlasks
     },
@@ -201,6 +222,26 @@ export default {
       this.showWinMessage = false
       this.newGame()
       this.winCount = 0
+    },
+    addFlask() {
+      if (this.FLASK_COUNT < 16) {
+        this.FLASK_COUNT += 1
+      }
+    },
+    delFlask() {
+      if (this.FLASK_COUNT > 3) {
+        this.FLASK_COUNT -= 1
+      }
+    },
+    addLayer() {
+      if (this.LAYERS_PER_FLASK < 10) {
+        this.LAYERS_PER_FLASK += 1
+      }
+    },
+    delLayer() {
+      if (this.LAYERS_PER_FLASK > 3) {
+        this.LAYERS_PER_FLASK -= 1
+      }
     }
   }
 }
@@ -239,5 +280,20 @@ export default {
   padding: 8px 16px;
   font-size: 18px;
   font-weight: bold;
+}
+.controls {
+  padding: 10px 20px;
+  position: center;
+  gap: 10px;
+  display: flex;
+}
+.setting-btn {
+  padding: 10px 20px;
+  font-size: 12px;
+  background: #afafaf;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 </style>
