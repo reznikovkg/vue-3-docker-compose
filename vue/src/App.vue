@@ -31,7 +31,7 @@ export default {
       COLORS: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
       selectedFlaskIndex: null,
       flasks: [],
-      showWinMessage: false,
+      showWinMessage: false
     }
   },
   mounted() {
@@ -127,16 +127,8 @@ export default {
         const layers = []
         let fullness = 0
         console.log('Генерация слоев для колбы ', i)
-        let hasLastColor = false
-        let lastColor = 'orange'
         do {
-          let colorIndex = -1
-          console.log('Предыдущий цвет ', lastColor)
-          do {
-            colorIndex = Math.floor(Math.random() * mapColors.length)
-          } while (hasLastColor && (mapColors[colorIndex] === lastColor))
-          lastColor = mapColors[colorIndex]
-          hasLastColor = true
+          let colorIndex = Math.floor(Math.random() * mapColors.length)
           console.log('Выбираем цвет: ', colorIndex)
           let rndParts = 1
           if (mapCounts[colorIndex] != 1) {
@@ -144,10 +136,14 @@ export default {
           }
           console.log('Берем ', rndParts, ' частей этого цвета')
           console.log('Получаем ', percent * rndParts, ' процент цвета в колбе')
-          layers.push({
-            color: mapColors[colorIndex],
-            percent: percent * rndParts
-          })
+          if (layers.length > 0 && layers[layers.length - 1].color === mapColors[colorIndex]) {
+            layers[layers.length - 1].percent += percent * rndParts
+          } else {
+            layers.push({
+              color: mapColors[colorIndex],
+              percent: percent * rndParts
+            })
+          }
           fullness += rndParts
           mapCounts[colorIndex] -= rndParts
           console.log('Остается ', mapCounts[colorIndex], ' этого цвета')
@@ -168,7 +164,7 @@ export default {
         })
       }
       for (let i = 1; i < lastLayers.length; i++) {
-        if (lastLayers[i].color == lastLayers[i - 1].color) {
+        if (lastLayers[i].color === lastLayers[i - 1].color) {
           console.log('Несколько слоев одного цвета подряд')
           lastLayers[i - 1].percent += lastLayers[i].percent
           lastLayers.splice(i, 1)
