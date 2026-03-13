@@ -50,6 +50,38 @@
           @touchend="() => onTouchEnd()"
         />
 
+        <div
+          class="car car--player"
+          :style="getCarStyle(gameState.playerCar, true)"
+        >
+          <div class="car__body">
+            <div class="car__roof" />
+            <div class="car__side car__side--left" />
+            <div class="car__side car__side--right" />
+            <div class="car__wheel car__wheel--fl" />
+            <div class="car__wheel car__wheel--fr" />
+            <div class="car__wheel car__wheel--rl" />
+            <div class="car__wheel car__wheel--rr" />
+          </div>
+        </div>
+
+        <div
+          v-for="enemy in gameState.enemies"
+          :key="enemy.id"
+          class="car car--enemy"
+          :style="getCarStyle(enemy, false)"
+        >
+          <div class="car__body">
+            <div class="car__roof" />
+            <div class="car__side car__side--left" />
+            <div class="car__side car__side--right" />
+            <div class="car__wheel car__wheel--fl" />
+            <div class="car__wheel car__wheel--fr" />
+            <div class="car__wheel car__wheel--rl" />
+            <div class="car__wheel car__wheel--rr" />
+          </div>
+        </div>
+
         <div v-if="isPaused" class="game__overlay game__overlay--pause">
           <div class="game__overlay-text">
             ПАУЗА
@@ -84,6 +116,7 @@ import { ACTIONS } from '@/store'
 
 const ROAD_WIDTH = 400
 const LANE_COUNT = 3
+const TUNNEL_TOP_RATIO = 0.52
 const INITIAL_SPEED = 3
 const SPEED_INCREASE = 0.0005
 const INITIAL_LIVES = 3
@@ -99,6 +132,7 @@ const KEY_PAUSE_VALUES = [' ', 'p', 'P', 'з', 'З']
 const GAME_LOOP_FPS = 60
 
 interface Car {
+  id?: number
   x: number
   y: number
   width: number
@@ -107,6 +141,7 @@ interface Car {
   lane?: number
   changingLane?: boolean
   targetLane?: number
+  color?: string
 }
 
 interface GameState {
@@ -162,6 +197,8 @@ const gameState = reactive<GameState>({
 
 let gameLoopId: number | null = null
 let nextEnemySpawnDistance = ENEMY_SPAWN_DISTANCE_STEP
+let roadDashOffset = 0
+let enemyIdCounter = 1
 
 const getCanvasSize = () => {
   const isMobile = window.innerWidth < 768
@@ -191,6 +228,17 @@ const updateCanvasSize = () => {
   canvasSize.scale = size.scale
 }
 
+const getRoadBoundsAtY = (yPx: number) => {
+  const w = canvasSize.width
+  const h = canvasSize.height
+  const centerX = w / 2
+  const topWidth = w * TUNNEL_TOP_RATIO
+  const widthAtY = topWidth + (w - topWidth) * Math.min(1, Math.max(0, yPx / h))
+  const leftPx = centerX - widthAtY / 2
+
+  return { leftPx, widthPx: widthAtY }
+}
+
 const drawCar = (
   context: CanvasRenderingContext2D,
   car: Car,
@@ -203,7 +251,6 @@ const drawCar = (
   const topY = car.y * canvasScale
   const width = car.width * canvasScale
   const height = car.height * canvasScale
-
   context.fillStyle = color
   context.fillRect(
     centerX - width / 2,
@@ -274,14 +321,45 @@ const getRandomLaneX = () => {
 
 const spawnEnemy = () => {
   const enemyCar: Car = {
+    id: enemyIdCounter++,
     x: getRandomLaneX(),
     y: -ENEMY_HEIGHT,
     width: ENEMY_WIDTH,
     height: ENEMY_HEIGHT,
     speed: gameState.speed * ENEMY_SPEED_FACTOR,
+    color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 55%)`,
   }
 
   gameState.enemies.push(enemyCar)
+}
+
+const getCarStyle = (car: Car, isPlayer: boolean) => {
+  const scale = canvasSize.scale
+  const centerYpx = (car.y + car.height / 2) * scale
+  const bounds = getRoadBoundsAtY(centerYpx)
+  const centerXpx = bounds.leftPx + (car.x / ROAD_WIDTH) * bounds.widthPx
+
+  const gameHeight = canvasSize.height / scale
+  const depthRatio = Math.max(0, Math.min(1, (car.y + car.height / 2) / gameHeight))
+  const sizeScale = isPlayer ? 1 : 0.72 + 0.28 * depthRatio
+
+  const width = car.width * scale * sizeScale
+  const height = car.height * scale * sizeScale
+
+  const roadCenterX = bounds.leftPx + bounds.widthPx / 2
+  const roadHalfWidth = bounds.widthPx / 2
+  const offsetRatio = roadHalfWidth > 0 ? (centerXpx - roadCenterX) / roadHalfWidth : 0
+  const maxTiltDeg = 22
+  const tiltDeg = isPlayer ? offsetRatio * maxTiltDeg : 0
+
+  const baseColor = isPlayer ? '#3b82f6' : (car.color || '#9ca3af')
+
+  return {
+    width: `${width}px`,
+    height: `${height}px`,
+    transform: `translate3d(${centerXpx}px, ${centerYpx}px, 0) translate(-50%, -50%) scale(${sizeScale}) rotateX(40deg) rotateY(${tiltDeg}deg)`,
+    '--car-color': baseColor,
+  }
 }
 
 const detectCollisions = () => {
@@ -365,37 +443,43 @@ const gameLoop = () => {
   }
 
   const canvasScale = canvasSize.scale
-  const roadWidthScaled = ROAD_WIDTH * canvasScale
-  const laneWidthScaled = roadWidthScaled / LANE_COUNT
+  const cw = canvasElement.width
+  const ch = canvasElement.height
 
   context.fillStyle = '#16a34a'
-  context.fillRect(
-    0,
-    0,
-    canvasElement.width,
-    canvasElement.height,
-  )
+  context.fillRect(0, 0, cw, ch)
+
+  const topBounds = getRoadBoundsAtY(0)
+  const bottomBounds = getRoadBoundsAtY(ch)
+  const roadLeftTop = topBounds.leftPx
+  const roadRightTop = topBounds.leftPx + topBounds.widthPx
+  const roadLeftBottom = bottomBounds.leftPx
+  const roadRightBottom = bottomBounds.leftPx + bottomBounds.widthPx
 
   context.fillStyle = '#374151'
-  context.fillRect(
-    0,
-    0,
-    roadWidthScaled,
-    canvasElement.height,
-  )
+  context.beginPath()
+  context.moveTo(roadLeftTop, 0)
+  context.lineTo(roadRightTop, 0)
+  context.lineTo(roadRightBottom, ch)
+  context.lineTo(roadLeftBottom, ch)
+  context.closePath()
+  context.fill()
 
   context.strokeStyle = '#ffffff'
   context.lineWidth = 2
   context.setLineDash([20 * canvasScale, 15 * canvasScale])
+  roadDashOffset = roadDashOffset + gameState.speed * 1.5
+  context.lineDashOffset = -roadDashOffset * canvasScale
 
   let laneIndex = 1
 
   while (laneIndex < LANE_COUNT) {
+    const xTop = roadLeftTop + (topBounds.widthPx / LANE_COUNT) * laneIndex
+    const xBottom = roadLeftBottom + (bottomBounds.widthPx / LANE_COUNT) * laneIndex
     context.beginPath()
-    context.moveTo(laneIndex * laneWidthScaled, 0)
-    context.lineTo(laneIndex * laneWidthScaled, canvasElement.height)
+    context.moveTo(xTop, 0)
+    context.lineTo(xBottom, ch)
     context.stroke()
-
     laneIndex = laneIndex + 1
   }
 
@@ -427,13 +511,6 @@ const gameLoop = () => {
 
   gameState.playerCar.y = canvasElement.height / canvasScale - 100
 
-  drawCar(
-    context,
-    gameState.playerCar,
-    '#3b82f6',
-    true,
-  )
-
   gameState.enemies.forEach((enemy) => {
     enemy.y = enemy.y + enemy.speed
   })
@@ -447,15 +524,6 @@ const gameLoop = () => {
   })
 
   gameState.enemies = visibleEnemies
-
-  gameState.enemies.forEach((enemy) => {
-    drawCar(
-      context,
-      enemy,
-      '#9ca3af',
-      false,
-    )
-  })
 
   detectCollisions()
 }
@@ -572,6 +640,7 @@ onUnmounted(() => {
 
   &__canvas-wrapper {
     position: relative;
+    perspective: 900px;
     border-radius: var(--vt-radius-default);
     overflow: hidden;
     box-shadow: var(--vt-shadow-default);
@@ -612,6 +681,89 @@ onUnmounted(() => {
   &__hint {
     width: 100%;
     max-width: 420px;
+  }
+}
+
+.car {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  pointer-events: none;
+  transition: transform 0.12s ease-out;
+  z-index: 2;
+
+  &__body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.7),
+      rgba(255, 255, 255, 0.2)
+    ),
+    var(--car-color, #9ca3af);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+  }
+
+  &__roof {
+    position: absolute;
+    inset: 18%;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #1f2937, #111827);
+    opacity: 0.9;
+  }
+
+  &__side {
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    width: 5px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.4));
+
+    &--left {
+      left: 0;
+    }
+
+    &--right {
+      right: 0;
+    }
+  }
+
+  &__wheel {
+    position: absolute;
+    width: 18%;
+    height: 14%;
+    border-radius: 999px;
+    background: #020617;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.6);
+
+    &--fl {
+      left: 4%;
+      top: 6%;
+    }
+
+    &--fr {
+      right: 4%;
+      top: 6%;
+    }
+
+    &--rl {
+      left: 4%;
+      bottom: 6%;
+    }
+
+    &--rr {
+      right: 4%;
+      bottom: 6%;
+    }
+  }
+
+  &--player {
+    z-index: 3;
   }
 }
 
