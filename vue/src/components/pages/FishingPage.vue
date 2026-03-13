@@ -190,6 +190,7 @@ export default {
   data() {
     return {
       unsubscribePhaseSubscription: null,
+      lastAppliedPhase: null,
     };
   },
   computed: {
@@ -426,18 +427,25 @@ export default {
     this.applyPageTitle();
   },
   created() {
-    this.applyPageTitle(this.phase);
-    this.unsubscribePhaseSubscription = this.$store.subscribe((mutation) => {
-      if (mutation.type !== 'gameSession/SET_PHASE') {
-        return;
-      }
-
-      this.applyPageTitle(mutation.payload);
-    });
-
+    this.lastAppliedPhase = this.phase;
     if (!this.selectedLocationId && this.locations.length) {
       this.selectLocation(this.locations[0].id);
     }
+
+    this.applyPageTitle(this.lastAppliedPhase);
+    this.unsubscribePhaseSubscription = this.$store.subscribe((mutation) => {
+      if (!mutation.type.startsWith('gameSession/')) {
+        return;
+      }
+
+      const nextPhase = this.$store.getters['gameSession/getPhase'];
+      if (nextPhase === this.lastAppliedPhase) {
+        return;
+      }
+
+      this.lastAppliedPhase = nextPhase;
+      this.applyPageTitle(nextPhase);
+    });
   },
   methods: {
     resolvePageTitle(phase) {
