@@ -29,6 +29,16 @@
           >
             ☁️
           </Cloud>
+          <template v-for="spark in getSparks" :key="spark.id">
+            <Spark
+              v-if="index === spark.index"
+              :show-spark="true"
+              :spark-index="spark.index"
+              :spark-direction="spark.direction"
+              :spark-id="spark.id"
+              class="c-game__spark"
+            />
+          </template>
           <span v-if="cell.t === 1" class="c-game__emoji">
             <slot name="tree">🌲</slot>
           </span>
@@ -56,6 +66,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import StopWatch from '../StopWatch.vue'
 import Cloud from '../Cloud.vue'
+import Spark from '../Spark.vue'
 
 const MOVEMENT_INTERVAL = 300
 const CELL_SIZE = 60
@@ -64,7 +75,8 @@ export default {
   name: 'IndexPage',
   components: {
     StopWatch,
-    Cloud
+    Cloud,
+    Spark
   },
   props: {},
   emits: ['game-win', 'game-lose', 'game-error'],
@@ -73,7 +85,8 @@ export default {
       moveInterval: null,
       pendingDirection: null,
       victoryData: null,
-      cloudMoveInterval: null
+      cloudMoveInterval: null,
+      sparkInterval: null
     }
   },
   computed: {
@@ -88,9 +101,10 @@ export default {
       'getTreeCount',
       'getTotalTrees',
       'getCurrentTime',
-       'getCloudIndex',
+      'getCloudIndex',
       'getCloudDirection',
-      'isGameOver'
+      'isGameOver',
+      'getSparks'
     ]),
     isGameActive() {
       return this.getGameStatus === 'active'
@@ -112,10 +126,12 @@ export default {
     this.initGame()
     window.addEventListener('keydown', this.handleKeyDown)
     this.startMovement()
+    this.startSparkMovement()
   },
   beforeUnmount() {
     this.stopMovement()
     this.stopCloudMovement()
+    this.stopSparkMovement()
     window.removeEventListener('keydown', this.handleKeyDown) 
     this.setGameStatus('paused')
   },
@@ -128,7 +144,11 @@ export default {
       'collectTree',
       'resetGame',
       'setGameOver',
-      'moveCloud'
+      'initCloud',
+      'moveCloud',
+      'addSpark',        
+      'moveAllSparks',   
+      'setLastShotTime'
     ]),
     initGame() {
       return this.resetGame()
@@ -136,6 +156,8 @@ export default {
         .then(() => {
           this.startMovement()
           this.startCloudMovement()
+          this.startSparkMovement()
+          this.initCloud()
         })
         .catch((error) => {
           console.error('Game initialization error:', error)
@@ -150,6 +172,7 @@ export default {
       if (this.moveInterval) {
         clearInterval(this.moveInterval)
         this.stopCloudMovement()
+        this.stopSparkMovement()
         this.moveInterval = null
       }
     },
@@ -215,12 +238,15 @@ export default {
         this.$emit('game-win', this.victoryData)
         this.showVictoryAlert()
         this.stopMovement()
+        this.stopSparkMovement()
         this.setGameStatus('win')
           .then(() => this.resetGame())
           .then(() => this.setGameStatus('active'))
           .then(() => {
             this.startMovement()
             this.startCloudMovement()
+            this.startSparkMovement()
+            this.initCloud()
             this.victoryData = null
           })
           .catch((error) => {
@@ -231,30 +257,57 @@ export default {
     },
         handleGameOver() {
       const alertMessage = 'Вы проиграли, попробуйте снова'
-      
       setTimeout(() => {
         alert(alertMessage)
       }, 100)
-      
       this.$emit('game-lose')
       this.stopMovement()
       this.stopCloudMovement()
-      
+      this.stopSparkMovement()
       this.setGameStatus('lose')
         .then(() => this.resetGame())
         .then(() => this.setGameStatus('active'))
         .then(() => {
           this.startMovement()
           this.startCloudMovement()
+          this.startSparkMovement()
+          this.initCloud()
         })
         .catch((error) => {
           console.error('Game restart after lose error:', error)
           this.$emit('game-error', error)
         })
     },
+    handleShoot() {
+      if (!this.isGameActive) return
+      const currentTime = Date.now()
+      const lastShotTime = this.getLastShotTime
+      if (currentTime - lastShotTime < 3000) {
+        return
+      }
+      const currentDirection = this.pendingDirection || this.getDirection
+      if (!currentDirection) return
+      this.addSpark({
+        index: this.getPlayerIndex,
+        direction: currentDirection
+      })
+    },
+    startSparkMovement() {
+      if (this.sparkInterval) return
+      this.sparkInterval = setInterval(() => {
+        this.moveAllSparks()
+      }, MOVEMENT_INTERVAL / 2)
+    },
+    stopSparkMovement() {
+      if (this.sparkInterval) {
+        clearInterval(this.sparkInterval)
+        this.sparkInterval = null
+      }
+    },
     restartGame() {
       this.stopMovement()
       this.stopCloudMovement()
+      this.stopSparkMovement()
       return this.initGame()
     },
     getNextIndex(currentIndex, moveDirection) {
@@ -278,6 +331,11 @@ export default {
     },
     handleKeyDown(event) {
       if (!this.isGameActive) return
+      if (event.code === 'Space') {
+        event.preventDefault()
+        this.handleShoot()
+        return
+      }
       const keyMap = {
         'ArrowUp': 'up',
         'ArrowDown': 'down',

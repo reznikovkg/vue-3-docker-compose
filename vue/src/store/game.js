@@ -10,9 +10,11 @@ export const MUTATIONS = {
   SET_TIMER_INTERVAL: 'SET_TIMER_INTERVAL',
   SET_CLOUD_INDEX: 'SET_CLOUD_INDEX',
   SET_CLOUD_DIRECTION: 'SET_CLOUD_DIRECTION',
-  SET_GAME_OVER: 'SET_GAME_OVER'
+  SET_GAME_OVER: 'SET_GAME_OVER',
+  REMOVE_SPARK: 'REMOVE_SPARK',
+  SET_SPARKS: 'SET_SPARKS',
+  SET_LAST_SHOT_TIME: 'SET_LAST_SHOT_TIME'
 }
-
 // 0 - empty, 1 - tree, 2 - wall
 const getInitialGrid = () => [
   { t: 0 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 },
@@ -26,7 +28,6 @@ const getInitialGrid = () => [
   { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
   { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }
 ]
-
 export default {
   namespaced: true,
   state: {
@@ -42,7 +43,9 @@ export default {
     timerInterval: null,
     cloudIndex: null,
     cloudDirection: null,
-    gameOver: false
+    gameOver: false,
+    sparks: [],
+    lastShotTime: 0
   },
   getters: {
     getGrid: (state) => state.grid,
@@ -58,7 +61,9 @@ export default {
     isGameActive: (state) => state.gameStatus === 'active',
     getCloudIndex: (state) => state.cloudIndex,
     getCloudDirection: (state) => state.cloudDirection,
-    isGameOver: (state) => state.gameOver
+    isGameOver: (state) => state.gameOver,
+    getSparks: (state) => state.sparks,
+    getLastShotTime: (state) => state.lastShotTime
   },
   mutations: {
     [MUTATIONS.SET_PLAYER_INDEX](state, index) {
@@ -124,6 +129,15 @@ export default {
     },
     [MUTATIONS.SET_GAME_OVER](state, value) {
       state.gameOver = value
+    },
+    [MUTATIONS.SET_SPARKS](state, sparks) {
+      state.sparks = sparks
+    },
+    [MUTATIONS.SET_LAST_SHOT_TIME](state, time) {
+      state.lastShotTime = time
+    },
+    [MUTATIONS.REMOVE_SPARK](state, sparkId) {
+      state.sparks = state.sparks.filter(s => s.id !== sparkId)
     }
   },
   actions: {
@@ -148,18 +162,12 @@ export default {
     setGameStatus({ commit, state }, status) {
       return new Promise((resolve) => {
         commit(MUTATIONS.SET_GAME_STATUS, status)
-        
         if (status === 'active') {
           if (!state.timerInterval) {
             const interval = setInterval(() => {
               commit(MUTATIONS.SET_CURRENT_TIME, state.currentTime + 1)
             }, 1000)
             commit(MUTATIONS.SET_TIMER_INTERVAL, interval)
-          }
-        if (state.cloudIndex === null) {
-            setTimeout(() => {
-              this.dispatch('game/initCloud')
-            }, 100)
           }
         } else {
           if (state.timerInterval) {
@@ -204,6 +212,8 @@ export default {
         commit(MUTATIONS.SET_CLOUD_INDEX, null)
         commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
         commit(MUTATIONS.SET_GAME_OVER, false)
+        commit(MUTATIONS.SET_SPARKS, [])
+        commit(MUTATIONS.SET_LAST_SHOT_TIME, 0)
         resolve()
       })
     },
@@ -232,9 +242,8 @@ export default {
       })
     },
     initCloud({ commit, state }) {
-  return new Promise((resolve) => {
+    return new Promise((resolve) => {
     try {
-      // Проверка существования grid
       if (!state.grid || !Array.isArray(state.grid)) {
         console.warn('Grid is not available for cloud initialization')
         commit(MUTATIONS.SET_CLOUD_INDEX, null)
@@ -269,7 +278,6 @@ export default {
       console.error('Error in initCloud:', error)
       commit(MUTATIONS.SET_CLOUD_INDEX, null)
       commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
-      resolve()
     }
   })
 },
@@ -279,25 +287,21 @@ export default {
           resolve()
           return
         }
-
         const currentIndex = state.cloudIndex
         const currentDirection = state.cloudDirection
         const rows = state.rows
         const cols = state.cols
         const grid = state.grid
-
         const getAvailableDirections = () => {
           const row = Math.floor(currentIndex / cols)
           const col = currentIndex % cols
           const directions = []
-
           const moves = {
             'up': { row: row - 1, col: col, opposite: 'down' },
             'down': { row: row + 1, col: col, opposite: 'up' },
             'left': { row: row, col: col - 1, opposite: 'right' },
             'right': { row: row, col: col + 1, opposite: 'left' }
           }
-
           Object.entries(moves).forEach(([dir, pos]) => {
             if (pos.row >= 0 && pos.row < rows && pos.col >= 0 && pos.col < cols) {
               const cellIndex = pos.row * cols + pos.col
@@ -322,33 +326,25 @@ export default {
           }
           return directions
         }
-
         const availableDirections = getAvailableDirections()
-
         if (availableDirections.length === 0) {
           resolve()
           return
         }
-
-        const newDirection = availableDirections[Math.floor(Math.random() * availableDirections.length)]
-        
+        const newDirection = availableDirections[Math.floor(Math.random() * availableDirections.length)]        
         const row = Math.floor(currentIndex / cols)
         const col = currentIndex % cols
         let newRow = row
         let newCol = col
-
         switch (newDirection) {
           case 'up': newRow--; break
           case 'down': newRow++; break
           case 'left': newCol--; break
           case 'right': newCol++; break
         }
-
         const newIndex = newRow * cols + newCol
-        
         commit(MUTATIONS.SET_CLOUD_DIRECTION, newDirection)
         commit(MUTATIONS.SET_CLOUD_INDEX, newIndex)
-
         if (newIndex === state.playerIndex) {
           commit(MUTATIONS.SET_GAME_OVER, true)
           if (state.timerInterval) {
@@ -358,9 +354,92 @@ export default {
           commit(MUTATIONS.SET_GAME_STATUS, 'lose')
           commit(MUTATIONS.SET_CLOUD_INDEX, null)
         }
-
         resolve()
       })
-    }
+    },
+    addSpark({ commit, getters, state }, { index, direction }) {
+      return new Promise((resolve) => {
+        const now = Date.now()
+        const timeSinceLastShot = now - state.lastShotTime
+        
+        if (timeSinceLastShot < 3000) {
+          resolve()
+          return
+        }
+        const sparkId = now + Math.random()
+        const spark = {
+          id: sparkId,
+          index: index,
+          direction: direction
+        }
+        const currentSparks = [...state.sparks, spark]
+        commit(MUTATIONS.SET_SPARKS, currentSparks)
+        commit(MUTATIONS.SET_LAST_SHOT_TIME, now)
+        resolve()
+      })
+    },
+    removeSpark({ commit, state }, sparkId) {
+      return new Promise((resolve) => {
+        const filteredSparks = state.sparks.filter(spark => spark.id !== sparkId)
+        commit(MUTATIONS.SET_SPARKS, filteredSparks)
+        resolve()
+      })
+    },
+    moveAllSparks({ commit, getters, state }) {
+      return new Promise((resolve) => {
+        if (state.gameStatus !== 'active' || state.sparks.length === 0) {
+          resolve()
+          return
+        }
+        const rows = state.rows
+        const cols = state.cols
+        const grid = state.grid
+        let cloudIndex = state.cloudIndex
+        const sparksToRemove = []
+        const updatedSparks = []
+        for (const spark of state.sparks) {
+          const row = Math.floor(spark.index / cols)
+          const col = spark.index % cols
+          let newRow = row
+          let newCol = col
+          switch (spark.direction) {
+            case 'up': newRow--; break
+            case 'down': newRow++; break
+            case 'left': newCol--; break
+            case 'right': newCol++; break
+          }
+          if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols) {
+            sparksToRemove.push(spark.id)
+            continue
+          }
+          const newIndex = newRow * cols + newCol
+          if (grid[newIndex].t === 2) {
+            sparksToRemove.push(spark.id)
+            continue
+          }
+          if (newIndex === cloudIndex) {
+            sparksToRemove.push(spark.id)
+            cloudIndex = null
+            commit(MUTATIONS.SET_CLOUD_INDEX, null)
+            continue
+          }
+          updatedSparks.push({
+            ...spark,
+            index: newIndex
+          })
+        }
+        commit(MUTATIONS.SET_SPARKS, updatedSparks)
+        for (const sparkId of sparksToRemove) {
+          commit(MUTATIONS.REMOVE_SPARK, sparkId)
+        }
+        resolve()
+      })
+    },
+    setLastShotTime({ commit }, time) {
+      return new Promise((resolve) => {
+        commit(MUTATIONS.SET_LAST_SHOT_TIME, time)
+        resolve()
+      })
+    },
   }
 }
