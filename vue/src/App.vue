@@ -10,6 +10,9 @@
         @click="handleFlaskClick(index)"
       />
     </div>
+    <div v-if="showWinMessage" class="win-message">
+      Победа
+    </div>
   </div>
 </template>
 
@@ -27,7 +30,8 @@ export default {
       LAYERS_PER_FLASK: 4,
       COLORS: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
       selectedFlaskIndex: null,
-      flasks: []
+      flasks: [],
+      showWinMessage: false,
     }
   },
   mounted() {
@@ -94,6 +98,15 @@ export default {
         const toTopLayer = toFlask.layers[toFlask.layers.length - 1]
         toTopLayer.percent += pourAmount
       }
+
+      if (this.checkWin()) {
+        this.showWinMessage = true
+        console.log('Победа')
+        setTimeout(() => {
+          this.showWinMessage = false
+          this.newGame()
+        }, 2000)
+      }
     },
     generateRandomFlasks() {
       const newFlasks = []
@@ -135,8 +148,8 @@ export default {
             color: mapColors[colorIndex],
             percent: percent * rndParts
           })
-          fullness = fullness + rndParts
-          mapCounts[colorIndex] = mapCounts[colorIndex] - rndParts
+          fullness += rndParts
+          mapCounts[colorIndex] -= rndParts
           console.log('Остается ', mapCounts[colorIndex], ' этого цвета')
           if (mapCounts[colorIndex] === 0) {
             mapColors.splice(colorIndex, 1)
@@ -167,6 +180,14 @@ export default {
 
       return newFlasks
     },
+    checkWin() {
+      for (let flask of this.flasks) {
+        if (flask.layers.length === 0) continue
+        if (flask.layers.length > 1) return false
+        if (flask.layers[0].percent !== 100) return false
+      }
+      return true
+    },
     newGame() {
       this.selectedFlaskIndex = null
       this.flasks = this.generateRandomFlasks()
@@ -186,5 +207,13 @@ export default {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+}
+.win-message {
+  position: center;
+  color: gold;
+  padding: 20px 40px;
+  font-size: 32px;
+  font-weight: bold;
+  z-index: 1000;
 }
 </style>
