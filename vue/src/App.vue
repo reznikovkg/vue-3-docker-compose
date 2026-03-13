@@ -10,6 +10,12 @@
         @click="handleFlaskClick(index)"
       />
     </div>
+    <div class="win-counter">
+      Серия побед: {{ winCount }}
+    </div>
+    <div>
+      <button @click="resetGame" class="reset-btn">Сброс</button>
+    </div>
     <div v-if="showWinMessage" class="win-message">
       Победа
     </div>
@@ -31,7 +37,8 @@ export default {
       COLORS: ['red', 'blue', 'green', 'yellow', 'purple', 'orange'],
       selectedFlaskIndex: null,
       flasks: [],
-      showWinMessage: false
+      showWinMessage: false,
+      winCount : 0
     }
   },
   mounted() {
@@ -106,6 +113,7 @@ export default {
           this.showWinMessage = false
           this.newGame()
         }, 2000)
+        this.winCount += 1
       }
     },
     generateRandomFlasks() {
@@ -188,6 +196,11 @@ export default {
       this.selectedFlaskIndex = null
       this.flasks = this.generateRandomFlasks()
       console.log('Новая игра', this.flasks)
+    },
+    resetGame() {
+      this.showWinMessage = false
+      this.newGame()
+      this.winCount = 0
     }
   }
 }
@@ -211,5 +224,20 @@ export default {
   font-size: 32px;
   font-weight: bold;
   z-index: 1000;
+}
+.reset-btn {
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #36c9ff;
+  color: #333;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.win-counter {
+  color: gold;
+  padding: 8px 16px;
+  font-size: 18px;
+  font-weight: bold;
 }
 </style>
