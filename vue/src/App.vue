@@ -154,6 +154,13 @@ export default {
           percent: percent * mapCounts[i]
         })
       }
+      for (let i = 1; i < lastLayers.length; i++) {
+        if (lastLayers[i].color == lastLayers[i - 1].color) {
+          console.log('Несколько слоев одного цвета подряд')
+          lastLayers[i - 1].percent += lastLayers[i].percent
+          lastLayers.splice(i, 1)
+        }
+      }
       console.log(lastLayers)
       newFlasks.push( {layers: lastLayers} )
       newFlasks.push( {layers: []} )
