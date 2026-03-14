@@ -74,12 +74,7 @@ export default {
 $bobber-size: 14px;
 $bobber-border: #7f1212;
 $bobber-highlight: rgba(255, 255, 255, 0.28);
-$bobber-highlight-soft: rgba(255, 255, 255, 0.24);
-$bobber-highlight-strong: rgba(255, 255, 255, 0.35);
 $bobber-glow: rgba(255, 117, 117, 0.45);
-$bobber-glow-soft: rgba(255, 117, 117, 0.28);
-$bobber-glow-mid: rgba(255, 117, 117, 0.32);
-$bobber-glow-strong: rgba(255, 117, 117, 0.46);
 $bobber-shadow: rgba(0, 0, 0, 0.24);
 $bobber-shadow-strong: rgba(0, 0, 0, 0.28);
 $bobber-shadow-hooked: rgba(0, 0, 0, 0.22);
@@ -104,7 +99,6 @@ $bobber-shadow-hooked: rgba(0, 0, 0, 0.22);
   z-index: 3;
 
   &--waiting {
-    animation: bobber-float 1.4s ease-in-out infinite;
     filter: saturate(1.1);
   }
 
@@ -132,32 +126,6 @@ $bobber-shadow-hooked: rgba(0, 0, 0, 0.22);
       0 0 24px rgba(255, 117, 117, 0.72),
       0 4px 14px $bobber-shadow-strong;
     filter: brightness(1.08) saturate(1.24);
-  }
-}
-
-@keyframes bobber-float {
-  0% {
-    box-shadow:
-      0 0 0 1px $bobber-highlight-soft,
-      0 0 10px $bobber-glow-soft,
-      0 2px 8px $bobber-shadow;
-    transform: translate(-50%, -49%);
-  }
-
-  50% {
-    box-shadow:
-      0 0 0 1px $bobber-highlight-strong,
-      0 0 18px $bobber-glow-strong,
-      0 3px 10px $bobber-shadow-strong;
-    transform: translate(-50%, -53%);
-  }
-
-  100% {
-    box-shadow:
-      0 0 0 1px $bobber-highlight-soft,
-      0 0 12px $bobber-glow-mid,
-      0 2px 8px $bobber-shadow;
-    transform: translate(-50%, -50%);
   }
 }
 </style>
