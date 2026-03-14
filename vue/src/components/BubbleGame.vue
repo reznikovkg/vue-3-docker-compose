@@ -14,8 +14,8 @@
       </button>
     </div>
     -->
-    
-    <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)">
+
+    <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)" @mousemove="(e) => onFieldMouseMove(e)">
       <div class="c-game__topbar" @click="(e) => e.stopPropagation()">
         <div class="c-game__targetWrap">
           <div class="c-game__target">
@@ -61,6 +61,12 @@
         :size="bubble.r * 2"
         :sizeType="bubble.size"
       />
+
+      <div
+        v-if="activeMode === 'laser'"
+        class="c-game__laserCursor"
+        :style="{ left: laserX + 'px', top: laserY + 'px' }"
+      ></div>
     </div>
   </div>
 </template>
@@ -141,7 +147,12 @@ export default {
       spawnTimerId: null,
       finishTimerId: null,
       timeLeft: GAME_DEFAULTS.maxTime,
-      rafId: null
+      rafId: null,
+      activeMode: 'normal',
+      laserX: 0,
+      laserY: 0,
+      laserClientX: 0,
+      laserClientY: 0
     }
   },
 
@@ -180,6 +191,22 @@ export default {
 
     bombMode(x, y) {
       return spawnBomb(this, x, y)
+    },
+
+    onFieldMouseMove(e) {
+      const rect = this.$refs.gameField ? this.$refs.gameField.getBoundingClientRect() : null
+
+      this.laserClientX = e.clientX
+      this.laserClientY = e.clientY
+
+      if (rect) {
+        this.laserX = e.clientX - rect.left
+        this.laserY = e.clientY - rect.top
+      }
+
+      if (this.activeMode === 'laser') {
+        handleLaserMode(this, e)
+      }
     },
 
     // старт + генерация
@@ -419,6 +446,13 @@ export default {
     },
     tick() { // скорость пока тут
       if (this.isRunning) {
+        if (this.activeMode === 'laser' && this.laserClientX && this.laserClientY) {
+          handleLaserMode(this, {
+            clientX: this.laserClientX,
+            clientY: this.laserClientY
+          })
+        }
+
         const { fieldWidth, fieldHeight } = this.getFieldSize()
 
         const movedBubbles = this.bubbles
@@ -565,6 +599,21 @@ export default {
     width: 100%;
     height: 100%;
     overflow: hidden;
+  }
+
+  &__laserCursor {
+    position: absolute;
+    z-index: 8;
+    width: 16px;
+    height: 16px;
+    border: 1px solid rgba(255, 80, 80, 0.95);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(255, 80, 80, 0.45); //светяшка
+    background:
+      linear-gradient(rgba(255, 80, 80, 0.95), rgba(255, 80, 80, 0.95)) center / 1px 100% no-repeat,
+      linear-gradient(90deg, rgba(255, 80, 80, 0.95), rgba(255, 80, 80, 0.95)) center / 100% 1px no-repeat;
   }
 
   &__topbar {
