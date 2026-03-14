@@ -5,6 +5,7 @@
       <div class="puzzle__stats">
         <div class="puzzle__moves">Ходов: {{ moves }}</div>
         <div class="puzzle__timer">{{ formatTime }}</div>
+        <div class="puzzle__speed" v-if="timerSpeed > 1">x{{ timerSpeed }}</div>
       </div>
     </div>
 
@@ -26,17 +27,24 @@
     <div class="puzzle__mode-control">
       <button 
         class="puzzle__mode-button" 
-        :class="{ 'puzzle__mode-button--active': !blockMode }"
-        @click="() => setMode(false)"
+        :class="{ 'puzzle__mode-button--active': currentMode === 'normal' }"
+        @click="() => setMode('normal')"
       >
         Обычный режим
       </button>
       <button 
         class="puzzle__mode-button" 
-        :class="{ 'puzzle__mode-button--active': blockMode }"
-        @click="() => setMode(true)"
+        :class="{ 'puzzle__mode-button--active': currentMode === 'block' }"
+        @click="() => setMode('block')"
       >
         Режим блокировок
+      </button>
+      <button 
+        class="puzzle__mode-button" 
+        :class="{ 'puzzle__mode-button--active': currentMode === 'freeze' }"
+        @click="() => setMode('freeze')"
+      >
+        Режим заморозки
       </button>
     </div>
 
@@ -51,15 +59,23 @@
       <div 
         v-for="(cell, i) in cells" 
         :key="i"
-        class="puzzle__cell" 
-        :class="{ 
-          'puzzle__cell--empty': cell === size * size,
-          'puzzle__cell--blocked': blockMode && blockedCell === i
-        }"
-        @click="() => handleClick(i)"
-        @touchstart.prevent="() => handleClick(i)"
+        class="puzzle__cell-wrapper"
+        :style="getCellStyle(i)"
       >
-        <span v-if="cell !== size * size">{{ cell }}</span>
+        <div 
+          class="puzzle__cell" 
+          :class="{ 
+            'puzzle__cell--empty': cell === size * size,
+            'puzzle__cell--blocked': (currentMode === 'block' && blockedCell === i),
+            'puzzle__cell--frozen': currentMode === 'freeze' && isFrozen(i)
+          }"
+          @click="() => handleClick(i)"
+          @touchstart.prevent="() => touchStart(i, $event)"
+          @touchend.prevent="() => touchEnd(i, $event)"
+          @touchmove.prevent="() => {}"
+        >
+          <span v-if="cell !== size * size">{{ cell }}</span>
+        </div>
       </div>
     </div>
     <div class="puzzle__controls">
@@ -95,7 +111,16 @@ export default {
       bonusActive: false,
       blockedCell: null,
       records: [],
-      blockMode: false
+      currentMode: 'normal',
+      animatingCells: {},
+      touchStartX: null,
+      touchStartY: null,
+      touchStartIndex: null,
+      lastMoveTime: Date.now(),
+      timerSpeed: 1,
+      speedUpTimer: null,
+      lastMoves: [],
+      penaltySeconds: 0
     }
   },
   computed: {
@@ -111,15 +136,16 @@ export default {
       })
     },
     formatTime() {
-      const m = Math.floor(this.seconds / 60)
-      const s = this.seconds % 60
+      const totalSeconds = this.seconds + this.penaltySeconds
+      const m = Math.floor(totalSeconds / 60)
+      const s = totalSeconds % 60
       return `${m}:${s.toString().padStart(2, '0')}`
     },
     isNewRecord() {
       if (!this.isSolved) return false
       const sameSize = this.records.filter(r => r.size === this.size)
       if (sameSize.length < 5) return true
-      return this.seconds < Math.max(...sameSize.map(r => r.time))
+      return (this.seconds + this.penaltySeconds) < Math.max(...sameSize.map(r => r.time))
     }
   },
   methods: {
@@ -152,10 +178,15 @@ export default {
       this.blockedCell = null
       this.bonusActive = false
       this.startTimer()
+      this.lastMoveTime = Date.now()
+      this.lastMoves = []
+      this.animatingCells = {}
+      this.checkBoost()
+      this.penaltySeconds = 0
     },
     setMode(mode) {
-      if (this.blockMode !== mode) {
-        this.blockMode = mode
+      if (this.currentMode !== mode) {
+        this.currentMode = mode
         this.newGame()
       }
     },
@@ -167,6 +198,11 @@ export default {
       const col = index % this.size
       return (Math.abs(emptyRow - row) + Math.abs(emptyCol - col)) === 1
     },
+    isFrozen(index) {
+      if (this.currentMode !== 'freeze') return false
+      const cellValue = this.cells[index]
+      return cellValue === index + 1
+    },
     handleClick(index) {
       if (this.isSolved) return
       if (this.bonusActive && index !== this.emptyIndex) {
@@ -175,22 +211,104 @@ export default {
         return
       }
       if (!this.canMove(index)) return
-      if (this.blockMode && this.blockedCell === index) return
+      if (this.currentMode === 'block' && this.blockedCell === index) return
+      if (this.currentMode === 'freeze' && this.isFrozen(index)) return
       this.moveCell(index)
     },
-    moveCell(index) {
-      const newCell = [...this.cells]
+    touchStart(index, event) {
+      this.touchStartX = event.touches[0].clientX
+      this.touchStartY = event.touches[0].clientY
+      this.touchStartIndex = index
+    },
+    touchEnd(index, event) {
+      if (!this.touchStartX || !this.touchStartY) return
+      const deltaX = event.changedTouches[0].clientX - this.touchStartX
+      const deltaY = event.changedTouches[0].clientY - this.touchStartY
+      if (Math.abs(deltaX) < 30 && Math.abs(deltaY) < 30) {
+        this.handleClick(index)
+        return
+      }
       const empty = this.emptyIndex
+      const emptyRow = Math.floor(empty / this.size)
+      const emptyCol = empty % this.size
+      const startRow = Math.floor(this.touchStartIndex / this.size)
+      const startCol = this.touchStartIndex % this.size
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (deltaX > 0 && startCol + 1 === emptyCol && startRow === emptyRow) {
+          this.handleClick(this.touchStartIndex)
+        } else if (deltaX < 0 && startCol - 1 === emptyCol && startRow === emptyRow) {
+          this.handleClick(this.touchStartIndex)
+        }
+      } else {
+        if (deltaY > 0 && startRow + 1 === emptyRow && startCol === emptyCol) {
+          this.handleClick(this.touchStartIndex)
+        } else if (deltaY < 0 && startRow - 1 === emptyRow && startCol === emptyCol) {
+          this.handleClick(this.touchStartIndex)
+        }
+      }
+      this.touchStartX = null
+      this.touchStartY = null
+      this.touchStartIndex = null
+    },
+    getCellStyle(index) {
+      if (this.animatingCells[index]) {
+        return {
+          position: 'relative',
+          transform: `translate(${this.animatingCells[index].x}px, ${this.animatingCells[index].y}px)`,
+          transition: 'transform 0.2s ease'
+        }
+      }
+      return {
+        position: 'relative',
+        transition: 'transform 0.2s ease'
+      }
+    },
+    animateMove(fromIndex, toIndex) {
+      const fromRow = Math.floor(fromIndex / this.size)
+      const fromCol = fromIndex % this.size
+      const toRow = Math.floor(toIndex / this.size)
+      const toCol = toIndex % this.size
+      const cellSize = 60
+      const deltaX = (toCol - fromCol) * cellSize
+      const deltaY = (toRow - fromRow) * cellSize
+      this.animatingCells = {
+        ...this.animatingCells,
+        [fromIndex]: { x: -deltaX, y: -deltaY }
+      }
+      setTimeout(() => {
+        this.animatingCells = {
+          ...this.animatingCells,
+          [fromIndex]: { x: 0, y: 0 }
+        }
+      }, 200)
+    },
+    moveCell(index) {
+      const empty = this.emptyIndex
+      this.animateMove(index, empty)
+      const newCell = [...this.cells]
       newCell[empty] = newCell[index]
       newCell[index] = this.size * this.size
       this.cells = newCell
       this.moves++
-      if (this.blockMode) {
+      this.lastMoveTime = Date.now()
+      this.timerSpeed = 1
+      this.lastMoves.push({ from: index, to: empty })
+      if (this.lastMoves.length > 2) {
+        this.lastMoves.shift()
+      }
+      if (this.lastMoves.length === 2) {
+        const [first, second] = this.lastMoves
+        if (first.from === second.to && first.to === second.from) {
+          this.penaltySeconds += 10
+        }
+      }
+      if (this.currentMode === 'block') {
         this.blockNextCell()
       }
       
       if (this.isSolved) {
         clearInterval(this.timer)
+        clearInterval(this.speedUpTimer)
         this.checkRecord()
       }
     },
@@ -206,7 +324,20 @@ export default {
       if (this.timer) clearInterval(this.timer)
       this.timer = setInterval(() => {
         if (!this.isSolved) {
-          this.seconds++
+          this.seconds += this.timerSpeed
+        }
+      }, 1000)
+    },
+    checkBoost() {
+      if (this.speedUpTimer) clearInterval(this.speedUpTimer)
+      this.speedUpTimer = setInterval(() => {
+        if (!this.isSolved) {
+          const timeSinceLastMove = (Date.now() - this.lastMoveTime) / 1000
+          if (timeSinceLastMove > 5) {
+            this.timerSpeed = 2
+          } else {
+            this.timerSpeed = 1
+          }
         }
       }, 1000)
     },
@@ -231,9 +362,10 @@ export default {
       localStorage.setItem('puzzleRecords', JSON.stringify(this.records))
     },
     checkRecord() {
+      const totalSeconds = this.seconds + this.penaltySeconds
       const newRecord = {
         size: this.size,
-        time: this.seconds,
+        time: totalSeconds,
         moves: this.moves,
         date: Date.now()
       }
@@ -262,6 +394,7 @@ export default {
   },
   beforeUnmount() {
     if (this.timer) clearInterval(this.timer)
+    if (this.speedUpTimer) clearInterval(this.speedUpTimer)
   }
 }
 </script>
@@ -287,6 +420,7 @@ export default {
   &__stats {
     display: flex;
     gap: 15px;
+    align-items: center;
   }
   
   &__moves {
@@ -299,6 +433,14 @@ export default {
     font-weight: bold;
     color: #2196F3;
     font-family: monospace;
+  }
+  &__speed {
+    font-size: 14px;
+    font-weight: bold;
+    color: #2196F3;
+    background: #0e1353;
+    padding: 4px 8px;
+    border-radius: 12px;
   }
   &__size-control {
     display: flex;
@@ -383,7 +525,13 @@ export default {
     margin-bottom: 20px;
     aspect-ratio: 1;
   }
+  &__cell-wrapper {
+    width: 100%;
+    height: 100%;
+  }
   &__cell {
+    width: 100%;
+    height: 100%;
     background: white;
     border-radius: 8px;
     display: flex;
@@ -393,11 +541,10 @@ export default {
     font-weight: bold;
     color: #333;
     cursor: pointer;
-    aspect-ratio: 1;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     transition: all 0.2s;
     user-select: none;
-    &:active:not(&--empty):not(&--blocked) {
+    &:active:not(&--empty):not(&--blocked):not(&--frozen) {
       transform: scale(0.95);
       background: #f0f0f0;
     }
@@ -411,6 +558,12 @@ export default {
       background: #ffcdd2;
       cursor: not-allowed;
       opacity: 0.7;
+    }
+    &--frozen {
+      background: #e0e0e0;
+      color: #999;
+      cursor: not-allowed;
+      border: 2px solid #2196F3;
     }
   }
 
