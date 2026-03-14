@@ -8,10 +8,10 @@
     <main class="fishing-page__stage">
       <div
         class="fishing-page__play-area"
-        @pointercancel="() => onReelingStop()"
-        @pointerdown="() => onReelingStart()"
-        @pointerleave="() => onReelingStop()"
-        @pointerup="() => onReelingStop()"
+        @pointercancel="onReelingStop()"
+        @pointerdown="onReelingStart()"
+        @pointerleave="onReelingStop()"
+        @pointerup="onReelingStop()"
       >
         <FishingScene :bobber="sceneBobber" :location="selectedLocation" />
       </div>
@@ -23,7 +23,7 @@
           :disabled="!canCast"
           :locations="locations"
           :selected-location-id="selectedLocationId"
-          @select="(locationId) => selectLocation(locationId)"
+          @select="selectLocation($event)"
         />
       </aside>
 
@@ -72,7 +72,7 @@
       <section class="fishing-page__hud-tray">
         <div class="fishing-page__tray-primary">
           <div class="fishing-page__cast-row">
-            <BaseButton :disabled="!canCast" @click="() => startCast()">
+            <BaseButton :disabled="!canCast" @click="startCast()">
               Cast
             </BaseButton>
             <span
@@ -132,7 +132,7 @@
             <p class="fishing-page__result-message">
               {{ resultPanel.message }}
             </p>
-            <BaseButton @click="() => closeResultPanel()">Close</BaseButton>
+            <BaseButton @click="closeResultPanel()">Close</BaseButton>
           </div>
           <article v-if="showCatchCard" class="fishing-page__catch-card">
             <div class="fishing-page__catch-media">

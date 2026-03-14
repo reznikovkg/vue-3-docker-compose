@@ -8,7 +8,7 @@
         'location-selector__item--active': location.id === selectedLocationId,
       }"
       :disabled="disabled"
-      @click="() => $emit('select', location.id)"
+      @click="$emit('select', location.id)"
     >
       {{ location.name }}
     </BaseButton>
