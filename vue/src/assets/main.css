@@ -6,7 +6,7 @@
   padding: 2rem;
   font-weight: normal;
 }
-
+/*
 a,
 .green {
   text-decoration: none;
@@ -20,7 +20,8 @@ a,
     background-color: hsla(160, 100%, 37%, 0.2);
   }
 }
-
+/*  */
+/*
 @media (min-width: 1024px) {
   body {
     display: flex;
@@ -33,3 +34,4 @@ a,
     padding: 0 2rem;
   }
 }
+*/

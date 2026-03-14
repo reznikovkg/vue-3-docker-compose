@@ -2,41 +2,63 @@ import { createStore } from 'vuex'
 import list from './list'
 
 const MUTATIONS = {
-  INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+  SET_SETTINGS: 'SET_SETTINGS',
+  UPDATE_SETTINGS: 'UPDATE_SETTINGS',
+  RESET_SETTINGS: 'RESET_SETTINGS'
 }
+
+
+const DEFAULT_SETTINGS = {
+  totalColors: 3,
+  targetColor: 'red',
+  spawnRate: 1,
+  pointsForCorrect: 1,
+  pointsForWrong: -5
+}
+
 
 export default createStore({
   state () {
     return {
-      count: 0
+      settings: {...DEFAULT_SETTINGS}
     }
   },
-  getters: {
-    getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
+  getters: {  
+    getSettings: (state) => state.settings,
+    getTotalColors: (state) => state.settings.totalColors,
+    getTargetColor: (state) => state.settings.targetColor,
+    getSpawnRate: (state) => state.settings.spawnRate,
+    getPointsForCorrect: (state) => state.settings.pointsForCorrect,
+    getPointsForWrong:  (state) => state.settings.pointsForWrong,
+
+    getSpawnInterval: (state) => (1/state.settings.spawnRate).toFixed(1),
+    isTargetColor: (state) => (color) => color == state.settings.targetColor
   },
   mutations: {
-    [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
+    [MUTATIONS.SET_SETTINGS]: (state, settings) => {
+      state.settings = {...settings}
     },
-    [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
+    [MUTATIONS.UPDATE_SETTINGS]: (state, {key, value}) => {
+      if (key in state.settings) {
+        state.settings[key] = value
+      }
     },
+    [MUTATIONS.RESET_SETTINGS]: (state) => {
+      state.settings = {...DEFAULT_SETTINGS}
+    }
   },
   actions: {
-    runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
+    setSettings: (store, settings) => {
+      store.commit(MUTATIONS.SET_SETTINGS, settings)
     },
-    setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
+    updateSetting: (store, {key, value}) => {
+      store.commit(MUTATIONS.UPDATE_SETTINGS, {key, value})
     },
+    resetSettings: (store) => {
+      store.commit(MUTATIONS.RESET_SETTINGS)
+    }
   },
   modules: {
-    list
+    list,
   }
 })
