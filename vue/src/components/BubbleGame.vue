@@ -71,6 +71,15 @@
       ></div>
 
       <div
+        v-for="item in comboTextItems"
+        :key="item.id"
+        class="c-game__comboText"
+        :style="{ left: item.x + 'px', top: item.y + 'px' }"
+      >
+        {{ item.text }}
+      </div>
+
+      <div
         v-if="activeMode === 'laser'"
         class="c-game__laserCursor"
         :style="{ left: laserX + 'px', top: laserY + 'px' }"
@@ -102,7 +111,6 @@ export default {
     Bubble
   },
 
-  // Подумать что с этим сделать тут!!!
   // (IndexPage -> GamwMenu | GamwMenu на start | IndexPage в startFromMenu(settings) | IndexPage -> BubbleGame )
   props: {
     // цвета участвующие в генерации пузырей см.список
@@ -159,6 +167,9 @@ export default {
       activeMode: 'auto',
       marks: [], // метки выстрелов автомата
       autoShotTimerId: null,  // интервал автовыстрелов
+      hitComboMultiplier: 1,
+      missComboMultiplier: 1,
+      comboTextItems: [],
       laserX: 0,
       laserY: 0,
       laserClientX: 0,
@@ -204,8 +215,8 @@ export default {
       stopAutoMode(this)
     },
 
-    comboMode(bubble, isHit) {
-      return applyCombo(this, bubble, isHit)
+    comboMode(bubble, x, y, index = 0) {
+      return applyCombo(this, bubble, x, y, index)
     },
 
     bombMode(x, y) {
@@ -237,6 +248,9 @@ export default {
       this.bubbles = []
       this.nextId = 1
       this.timeLeft = this.maxTime
+      this.hitComboMultiplier = 1
+      this.missComboMultiplier = 1
+      this.comboTextItems = []
 
       if (typeof this.onStart === 'function') {
         this.onStart()
@@ -523,6 +537,9 @@ export default {
     handleFieldClick(e) {
       const x = e.clientX
       const y = e.clientY
+      const rect = this.$refs.gameField ? this.$refs.gameField.getBoundingClientRect() : null
+      const localX = rect ? x - rect.left : x
+      const localY = rect ? y - rect.top : y
       const elements = document.elementsFromPoint(x, y)
 
       const ids = []
@@ -539,14 +556,14 @@ export default {
       let nextBubbles = [...this.bubbles]
 
       // для каждого найти пузырь считать клик, копим и делитим иначе выход
-      ids.forEach((id) => {
+      ids.forEach((id, index) => {
         const numericId = Number(id)
         const bubble = nextBubbles.find((item) => item.id === numericId)
         if (!bubble) {
           return
         }
 
-        const delta = this.getClickDelta(bubble)
+        const delta = this.comboMode(bubble, localX, localY, index)
         deltas.push(delta)
         nextScore += delta
 
@@ -662,6 +679,18 @@ export default {
     }
   }
 
+  &__comboText {
+    position: absolute;
+    z-index: 9;
+    pointer-events: none;
+    transform: translate(-50%, -50%) rotate(-8deg);
+    color: #ffd24c;
+    font-weight: 700;
+    white-space: nowrap;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
+    animation: c-game-combo-fade 0.9s ease forwards;
+  }
+
   &__topbar {
     position: absolute;
     top: 16px;
@@ -752,6 +781,23 @@ export default {
 
   &__stopText {
     line-height: 1;
+  }
+}
+
+@keyframes c-game-combo-fade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-8deg) scale(0.8);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -60%) rotate(-8deg) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -90%) rotate(-8deg) scale(1.05);
   }
 }
 </style>

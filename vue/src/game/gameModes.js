@@ -1,3 +1,5 @@
+import { BUBBLE_RULES } from '@/constants/gameConfig.js'
+
 export function handleLaserMode(ctx, e) {
   if (!ctx || !e) {
     return null
@@ -91,12 +93,43 @@ export function stopAutoMode(ctx) {
   return null
 }
 
-export function applyCombo(ctx, bubble, isHit) {
-  return {
-    ctx,
-    bubble,
-    isHit
+export function applyCombo(ctx, bubble, x, y, index = 0) {
+  if (!ctx || !bubble) {
+    return 0
   }
+
+  const getSafeValue = (value) => {
+    return Number(value.toFixed(2))
+  }
+
+  const addComboText = (text) => {
+    const id = Date.now() + Math.random()
+    const item = {
+      id,
+      x: x + 12,
+      y: y - 12 - index * 18,
+      text
+    }
+
+    ctx.comboTextItems = [...ctx.comboTextItems, item]
+
+    setTimeout(() => {
+      ctx.comboTextItems = ctx.comboTextItems.filter((comboItem) => comboItem.id !== id)
+    }, 900)
+  }
+
+  if (bubble.color === ctx.targetColor) {
+    const delta = getSafeValue(ctx.scoreHit * ctx.hitComboMultiplier)
+    ctx.hitComboMultiplier = getSafeValue(Math.min(ctx.hitComboMultiplier * 1.2, 5))
+    addComboText('Комбо x' + ctx.hitComboMultiplier.toFixed(1))
+    return delta
+  }
+
+  const penalty = BUBBLE_RULES.miss[bubble.size] || ctx.scoreMiss
+  const delta = getSafeValue(penalty * ctx.missComboMultiplier)
+  ctx.missComboMultiplier = getSafeValue(Math.min(ctx.missComboMultiplier * 1.3, 7))
+  addComboText('Комбо x' + ctx.missComboMultiplier.toFixed(1))
+  return delta
 }
 
 export function spawnBomb(ctx, x, y) {
