@@ -24,15 +24,71 @@ export function handleLaserMode(ctx, e) {
 }
 
 export function startAutoMode(ctx) {
-  return {
-    ctx
+  if (!ctx || !ctx.$refs || !ctx.$refs.gameField) {
+    return null
   }
+
+  if (ctx.autoShotTimerId) {
+    clearInterval(ctx.autoShotTimerId)
+  }
+
+  const field = ctx.$refs.gameField
+  //позишн поля на экране
+  const rect = field.getBoundingClientRect()
+
+  ctx.autoShotTimerId = setInterval(() => {
+    //реальные размеры
+    const width = field.clientWidth
+    const height = field.clientHeight
+    //точка выстрела
+    const x = Math.floor(Math.random() * width)
+    const y = Math.floor(Math.random() * height)
+    //id для метки
+    const id = Date.now() + Math.random()
+
+    ctx.marks = [...ctx.marks, { id, x, y, isActive: true }]
+
+    //затухашка
+    setTimeout(() => {
+      ctx.marks = ctx.marks.map((mark) => {
+        if (mark.id === id) {
+          return {
+            ...mark,
+            isActive: false
+          }
+        }
+
+        return mark
+      })
+    }, 1600)
+
+    setTimeout(() => {
+      ctx.marks = ctx.marks.filter((mark) => mark.id !== id)
+    }, 2000)
+
+    // для клика перевод
+    ctx.handleFieldClick({
+      clientX: rect.left + x,
+      clientY: rect.top + y
+    })
+  }, 500)
+
+  return ctx.autoShotTimerId
 }
 
 export function stopAutoMode(ctx) {
-  return {
-    ctx
+  if (!ctx) {
+    return null
   }
+
+  if (ctx.autoShotTimerId) {
+    clearInterval(ctx.autoShotTimerId)
+    ctx.autoShotTimerId = null
+  }
+
+  ctx.activeMode = 'normal'
+
+  return null
 }
 
 export function applyCombo(ctx, bubble, isHit) {

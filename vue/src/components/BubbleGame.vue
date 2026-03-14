@@ -63,6 +63,14 @@
       />
 
       <div
+        v-for="mark in marks"
+        :key="mark.id"
+        class="c-game__mark"
+        :class="{ 'c-game__mark--hide': !mark.isActive }"
+        :style="{ left: mark.x + 'px', top: mark.y + 'px' }"
+      ></div>
+
+      <div
         v-if="activeMode === 'laser'"
         class="c-game__laserCursor"
         :style="{ left: laserX + 'px', top: laserY + 'px' }"
@@ -148,7 +156,9 @@ export default {
       finishTimerId: null,
       timeLeft: GAME_DEFAULTS.maxTime,
       rafId: null,
-      activeMode: 'normal',
+      activeMode: 'auto',
+      marks: [], // метки выстрелов автомата
+      autoShotTimerId: null,  // интервал автовыстрелов
       laserX: 0,
       laserY: 0,
       laserClientX: 0,
@@ -183,6 +193,15 @@ export default {
 
     autoModeStop() {
       return stopAutoMode(this)
+    },
+
+    activateAutoMode() {
+      this.activeMode = 'auto'
+      startAutoMode(this)
+    },
+
+    deactivateAutoMode() {
+      stopAutoMode(this)
     },
 
     comboMode(bubble, isHit) {
@@ -561,6 +580,7 @@ export default {
   mounted() { // см.стаковерфлоу
     this.rafId = requestAnimationFrame(() => this.tick())
     this.startGame()
+    this.activateAutoMode()
   },
 
   beforeUnmount() { // стоп анимка -- стоп спавн
@@ -577,6 +597,11 @@ export default {
     if (this.finishTimerId) {
       clearInterval(this.finishTimerId)
       this.finishTimerId = null
+    }
+
+    if (this.autoShotTimerId) {
+      clearInterval(this.autoShotTimerId)
+      this.autoShotTimerId = null
     }
   }
 }
@@ -614,6 +639,27 @@ export default {
     background:
       linear-gradient(rgba(255, 80, 80, 0.95), rgba(255, 80, 80, 0.95)) center / 1px 100% no-repeat,
       linear-gradient(90deg, rgba(255, 80, 80, 0.95), rgba(255, 80, 80, 0.95)) center / 100% 1px no-repeat;
+  }
+
+  &__mark {
+    position: absolute;
+    z-index: 7;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 210, 60, 0.95);
+    box-shadow: 0 0 10px rgba(255, 210, 60, 0.65); //светяшка
+    opacity: 1;
+    transition:
+      opacity 0.35s ease,
+      transform 0.35s ease;
+
+    &--hide {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(1.8);
+    }
   }
 
   &__topbar {
