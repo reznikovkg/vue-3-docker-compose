@@ -97,49 +97,7 @@ const normalizeInventoryMap = (payload) => {
   }, {})
 }
 
-const normalizeSaveStateV1 = (payload) => {
-  const selectedLocationId =
-    typeof payload.selectedLocationId === 'string'
-      ? payload.selectedLocationId
-      : null
-  const savedRodId =
-    typeof payload.currentRodId === 'string'
-      ? payload.currentRodId
-      : DEFAULT_ROD_ID
-  const currentRodId =
-    savedRodId === 'default-rod' ? DEFAULT_ROD_ID : savedRodId
-  const catchLog = Array.isArray(payload.catchLog)
-    ? payload.catchLog.filter((item) => item && typeof item === 'object')
-    : []
-  const inventoryFish = Array.isArray(payload.inventoryFish)
-    ? payload.inventoryFish
-        .map((item) => normalizeFishInventoryEntry(item))
-        .filter((item) => Boolean(item))
-    : []
-
-  return {
-    version: SAVE_VERSION,
-    selectedLocationId,
-    currentRodId,
-    currentLineId: DEFAULT_LINE_ID,
-    currentBaitId: DEFAULT_BAIT_ID,
-    money: toSafeNumber(payload.money),
-    stats: {
-      attempts: toSafeNumber(payload.stats?.attempts),
-      catches: toSafeNumber(payload.stats?.catches),
-      fails: toSafeNumber(payload.stats?.fails),
-    },
-    catchLog,
-    inventoryFish,
-    inventoryRods: {},
-    inventoryLines: {},
-    inventoryBait: {},
-    boostedLocationId: null,
-    boostedCastsRemaining: 0,
-  }
-}
-
-const normalizeSaveStateV2 = (payload) => {
+const normalizeSaveStateV3 = (payload) => {
   const selectedLocationId =
     typeof payload.selectedLocationId === 'string'
       ? payload.selectedLocationId
@@ -184,19 +142,6 @@ const normalizeSaveStateV2 = (payload) => {
     inventoryRods: normalizeInventoryMap(payload.inventoryRods),
     inventoryLines: normalizeInventoryMap(payload.inventoryLines),
     inventoryBait: normalizeInventoryMap(payload.inventoryBait),
-    boostedLocationId: null,
-    boostedCastsRemaining: 0,
-  }
-}
-
-const normalizeSaveStateV3 = (payload) => {
-  const normalizedV2 = normalizeSaveStateV2(payload)
-  if (!normalizedV2) {
-    return null
-  }
-
-  return {
-    ...normalizedV2,
     boostedLocationId:
       typeof payload.boostedLocationId === 'string'
         ? payload.boostedLocationId
@@ -208,14 +153,6 @@ const normalizeSaveStateV3 = (payload) => {
 const normalizeSaveState = (payload) => {
   if (!payload || typeof payload !== 'object') {
     return null
-  }
-
-  if (payload.version === 1) {
-    return normalizeSaveStateV1(payload)
-  }
-
-  if (payload.version === 2) {
-    return normalizeSaveStateV2(payload)
   }
 
   if (payload.version === SAVE_VERSION) {
