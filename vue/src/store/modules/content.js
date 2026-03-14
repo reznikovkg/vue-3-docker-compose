@@ -8,6 +8,7 @@ const buildInitialState = () => ({
   locations: GAME_CONFIG.locations,
   fishDefinitions: GAME_CONFIG.fishDefinitions,
   fishTables: GAME_CONFIG.fishTables,
+  gearDefinitions: GAME_CONFIG.gearDefinitions,
   tuning: GAME_CONFIG.tuning,
 })
 
@@ -20,6 +21,15 @@ export default {
     getLocations: (state) => state.locations,
     getFishDefinitions: (state) => state.fishDefinitions,
     getFishTables: (state) => state.fishTables,
+    getGearDefinitions: (state) => state.gearDefinitions,
+    getGearBySlotAndId: (state) => (slot, id) => {
+      const slotItems = state.gearDefinitions?.[slot]
+      if (!Array.isArray(slotItems)) {
+        return null
+      }
+
+      return slotItems.find((item) => item.id === id) || null
+    },
     getTuning: (state) => state.tuning,
     getLocationById: (state) => (locationId) =>
       state.locations.find((location) => location.id === locationId) || null,
@@ -117,6 +127,7 @@ export default {
       state.locations = payload.locations
       state.fishDefinitions = payload.fishDefinitions
       state.fishTables = payload.fishTables
+      state.gearDefinitions = payload.gearDefinitions
       state.tuning = payload.tuning
     },
   },

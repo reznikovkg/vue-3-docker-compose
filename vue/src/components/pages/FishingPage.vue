@@ -33,6 +33,8 @@
         <h2 class="fishing-page__panel-title">Locations</h2>
         <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
         <LocationSelector
+          :boosted-casts-remaining="boostedCastsRemaining"
+          :boosted-location-id="boostedLocationId"
           :disabled="!canCast"
           :locations="locations"
           :selected-location-id="selectedLocationId"
@@ -76,6 +78,18 @@
           <div class="fishing-page__status-row">
             <dt>Barrier</dt>
             <dd>{{ isBarrierBlocking ? 'blocked' : 'clear' }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Rod</dt>
+            <dd>{{ equippedRodName }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Line</dt>
+            <dd>{{ equippedLineName }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Bait</dt>
+            <dd>{{ equippedBaitName }}</dd>
           </div>
         </dl>
         <section
@@ -205,11 +219,14 @@
       <InventoryStoreOverlay
         :active-tab="inventoryOverlayTab"
         :inventory-fish="inventoryFish"
+        :inventory-gear-items="inventoryGearItems"
         :is-open="isInventoryOverlayOpen"
         :money="money"
         :mode="inventoryOverlayMode"
-        @buy-item="() => onInventoryBuyItem()"
+        :store-gear-items="storeGearItems"
+        @buy-item="(item) => onInventoryBuyItem(item)"
         @close="() => closeInventoryOverlay()"
+        @equip-item="(item) => onInventoryEquipItem(item)"
         @mode-change="(mode) => setInventoryOverlayMode(mode)"
         @sell-all-fish="() => onInventorySellAllFish()"
         @sell-item="(item) => onInventorySellItem(item)"
@@ -268,6 +285,47 @@ export default {
     },
     inventoryFish() {
       return this.$store.getters['progress/getInventoryFish']
+    },
+    boostedLocationId() {
+      return this.$store.getters['progress/getBoostedLocationId']
+    },
+    boostedCastsRemaining() {
+      return this.$store.getters['progress/getBoostedCastsRemaining']
+    },
+    inventoryRods() {
+      return this.$store.getters['progress/getInventoryRods']
+    },
+    inventoryLines() {
+      return this.$store.getters['progress/getInventoryLines']
+    },
+    inventoryBait() {
+      return this.$store.getters['progress/getInventoryBait']
+    },
+    gearDefinitions() {
+      return this.$store.getters['content/getGearDefinitions']
+    },
+    currentRodId() {
+      return this.$store.getters['progress/getCurrentRodId']
+    },
+    currentLineId() {
+      return this.$store.getters['progress/getCurrentLineId']
+    },
+    currentBaitId() {
+      return this.$store.getters['progress/getCurrentBaitId']
+    },
+    inventoryGearItems() {
+      return {
+        rods: this.buildInventoryGearRows('rods'),
+        lines: this.buildInventoryGearRows('lines'),
+        bait: this.buildInventoryGearRows('bait'),
+      }
+    },
+    storeGearItems() {
+      return {
+        rods: this.buildStoreGearRows('rods'),
+        lines: this.buildStoreGearRows('lines'),
+        bait: this.buildStoreGearRows('bait'),
+      }
     },
     selectedLocationWarnings() {
       const locationId =
@@ -451,6 +509,15 @@ export default {
     selectedLocationName() {
       return this.selectedLocation?.name || 'none'
     },
+    equippedRodName() {
+      return this.resolveGearName('rods', this.currentRodId)
+    },
+    equippedLineName() {
+      return this.resolveGearName('lines', this.currentLineId)
+    },
+    equippedBaitName() {
+      return this.resolveGearName('bait', this.currentBaitId)
+    },
     minigameState() {
       return this.$store.getters['gameSession/getMinigameState']
     },
@@ -579,22 +646,131 @@ export default {
         return
       }
 
-      this.$store.dispatch('progress/sellFishByInstanceId', item.id)
+      this.$store.dispatch('progress/sellFishByInstanceId', item.id) // Promise-returning action; UI does not depend on completion
     },
     onInventorySellAllFish() {
-      this.$store.dispatch('progress/sellAllFish')
+      this.$store.dispatch('progress/sellAllFish') // Promise-returning action; UI updates from store reactivity
     },
-    onInventoryBuyItem() {},
+    onInventoryBuyItem(item) {
+      if (!item?.id || !item?.slot) {
+        return
+      }
+
+      this.$store.dispatch('progress/buyGearItem', {
+        slot: item.slot,
+        itemId: item.id,
+      }) // Promise-returning action; UI updates from store reactivity
+    },
+    onInventoryEquipItem(item) {
+      if (!item?.id || !item?.slot) {
+        return
+      }
+
+      this.$store.dispatch('progress/equipGearItem', {
+        slot: item.slot,
+        itemId: item.id,
+      }) // Promise-returning action; UI updates from store reactivity
+    },
+    resolveGearName(slot, gearId) {
+      const items = this.gearDefinitions?.[slot]
+      if (!Array.isArray(items)) {
+        return 'n/a'
+      }
+
+      const found = items.find((item) => item.id === gearId)
+      return found?.name || 'n/a'
+    },
+    getOwnedCount(slot, gearItem) {
+      if (gearItem.isUnlimited) {
+        return Number.POSITIVE_INFINITY
+      }
+
+      if (slot === 'rods') {
+        return Number(this.inventoryRods?.[gearItem.id] || 0)
+      }
+
+      if (slot === 'lines') {
+        return Number(this.inventoryLines?.[gearItem.id] || 0)
+      }
+
+      return Number(this.inventoryBait?.[gearItem.id] || 0)
+    },
+    getEquippedId(slot) {
+      if (slot === 'rods') {
+        return this.currentRodId
+      }
+
+      if (slot === 'lines') {
+        return this.currentLineId
+      }
+
+      return this.currentBaitId
+    },
+    resolveGearImageSrc(slot, itemId) {
+      if (slot !== 'rods') {
+        return null
+      }
+
+      const rodImageById = {
+        spinning: '/images/rods/rod-spinning.png',
+        fly: '/images/rods/rod-flywheel.png',
+        baitcast: '/images/rods/rod-baitcast.png',
+      }
+
+      return rodImageById[itemId] || null
+    },
+    buildInventoryGearRows(slot) {
+      const items = this.gearDefinitions?.[slot]
+      if (!Array.isArray(items)) {
+        return []
+      }
+
+      const equippedId = this.getEquippedId(slot)
+
+      return items.map((item) => {
+        const ownedCount = this.getOwnedCount(slot, item)
+        const isEquipped = item.id === equippedId
+        return {
+          id: item.id,
+          slot,
+          name: item.name,
+          meta: item.isDefault ? 'Default loadout' : 'Purchased gear',
+          ownedLabel: item.isUnlimited ? '∞' : String(ownedCount),
+          isEquipped,
+          canEquip: item.isUnlimited || ownedCount > 0,
+          price: Number(item.price || 0),
+          imageSrc: this.resolveGearImageSrc(slot, item.id),
+        }
+      })
+    },
+    buildStoreGearRows(slot) {
+      const items = this.gearDefinitions?.[slot]
+      if (!Array.isArray(items)) {
+        return []
+      }
+
+      return items
+        .filter((item) => !item.isDefault && !item.isUnlimited)
+        .map((item) => ({
+          id: item.id,
+          slot,
+          name: item.name,
+          meta: 'Store item',
+          price: Number(item.price || 0),
+          canBuy: this.money >= Number(item.price || 0),
+          imageSrc: this.resolveGearImageSrc(slot, item.id),
+        }))
+    },
     applyPageTitle(phase) {
       document.title = this.resolvePageTitle(phase)
     },
     selectLocation(locationId) {
-      this.$store.dispatch('progress/selectLocation', locationId)
+      this.$store.dispatch('progress/selectLocation', locationId) // Promise-returning action; no immediate UI dependency
     },
     startCast(castAnchor = null) {
       this.$store.dispatch('gameSession/startCast', {
         castAnchor,
-      })
+      }) // synchronous action body; schedules timeout/RAF flow internally
     },
     onSceneCast(castAnchor) {
       if (!this.canCast) {
@@ -628,7 +804,7 @@ export default {
           return
         }
 
-        this.$store.dispatch('gameSession/setReeling', true)
+        this.$store.dispatch('gameSession/setReeling', true) // synchronous action body; immediate state toggle
         return
       }
 
@@ -645,7 +821,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/registerBarrierClick')
+      this.$store.dispatch('gameSession/registerBarrierClick') // synchronous action body; immediate click handling
     },
     onWindowKeyUp(event) {
       if (this.isEditableTarget(event.target)) {
@@ -661,7 +837,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/setReeling', false)
+      this.$store.dispatch('gameSession/setReeling', false) // synchronous action body; immediate state toggle
     },
     onReelingStart() {
       if (this.phase !== 'minigame') {
@@ -669,21 +845,21 @@ export default {
       }
 
       if (this.isBarrierBlocking) {
-        this.$store.dispatch('gameSession/registerBarrierClick')
+        this.$store.dispatch('gameSession/registerBarrierClick') // synchronous action body; immediate click handling
         return
       }
 
-      this.$store.dispatch('gameSession/setReeling', true)
+      this.$store.dispatch('gameSession/setReeling', true) // synchronous action body; immediate state toggle
     },
     onReelingStop() {
       if (this.phase !== 'minigame') {
         return
       }
 
-      this.$store.dispatch('gameSession/setReeling', false)
+      this.$store.dispatch('gameSession/setReeling', false) // synchronous action body; immediate state toggle
     },
     closeResultPanel() {
-      this.$store.dispatch('ui/hideResultPanel')
+      this.$store.dispatch('ui/hideResultPanel') // synchronous action body; immediate UI reset
     },
   },
 }

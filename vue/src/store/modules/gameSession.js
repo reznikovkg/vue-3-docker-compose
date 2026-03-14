@@ -87,6 +87,18 @@ const clearRafLoop = () => {
   }
 }
 
+const buildGearContext = (rootGetters) => {
+  const currentRodId = rootGetters['progress/getCurrentRodId']
+  const currentLineId = rootGetters['progress/getCurrentLineId']
+  const currentBaitId = rootGetters['progress/getCurrentBaitId']
+
+  return {
+    rod: rootGetters['content/getGearBySlotAndId']('rods', currentRodId),
+    line: rootGetters['content/getGearBySlotAndId']('lines', currentLineId),
+    bait: rootGetters['content/getGearBySlotAndId']('bait', currentBaitId),
+  }
+}
+
 const getBiteDelayMs = (rootGetters) => {
   const tuning = rootGetters['content/getTuning']
 
@@ -94,6 +106,28 @@ const getBiteDelayMs = (rootGetters) => {
   const max = tuning?.biteDelayMs?.max || 3200
 
   return Math.floor(getRandomInRange(min, max))
+}
+
+const applyLocationQualityBoost = (encounter, isBoostedLocation) => {
+  if (!encounter) {
+    return null
+  }
+
+  const baseQuality = Number(encounter.quality || 0)
+  if (!isBoostedLocation) {
+    return {
+      ...encounter,
+      baseQuality,
+      isLocationBoosted: false,
+    }
+  }
+
+  return {
+    ...encounter,
+    baseQuality,
+    quality: Number((baseQuality * 2).toFixed(2)),
+    isLocationBoosted: true,
+  }
 }
 
 export default {
@@ -187,17 +221,20 @@ export default {
       }
 
       clearBiteTimeout()
-      dispatch('stopMinigameLoop') // synchronous cleanup action
+      dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
       biteCycleToken += 1
       const currentCycleToken = biteCycleToken
       commit(MUTATIONS.START_CAST, {
         timestamp: Date.now(),
         castAnchor: normalizeCastAnchor(payload.castAnchor),
       })
-      dispatch('ui/hideResultPanel', null, { root: true }) // synchronous UI reset
+      dispatch('progress/consumeLocationBoostCast', state.activeLocationId, {
+        root: true,
+      }) // Promise-returning action; fire-and-forget is intentional
+      dispatch('ui/hideResultPanel', null, { root: true }) // synchronous action body; immediate UI reset
       dispatch('scheduleBite', {
         cycleToken: currentCycleToken,
-      }) // synchronous kickoff; timeout handles async
+      }) // synchronous action body; schedules timeout-driven flow
       return true
     },
     scheduleBite({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -212,7 +249,7 @@ export default {
       biteTimeoutId = setTimeout(() => {
         dispatch('triggerBite', {
           cycleToken,
-        }) // synchronous action call inside timeout
+        }) // synchronous action body called from timeout
       }, delayMs)
 
       return true
@@ -232,17 +269,31 @@ export default {
       )
       const fishTables = rootGetters['content/getFishTables']
       const fishDefinitions = rootGetters['content/getFishDefinitions']
-      const encounter = rollEncounter(location, fishTables, fishDefinitions)
-      if (!encounter) {
+      const gearContext = buildGearContext(rootGetters)
+      const rolledEncounter = rollEncounter(
+        location,
+        fishTables,
+        fishDefinitions,
+        gearContext,
+      )
+      if (!rolledEncounter) {
         commit(MUTATIONS.SET_PHASE, PHASES.IDLE)
         return false
       }
+      const isBoostedLocation = rootGetters['progress/getIsLocationBoosted'](
+        state.activeLocationId,
+      )
+      const encounter = applyLocationQualityBoost(
+        rolledEncounter,
+        isBoostedLocation,
+      )
 
+      dispatch('progress/consumeEquippedBaitOnHook', null, { root: true }) // Promise-returning action; no immediate minigame dependency
       commit(MUTATIONS.SET_ENCOUNTER, encounter)
       commit(MUTATIONS.SET_PHASE, PHASES.MINIGAME)
       dispatch('startMinigame', {
         encounter,
-      }) // synchronous kickoff; RAF loop is scheduled inside
+      }) // synchronous action body; schedules RAF loop internally
       return true
     },
     startMinigame({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -263,7 +314,7 @@ export default {
         return false
       }
 
-      dispatch('stopMinigameLoop') // synchronous loop reset
+      dispatch('stopMinigameLoop') // synchronous action body; immediate loop reset
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         config,
         elapsedMs: 0,
@@ -283,7 +334,7 @@ export default {
         dispatch('tickMinigame', {
           timestamp,
           loopToken,
-        }) // synchronous tick action call in RAF
+        }) // synchronous action body called from RAF
       })
 
       return true
@@ -338,7 +389,7 @@ export default {
       }
 
       if (stepResult.outcome?.status === 'success') {
-        dispatch('resolveMinigame', stepResult.outcome) // async chain; no follow-up work here
+        dispatch('resolveMinigame', stepResult.outcome) // Promise-returning action; no dependent work in this tick
         return true
       }
 
@@ -346,12 +397,12 @@ export default {
         dispatch('resolveMinigame', {
           status: 'fail',
           reason: getDurabilityFailReason(state.encounter),
-        })
+        }) // Promise-returning action; no dependent work in this tick
         return true
       }
 
       if (stepResult.outcome) {
-        dispatch('resolveMinigame', stepResult.outcome)
+        dispatch('resolveMinigame', stepResult.outcome) // Promise-returning action; no dependent work in this tick
         return true
       }
 
@@ -359,7 +410,7 @@ export default {
         dispatch('tickMinigame', {
           timestamp: nextTimestamp,
           loopToken,
-        }) // synchronous tick action call in RAF
+        }) // synchronous action body called from RAF
       })
 
       return true
@@ -420,14 +471,14 @@ export default {
         dispatch('resolveMinigame', {
           status: 'fail',
           reason: getDurabilityFailReason(state.encounter),
-        })
+        }) // Promise-returning action; no dependent work in this click handler
         return true
       }
 
       return true
     },
     resolveMinigame({ state, commit, dispatch }, outcome) {
-      dispatch('stopMinigameLoop') // synchronous cleanup action
+      dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         isReeling: false,
         isBarrierBlocking: false,
@@ -451,13 +502,21 @@ export default {
           : dispatch('progress/recordFail', encounterPayload, { root: true })
         : Promise.resolve()
 
-      return progressDispatch.then(() => {
-        commit(MUTATIONS.SET_RESULT, {
-          status: outcome.status,
-          reason: outcome.reason,
-          encounter: state.encounter,
+      return progressDispatch
+        .then(() =>
+          outcome.status === 'fail'
+            ? dispatch('progress/consumeBrokenGearOnFail', outcome.reason, {
+                root: true,
+              })
+            : Promise.resolve(),
+        )
+        .then(() => {
+          commit(MUTATIONS.SET_RESULT, {
+            status: outcome.status,
+            reason: outcome.reason,
+            encounter: state.encounter,
+          })
         })
-      })
     },
     stopMinigameLoop() {
       clearRafLoop()
@@ -474,7 +533,7 @@ export default {
     },
     resetSession({ commit, dispatch }) {
       clearBiteTimeout()
-      dispatch('stopMinigameLoop') // synchronous cleanup action
+      dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
       biteCycleToken += 1
       commit(MUTATIONS.RESET_SESSION)
     },

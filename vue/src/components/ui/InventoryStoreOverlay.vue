@@ -72,16 +72,31 @@
           <div class="inventory-overlay__item-info">
             <h3 class="inventory-overlay__item-title">{{ item.name }}</h3>
             <p class="inventory-overlay__item-meta">{{ item.meta }}</p>
-            <p v-if="item.owned !== null" class="inventory-overlay__item-meta">
-              Owned: {{ item.owned }} | Price: {{ item.price }}
+            <p
+              v-if="isInventoryMode && !isFishTab"
+              class="inventory-overlay__item-meta"
+            >
+              Owned: {{ item.ownedLabel }}
             </p>
-            <p v-else class="inventory-overlay__item-meta">
+            <p
+              v-if="isInventoryMode && item.isEquipped"
+              class="inventory-overlay__item-meta"
+            >
+              Equipped
+            </p>
+            <p v-if="!isInventoryMode" class="inventory-overlay__item-meta">
+              Price: {{ item.price }}
+            </p>
+            <p
+              v-if="isInventoryMode && isFishTab"
+              class="inventory-overlay__item-meta"
+            >
               Sell price: {{ item.price }}
             </p>
           </div>
           <div class="inventory-overlay__item-actions">
             <button
-              v-if="isInventoryMode"
+              v-if="isInventoryMode && isFishTab"
               class="inventory-overlay__action inventory-overlay__action--sell"
               type="button"
               @click="() => $emit('sell-item', item)"
@@ -89,8 +104,18 @@
               Sell
             </button>
             <button
+              v-else-if="isInventoryMode"
+              class="inventory-overlay__action inventory-overlay__action--equip"
+              :disabled="item.isEquipped || !item.canEquip"
+              type="button"
+              @click="() => $emit('equip-item', item)"
+            >
+              {{ item.isEquipped ? 'Equipped' : 'Equip' }}
+            </button>
+            <button
               v-else
               class="inventory-overlay__action inventory-overlay__action--buy"
+              :disabled="!item.canBuy"
               type="button"
               @click="() => $emit('buy-item', item)"
             >
@@ -129,73 +154,6 @@ const MODE_OPTIONS = [
   { id: 'store', label: 'Store' },
 ]
 
-const MOCK_ITEMS = {
-  fish: [
-    {
-      id: 'fish-1',
-      name: 'Silver Perch',
-      meta: 'Tier 1',
-      owned: 8,
-      price: '14',
-    },
-    {
-      id: 'fish-2',
-      name: 'Golden Carp',
-      meta: 'Tier 2',
-      owned: 3,
-      price: '42',
-    },
-  ],
-  rods: [
-    {
-      id: 'rod-1',
-      name: 'Willow Rod',
-      meta: 'Entry rod',
-      owned: 1,
-      price: '120',
-    },
-    {
-      id: 'rod-2',
-      name: 'River Rod',
-      meta: 'Balanced control',
-      owned: 0,
-      price: '340',
-    },
-  ],
-  lines: [
-    {
-      id: 'line-1',
-      name: 'Cotton Line',
-      meta: 'Low durability',
-      owned: 4,
-      price: '26',
-    },
-    {
-      id: 'line-2',
-      name: 'Braided Line',
-      meta: 'High durability',
-      owned: 1,
-      price: '90',
-    },
-  ],
-  bait: [
-    {
-      id: 'bait-1',
-      name: 'Worm Pack',
-      meta: 'Common bait',
-      owned: 12,
-      price: '8',
-    },
-    {
-      id: 'bait-2',
-      name: 'Crank Lure',
-      meta: 'Rare lure',
-      owned: 2,
-      price: '55',
-    },
-  ],
-}
-
 export default {
   name: 'InventoryStoreOverlay',
   props: {
@@ -219,6 +177,22 @@ export default {
       type: Array,
       default: () => [],
     },
+    inventoryGearItems: {
+      type: Object,
+      default: () => ({
+        rods: [],
+        lines: [],
+        bait: [],
+      }),
+    },
+    storeGearItems: {
+      type: Object,
+      default: () => ({
+        rods: [],
+        lines: [],
+        bait: [],
+      }),
+    },
   },
   emits: [
     'close',
@@ -227,6 +201,7 @@ export default {
     'sell-item',
     'sell-all-fish',
     'buy-item',
+    'equip-item',
   ],
   computed: {
     inventoryTabs() {
@@ -247,6 +222,9 @@ export default {
     },
     isInventoryMode() {
       return this.mode === 'inventory'
+    },
+    isFishTab() {
+      return this.activeTab === 'fish'
     },
     modeTitle() {
       if (this.isInventoryMode) {
@@ -278,7 +256,11 @@ export default {
         return []
       }
 
-      return MOCK_ITEMS[this.activeTab] || []
+      if (this.isInventoryMode) {
+        return this.inventoryGearItems[this.activeTab] || []
+      }
+
+      return this.storeGearItems[this.activeTab] || []
     },
     showBulkSell() {
       return (
@@ -524,6 +506,16 @@ export default {
     &--buy {
       background: #206d47;
       border-color: #2ea36a;
+    }
+
+    &--equip {
+      background: #2b4f8f;
+      border-color: #4b78c5;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.6;
     }
   }
 
