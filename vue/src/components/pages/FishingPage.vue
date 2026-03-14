@@ -170,10 +170,11 @@
 import BaseButton from '@/components/ui/BaseButton.vue'
 import FishingScene from '@/components/fishing/FishingScene.vue'
 import LocationSelector from '@/components/fishing/LocationSelector.vue'
+import { defineConfig } from '@/utils/defineConfig'
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game'
 const HOOKED_BOBBER_Y = 92
-const PHASE_PAGE_TITLES = Object.freeze({
+const PHASE_PAGE_TITLES = defineConfig({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
   minigame: '3..2..1.. FIGHT!',

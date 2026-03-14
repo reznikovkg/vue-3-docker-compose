@@ -1,4 +1,6 @@
-export const FISH_DEFINITIONS = Object.freeze([
+import { defineConfig } from '@/utils/defineConfig'
+
+export const FISH_DEFINITIONS = defineConfig([
   {
     id: 'roach',
     name: 'Roach',
@@ -46,8 +48,8 @@ export const FISH_DEFINITIONS = Object.freeze([
   },
 ])
 
-export const FISH_TABLES = Object.freeze({
-  'freshwater-basic': Object.freeze([
+export const FISH_TABLES = defineConfig({
+  'freshwater-basic': [
     {
       fishId: 'roach',
       weight: 0.62,
@@ -60,8 +62,8 @@ export const FISH_TABLES = Object.freeze({
       fishId: 'pike',
       weight: 0.08,
     },
-  ]),
-  'river-mixed': Object.freeze([
+  ],
+  'river-mixed': [
     {
       fishId: 'roach',
       weight: 0.42,
@@ -74,8 +76,8 @@ export const FISH_TABLES = Object.freeze({
       fishId: 'pike',
       weight: 0.15,
     },
-  ]),
-  'marsh-predators': Object.freeze([
+  ],
+  'marsh-predators': [
     {
       fishId: 'roach',
       weight: 0.28,
@@ -88,5 +90,5 @@ export const FISH_TABLES = Object.freeze({
       fishId: 'pike',
       weight: 0.34,
     },
-  ]),
+  ],
 })

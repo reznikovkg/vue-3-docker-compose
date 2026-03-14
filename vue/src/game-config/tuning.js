@@ -1,29 +1,31 @@
-export const TUNING = Object.freeze({
-  biteDelayMs: Object.freeze({
+import { defineConfig } from '@/utils/defineConfig'
+
+export const TUNING = defineConfig({
+  biteDelayMs: {
     min: 900,
     max: 6400,
-  }),
-  minigame: Object.freeze({
+  },
+  minigame: {
     greenSpeedBase: 0.23,
     redSpeedBase: 0.11,
     maxTimeMs: 12000,
-    barrierCountRange: Object.freeze({
+    barrierCountRange: {
       min: 1,
       max: 3,
-    }),
-    barrierClicksByTier: Object.freeze({
-      1: Object.freeze({
+    },
+    barrierClicksByTier: {
+      1: {
         min: 4,
         max: 7,
-      }),
-      2: Object.freeze({
+      },
+      2: {
         min: 7,
         max: 12,
-      }),
-      3: Object.freeze({
+      },
+      3: {
         min: 12,
         max: 19,
-      }),
-    }),
-  }),
+      },
+    },
+  },
 })

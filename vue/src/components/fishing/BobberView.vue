@@ -14,7 +14,9 @@
 </template>
 
 <script>
-const DEFAULT_POSITION = Object.freeze({
+import { defineConfig } from '@/utils/defineConfig'
+
+const DEFAULT_POSITION = defineConfig({
   x: 40,
   y: 56,
 })

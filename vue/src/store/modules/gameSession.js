@@ -1,7 +1,8 @@
 import { rollEncounter } from '@/game-logic/encounter'
 import { buildMinigameConfig, stepMinigame } from '@/game-logic/minigame'
+import { defineConfig } from '@/utils/defineConfig'
 
-const PHASES = Object.freeze({
+const PHASES = defineConfig({
   IDLE: 'idle',
   CASTING: 'casting',
   WAITING_BITE: 'waitingBite',
