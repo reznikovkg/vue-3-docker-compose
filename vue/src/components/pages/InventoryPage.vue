@@ -93,7 +93,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
+
 export default {
   name: 'InventoryPage',
   computed: {
@@ -116,26 +117,22 @@ export default {
   },
 
   methods: {
-    selectRod(id) { 
-      this.$store.commit('inventory/SET_ACTIVE_ROD', id) 
+    ...mapActions('inventory', [
+      'setActiveRod',
+      'setActiveBait',
+      'sellItem',
+      'sellFish',
+      'sellAllFish'
+    ]),
+
+    selectRod(id) {
+      this.setActiveRod(id)
     },
 
-    selectBait(id) { 
-      this.$store.commit('inventory/SET_ACTIVE_BAIT', id) 
+    selectBait(id) {
+      this.setActiveBait(id)
     },
 
-    sellItem(id) {
-      this.$store.commit('inventory/SELL_ITEM', id)
-    },
-
-    sellFish(index) { 
-      this.$store.commit('inventory/SELL_FISH', index) 
-    },
-
-    sellAllFish() { 
-      this.$store.commit('inventory/SELL_ALL_FISH')
-    },
-    
     back() { 
       this.$router.push({ name: this.$routes.INDEX }) 
     }

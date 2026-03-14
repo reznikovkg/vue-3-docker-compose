@@ -9,7 +9,7 @@
     
     <div class="shop__grid">
       <div
-        v-for="item in items"
+        v-for="item in shopItems"
         :key="item.id"
         class="shop__card"
       >
@@ -34,26 +34,32 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
 import { items } from '@/config/items'
 
 export default {
   name: 'ShopPage',
 
   computed: {
-    items() {
+    ...mapGetters('inventory', [
+      'money',
+      'items'
+    ]),
+
+    shopItems() {
       return items
     },
 
-    money() {
-      return this.$store.getters['inventory/money']
-    },
-
     inventoryItems() {
-      return this.$store.getters['inventory/items']
+      return this.items
     }
   },
 
   methods: {
+    ...mapActions('inventory', [
+      'buyItem'
+    ]),
+
     hasItem(item) {
       return this.inventoryItems.some(i => i.id === item.id)
     },
@@ -63,8 +69,8 @@ export default {
         alert('Недостаточно денег')
         return
       }
-      this.$store.commit('inventory/ADD_ITEM', item)
-      this.$store.commit('inventory/REMOVE_MONEY', item.price)
+
+      this.buyItem(item)
     },
     
     back() {

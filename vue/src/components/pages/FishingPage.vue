@@ -42,8 +42,10 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
 import { locations } from '@/config/locations'
 import { fish } from '@/config/fish'
+
 export default {
   name: 'FishingPage',
   data() {
@@ -64,15 +66,11 @@ export default {
     }
   },
   computed: {
-    items() {
-      return this.$store.getters['inventory/items']
-    },
-    activeRod() {
-      return this.$store.getters['inventory/activeRod']
-    },
-    activeBait() {
-      return this.$store.getters['inventory/activeBait'] 
-    }
+    ...mapGetters('inventory', [
+      'items',
+      'activeRod',
+      'activeBait'
+    ])
   },
   mounted() {
     const id = Number(this.$route.params.locationId)
@@ -80,6 +78,11 @@ export default {
     this.generateHotSpot()
   },
   methods: {
+    ...mapActions('inventory', [
+      'removeItem',
+      'addFish'
+    ]),
+
     generateHotSpot() {
       const rect = this.$refs.area?.getBoundingClientRect()
       if (!rect) {
@@ -249,7 +252,7 @@ export default {
       
       const rodItem = this.items.find(i => i.id === this.activeRod)
       if (rodItem) {
-        this.$store.commit('inventory/REMOVE_ITEM', rodItem.id)
+        this.removeItem(rodItem.id)
       }
 
       this.messageTimeout = setTimeout(() => {
@@ -265,7 +268,7 @@ export default {
       this.clearAllIntervals()
       this.clearAllTimeouts()
 
-      this.$store.commit('inventory/ADD_FISH', this.currentFish)
+      this.addFish(this.currentFish)
       this.fishingState = 'idle'
       this.tension = 0
       this.floatPosition = null
