@@ -219,7 +219,7 @@ export default {
         }
 
         if (this.tension >= 100) {
-         this.breakRod()
+          this.breakRod()
         }
       }, 100)
     },
