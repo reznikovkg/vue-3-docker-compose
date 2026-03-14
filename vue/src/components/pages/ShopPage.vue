@@ -65,11 +65,6 @@ export default {
     },
 
     buy(item) {
-      if (this.money < item.price) {
-        alert('Недостаточно денег')
-        return
-      }
-
       this.buyItem(item)
     },
     
