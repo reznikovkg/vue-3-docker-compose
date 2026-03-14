@@ -2,8 +2,10 @@
   <RouterView />
 </template>
 
-<script setup>
+<script>
+export default {
+  name: 'AppRoot',
+}
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

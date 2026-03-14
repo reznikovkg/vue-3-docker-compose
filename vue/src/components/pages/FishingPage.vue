@@ -1,0 +1,1041 @@
+<template>
+  <section class="fishing-page">
+    <header class="fishing-page__header">
+      <h1>Gone Fishing</h1>
+      <RouterLink :to="{ name: $routes.INDEX }">Back to Index</RouterLink>
+    </header>
+
+    <main class="fishing-page__stage">
+      <div
+        class="fishing-page__play-area"
+        @pointercancel="() => onReelingStop()"
+        @pointerdown="() => onReelingStart()"
+        @pointerleave="() => onReelingStop()"
+        @pointerup="() => onReelingStop()"
+      >
+        <FishingScene
+          :bobber="sceneBobber"
+          :location="selectedLocation"
+          @cast="(castAnchor) => onSceneCast(castAnchor)"
+        />
+      </div>
+
+      <CollapsibleSidebar
+        class="fishing-page__hud-panel fishing-page__hud-panel--left"
+        :collapsed="isLocationPanelCollapsed"
+        direction="left"
+        mobile-mode="force-expanded"
+        :mobile-breakpoint="900"
+        :peek-size="48"
+        :collapsed-min-height="72"
+        @toggle="(nextCollapsed) => toggleLocationPanel(nextCollapsed)"
+      >
+        <h2 class="fishing-page__panel-title">Locations</h2>
+        <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
+        <LocationSelector
+          :disabled="!canCast"
+          :locations="locations"
+          :selected-location-id="selectedLocationId"
+          @select="(locationId) => selectLocation(locationId)"
+        />
+      </CollapsibleSidebar>
+
+      <CollapsibleSidebar
+        class="fishing-page__hud-panel fishing-page__hud-panel--right"
+        :collapsed="isStatusPanelCollapsed"
+        direction="right"
+        mobile-mode="force-expanded"
+        :mobile-breakpoint="900"
+        :peek-size="48"
+        :collapsed-min-height="72"
+        @toggle="(nextCollapsed) => toggleStatusPanel(nextCollapsed)"
+      >
+        <h2 class="fishing-page__panel-title">Status</h2>
+        <p class="fishing-page__panel-copy">Current fishing session state.</p>
+        <dl class="fishing-page__status-list">
+          <div class="fishing-page__status-row">
+            <dt>Phase</dt>
+            <dd>{{ phase }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Location</dt>
+            <dd>{{ selectedLocationName }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Cast started</dt>
+            <dd>{{ castStartedAtLabel }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Encounter</dt>
+            <dd>{{ encounterLabel }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Reeling</dt>
+            <dd>{{ isReeling ? 'yes' : 'no' }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Barrier</dt>
+            <dd>{{ isBarrierBlocking ? 'blocked' : 'clear' }}</dd>
+          </div>
+        </dl>
+        <section
+          v-if="sceneWarnings.length"
+          class="fishing-page__warning-panel"
+        >
+          <h3 class="fishing-page__warning-title">Scene warnings</h3>
+          <ul class="fishing-page__warning-list">
+            <li v-for="warning in sceneWarnings" :key="warning">
+              {{ warning }}
+            </li>
+          </ul>
+        </section>
+      </CollapsibleSidebar>
+
+      <section class="fishing-page__hud-tray">
+        <div class="fishing-page__tray-primary">
+          <div class="fishing-page__cast-row">
+            <span
+              class="fishing-page__phase-chip"
+              :class="`fishing-page__phase-chip--${phase}`"
+              role="status"
+            >
+              {{ phaseMessage }}
+            </span>
+          </div>
+          <p class="fishing-page__cast-hint">
+            Click anywhere on the water to cast.
+          </p>
+        </div>
+
+        <section v-if="phase === 'minigame'" class="fishing-page__minigame-hud">
+          <p v-if="isBarrierBlocking" class="fishing-page__minigame-copy">
+            Mash left mouse button or Q to break barrier.
+          </p>
+          <p v-else class="fishing-page__minigame-copy">
+            Hold left mouse button or Space to reel.
+          </p>
+          <div class="fishing-page__bar" role="img">
+            <div
+              class="fishing-page__bar-fill fishing-page__bar-fill--green"
+              :style="{ width: `${greenProgressStylePercent}%` }"
+            ></div>
+            <div
+              class="fishing-page__bar-marker fishing-page__bar-marker--red"
+              :style="{ left: `${redProgressStylePercent}%` }"
+            ></div>
+            <div
+              v-for="barrier in minigameBarriers"
+              :key="barrier.id"
+              class="fishing-page__bar-marker fishing-page__bar-marker--barrier"
+              :class="{
+                'fishing-page__bar-marker--barrier-active':
+                  activeBarrier && barrier.id === activeBarrier.id,
+              }"
+              :style="{ left: `${Math.round(barrier.position * 100)}%` }"
+            ></div>
+          </div>
+          <div class="fishing-page__durability">
+            <span class="fishing-page__durability-label">Rod durability</span>
+            <div class="fishing-page__durability-track" role="img">
+              <div
+                class="fishing-page__durability-fill"
+                :style="{ width: `${durabilityWearStylePercent}%` }"
+              ></div>
+            </div>
+            <span class="fishing-page__durability-value">
+              {{ durabilityWearPercent }}%
+            </span>
+          </div>
+          <p v-if="isBarrierBlocking" class="fishing-page__minigame-copy">
+            Clicks remaining: {{ barrierRemainingClicks }}
+          </p>
+        </section>
+
+        <section
+          v-if="resultPanel.isOpen"
+          class="fishing-page__result-panel"
+          :class="{
+            'fishing-page__result-panel--success': resultPanel.isSuccess,
+            'fishing-page__result-panel--fail': !resultPanel.isSuccess,
+          }"
+        >
+          <div class="fishing-page__result-head">
+            <p class="fishing-page__result-message">
+              {{ resultPanel.message }}
+            </p>
+            <BaseButton @click="() => closeResultPanel()">Close</BaseButton>
+          </div>
+          <article v-if="showCatchCard" class="fishing-page__catch-card">
+            <div class="fishing-page__catch-media">
+              <img
+                class="fishing-page__catch-image"
+                :src="catchImageSrc"
+                :alt="`${resultEncounter.fishName} illustration`"
+                width="1536"
+                height="1024"
+              />
+            </div>
+            <div class="fishing-page__catch-details">
+              <h3>{{ resultEncounter.fishName }}</h3>
+              <p class="fishing-page__catch-row">
+                <strong>Tier:</strong> {{ resultEncounter.tier }}
+              </p>
+              <p class="fishing-page__catch-row">
+                <strong>Size:</strong> {{ catchSizeLabel }}
+              </p>
+              <p class="fishing-page__catch-row">
+                <strong>Quality:</strong> {{ catchQualityLabel }}
+              </p>
+              <p class="fishing-page__catch-row">
+                <strong>Difficulty:</strong> {{ catchDifficultyLabel }}
+              </p>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </section>
+</template>
+
+<script>
+import BaseButton from '@/components/ui/BaseButton.vue'
+import CollapsibleSidebar from '@/components/ui/CollapsibleSidebar.vue'
+import FishingScene from '@/components/fishing/FishingScene.vue'
+import LocationSelector from '@/components/fishing/LocationSelector.vue'
+import { defineConfig } from '@/utils/defineConfig'
+
+const DEFAULT_PAGE_TITLE = 'Fishing Game'
+const HOOKED_BOBBER_Y = 92
+const PHASE_PAGE_TITLES = defineConfig({
+  idle: 'Looking for fish...',
+  waitingBite: 'Patiently waiting...',
+  minigame: '3..2..1.. FIGHT!',
+  result: 'Another one!',
+})
+
+export default {
+  name: 'FishingPage',
+  components: {
+    BaseButton,
+    CollapsibleSidebar,
+    FishingScene,
+    LocationSelector,
+  },
+  data() {
+    return {
+      unsubscribePhaseSubscription: null,
+      lastAppliedPhase: null,
+      isLocationPanelCollapsed: false,
+      isStatusPanelCollapsed: false,
+    }
+  },
+  computed: {
+    locations() {
+      return this.$store.getters['content/getLocations']
+    },
+    configWarnings() {
+      return this.$store.getters['content/getConfigWarnings']
+    },
+    selectedLocationWarnings() {
+      const locationId =
+        this.selectedLocationId || this.selectedLocation?.id || null
+
+      if (!locationId) {
+        return []
+      }
+
+      return this.$store.getters['content/getLocationWarnings'](locationId)
+    },
+    sceneWarnings() {
+      return [
+        ...new Set([...this.configWarnings, ...this.selectedLocationWarnings]),
+      ]
+    },
+    phase() {
+      return this.$store.getters['gameSession/getPhase']
+    },
+    phaseMessage() {
+      if (this.phase === 'waitingBite') {
+        return 'Waiting for bite...'
+      }
+
+      if (this.phase === 'minigame') {
+        return 'Fish bite detected.'
+      }
+
+      if (this.phase === 'result') {
+        return `Result: ${this.resultLabel}`
+      }
+
+      return 'Ready to cast.'
+    },
+    canCast() {
+      return this.phase === 'idle' || this.phase === 'result'
+    },
+    castAnchor() {
+      return this.$store.getters['gameSession/getCastAnchor']
+    },
+    sceneBobber() {
+      if (!this.selectedLocation) {
+        return {
+          isVisible: false,
+        }
+      }
+
+      const defaultAnchor = this.selectedLocation.bobberAnchor
+      const anchorPosition = this.castAnchor || defaultAnchor
+      if (
+        !anchorPosition ||
+        !Number.isFinite(anchorPosition.x) ||
+        !Number.isFinite(anchorPosition.y)
+      ) {
+        return {
+          isVisible: false,
+        }
+      }
+
+      const targetPosition = {
+        x: 50,
+        y: HOOKED_BOBBER_Y,
+      }
+
+      if (this.phase === 'casting' || this.phase === 'waitingBite') {
+        return {
+          isVisible: true,
+          isEnergized: true,
+          mode: 'waiting',
+          anchorPosition,
+          progress: 0,
+          targetPosition,
+        }
+      }
+
+      if (this.phase === 'minigame') {
+        return {
+          isVisible: true,
+          isEnergized: this.isReeling,
+          mode: 'hooked',
+          anchorPosition,
+          progress: this.minigameState.greenProgress || 0,
+          targetPosition,
+        }
+      }
+
+      return {
+        isVisible: false,
+      }
+    },
+    castStartedAt() {
+      return this.$store.getters['gameSession/getCastStartedAt']
+    },
+    castStartedAtLabel() {
+      if (!this.castStartedAt) {
+        return 'n/a'
+      }
+
+      return new Date(this.castStartedAt).toLocaleTimeString()
+    },
+    encounter() {
+      return this.$store.getters['gameSession/getEncounter']
+    },
+    result() {
+      return this.$store.getters['gameSession/getResult']
+    },
+    resultPanel() {
+      return this.$store.getters['ui/getResultPanel']
+    },
+    resultEncounter() {
+      return this.result?.encounter || null
+    },
+    showCatchCard() {
+      return Boolean(
+        this.resultPanel.isOpen &&
+        this.resultPanel.isSuccess &&
+        this.resultEncounter,
+      )
+    },
+    catchImageSrc() {
+      if (!this.resultEncounter) {
+        return ''
+      }
+
+      return `/images/fish/${this.resultEncounter.fishId}.webp`
+    },
+    catchSizeLabel() {
+      if (!this.resultEncounter) {
+        return 'n/a'
+      }
+
+      return `${Number(this.resultEncounter.size || 0).toFixed(2)} kg`
+    },
+    catchQualityLabel() {
+      if (!this.resultEncounter) {
+        return 'n/a'
+      }
+
+      return Number(this.resultEncounter.quality || 0).toFixed(2)
+    },
+    catchDifficultyLabel() {
+      if (!this.resultEncounter) {
+        return 'n/a'
+      }
+
+      return Number(this.resultEncounter.difficultyScore || 0).toFixed(2)
+    },
+    resultLabel() {
+      if (!this.result) {
+        return 'none'
+      }
+
+      if (this.result.status === 'success') {
+        return 'success'
+      }
+
+      return 'fail'
+    },
+    encounterLabel() {
+      if (!this.encounter) {
+        return 'none'
+      }
+
+      return `${this.encounter.fishName} (tier ${this.encounter.tier}, diff ${this.encounter.difficultyScore})`
+    },
+    selectedLocationId() {
+      return this.$store.getters['progress/getSelectedLocationId']
+    },
+    selectedLocation() {
+      if (!this.selectedLocationId) {
+        return this.locations[0] || null
+      }
+
+      return this.$store.getters['content/getLocationById'](
+        this.selectedLocationId,
+      )
+    },
+    selectedLocationName() {
+      return this.selectedLocation?.name || 'none'
+    },
+    minigameState() {
+      return this.$store.getters['gameSession/getMinigameState']
+    },
+    minigameBarriers() {
+      return this.minigameState.config?.barriers || []
+    },
+    activeBarrier() {
+      return this.$store.getters['gameSession/getActiveBarrier']
+    },
+    barrierRemainingClicks() {
+      return this.$store.getters['gameSession/getBarrierRemainingClicks']
+    },
+    isBarrierBlocking() {
+      return this.$store.getters['gameSession/getIsBarrierBlocking']
+    },
+    isReeling() {
+      return Boolean(this.minigameState.isReeling)
+    },
+    durabilityWear() {
+      return Number(this.minigameState.durabilityWear || 0)
+    },
+    durabilityWearStylePercent() {
+      return Number((this.durabilityWear * 100).toFixed(3))
+    },
+    durabilityWearPercent() {
+      return Math.round(this.durabilityWear * 100)
+    },
+    greenProgressStylePercent() {
+      return Number(((this.minigameState.greenProgress || 0) * 100).toFixed(3))
+    },
+    redProgressStylePercent() {
+      return Number(((this.minigameState.redProgress || 0) * 100).toFixed(3))
+    },
+    elapsedMsLabel() {
+      return `${Math.round(this.minigameState.elapsedMs || 0)}ms`
+    },
+    maxTimeLabel() {
+      const maxMs = this.minigameState.config?.maxTimeMs || 0
+      return `${maxMs}ms`
+    },
+  },
+  mounted() {
+    window.addEventListener('pointerup', this.onReelingStop)
+    window.addEventListener('blur', this.onReelingStop)
+    window.addEventListener('keydown', this.onWindowKeyDown)
+    window.addEventListener('keyup', this.onWindowKeyUp)
+  },
+  beforeUnmount() {
+    window.removeEventListener('pointerup', this.onReelingStop)
+    window.removeEventListener('blur', this.onReelingStop)
+    window.removeEventListener('keydown', this.onWindowKeyDown)
+    window.removeEventListener('keyup', this.onWindowKeyUp)
+
+    if (this.unsubscribePhaseSubscription) {
+      this.unsubscribePhaseSubscription()
+      this.unsubscribePhaseSubscription = null
+    }
+
+    this.applyPageTitle()
+  },
+  created() {
+    this.lastAppliedPhase = this.phase
+    if (!this.selectedLocationId && this.locations.length) {
+      this.selectLocation(this.locations[0].id)
+    }
+
+    this.applyPageTitle(this.lastAppliedPhase)
+    this.unsubscribePhaseSubscription = this.$store.subscribe((mutation) => {
+      if (!mutation.type.startsWith('gameSession/')) {
+        return
+      }
+
+      const nextPhase = this.$store.getters['gameSession/getPhase']
+      if (nextPhase === this.lastAppliedPhase) {
+        return
+      }
+
+      this.lastAppliedPhase = nextPhase
+      this.applyPageTitle(nextPhase)
+    })
+  },
+  methods: {
+    resolvePageTitle(phase) {
+      return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE
+    },
+    toggleLocationPanel(nextCollapsed) {
+      if (typeof nextCollapsed === 'boolean') {
+        this.isLocationPanelCollapsed = nextCollapsed
+        return
+      }
+
+      this.isLocationPanelCollapsed = !this.isLocationPanelCollapsed
+    },
+    toggleStatusPanel(nextCollapsed) {
+      if (typeof nextCollapsed === 'boolean') {
+        this.isStatusPanelCollapsed = nextCollapsed
+        return
+      }
+
+      this.isStatusPanelCollapsed = !this.isStatusPanelCollapsed
+    },
+    applyPageTitle(phase) {
+      document.title = this.resolvePageTitle(phase)
+    },
+    selectLocation(locationId) {
+      this.$store.dispatch('progress/selectLocation', locationId) // async chain; UI does not depend on completion
+    },
+    startCast(castAnchor = null) {
+      this.$store.dispatch('gameSession/startCast', {
+        castAnchor,
+      })
+    },
+    onSceneCast(castAnchor) {
+      if (!this.canCast) {
+        return
+      }
+
+      this.startCast(castAnchor)
+    },
+    isEditableTarget(target) {
+      const element = target
+      if (!element || typeof element.closest !== 'function') {
+        return false
+      }
+
+      return Boolean(
+        element.closest('input, textarea, select, [contenteditable="true"]'),
+      )
+    },
+    onWindowKeyDown(event) {
+      if (this.isEditableTarget(event.target)) {
+        return
+      }
+
+      if (event.code === 'Space') {
+        if (this.phase !== 'minigame') {
+          return
+        }
+
+        event.preventDefault()
+        if (this.isBarrierBlocking) {
+          return
+        }
+
+        this.$store.dispatch('gameSession/setReeling', true) // synchronous state toggle
+        return
+      }
+
+      if (event.key?.toLowerCase() !== 'q') {
+        return
+      }
+
+      if (
+        this.phase !== 'minigame' ||
+        !this.isBarrierBlocking ||
+        event.repeat
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      this.$store.dispatch('gameSession/registerBarrierClick') // synchronous click handler
+    },
+    onWindowKeyUp(event) {
+      if (this.isEditableTarget(event.target)) {
+        return
+      }
+
+      if (event.code !== 'Space') {
+        return
+      }
+
+      if (this.phase !== 'minigame') {
+        return
+      }
+
+      event.preventDefault()
+      this.$store.dispatch('gameSession/setReeling', false) // synchronous state toggle
+    },
+    onReelingStart() {
+      if (this.phase !== 'minigame') {
+        return
+      }
+
+      if (this.isBarrierBlocking) {
+        this.$store.dispatch('gameSession/registerBarrierClick')
+        return
+      }
+
+      this.$store.dispatch('gameSession/setReeling', true)
+    },
+    onReelingStop() {
+      if (this.phase !== 'minigame') {
+        return
+      }
+
+      this.$store.dispatch('gameSession/setReeling', false)
+    },
+    closeResultPanel() {
+      this.$store.dispatch('ui/hideResultPanel') // synchronous UI action
+    },
+  },
+}
+</script>
+
+<style scoped lang="scss">
+@use 'sass:map';
+@use '@/styles/mixins' as mixins;
+@use '@/styles/tokens' as tokens;
+
+.fishing-page {
+  background: tokens.$fishing-page-background;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  padding: 16px;
+
+  &__header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    h1 {
+      color: #f5f8fc;
+      margin: 0;
+    }
+  }
+
+  &__stage {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  &__cast-row {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  &__cast-hint {
+    color: tokens.$fishing-panel-text;
+    font-size: clamp(16px, 1.6vw, 20px);
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+    max-width: 38ch;
+  }
+
+  &__phase-chip {
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+
+    @each $phase, $phase-style in tokens.$fishing-phase-chip-styles {
+      &--#{$phase} {
+        background: map.get($phase-style, background);
+        color: map.get($phase-style, color);
+      }
+    }
+  }
+
+  &__result-panel {
+    background: tokens.$fishing-result-background;
+    border: 1px solid tokens.$fishing-result-border;
+    border-radius: tokens.$fishing-result-radius;
+    padding: tokens.$fishing-result-padding;
+
+    &--success {
+      border-color: tokens.$fishing-result-border-success;
+    }
+
+    &--fail {
+      border-color: tokens.$fishing-result-border-fail;
+    }
+  }
+
+  &__play-area {
+    height: 100%;
+    inset: 0;
+    min-height: 0;
+    position: absolute;
+    user-select: none;
+    width: 100%;
+  }
+
+  &__hud-panel {
+    @include mixins.glass-panel(
+      tokens.$fishing-panel-background,
+      tokens.$fishing-panel-border,
+      tokens.$fishing-panel-radius,
+      tokens.$fishing-panel-shadow,
+      tokens.$fishing-panel-padding
+    );
+    color: tokens.$fishing-panel-text;
+    max-height: calc(100% - 176px);
+    overflow: auto;
+    position: absolute;
+    top: 16px;
+    width: min(260px, calc(50% - 28px));
+    z-index: 2;
+
+    &--left {
+      left: 16px;
+    }
+
+    &--right {
+      right: 16px;
+    }
+  }
+
+  &__panel-title {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    margin: 0 0 8px;
+    text-transform: uppercase;
+  }
+
+  &__panel-copy {
+    color: tokens.$fishing-panel-muted;
+    font-size: 13px;
+    line-height: 1.4;
+    margin: 0 0 14px;
+  }
+
+  &__status-list {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 16px;
+  }
+
+  &__status-row {
+    border-bottom: 1px solid tokens.$fishing-status-border;
+    display: grid;
+    gap: 4px;
+    padding-bottom: 10px;
+
+    dt {
+      color: tokens.$fishing-panel-muted;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      margin: 0;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+
+  &__warning-panel {
+    @include mixins.warning-panel(
+      tokens.$fishing-warning-background,
+      tokens.$fishing-warning-border,
+      tokens.$fishing-warning-text,
+      tokens.$fishing-warning-radius,
+      tokens.$fishing-warning-padding
+    );
+    margin-bottom: 14px;
+  }
+
+  &__warning-title {
+    font-size: 13px;
+    margin: 0 0 6px;
+    text-transform: uppercase;
+  }
+
+  &__warning-list {
+    margin: 0;
+    padding-left: 18px;
+  }
+
+  &__hud-tray {
+    @include mixins.glass-panel(
+      tokens.$fishing-tray-background,
+      tokens.$fishing-tray-border,
+      tokens.$fishing-tray-radius,
+      tokens.$fishing-panel-shadow,
+      tokens.$fishing-tray-padding,
+      14px
+    );
+    bottom: 16px;
+    color: tokens.$fishing-panel-text;
+    display: grid;
+    gap: 14px;
+    left: 50%;
+    max-width: min(1120px, calc(100% - 32px));
+    position: absolute;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    z-index: 3;
+  }
+
+  &__tray-primary {
+    align-items: start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    justify-content: space-between;
+  }
+
+  &__catch-card {
+    align-items: center;
+    border: 1px solid tokens.$fishing-catch-card-border;
+    border-radius: tokens.$fishing-catch-card-radius;
+    display: grid;
+    gap: tokens.$fishing-catch-card-gap;
+    grid-template-columns: tokens.$fishing-catch-card-width 1fr;
+    margin: 10px 0;
+    padding: tokens.$fishing-catch-card-padding;
+  }
+
+  &__catch-media {
+    @include mixins.catch-frame(
+      tokens.$fishing-catch-media-background,
+      tokens.$fishing-catch-media-border,
+      tokens.$fishing-catch-media-radius
+    );
+    width: clamp(
+      tokens.$fishing-catch-media-width-min,
+      22vw,
+      tokens.$fishing-catch-media-width-max
+    );
+  }
+
+  &__catch-image {
+    display: block;
+    height: auto;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  &__result-head {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  &__result-message {
+    margin: 0;
+  }
+
+  &__catch-details {
+    h3 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+  }
+
+  &__catch-row {
+    font-size: 13px;
+    margin: 2px 0;
+  }
+
+  &__minigame-hud {
+    display: grid;
+    gap: 10px;
+  }
+
+  &__bar {
+    background: tokens.$fishing-minigame-bar-background;
+    border-radius: tokens.$fishing-minigame-bar-radius;
+    height: tokens.$fishing-minigame-bar-height;
+    overflow: hidden;
+    position: relative;
+  }
+
+  &__bar-fill {
+    height: 100%;
+    transition: width 90ms linear;
+
+    &--green {
+      background: tokens.$fishing-minigame-fill-green;
+    }
+  }
+
+  &__bar-marker {
+    border-left: tokens.$fishing-minigame-red-width solid
+      tokens.$fishing-minigame-marker-red;
+    bottom: 0;
+    position: absolute;
+    top: 0;
+    transform: translateX(calc(tokens.$fishing-minigame-red-width * -0.5));
+    transition: left 90ms linear;
+
+    &--red {
+      border-left-color: tokens.$fishing-minigame-marker-red;
+    }
+
+    &--barrier {
+      border-left: tokens.$fishing-minigame-barrier-width dotted
+        tokens.$fishing-minigame-marker-barrier;
+    }
+
+    &--barrier-active {
+      border-left-color: tokens.$fishing-minigame-marker-active;
+    }
+  }
+
+  &__minigame-copy {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  &__durability {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  &__durability-label {
+    color: tokens.$fishing-panel-muted;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  &__durability-track {
+    background: #2f3643;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+  }
+
+  &__durability-fill {
+    background: linear-gradient(90deg, #46c27a 0%, #ef8748 55%, #d93a3a 100%);
+    height: 100%;
+    transition: width 90ms linear;
+  }
+
+  &__durability-value {
+    color: tokens.$fishing-panel-muted;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  a:focus-visible {
+    @include mixins.focus-ring(tokens.$button-focus-ring);
+  }
+}
+
+@media (max-width: tokens.$fishing-breakpoint-tablet) {
+  .fishing-page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: auto;
+
+    &__stage {
+      display: grid;
+      gap: 12px;
+      overflow: visible;
+    }
+
+    &__play-area {
+      aspect-ratio: 3 / 2;
+      height: auto;
+      inset: auto;
+      position: relative;
+    }
+
+    &__hud-panel,
+    &__hud-tray {
+      left: auto;
+      max-height: none;
+      max-width: none;
+      position: relative;
+      right: auto;
+      top: auto;
+      transform: none;
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: tokens.$fishing-breakpoint-mobile) {
+  .fishing-page {
+    padding: 12px;
+
+    &__header {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    &__hud-panel,
+    &__hud-tray {
+      padding: 14px;
+    }
+
+    &__cast-row {
+      gap: 8px;
+    }
+
+    &__phase-chip {
+      font-size: 12px;
+    }
+
+    &__catch-card {
+      grid-template-columns: 1fr;
+    }
+
+    &__catch-media {
+      width: 100%;
+    }
+
+    &__result-head {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+}
+</style>

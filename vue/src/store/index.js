@@ -1,5 +1,9 @@
 import { createStore } from 'vuex'
 import list from './list'
+import content from '@/store/modules/content'
+import gameSession from '@/store/modules/gameSession'
+import progress from '@/store/modules/progress'
+import ui from '@/store/modules/ui'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -7,9 +11,9 @@ const MUTATIONS = {
 }
 
 export default createStore({
-  state () {
+  state() {
     return {
-      count: 0
+      count: 0,
     }
   },
   getters: {
@@ -37,6 +41,10 @@ export default createStore({
     },
   },
   modules: {
-    list
-  }
+    content,
+    gameSession,
+    list,
+    progress,
+    ui,
+  },
 })

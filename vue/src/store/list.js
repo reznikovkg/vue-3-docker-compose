@@ -1,8 +1,8 @@
 export default {
   namespaced: true,
-  state () {
+  state() {
     return {
-      list: [1, 2, 3]
+      list: [1, 2, 3],
     }
   },
   getters: {
@@ -18,5 +18,5 @@ export default {
       store.commit('SET_LIST', payload)
       // store.dispatch('list/setList', null, { root: true })
     },
-  }
+  },
 }
