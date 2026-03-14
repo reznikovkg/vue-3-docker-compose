@@ -35,4 +35,4 @@ export const LOCATIONS = Object.freeze([
     biteRateBase: 0.92,
     difficultyMultiplier: 0.8,
   },
-]);
+])

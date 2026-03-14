@@ -167,18 +167,18 @@
 </template>
 
 <script>
-import BaseButton from '@/components/ui/BaseButton.vue';
-import FishingScene from '@/components/fishing/FishingScene.vue';
-import LocationSelector from '@/components/fishing/LocationSelector.vue';
+import BaseButton from '@/components/ui/BaseButton.vue'
+import FishingScene from '@/components/fishing/FishingScene.vue'
+import LocationSelector from '@/components/fishing/LocationSelector.vue'
 
-const DEFAULT_PAGE_TITLE = 'Fishing Game';
-const HOOKED_BOBBER_Y = 92;
+const DEFAULT_PAGE_TITLE = 'Fishing Game'
+const HOOKED_BOBBER_Y = 92
 const PHASE_PAGE_TITLES = Object.freeze({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
   minigame: '3..2..1.. FIGHT!',
   result: 'Another one!',
-});
+})
 
 export default {
   name: 'FishingPage',
@@ -191,59 +191,59 @@ export default {
     return {
       unsubscribePhaseSubscription: null,
       lastAppliedPhase: null,
-    };
+    }
   },
   computed: {
     locations() {
-      return this.$store.getters['content/getLocations'];
+      return this.$store.getters['content/getLocations']
     },
     configWarnings() {
-      return this.$store.getters['content/getConfigWarnings'];
+      return this.$store.getters['content/getConfigWarnings']
     },
     selectedLocationWarnings() {
       const locationId =
-        this.selectedLocationId || this.selectedLocation?.id || null;
+        this.selectedLocationId || this.selectedLocation?.id || null
 
       if (!locationId) {
-        return [];
+        return []
       }
 
-      return this.$store.getters['content/getLocationWarnings'](locationId);
+      return this.$store.getters['content/getLocationWarnings'](locationId)
     },
     sceneWarnings() {
       return [
         ...new Set([...this.configWarnings, ...this.selectedLocationWarnings]),
-      ];
+      ]
     },
     phase() {
-      return this.$store.getters['gameSession/getPhase'];
+      return this.$store.getters['gameSession/getPhase']
     },
     phaseMessage() {
       if (this.phase === 'waitingBite') {
-        return 'Waiting for bite...';
+        return 'Waiting for bite...'
       }
 
       if (this.phase === 'minigame') {
-        return 'Fish bite detected.';
+        return 'Fish bite detected.'
       }
 
       if (this.phase === 'result') {
-        return `Result: ${this.resultLabel}`;
+        return `Result: ${this.resultLabel}`
       }
 
-      return 'Ready to cast.';
+      return 'Ready to cast.'
     },
     canCast() {
-      return this.phase === 'idle' || this.phase === 'result';
+      return this.phase === 'idle' || this.phase === 'result'
     },
     sceneBobber() {
       if (!this.selectedLocation) {
         return {
           isVisible: false,
-        };
+        }
       }
 
-      const anchorPosition = this.selectedLocation.bobberAnchor;
+      const anchorPosition = this.selectedLocation.bobberAnchor
       if (
         !anchorPosition ||
         !Number.isFinite(anchorPosition.x) ||
@@ -251,13 +251,13 @@ export default {
       ) {
         return {
           isVisible: false,
-        };
+        }
       }
 
       const targetPosition = {
         x: anchorPosition.x,
         y: HOOKED_BOBBER_Y,
-      };
+      }
 
       if (this.phase === 'casting' || this.phase === 'waitingBite') {
         return {
@@ -267,7 +267,7 @@ export default {
           anchorPosition,
           progress: 0,
           targetPosition,
-        };
+        }
       }
 
       if (this.phase === 'minigame') {
@@ -278,219 +278,219 @@ export default {
           anchorPosition,
           progress: this.minigameState.greenProgress || 0,
           targetPosition,
-        };
+        }
       }
 
       return {
         isVisible: false,
-      };
+      }
     },
     castStartedAt() {
-      return this.$store.getters['gameSession/getCastStartedAt'];
+      return this.$store.getters['gameSession/getCastStartedAt']
     },
     castStartedAtLabel() {
       if (!this.castStartedAt) {
-        return 'n/a';
+        return 'n/a'
       }
 
-      return new Date(this.castStartedAt).toLocaleTimeString();
+      return new Date(this.castStartedAt).toLocaleTimeString()
     },
     encounter() {
-      return this.$store.getters['gameSession/getEncounter'];
+      return this.$store.getters['gameSession/getEncounter']
     },
     result() {
-      return this.$store.getters['gameSession/getResult'];
+      return this.$store.getters['gameSession/getResult']
     },
     resultPanel() {
-      return this.$store.getters['ui/getResultPanel'];
+      return this.$store.getters['ui/getResultPanel']
     },
     resultEncounter() {
-      return this.result?.encounter || null;
+      return this.result?.encounter || null
     },
     showCatchCard() {
       return Boolean(
         this.resultPanel.isOpen &&
         this.resultPanel.isSuccess &&
         this.resultEncounter,
-      );
+      )
     },
     catchImageSrc() {
       if (!this.resultEncounter) {
-        return '';
+        return ''
       }
 
-      return `/images/fish/${this.resultEncounter.fishId}.webp`;
+      return `/images/fish/${this.resultEncounter.fishId}.webp`
     },
     catchSizeLabel() {
       if (!this.resultEncounter) {
-        return 'n/a';
+        return 'n/a'
       }
 
-      return `${Number(this.resultEncounter.size || 0).toFixed(2)} kg`;
+      return `${Number(this.resultEncounter.size || 0).toFixed(2)} kg`
     },
     catchQualityLabel() {
       if (!this.resultEncounter) {
-        return 'n/a';
+        return 'n/a'
       }
 
-      return Number(this.resultEncounter.quality || 0).toFixed(2);
+      return Number(this.resultEncounter.quality || 0).toFixed(2)
     },
     catchDifficultyLabel() {
       if (!this.resultEncounter) {
-        return 'n/a';
+        return 'n/a'
       }
 
-      return Number(this.resultEncounter.difficultyScore || 0).toFixed(2);
+      return Number(this.resultEncounter.difficultyScore || 0).toFixed(2)
     },
     resultLabel() {
       if (!this.result) {
-        return 'none';
+        return 'none'
       }
 
       if (this.result.status === 'success') {
-        return 'success';
+        return 'success'
       }
 
-      return 'fail';
+      return 'fail'
     },
     encounterLabel() {
       if (!this.encounter) {
-        return 'none';
+        return 'none'
       }
 
-      return `${this.encounter.fishName} (tier ${this.encounter.tier}, diff ${this.encounter.difficultyScore})`;
+      return `${this.encounter.fishName} (tier ${this.encounter.tier}, diff ${this.encounter.difficultyScore})`
     },
     selectedLocationId() {
-      return this.$store.getters['progress/getSelectedLocationId'];
+      return this.$store.getters['progress/getSelectedLocationId']
     },
     selectedLocation() {
       if (!this.selectedLocationId) {
-        return this.locations[0] || null;
+        return this.locations[0] || null
       }
 
       return this.$store.getters['content/getLocationById'](
         this.selectedLocationId,
-      );
+      )
     },
     selectedLocationName() {
-      return this.selectedLocation?.name || 'none';
+      return this.selectedLocation?.name || 'none'
     },
     minigameState() {
-      return this.$store.getters['gameSession/getMinigameState'];
+      return this.$store.getters['gameSession/getMinigameState']
     },
     minigameBarriers() {
-      return this.minigameState.config?.barriers || [];
+      return this.minigameState.config?.barriers || []
     },
     activeBarrier() {
-      return this.$store.getters['gameSession/getActiveBarrier'];
+      return this.$store.getters['gameSession/getActiveBarrier']
     },
     barrierRemainingClicks() {
-      return this.$store.getters['gameSession/getBarrierRemainingClicks'];
+      return this.$store.getters['gameSession/getBarrierRemainingClicks']
     },
     isBarrierBlocking() {
-      return this.$store.getters['gameSession/getIsBarrierBlocking'];
+      return this.$store.getters['gameSession/getIsBarrierBlocking']
     },
     isReeling() {
-      return Boolean(this.minigameState.isReeling);
+      return Boolean(this.minigameState.isReeling)
     },
     greenProgressPercent() {
-      return Math.round((this.minigameState.greenProgress || 0) * 100);
+      return Math.round((this.minigameState.greenProgress || 0) * 100)
     },
     redProgressPercent() {
-      return Math.round((this.minigameState.redProgress || 0) * 100);
+      return Math.round((this.minigameState.redProgress || 0) * 100)
     },
     elapsedMsLabel() {
-      return `${Math.round(this.minigameState.elapsedMs || 0)}ms`;
+      return `${Math.round(this.minigameState.elapsedMs || 0)}ms`
     },
     maxTimeLabel() {
-      const maxMs = this.minigameState.config?.maxTimeMs || 0;
-      return `${maxMs}ms`;
+      const maxMs = this.minigameState.config?.maxTimeMs || 0
+      return `${maxMs}ms`
     },
   },
   mounted() {
-    window.addEventListener('pointerup', this.onReelingStop);
-    window.addEventListener('blur', this.onReelingStop);
-    window.addEventListener('keydown', this.onWindowKeyDown);
-    window.addEventListener('keyup', this.onWindowKeyUp);
+    window.addEventListener('pointerup', this.onReelingStop)
+    window.addEventListener('blur', this.onReelingStop)
+    window.addEventListener('keydown', this.onWindowKeyDown)
+    window.addEventListener('keyup', this.onWindowKeyUp)
   },
   beforeUnmount() {
-    window.removeEventListener('pointerup', this.onReelingStop);
-    window.removeEventListener('blur', this.onReelingStop);
-    window.removeEventListener('keydown', this.onWindowKeyDown);
-    window.removeEventListener('keyup', this.onWindowKeyUp);
+    window.removeEventListener('pointerup', this.onReelingStop)
+    window.removeEventListener('blur', this.onReelingStop)
+    window.removeEventListener('keydown', this.onWindowKeyDown)
+    window.removeEventListener('keyup', this.onWindowKeyUp)
 
     if (this.unsubscribePhaseSubscription) {
-      this.unsubscribePhaseSubscription();
-      this.unsubscribePhaseSubscription = null;
+      this.unsubscribePhaseSubscription()
+      this.unsubscribePhaseSubscription = null
     }
 
-    this.applyPageTitle();
+    this.applyPageTitle()
   },
   created() {
-    this.lastAppliedPhase = this.phase;
+    this.lastAppliedPhase = this.phase
     if (!this.selectedLocationId && this.locations.length) {
-      this.selectLocation(this.locations[0].id);
+      this.selectLocation(this.locations[0].id)
     }
 
-    this.applyPageTitle(this.lastAppliedPhase);
+    this.applyPageTitle(this.lastAppliedPhase)
     this.unsubscribePhaseSubscription = this.$store.subscribe((mutation) => {
       if (!mutation.type.startsWith('gameSession/')) {
-        return;
+        return
       }
 
-      const nextPhase = this.$store.getters['gameSession/getPhase'];
+      const nextPhase = this.$store.getters['gameSession/getPhase']
       if (nextPhase === this.lastAppliedPhase) {
-        return;
+        return
       }
 
-      this.lastAppliedPhase = nextPhase;
-      this.applyPageTitle(nextPhase);
-    });
+      this.lastAppliedPhase = nextPhase
+      this.applyPageTitle(nextPhase)
+    })
   },
   methods: {
     resolvePageTitle(phase) {
-      return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE;
+      return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE
     },
     applyPageTitle(phase) {
-      document.title = this.resolvePageTitle(phase);
+      document.title = this.resolvePageTitle(phase)
     },
     selectLocation(locationId) {
-      this.$store.dispatch('progress/selectLocation', locationId);
+      this.$store.dispatch('progress/selectLocation', locationId)
     },
     startCast() {
-      this.$store.dispatch('gameSession/startCast');
+      this.$store.dispatch('gameSession/startCast')
     },
     isEditableTarget(target) {
-      const element = target;
+      const element = target
       if (!element || typeof element.closest !== 'function') {
-        return false;
+        return false
       }
 
       return Boolean(
         element.closest('input, textarea, select, [contenteditable="true"]'),
-      );
+      )
     },
     onWindowKeyDown(event) {
       if (this.isEditableTarget(event.target)) {
-        return;
+        return
       }
 
       if (event.code === 'Space') {
         if (this.phase !== 'minigame') {
-          return;
+          return
         }
 
-        event.preventDefault();
+        event.preventDefault()
         if (this.isBarrierBlocking) {
-          return;
+          return
         }
 
-        this.$store.dispatch('gameSession/setReeling', true);
-        return;
+        this.$store.dispatch('gameSession/setReeling', true)
+        return
       }
 
       if (event.key?.toLowerCase() !== 'q') {
-        return;
+        return
       }
 
       if (
@@ -498,44 +498,44 @@ export default {
         !this.isBarrierBlocking ||
         event.repeat
       ) {
-        return;
+        return
       }
 
-      event.preventDefault();
-      this.$store.dispatch('gameSession/registerBarrierClick');
+      event.preventDefault()
+      this.$store.dispatch('gameSession/registerBarrierClick')
     },
     onWindowKeyUp(event) {
       if (this.isEditableTarget(event.target)) {
-        return;
+        return
       }
 
       if (event.code !== 'Space') {
-        return;
+        return
       }
 
       if (this.phase !== 'minigame') {
-        return;
+        return
       }
 
-      event.preventDefault();
-      this.$store.dispatch('gameSession/setReeling', false);
+      event.preventDefault()
+      this.$store.dispatch('gameSession/setReeling', false)
     },
     onReelingStart() {
       if (this.isBarrierBlocking) {
-        this.$store.dispatch('gameSession/registerBarrierClick');
-        return;
+        this.$store.dispatch('gameSession/registerBarrierClick')
+        return
       }
 
-      this.$store.dispatch('gameSession/setReeling', true);
+      this.$store.dispatch('gameSession/setReeling', true)
     },
     onReelingStop() {
-      this.$store.dispatch('gameSession/setReeling', false);
+      this.$store.dispatch('gameSession/setReeling', false)
     },
     closeResultPanel() {
-      this.$store.dispatch('ui/hideResultPanel');
+      this.$store.dispatch('ui/hideResultPanel')
     },
   },
-};
+}
 </script>
 
 <style scoped lang="scss">

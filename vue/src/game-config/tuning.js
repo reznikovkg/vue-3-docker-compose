@@ -26,4 +26,4 @@ export const TUNING = Object.freeze({
       }),
     }),
   }),
-});
+})

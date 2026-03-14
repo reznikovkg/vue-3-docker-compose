@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import BobberView from '@/components/fishing/BobberView.vue';
+import BobberView from '@/components/fishing/BobberView.vue'
 
 export default {
   name: 'FishingScene',
@@ -50,94 +50,94 @@ export default {
     return {
       imageLoadState: 'idle',
       imageLoadPath: null,
-    };
+    }
   },
   computed: {
     backgroundImagePath() {
-      return this.location?.bgImage || '';
+      return this.location?.bgImage || ''
     },
     hasBackgroundImage() {
-      return Boolean(this.backgroundImagePath);
+      return Boolean(this.backgroundImagePath)
     },
     hasRenderableBackgroundImage() {
-      return this.hasBackgroundImage && this.imageLoadState === 'loaded';
+      return this.hasBackgroundImage && this.imageLoadState === 'loaded'
     },
     surfaceStyle() {
       const baseGradient =
-        'linear-gradient(180deg, #9bc6ea 0%, #6ba0c7 48%, #3f6e6d 49%, #44685d 100%)';
+        'linear-gradient(180deg, #9bc6ea 0%, #6ba0c7 48%, #3f6e6d 49%, #44685d 100%)'
 
       return {
         backgroundImage: baseGradient,
-      };
+      }
     },
     showWaterOverlay() {
-      return !this.hasRenderableBackgroundImage;
+      return !this.hasRenderableBackgroundImage
     },
     showBobber() {
       return Boolean(
         this.bobber?.isVisible && this.hasRenderableBackgroundImage,
-      );
+      )
     },
     locationName() {
-      return this.location?.name || 'Unknown location';
+      return this.location?.name || 'Unknown location'
     },
     showFallbackNote() {
       return (
         !this.hasRenderableBackgroundImage && this.imageLoadState !== 'loading'
-      );
+      )
     },
     fallbackNote() {
       if (!this.location) {
-        return 'Location data is missing. Showing fallback scene.';
+        return 'Location data is missing. Showing fallback scene.'
       }
 
       if (!this.hasBackgroundImage) {
-        return 'Background image is missing. Showing fallback scene.';
+        return 'Background image is missing. Showing fallback scene.'
       }
 
-      return 'Background file could not be loaded. Showing fallback scene.';
+      return 'Background file could not be loaded. Showing fallback scene.'
     },
   },
   watch: {
     backgroundImagePath: {
       immediate: true,
       handler(nextPath) {
-        this.resolveBackgroundImageState(nextPath);
+        this.resolveBackgroundImageState(nextPath)
       },
     },
   },
   methods: {
     resolveBackgroundImageState(nextPath) {
       if (!nextPath) {
-        this.imageLoadPath = null;
-        this.imageLoadState = 'idle';
-        return;
+        this.imageLoadPath = null
+        this.imageLoadState = 'idle'
+        return
       }
 
-      this.imageLoadPath = nextPath;
-      this.imageLoadState = 'loading';
-      const probe = new Image();
+      this.imageLoadPath = nextPath
+      this.imageLoadState = 'loading'
+      const probe = new Image()
 
       probe.onload = () => {
         if (this.imageLoadPath !== nextPath) {
-          return;
+          return
         }
 
-        this.imageLoadState = 'loaded';
-      };
+        this.imageLoadState = 'loaded'
+      }
 
       probe.onerror = () => {
         if (this.imageLoadPath !== nextPath) {
-          return;
+          return
         }
 
-        this.imageLoadState = 'error';
-      };
+        this.imageLoadState = 'error'
+      }
 
-      probe.src = nextPath;
+      probe.src = nextPath
     },
   },
-};
+}
 </script>
 
 <style scoped lang="scss">

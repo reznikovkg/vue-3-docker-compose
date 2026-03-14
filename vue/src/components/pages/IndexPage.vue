@@ -6,14 +6,14 @@
 </template>
 
 <script>
-const PAGE_TITLE = 'Gone Fishing';
+const PAGE_TITLE = 'Gone Fishing'
 
 export default {
   name: 'IndexPage',
   created() {
-    document.title = PAGE_TITLE;
+    document.title = PAGE_TITLE
   },
-};
+}
 </script>
 
 <style scoped lang="scss">

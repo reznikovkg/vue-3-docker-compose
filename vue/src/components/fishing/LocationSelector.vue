@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import BaseButton from '@/components/ui/BaseButton.vue';
+import BaseButton from '@/components/ui/BaseButton.vue'
 
 export default {
   name: 'LocationSelector',
@@ -38,7 +38,7 @@ export default {
     },
   },
   emits: ['select'],
-};
+}
 </script>
 
 <style scoped lang="scss">

@@ -29,7 +29,8 @@ pnpm-debug.log*
 
 # Vue
 **/components/archive/*
-**/components/testing/*
+**/testing/*
+vue/src/game-config/validation.js
 *lock*.yaml
 
 # Assets

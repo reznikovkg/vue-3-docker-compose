@@ -17,7 +17,7 @@
 const DEFAULT_POSITION = Object.freeze({
   x: 40,
   y: 56,
-});
+})
 
 export default {
   name: 'BobberView',
@@ -50,10 +50,10 @@ export default {
   computed: {
     currentPosition() {
       if (this.mode !== 'hooked') {
-        return this.anchorPosition;
+        return this.anchorPosition
       }
 
-      const safeProgress = Math.min(Math.max(this.progress, 0), 1);
+      const safeProgress = Math.min(Math.max(this.progress, 0), 1)
 
       return {
         x:
@@ -62,10 +62,10 @@ export default {
         y:
           this.anchorPosition.y +
           (this.targetPosition.y - this.anchorPosition.y) * safeProgress,
-      };
+      }
     },
   },
-};
+}
 </script>
 
 <style scoped lang="scss">

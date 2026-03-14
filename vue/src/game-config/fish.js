@@ -44,7 +44,7 @@ export const FISH_DEFINITIONS = Object.freeze([
       surge: 1.3,
     },
   },
-]);
+])
 
 export const FISH_TABLES = Object.freeze({
   'freshwater-basic': Object.freeze([
@@ -89,4 +89,4 @@ export const FISH_TABLES = Object.freeze({
       weight: 0.34,
     },
   ]),
-});
+})

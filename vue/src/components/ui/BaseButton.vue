@@ -17,7 +17,7 @@ export default {
       default: 'button',
     },
   },
-};
+}
 </script>
 
 <style scoped lang="scss">
