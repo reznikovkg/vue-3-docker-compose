@@ -13,6 +13,8 @@
           class="fishing-scene__image"
           :src="backgroundImagePath"
           :alt="locationName"
+          draggable="false"
+          @dragstart.prevent
           @load="() => (backgroundImageFailed = false)"
           @error="() => (backgroundImageFailed = true)"
         />
@@ -178,6 +180,8 @@ export default {
     inset: 0;
     object-fit: cover;
     position: absolute;
+    user-select: none;
+    -webkit-user-drag: none;
     width: 100%;
   }
 

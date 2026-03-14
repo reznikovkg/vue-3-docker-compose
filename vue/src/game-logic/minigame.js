@@ -1,11 +1,13 @@
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+const getDifficultyNorm = (difficultyScore) =>
+  clamp((difficultyScore - 1) / 1.8, 0, 1)
 
 const buildBarriers = (encounter, tuning, rng = Math.random) => {
   const countRange = tuning.minigame.barrierCountRange
   const minCount = countRange.min
   const maxCount = countRange.max
   const difficultyScore = encounter.difficultyScore
-  const difficultyNorm = clamp((difficultyScore - 1) / 1.8, 0, 1)
+  const difficultyNorm = getDifficultyNorm(difficultyScore)
   const barrierCount = Math.round(
     minCount + difficultyNorm * (maxCount - minCount),
   )
@@ -53,6 +55,7 @@ const buildMinigameConfig = (encounter, tuning) => {
   const baseRedSpeed = tuning?.minigame?.redSpeedBase
   const maxTimeMs = tuning?.minigame?.maxTimeMs
   const difficultyScore = encounter.difficultyScore
+  const difficultyNorm = getDifficultyNorm(difficultyScore)
   const difficultyDelta = Math.max(0, difficultyScore - 1)
 
   const greenSpeedPerSec = clamp(
@@ -66,9 +69,16 @@ const buildMinigameConfig = (encounter, tuning) => {
     0.9,
   )
 
+  const reelWearPerSec = 0.07 + 0.09 * difficultyNorm
+  const idleRecoveryPerSec = 0.12 - 0.07 * difficultyNorm
+  const barrierClickWear = 0.04 + 0.08 * difficultyNorm
+
   return {
     greenSpeedPerSec: Number(greenSpeedPerSec.toFixed(4)),
     redSpeedPerSec: Number(redSpeedPerSec.toFixed(4)),
+    reelWearPerSec: Number(reelWearPerSec.toFixed(4)),
+    idleRecoveryPerSec: Number(idleRecoveryPerSec.toFixed(4)),
+    barrierClickWear: Number(barrierClickWear.toFixed(4)),
     maxTimeMs,
     targetProgress: 1,
     redStartDelayMs: 750,
@@ -83,10 +93,18 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
   const greenDelta = inputState.isReeling ? config.greenSpeedPerSec * dtSec : 0
   const redCanAdvance = elapsedMs >= (config.redStartDelayMs || 0)
   const redDelta = redCanAdvance ? config.redSpeedPerSec * dtSec : 0
+  const durabilityDelta = inputState.isReeling
+    ? config.reelWearPerSec * dtSec
+    : config.idleRecoveryPerSec * dtSec * -1
   let greenProgress = clamp(
     runtimeState.greenProgress + greenDelta,
     0,
     config.targetProgress,
+  )
+  const durabilityWear = clamp(
+    runtimeState.durabilityWear + durabilityDelta,
+    0,
+    1,
   )
   const redProgress = clamp(
     runtimeState.redProgress + redDelta,
@@ -110,6 +128,7 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
     greenProgress,
     redProgress,
     elapsedMs,
+    durabilityWear,
   }
 
   if (greenProgress >= config.targetProgress) {
@@ -132,20 +151,6 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
       outcome: {
         status: 'fail',
         reason: 'caught_up',
-      },
-      meta: {
-        isBarrierBlocking,
-        activeBarrier,
-      },
-    }
-  }
-
-  if (elapsedMs >= config.maxTimeMs) {
-    return {
-      nextState,
-      outcome: {
-        status: 'fail',
-        reason: 'timeout',
       },
       meta: {
         isBarrierBlocking,

@@ -117,11 +117,11 @@
           <div class="fishing-page__bar" role="img">
             <div
               class="fishing-page__bar-fill fishing-page__bar-fill--green"
-              :style="{ width: `${greenProgressPercent}%` }"
+              :style="{ width: `${greenProgressStylePercent}%` }"
             ></div>
             <div
               class="fishing-page__bar-marker fishing-page__bar-marker--red"
-              :style="{ left: `${redProgressPercent}%` }"
+              :style="{ left: `${redProgressStylePercent}%` }"
             ></div>
             <div
               v-for="barrier in minigameBarriers"
@@ -133,6 +133,18 @@
               }"
               :style="{ left: `${Math.round(barrier.position * 100)}%` }"
             ></div>
+          </div>
+          <div class="fishing-page__durability">
+            <span class="fishing-page__durability-label">Rod durability</span>
+            <div class="fishing-page__durability-track" role="img">
+              <div
+                class="fishing-page__durability-fill"
+                :style="{ width: `${durabilityWearStylePercent}%` }"
+              ></div>
+            </div>
+            <span class="fishing-page__durability-value">
+              {{ durabilityWearPercent }}%
+            </span>
           </div>
           <p v-if="isBarrierBlocking" class="fishing-page__minigame-copy">
             Clicks remaining: {{ barrierRemainingClicks }}
@@ -421,11 +433,20 @@ export default {
     isReeling() {
       return Boolean(this.minigameState.isReeling)
     },
-    greenProgressPercent() {
-      return Math.round((this.minigameState.greenProgress || 0) * 100)
+    durabilityWear() {
+      return Number(this.minigameState.durabilityWear || 0)
     },
-    redProgressPercent() {
-      return Math.round((this.minigameState.redProgress || 0) * 100)
+    durabilityWearStylePercent() {
+      return Number((this.durabilityWear * 100).toFixed(3))
+    },
+    durabilityWearPercent() {
+      return Math.round(this.durabilityWear * 100)
+    },
+    greenProgressStylePercent() {
+      return Number(((this.minigameState.greenProgress || 0) * 100).toFixed(3))
+    },
+    redProgressStylePercent() {
+      return Number(((this.minigameState.redProgress || 0) * 100).toFixed(3))
     },
     elapsedMsLabel() {
       return `${Math.round(this.minigameState.elapsedMs || 0)}ms`
@@ -871,6 +892,7 @@ export default {
 
   &__bar-fill {
     height: 100%;
+    transition: width 90ms linear;
 
     &--green {
       background: tokens.$fishing-minigame-fill-green;
@@ -884,6 +906,7 @@ export default {
     position: absolute;
     top: 0;
     transform: translateX(calc(tokens.$fishing-minigame-red-width * -0.5));
+    transition: left 90ms linear;
 
     &--red {
       border-left-color: tokens.$fishing-minigame-marker-red;
@@ -903,6 +926,41 @@ export default {
     font-size: 16px;
     font-weight: 700;
     margin: 0;
+  }
+
+  &__durability {
+    align-items: center;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: auto 1fr auto;
+  }
+
+  &__durability-label {
+    color: tokens.$fishing-panel-muted;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  &__durability-track {
+    background: #2f3643;
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+  }
+
+  &__durability-fill {
+    background: linear-gradient(90deg, #46c27a 0%, #ef8748 55%, #d93a3a 100%);
+    height: 100%;
+    transition: width 90ms linear;
+  }
+
+  &__durability-value {
+    color: tokens.$fishing-panel-muted;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   a:focus-visible {

@@ -1,9 +1,11 @@
 const SAVE_KEY = 'fishing_game_save_v1'
 const SAVE_VERSION = 1
+const DEFAULT_ROD_ID = 'default-rod'
 
 const buildDefaultSaveState = () => ({
   version: SAVE_VERSION,
   selectedLocationId: null,
+  currentRodId: DEFAULT_ROD_ID,
   stats: {
     attempts: 0,
     catches: 0,
@@ -37,6 +39,10 @@ const normalizeSaveState = (payload) => {
     typeof payload.selectedLocationId === 'string'
       ? payload.selectedLocationId
       : null
+  const currentRodId =
+    typeof payload.currentRodId === 'string'
+      ? payload.currentRodId
+      : DEFAULT_ROD_ID
   const catchLog = Array.isArray(payload.catchLog)
     ? payload.catchLog.filter((item) => item && typeof item === 'object')
     : []
@@ -44,6 +50,7 @@ const normalizeSaveState = (payload) => {
   return {
     version: SAVE_VERSION,
     selectedLocationId,
+    currentRodId,
     stats: {
       attempts: toSafeNumber(payload.stats?.attempts),
       catches: toSafeNumber(payload.stats?.catches),

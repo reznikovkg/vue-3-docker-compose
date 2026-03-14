@@ -8,14 +8,17 @@ import {
 const MUTATIONS = {
   HYDRATE_PROGRESS: 'HYDRATE_PROGRESS',
   SET_SELECTED_LOCATION_ID: 'SET_SELECTED_LOCATION_ID',
+  SET_CURRENT_ROD_ID: 'SET_CURRENT_ROD_ID',
   INCREMENT_ATTEMPTS: 'INCREMENT_ATTEMPTS',
   INCREMENT_CATCHES: 'INCREMENT_CATCHES',
   INCREMENT_FAILS: 'INCREMENT_FAILS',
   ADD_CATCH_LOG: 'ADD_CATCH_LOG',
 }
+const DEFAULT_ROD_ID = 'default-rod'
 
 const buildInitialState = () => ({
   selectedLocationId: null,
+  currentRodId: DEFAULT_ROD_ID,
   catchLog: [],
   stats: {
     attempts: 0,
@@ -27,6 +30,7 @@ const buildInitialState = () => ({
 const buildSaveState = (state) => ({
   version: 1,
   selectedLocationId: state.selectedLocationId,
+  currentRodId: state.currentRodId,
   stats: {
     attempts: state.stats.attempts,
     catches: state.stats.catches,
@@ -42,6 +46,7 @@ export default {
   },
   getters: {
     getSelectedLocationId: (state) => state.selectedLocationId,
+    getCurrentRodId: (state) => state.currentRodId,
     getCatchLog: (state) => state.catchLog,
     getStats: (state) => state.stats,
     getCatchRate: (state) => {
@@ -55,6 +60,7 @@ export default {
   mutations: {
     [MUTATIONS.HYDRATE_PROGRESS]: (state, payload) => {
       state.selectedLocationId = payload.selectedLocationId ?? null
+      state.currentRodId = payload.currentRodId ?? DEFAULT_ROD_ID
       state.catchLog = Array.isArray(payload.catchLog) ? payload.catchLog : []
       state.stats = {
         attempts: payload.stats?.attempts ?? 0,
@@ -64,6 +70,9 @@ export default {
     },
     [MUTATIONS.SET_SELECTED_LOCATION_ID]: (state, locationId) => {
       state.selectedLocationId = locationId
+    },
+    [MUTATIONS.SET_CURRENT_ROD_ID]: (state, rodId) => {
+      state.currentRodId = rodId
     },
     [MUTATIONS.INCREMENT_ATTEMPTS]: (state) => {
       state.stats.attempts += 1
@@ -126,6 +135,13 @@ export default {
       ).then(() => dispatch('persistProgress'))
     },
     recordFail({ commit, dispatch }, payload) {
+      const failReason = payload?.reason || 'caught_up'
+      const isRodBreak = failReason === 'rod_broke'
+
+      if (isRodBreak) {
+        commit(MUTATIONS.SET_CURRENT_ROD_ID, DEFAULT_ROD_ID)
+      }
+
       commit(MUTATIONS.INCREMENT_ATTEMPTS)
       commit(MUTATIONS.INCREMENT_FAILS)
       commit(MUTATIONS.ADD_CATCH_LOG, {
@@ -133,11 +149,18 @@ export default {
         result: 'failed',
         timestamp: Date.now(),
       })
+
+      const message = isRodBreak
+        ? 'Rod broke. Switched to default rod. Fish escaped.'
+        : failReason === 'line_snapped'
+          ? 'Line snapped. Fish escaped.'
+          : 'Fish escaped.'
+
       return dispatch(
         'ui/showResultPanel',
         {
           isSuccess: false,
-          message: 'Fish escaped.',
+          message,
         },
         { root: true },
       ).then(() => dispatch('persistProgress'))

@@ -31,6 +31,7 @@ const buildInitialMinigameState = () => ({
   lastTickMs: null,
   greenProgress: 0,
   redProgress: 0,
+  durabilityWear: 0,
   isReeling: false,
   isBarrierBlocking: false,
   activeBarrierIndex: 0,
@@ -62,6 +63,14 @@ const normalizeCastAnchor = (castAnchor) => {
     x: Number(clamp(castAnchor.x, 0, 100).toFixed(2)),
     y: Number(clamp(castAnchor.y, 0, 100).toFixed(2)),
   }
+}
+const getDurabilityFailReason = (encounter, rng = Math.random) => {
+  const tier = Number(encounter?.tier || 1)
+  if (tier === 3 && rng() < 0.4) {
+    return 'rod_broke'
+  }
+
+  return 'line_snapped'
 }
 
 const clearBiteTimeout = () => {
@@ -261,6 +270,7 @@ export default {
         lastTickMs: null,
         greenProgress: 0.08,
         redProgress: 0,
+        durabilityWear: 0,
         isReeling: false,
         isBarrierBlocking: false,
         activeBarrierIndex: 0,
@@ -297,6 +307,7 @@ export default {
       const runtimeState = {
         greenProgress: state.minigame.greenProgress,
         redProgress: state.minigame.redProgress,
+        durabilityWear: state.minigame.durabilityWear,
         elapsedMs: state.minigame.elapsedMs,
         activeBarrierIndex: state.minigame.activeBarrierIndex,
         barrierClicksDone: state.minigame.barrierClicksDone,
@@ -314,6 +325,7 @@ export default {
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         greenProgress: stepResult.nextState.greenProgress,
         redProgress: stepResult.nextState.redProgress,
+        durabilityWear: stepResult.nextState.durabilityWear,
         elapsedMs: stepResult.nextState.elapsedMs,
         lastTickMs: timestamp,
         isBarrierBlocking: Boolean(stepResult.meta?.isBarrierBlocking),
@@ -325,8 +337,21 @@ export default {
         })
       }
 
-      if (stepResult.outcome) {
+      if (stepResult.outcome?.status === 'success') {
         dispatch('resolveMinigame', stepResult.outcome) // async chain; no follow-up work here
+        return true
+      }
+
+      if (stepResult.nextState.durabilityWear >= 1) {
+        dispatch('resolveMinigame', {
+          status: 'fail',
+          reason: getDurabilityFailReason(state.encounter),
+        })
+        return true
+      }
+
+      if (stepResult.outcome) {
+        dispatch('resolveMinigame', stepResult.outcome)
         return true
       }
 
@@ -353,7 +378,7 @@ export default {
       })
       return true
     },
-    registerBarrierClick({ state, getters, commit }) {
+    registerBarrierClick({ state, getters, commit, dispatch }) {
       if (state.phase !== PHASES.MINIGAME) {
         return false
       }
@@ -368,20 +393,37 @@ export default {
       }
 
       const nextClicksDone = state.minigame.barrierClicksDone + 1
+      const nextDurabilityWear = clamp(
+        (state.minigame.durabilityWear || 0) +
+          (state.minigame.config?.barrierClickWear || 0),
+        0,
+        1,
+      )
+
       if (nextClicksDone >= activeBarrier.requiredClicks) {
         commit(MUTATIONS.SET_MINIGAME_STATE, {
           activeBarrierIndex: state.minigame.activeBarrierIndex + 1,
           barrierClicksDone: 0,
+          durabilityWear: nextDurabilityWear,
           isBarrierBlocking: false,
           isReeling: false,
+        })
+      } else {
+        commit(MUTATIONS.SET_MINIGAME_STATE, {
+          barrierClicksDone: nextClicksDone,
+          durabilityWear: nextDurabilityWear,
+          isBarrierBlocking: true,
+        })
+      }
+
+      if (nextDurabilityWear >= 1) {
+        dispatch('resolveMinigame', {
+          status: 'fail',
+          reason: getDurabilityFailReason(state.encounter),
         })
         return true
       }
 
-      commit(MUTATIONS.SET_MINIGAME_STATE, {
-        barrierClicksDone: nextClicksDone,
-        isBarrierBlocking: true,
-      })
       return true
     },
     resolveMinigame({ state, commit, dispatch }, outcome) {
@@ -398,6 +440,7 @@ export default {
             fishName: state.encounter.fishName,
             size: state.encounter.size,
             tier: state.encounter.tier,
+            reason: outcome.reason,
           }
         : null
 
