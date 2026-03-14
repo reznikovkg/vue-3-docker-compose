@@ -193,6 +193,28 @@
           </article>
         </section>
       </section>
+
+      <BaseButton
+        class="fishing-page__inventory-launcher"
+        :disabled="!canOpenInventoryOverlay"
+        @click="() => openInventoryOverlay()"
+      >
+        Inventory
+      </BaseButton>
+
+      <InventoryStoreOverlay
+        :active-tab="inventoryOverlayTab"
+        :inventory-fish="inventoryFish"
+        :is-open="isInventoryOverlayOpen"
+        :money="money"
+        :mode="inventoryOverlayMode"
+        @buy-item="() => onInventoryBuyItem()"
+        @close="() => closeInventoryOverlay()"
+        @mode-change="(mode) => setInventoryOverlayMode(mode)"
+        @sell-all-fish="() => onInventorySellAllFish()"
+        @sell-item="(item) => onInventorySellItem(item)"
+        @tab-change="(tabId) => setInventoryOverlayTab(tabId)"
+      />
     </main>
   </section>
 </template>
@@ -201,6 +223,7 @@
 import BaseButton from '@/components/ui/BaseButton.vue'
 import CollapsibleSidebar from '@/components/ui/CollapsibleSidebar.vue'
 import FishingScene from '@/components/fishing/FishingScene.vue'
+import InventoryStoreOverlay from '@/components/ui/InventoryStoreOverlay.vue'
 import LocationSelector from '@/components/fishing/LocationSelector.vue'
 import { defineConfig } from '@/utils/defineConfig'
 
@@ -219,6 +242,7 @@ export default {
     BaseButton,
     CollapsibleSidebar,
     FishingScene,
+    InventoryStoreOverlay,
     LocationSelector,
   },
   data() {
@@ -227,6 +251,9 @@ export default {
       lastAppliedPhase: null,
       isLocationPanelCollapsed: false,
       isStatusPanelCollapsed: false,
+      isInventoryOverlayOpen: false,
+      inventoryOverlayMode: 'inventory',
+      inventoryOverlayTab: 'fish',
     }
   },
   computed: {
@@ -235,6 +262,12 @@ export default {
     },
     configWarnings() {
       return this.$store.getters['content/getConfigWarnings']
+    },
+    money() {
+      return this.$store.getters['progress/getMoney']
+    },
+    inventoryFish() {
+      return this.$store.getters['progress/getInventoryFish']
     },
     selectedLocationWarnings() {
       const locationId =
@@ -270,6 +303,9 @@ export default {
       return 'Ready to cast.'
     },
     canCast() {
+      return this.phase === 'idle' || this.phase === 'result'
+    },
+    canOpenInventoryOverlay() {
       return this.phase === 'idle' || this.phase === 'result'
     },
     castAnchor() {
@@ -516,11 +552,44 @@ export default {
 
       this.isStatusPanelCollapsed = !this.isStatusPanelCollapsed
     },
+    openInventoryOverlay() {
+      if (!this.canOpenInventoryOverlay) {
+        return
+      }
+
+      this.inventoryOverlayMode = 'inventory'
+      this.inventoryOverlayTab = 'fish'
+      this.isInventoryOverlayOpen = true
+    },
+    closeInventoryOverlay() {
+      this.isInventoryOverlayOpen = false
+    },
+    setInventoryOverlayMode(mode) {
+      this.inventoryOverlayMode = mode
+
+      if (mode === 'store' && this.inventoryOverlayTab === 'fish') {
+        this.inventoryOverlayTab = 'rods'
+      }
+    },
+    setInventoryOverlayTab(tabId) {
+      this.inventoryOverlayTab = tabId
+    },
+    onInventorySellItem(item) {
+      if (!item?.id) {
+        return
+      }
+
+      this.$store.dispatch('progress/sellFishByInstanceId', item.id)
+    },
+    onInventorySellAllFish() {
+      this.$store.dispatch('progress/sellAllFish')
+    },
+    onInventoryBuyItem() {},
     applyPageTitle(phase) {
       document.title = this.resolvePageTitle(phase)
     },
     selectLocation(locationId) {
-      this.$store.dispatch('progress/selectLocation', locationId) // async chain; UI does not depend on completion
+      this.$store.dispatch('progress/selectLocation', locationId)
     },
     startCast(castAnchor = null) {
       this.$store.dispatch('gameSession/startCast', {
@@ -559,7 +628,7 @@ export default {
           return
         }
 
-        this.$store.dispatch('gameSession/setReeling', true) // synchronous state toggle
+        this.$store.dispatch('gameSession/setReeling', true)
         return
       }
 
@@ -576,7 +645,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/registerBarrierClick') // synchronous click handler
+      this.$store.dispatch('gameSession/registerBarrierClick')
     },
     onWindowKeyUp(event) {
       if (this.isEditableTarget(event.target)) {
@@ -592,7 +661,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/setReeling', false) // synchronous state toggle
+      this.$store.dispatch('gameSession/setReeling', false)
     },
     onReelingStart() {
       if (this.phase !== 'minigame') {
@@ -614,7 +683,7 @@ export default {
       this.$store.dispatch('gameSession/setReeling', false)
     },
     closeResultPanel() {
-      this.$store.dispatch('ui/hideResultPanel') // synchronous UI action
+      this.$store.dispatch('ui/hideResultPanel')
     },
   },
 }
@@ -814,6 +883,13 @@ export default {
     z-index: 3;
   }
 
+  &__inventory-launcher {
+    bottom: 16px;
+    position: fixed;
+    right: 16px;
+    z-index: 25;
+  }
+
   &__tray-primary {
     align-items: start;
     display: flex;
@@ -997,6 +1073,11 @@ export default {
       top: auto;
       transform: none;
       width: 100%;
+    }
+
+    &__inventory-launcher {
+      bottom: 12px;
+      right: 12px;
     }
   }
 }

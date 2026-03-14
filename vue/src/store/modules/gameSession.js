@@ -439,6 +439,7 @@ export default {
             fishId: state.encounter.fishId,
             fishName: state.encounter.fishName,
             size: state.encounter.size,
+            quality: state.encounter.quality,
             tier: state.encounter.tier,
             reason: outcome.reason,
           }

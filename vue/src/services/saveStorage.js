@@ -6,12 +6,14 @@ const buildDefaultSaveState = () => ({
   version: SAVE_VERSION,
   selectedLocationId: null,
   currentRodId: DEFAULT_ROD_ID,
+  money: 0,
   stats: {
     attempts: 0,
     catches: 0,
     fails: 0,
   },
   catchLog: [],
+  inventoryFish: [],
 })
 
 const toSafeNumber = (value) => {
@@ -24,6 +26,44 @@ const toSafeNumber = (value) => {
   }
 
   return Math.floor(value)
+}
+
+const toSafeFloat = (value) => {
+  if (!Number.isFinite(value)) {
+    return 0
+  }
+
+  if (value < 0) {
+    return 0
+  }
+
+  return Number(value.toFixed(2))
+}
+
+const normalizeFishInventoryEntry = (payload) => {
+  if (!payload || typeof payload !== 'object') {
+    return null
+  }
+
+  if (typeof payload.id !== 'string' || !payload.id) {
+    return null
+  }
+
+  if (typeof payload.fishId !== 'string' || !payload.fishId) {
+    return null
+  }
+
+  return {
+    id: payload.id,
+    fishId: payload.fishId,
+    fishName:
+      typeof payload.fishName === 'string' ? payload.fishName : payload.fishId,
+    tier: toSafeNumber(payload.tier),
+    size: toSafeFloat(payload.size),
+    quality: toSafeFloat(payload.quality),
+    sellPrice: toSafeNumber(payload.sellPrice),
+    caughtAt: toSafeNumber(payload.caughtAt),
+  }
 }
 
 const normalizeSaveState = (payload) => {
@@ -46,17 +86,24 @@ const normalizeSaveState = (payload) => {
   const catchLog = Array.isArray(payload.catchLog)
     ? payload.catchLog.filter((item) => item && typeof item === 'object')
     : []
+  const inventoryFish = Array.isArray(payload.inventoryFish)
+    ? payload.inventoryFish
+        .map((item) => normalizeFishInventoryEntry(item))
+        .filter((item) => Boolean(item))
+    : []
 
   return {
     version: SAVE_VERSION,
     selectedLocationId,
     currentRodId,
+    money: toSafeNumber(payload.money),
     stats: {
       attempts: toSafeNumber(payload.stats?.attempts),
       catches: toSafeNumber(payload.stats?.catches),
       fails: toSafeNumber(payload.stats?.fails),
     },
     catchLog,
+    inventoryFish,
   }
 }
 
