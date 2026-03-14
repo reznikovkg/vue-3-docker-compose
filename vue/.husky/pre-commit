@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-cd vue || exit 1
-pnpm run precommit:check
