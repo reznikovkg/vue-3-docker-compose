@@ -1,50 +1,55 @@
 <template>
   <section class="fishing-page">
     <header class="fishing-page__header">
-      <h1>Fishing Game</h1>
+      <h1>Gone Fishing</h1>
       <RouterLink :to="{ name: $routes.INDEX }">Back to Index</RouterLink>
     </header>
 
     <main class="fishing-page__stage">
       <div
         class="fishing-page__play-area"
-        @pointercancel="onReelingStop()"
-        @pointerdown="onReelingStart()"
-        @pointerleave="onReelingStop()"
-        @pointerup="onReelingStop()"
+        @pointercancel="() => onReelingStop()"
+        @pointerdown="() => onReelingStart()"
+        @pointerleave="() => onReelingStop()"
+        @pointerup="() => onReelingStop()"
       >
-        <FishingScene :bobber="sceneBobber" :location="selectedLocation" />
+        <FishingScene
+          :bobber="sceneBobber"
+          :location="selectedLocation"
+          @cast="(castAnchor) => onSceneCast(castAnchor)"
+        />
       </div>
 
-      <aside
+      <CollapsibleSidebar
         class="fishing-page__hud-panel fishing-page__hud-panel--left"
-        :class="{
-          'fishing-page__hud-panel--collapsed': isLocationPanelCollapsed,
-        }"
+        :collapsed="isLocationPanelCollapsed"
+        direction="left"
+        mobile-mode="force-expanded"
+        :mobile-breakpoint="900"
+        :peek-size="48"
+        :collapsed-min-height="72"
+        @toggle="(nextCollapsed) => toggleLocationPanel(nextCollapsed)"
       >
-        <button
-          class="fishing-page__panel-toggle"
-          type="button"
-          @click="toggleLocationPanel()"
-        >
-          {{ isLocationPanelCollapsed ? '>' : '<' }}
-        </button>
-        <div
-          v-show="shouldShowLocationPanelContent"
-          class="fishing-page__panel-content"
-        >
-          <h2 class="fishing-page__panel-title">Locations</h2>
-          <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
-          <LocationSelector
-            :disabled="!canCast"
-            :locations="locations"
-            :selected-location-id="selectedLocationId"
-            @select="selectLocation($event)"
-          />
-        </div>
-      </aside>
+        <h2 class="fishing-page__panel-title">Locations</h2>
+        <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
+        <LocationSelector
+          :disabled="!canCast"
+          :locations="locations"
+          :selected-location-id="selectedLocationId"
+          @select="(locationId) => selectLocation(locationId)"
+        />
+      </CollapsibleSidebar>
 
-      <aside class="fishing-page__hud-panel fishing-page__hud-panel--right">
+      <CollapsibleSidebar
+        class="fishing-page__hud-panel fishing-page__hud-panel--right"
+        :collapsed="isStatusPanelCollapsed"
+        direction="right"
+        mobile-mode="force-expanded"
+        :mobile-breakpoint="900"
+        :peek-size="48"
+        :collapsed-min-height="72"
+        @toggle="(nextCollapsed) => toggleStatusPanel(nextCollapsed)"
+      >
         <h2 class="fishing-page__panel-title">Status</h2>
         <p class="fishing-page__panel-copy">Current fishing session state.</p>
         <dl class="fishing-page__status-list">
@@ -84,14 +89,11 @@
             </li>
           </ul>
         </section>
-      </aside>
+      </CollapsibleSidebar>
 
       <section class="fishing-page__hud-tray">
         <div class="fishing-page__tray-primary">
           <div class="fishing-page__cast-row">
-            <BaseButton :disabled="!canCast" @click="startCast()">
-              Cast
-            </BaseButton>
             <span
               class="fishing-page__phase-chip"
               :class="`fishing-page__phase-chip--${phase}`"
@@ -101,7 +103,7 @@
             </span>
           </div>
           <p class="fishing-page__cast-hint">
-            Cast is available in idle and result phases.
+            Click anywhere on the water to cast.
           </p>
         </div>
 
@@ -149,7 +151,7 @@
             <p class="fishing-page__result-message">
               {{ resultPanel.message }}
             </p>
-            <BaseButton @click="closeResultPanel()">Close</BaseButton>
+            <BaseButton @click="() => closeResultPanel()">Close</BaseButton>
           </div>
           <article v-if="showCatchCard" class="fishing-page__catch-card">
             <div class="fishing-page__catch-media">
@@ -185,13 +187,13 @@
 
 <script>
 import BaseButton from '@/components/ui/BaseButton.vue'
+import CollapsibleSidebar from '@/components/ui/CollapsibleSidebar.vue'
 import FishingScene from '@/components/fishing/FishingScene.vue'
 import LocationSelector from '@/components/fishing/LocationSelector.vue'
 import { defineConfig } from '@/utils/defineConfig'
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game'
 const HOOKED_BOBBER_Y = 92
-const LOCATION_PANEL_COLLAPSE_BREAKPOINT = 900
 const PHASE_PAGE_TITLES = defineConfig({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
@@ -203,6 +205,7 @@ export default {
   name: 'FishingPage',
   components: {
     BaseButton,
+    CollapsibleSidebar,
     FishingScene,
     LocationSelector,
   },
@@ -211,7 +214,7 @@ export default {
       unsubscribePhaseSubscription: null,
       lastAppliedPhase: null,
       isLocationPanelCollapsed: false,
-      viewportWidth: 0,
+      isStatusPanelCollapsed: false,
     }
   },
   computed: {
@@ -257,6 +260,9 @@ export default {
     canCast() {
       return this.phase === 'idle' || this.phase === 'result'
     },
+    castAnchor() {
+      return this.$store.getters['gameSession/getCastAnchor']
+    },
     sceneBobber() {
       if (!this.selectedLocation) {
         return {
@@ -264,7 +270,8 @@ export default {
         }
       }
 
-      const anchorPosition = this.selectedLocation.bobberAnchor
+      const defaultAnchor = this.selectedLocation.bobberAnchor
+      const anchorPosition = this.castAnchor || defaultAnchor
       if (
         !anchorPosition ||
         !Number.isFinite(anchorPosition.x) ||
@@ -276,7 +283,7 @@ export default {
       }
 
       const targetPosition = {
-        x: anchorPosition.x,
+        x: 50,
         y: HOOKED_BOBBER_Y,
       }
 
@@ -427,28 +434,18 @@ export default {
       const maxMs = this.minigameState.config?.maxTimeMs || 0
       return `${maxMs}ms`
     },
-    shouldShowLocationPanelContent() {
-      if (this.viewportWidth < LOCATION_PANEL_COLLAPSE_BREAKPOINT) {
-        return true
-      }
-
-      return !this.isLocationPanelCollapsed
-    },
   },
   mounted() {
-    this.syncViewportWidth()
     window.addEventListener('pointerup', this.onReelingStop)
     window.addEventListener('blur', this.onReelingStop)
     window.addEventListener('keydown', this.onWindowKeyDown)
     window.addEventListener('keyup', this.onWindowKeyUp)
-    window.addEventListener('resize', this.onWindowResize)
   },
   beforeUnmount() {
     window.removeEventListener('pointerup', this.onReelingStop)
     window.removeEventListener('blur', this.onReelingStop)
     window.removeEventListener('keydown', this.onWindowKeyDown)
     window.removeEventListener('keyup', this.onWindowKeyUp)
-    window.removeEventListener('resize', this.onWindowResize)
 
     if (this.unsubscribePhaseSubscription) {
       this.unsubscribePhaseSubscription()
@@ -482,23 +479,39 @@ export default {
     resolvePageTitle(phase) {
       return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE
     },
-    toggleLocationPanel() {
+    toggleLocationPanel(nextCollapsed) {
+      if (typeof nextCollapsed === 'boolean') {
+        this.isLocationPanelCollapsed = nextCollapsed
+        return
+      }
+
       this.isLocationPanelCollapsed = !this.isLocationPanelCollapsed
     },
-    onWindowResize() {
-      this.syncViewportWidth()
-    },
-    syncViewportWidth() {
-      this.viewportWidth = window.innerWidth
+    toggleStatusPanel(nextCollapsed) {
+      if (typeof nextCollapsed === 'boolean') {
+        this.isStatusPanelCollapsed = nextCollapsed
+        return
+      }
+
+      this.isStatusPanelCollapsed = !this.isStatusPanelCollapsed
     },
     applyPageTitle(phase) {
       document.title = this.resolvePageTitle(phase)
     },
     selectLocation(locationId) {
-      this.$store.dispatch('progress/selectLocation', locationId)
+      this.$store.dispatch('progress/selectLocation', locationId) // async chain; UI does not depend on completion
     },
-    startCast() {
-      this.$store.dispatch('gameSession/startCast')
+    startCast(castAnchor = null) {
+      this.$store.dispatch('gameSession/startCast', {
+        castAnchor,
+      })
+    },
+    onSceneCast(castAnchor) {
+      if (!this.canCast) {
+        return
+      }
+
+      this.startCast(castAnchor)
     },
     isEditableTarget(target) {
       const element = target
@@ -525,7 +538,7 @@ export default {
           return
         }
 
-        this.$store.dispatch('gameSession/setReeling', true)
+        this.$store.dispatch('gameSession/setReeling', true) // synchronous state toggle
         return
       }
 
@@ -542,7 +555,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/registerBarrierClick')
+      this.$store.dispatch('gameSession/registerBarrierClick') // synchronous click handler
     },
     onWindowKeyUp(event) {
       if (this.isEditableTarget(event.target)) {
@@ -558,9 +571,13 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/setReeling', false)
+      this.$store.dispatch('gameSession/setReeling', false) // synchronous state toggle
     },
     onReelingStart() {
+      if (this.phase !== 'minigame') {
+        return
+      }
+
       if (this.isBarrierBlocking) {
         this.$store.dispatch('gameSession/registerBarrierClick')
         return
@@ -569,10 +586,14 @@ export default {
       this.$store.dispatch('gameSession/setReeling', true)
     },
     onReelingStop() {
+      if (this.phase !== 'minigame') {
+        return
+      }
+
       this.$store.dispatch('gameSession/setReeling', false)
     },
     closeResultPanel() {
-      this.$store.dispatch('ui/hideResultPanel')
+      this.$store.dispatch('ui/hideResultPanel') // synchronous UI action
     },
   },
 }
@@ -680,45 +701,14 @@ export default {
     top: 16px;
     width: min(260px, calc(50% - 28px));
     z-index: 2;
-    transition: transform 180ms ease;
 
     &--left {
       left: 16px;
-
-      &.fishing-page__hud-panel--collapsed {
-        min-height: 72px;
-        transform: translateX(calc(-100% + 48px));
-      }
     }
 
     &--right {
       right: 16px;
     }
-  }
-
-  &__panel-toggle {
-    align-items: center;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid tokens.$fishing-panel-border;
-    border-radius: 8px;
-    color: tokens.$fishing-panel-text;
-    cursor: pointer;
-    display: inline-flex;
-    font-size: 14px;
-    font-weight: 700;
-    height: 28px;
-    justify-content: center;
-    padding: 0;
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    width: 28px;
-    z-index: 1;
-  }
-
-  &__panel-content {
-    display: grid;
-    margin-top: 36px;
   }
 
   &__panel-title {
@@ -918,10 +908,6 @@ export default {
   a:focus-visible {
     @include mixins.focus-ring(tokens.$button-focus-ring);
   }
-
-  &__panel-toggle:focus-visible {
-    @include mixins.focus-ring(tokens.$button-focus-ring);
-  }
 }
 
 @media (max-width: tokens.$fishing-breakpoint-tablet) {
@@ -953,14 +939,6 @@ export default {
       top: auto;
       transform: none;
       width: 100%;
-    }
-
-    &__hud-panel--left.fishing-page__hud-panel--collapsed {
-      transform: none;
-    }
-
-    &__panel-toggle {
-      display: none;
     }
   }
 }

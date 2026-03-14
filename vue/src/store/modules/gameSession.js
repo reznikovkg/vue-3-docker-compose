@@ -41,12 +41,28 @@ const buildInitialState = () => ({
   phase: PHASES.IDLE,
   activeLocationId: null,
   castStartedAt: null,
+  castAnchor: null,
   encounter: null,
   minigame: buildInitialMinigameState(),
   result: null,
 })
 
 const getRandomInRange = (min, max) => min + Math.random() * (max - min)
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+const normalizeCastAnchor = (castAnchor) => {
+  if (
+    !castAnchor ||
+    !Number.isFinite(castAnchor.x) ||
+    !Number.isFinite(castAnchor.y)
+  ) {
+    return null
+  }
+
+  return {
+    x: Number(clamp(castAnchor.x, 0, 100).toFixed(2)),
+    y: Number(clamp(castAnchor.y, 0, 100).toFixed(2)),
+  }
+}
 
 const clearBiteTimeout = () => {
   if (biteTimeoutId !== null) {
@@ -81,6 +97,7 @@ export default {
     getPhase: (state) => state.phase,
     getActiveLocationId: (state) => state.activeLocationId,
     getCastStartedAt: (state) => state.castStartedAt,
+    getCastAnchor: (state) => state.castAnchor,
     getEncounter: (state) => state.encounter,
     getMinigameState: (state) => state.minigame,
     getActiveBarrier: (state) =>
@@ -106,6 +123,7 @@ export default {
       state.phase = initialState.phase
       state.activeLocationId = initialState.activeLocationId
       state.castStartedAt = initialState.castStartedAt
+      state.castAnchor = initialState.castAnchor
       state.encounter = initialState.encounter
       state.minigame = initialState.minigame
       state.result = initialState.result
@@ -120,9 +138,11 @@ export default {
         state.minigame.isReeling = false
       }
     },
-    [MUTATIONS.START_CAST]: (state, timestamp) => {
+    [MUTATIONS.START_CAST]: (state, payload) => {
+      const { timestamp, castAnchor } = payload
       state.phase = PHASES.CASTING
       state.castStartedAt = timestamp
+      state.castAnchor = castAnchor
       state.result = null
       state.encounter = null
       state.minigame = buildInitialMinigameState()
@@ -148,7 +168,7 @@ export default {
     enterPhase({ commit }, phase) {
       commit(MUTATIONS.SET_PHASE, phase)
     },
-    startCast({ state, commit, dispatch }) {
+    startCast({ state, commit, dispatch }, payload = {}) {
       if (state.phase !== PHASES.IDLE && state.phase !== PHASES.RESULT) {
         return false
       }
@@ -158,14 +178,17 @@ export default {
       }
 
       clearBiteTimeout()
-      dispatch('stopMinigameLoop')
+      dispatch('stopMinigameLoop') // synchronous cleanup action
       biteCycleToken += 1
       const currentCycleToken = biteCycleToken
-      commit(MUTATIONS.START_CAST, Date.now())
-      dispatch('ui/hideResultPanel', null, { root: true })
+      commit(MUTATIONS.START_CAST, {
+        timestamp: Date.now(),
+        castAnchor: normalizeCastAnchor(payload.castAnchor),
+      })
+      dispatch('ui/hideResultPanel', null, { root: true }) // synchronous UI reset
       dispatch('scheduleBite', {
         cycleToken: currentCycleToken,
-      })
+      }) // synchronous kickoff; timeout handles async
       return true
     },
     scheduleBite({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -180,7 +203,7 @@ export default {
       biteTimeoutId = setTimeout(() => {
         dispatch('triggerBite', {
           cycleToken,
-        })
+        }) // synchronous action call inside timeout
       }, delayMs)
 
       return true
@@ -210,7 +233,7 @@ export default {
       commit(MUTATIONS.SET_PHASE, PHASES.MINIGAME)
       dispatch('startMinigame', {
         encounter,
-      })
+      }) // synchronous kickoff; RAF loop is scheduled inside
       return true
     },
     startMinigame({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -231,7 +254,7 @@ export default {
         return false
       }
 
-      dispatch('stopMinigameLoop')
+      dispatch('stopMinigameLoop') // synchronous loop reset
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         config,
         elapsedMs: 0,
@@ -250,7 +273,7 @@ export default {
         dispatch('tickMinigame', {
           timestamp,
           loopToken,
-        })
+        }) // synchronous tick action call in RAF
       })
 
       return true
@@ -303,7 +326,7 @@ export default {
       }
 
       if (stepResult.outcome) {
-        dispatch('resolveMinigame', stepResult.outcome)
+        dispatch('resolveMinigame', stepResult.outcome) // async chain; no follow-up work here
         return true
       }
 
@@ -311,7 +334,7 @@ export default {
         dispatch('tickMinigame', {
           timestamp: nextTimestamp,
           loopToken,
-        })
+        }) // synchronous tick action call in RAF
       })
 
       return true
@@ -362,7 +385,7 @@ export default {
       return true
     },
     resolveMinigame({ state, commit, dispatch }, outcome) {
-      dispatch('stopMinigameLoop')
+      dispatch('stopMinigameLoop') // synchronous cleanup action
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         isReeling: false,
         isBarrierBlocking: false,
@@ -378,18 +401,18 @@ export default {
           }
         : null
 
-      if (encounterPayload) {
-        if (outcome.status === 'success') {
-          dispatch('progress/recordCatch', encounterPayload, { root: true })
-        } else {
-          dispatch('progress/recordFail', encounterPayload, { root: true })
-        }
-      }
+      const progressDispatch = encounterPayload
+        ? outcome.status === 'success'
+          ? dispatch('progress/recordCatch', encounterPayload, { root: true })
+          : dispatch('progress/recordFail', encounterPayload, { root: true })
+        : Promise.resolve()
 
-      commit(MUTATIONS.SET_RESULT, {
-        status: outcome.status,
-        reason: outcome.reason,
-        encounter: state.encounter,
+      return progressDispatch.then(() => {
+        commit(MUTATIONS.SET_RESULT, {
+          status: outcome.status,
+          reason: outcome.reason,
+          encounter: state.encounter,
+        })
       })
     },
     stopMinigameLoop() {
@@ -407,7 +430,7 @@ export default {
     },
     resetSession({ commit, dispatch }) {
       clearBiteTimeout()
-      dispatch('stopMinigameLoop')
+      dispatch('stopMinigameLoop') // synchronous cleanup action
       biteCycleToken += 1
       commit(MUTATIONS.RESET_SESSION)
     },

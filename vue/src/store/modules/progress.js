@@ -84,14 +84,15 @@ export default {
     },
     bootstrapProgress({ dispatch }) {
       const saved = loadSavedProgress()
-      dispatch('hydrateProgress', saved || buildDefaultSaveState())
-
-      dispatch(
-        'gameSession/setActiveLocation',
-        saved?.selectedLocationId || null,
-        {
-          root: true,
-        },
+      return dispatch('hydrateProgress', saved || buildDefaultSaveState()).then(
+        () =>
+          dispatch(
+            'gameSession/setActiveLocation',
+            saved?.selectedLocationId || null,
+            {
+              root: true,
+            },
+          ),
       )
     },
     persistProgress({ state }) {
@@ -99,12 +100,13 @@ export default {
     },
     selectLocation({ commit, dispatch }, locationId) {
       commit(MUTATIONS.SET_SELECTED_LOCATION_ID, locationId)
-      dispatch('gameSession/setActiveLocation', locationId, { root: true })
-      dispatch('persistProgress')
+      return dispatch('gameSession/setActiveLocation', locationId, {
+        root: true,
+      }).then(() => dispatch('persistProgress'))
     },
     recordAttempt({ commit, dispatch }) {
       commit(MUTATIONS.INCREMENT_ATTEMPTS)
-      dispatch('persistProgress')
+      return dispatch('persistProgress')
     },
     recordCatch({ commit, dispatch }, payload) {
       commit(MUTATIONS.INCREMENT_ATTEMPTS)
@@ -114,15 +116,14 @@ export default {
         result: 'caught',
         timestamp: Date.now(),
       })
-      dispatch(
+      return dispatch(
         'ui/showResultPanel',
         {
           isSuccess: true,
           message: 'Fish caught.',
         },
         { root: true },
-      )
-      dispatch('persistProgress')
+      ).then(() => dispatch('persistProgress'))
     },
     recordFail({ commit, dispatch }, payload) {
       commit(MUTATIONS.INCREMENT_ATTEMPTS)
@@ -132,20 +133,19 @@ export default {
         result: 'failed',
         timestamp: Date.now(),
       })
-      dispatch(
+      return dispatch(
         'ui/showResultPanel',
         {
           isSuccess: false,
           message: 'Fish escaped.',
         },
         { root: true },
-      )
-      dispatch('persistProgress')
+      ).then(() => dispatch('persistProgress'))
     },
     resetProgress({ commit, dispatch }) {
       commit(MUTATIONS.HYDRATE_PROGRESS, buildInitialState())
       clearSavedProgress()
-      dispatch('gameSession/setActiveLocation', null, { root: true })
+      return dispatch('gameSession/setActiveLocation', null, { root: true })
     },
   },
 }

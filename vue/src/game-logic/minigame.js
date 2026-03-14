@@ -1,19 +1,17 @@
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
 const buildBarriers = (encounter, tuning, rng = Math.random) => {
-  const countRange = tuning?.minigame?.barrierCountRange || { min: 1, max: 3 }
-  const minCount = countRange.min || 1
-  const maxCount = Math.max(minCount, countRange.max || minCount)
-  const difficultyScore = encounter.difficultyScore || 1
+  const countRange = tuning.minigame.barrierCountRange
+  const minCount = countRange.min
+  const maxCount = countRange.max
+  const difficultyScore = encounter.difficultyScore
   const difficultyNorm = clamp((difficultyScore - 1) / 1.8, 0, 1)
   const barrierCount = Math.round(
     minCount + difficultyNorm * (maxCount - minCount),
   )
-  const tier = encounter.tier || 1
-  const clickRange = tuning?.minigame?.barrierClicksByTier?.[tier] || {
-    min: 4,
-    max: 6,
-  }
+  const tier = encounter.tier
+  const clickRange = tuning?.minigame?.barrierClicksByTier?.[tier]
+
   const start = 0.22
   const end = 0.88
   const spacing = (end - start) / (barrierCount + 1)
@@ -51,10 +49,10 @@ const buildMinigameConfig = (encounter, tuning) => {
     return null
   }
 
-  const baseGreenSpeed = tuning?.minigame?.greenSpeedBase || 0.23
-  const baseRedSpeed = tuning?.minigame?.redSpeedBase || 0.11
-  const maxTimeMs = tuning?.minigame?.maxTimeMs || 12000
-  const difficultyScore = encounter.difficultyScore || 1
+  const baseGreenSpeed = tuning?.minigame?.greenSpeedBase
+  const baseRedSpeed = tuning?.minigame?.redSpeedBase
+  const maxTimeMs = tuning?.minigame?.maxTimeMs
+  const difficultyScore = encounter.difficultyScore
   const difficultyDelta = Math.max(0, difficultyScore - 1)
 
   const greenSpeedPerSec = clamp(

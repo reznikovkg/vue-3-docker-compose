@@ -1,12 +1,20 @@
 <template>
   <section class="fishing-scene">
     <div class="fishing-scene__viewport">
-      <div class="fishing-scene__surface" :style="surfaceStyle">
+      <div
+        ref="surface"
+        class="fishing-scene__surface"
+        :style="surfaceStyle"
+        @pointerdown="(event) => emitCast(event)"
+      >
         <img
-          v-if="hasRenderableBackgroundImage"
+          v-if="hasBackgroundImage"
+          :key="backgroundImagePath"
           class="fishing-scene__image"
           :src="backgroundImagePath"
           :alt="locationName"
+          @load="() => (backgroundImageFailed = false)"
+          @error="() => (backgroundImageFailed = true)"
         />
         <BobberView
           v-if="showBobber"
@@ -46,10 +54,10 @@ export default {
       default: null,
     },
   },
+  emits: ['cast'],
   data() {
     return {
-      imageLoadState: 'idle',
-      imageLoadPath: null,
+      backgroundImageFailed: false,
     }
   },
   computed: {
@@ -60,7 +68,7 @@ export default {
       return Boolean(this.backgroundImagePath)
     },
     hasRenderableBackgroundImage() {
-      return this.hasBackgroundImage && this.imageLoadState === 'loaded'
+      return this.hasBackgroundImage && !this.backgroundImageFailed
     },
     surfaceStyle() {
       const baseGradient =
@@ -82,9 +90,7 @@ export default {
       return this.location?.name || 'Unknown location'
     },
     showFallbackNote() {
-      return (
-        !this.hasRenderableBackgroundImage && this.imageLoadState !== 'loading'
-      )
+      return !this.hasRenderableBackgroundImage
     },
     fallbackNote() {
       if (!this.location) {
@@ -98,43 +104,40 @@ export default {
       return 'Background file could not be loaded. Showing fallback scene.'
     },
   },
-  watch: {
-    backgroundImagePath: {
-      immediate: true,
-      handler(nextPath) {
-        this.resolveBackgroundImageState(nextPath)
-      },
-    },
-  },
   methods: {
-    resolveBackgroundImageState(nextPath) {
-      if (!nextPath) {
-        this.imageLoadPath = null
-        this.imageLoadState = 'idle'
+    clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value))
+    },
+    emitCast(event) {
+      if (event.pointerType === 'mouse' && event.button !== 0) {
         return
       }
 
-      this.imageLoadPath = nextPath
-      this.imageLoadState = 'loading'
-      const probe = new Image()
-
-      probe.onload = () => {
-        if (this.imageLoadPath !== nextPath) {
-          return
-        }
-
-        this.imageLoadState = 'loaded'
+      const surface = this.$refs.surface
+      if (!surface) {
+        return
       }
 
-      probe.onerror = () => {
-        if (this.imageLoadPath !== nextPath) {
-          return
-        }
-
-        this.imageLoadState = 'error'
+      const bounds = surface.getBoundingClientRect()
+      if (!bounds.width || !bounds.height) {
+        return
       }
 
-      probe.src = nextPath
+      const x = this.clamp(
+        ((event.clientX - bounds.left) / bounds.width) * 100,
+        0,
+        100,
+      )
+      const y = this.clamp(
+        ((event.clientY - bounds.top) / bounds.height) * 100,
+        0,
+        100,
+      )
+
+      this.$emit('cast', {
+        x: Number(x.toFixed(2)),
+        y: Number(y.toFixed(2)),
+      })
     },
   },
 }

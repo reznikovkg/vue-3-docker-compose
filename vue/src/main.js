@@ -12,6 +12,14 @@ const routes = {
   },
 }
 
-store.dispatch('progress/bootstrapProgress')
+const mountApp = () =>
+  createApp(App).use(router).use(routes).use(store).mount('#project')
 
-createApp(App).use(router).use(routes).use(store).mount('#project')
+store
+  .dispatch('progress/bootstrapProgress')
+  .catch((error) => {
+    console.error('Failed to bootstrap progress', error)
+  })
+  .finally(() => {
+    mountApp()
+  })
