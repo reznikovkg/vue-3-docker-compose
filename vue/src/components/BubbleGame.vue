@@ -14,7 +14,7 @@
       </button>
     </div>
     -->
-
+    
     <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)">
       <div class="c-game__topbar" @click="(e) => e.stopPropagation()">
         <div class="c-game__targetWrap">
@@ -71,6 +71,13 @@ import {
   GAME_DEFAULTS,
   BUBBLE_RULES
 } from '@/constants/gameConfig.js'
+import {
+  handleLaserMode,
+  startAutoMode,
+  stopAutoMode,
+  applyCombo,
+  spawnBomb
+} from '@/game/gameModes'
 import { mapActions } from 'vuex'
 import Bubble from '@/components/ui/Bubble.vue'
 
@@ -154,6 +161,26 @@ export default {
     ...mapActions('list', [
       'setList'
     ]),
+
+    laserMode(e) {
+      return handleLaserMode(this, e)
+    },
+
+    autoModeStart() {
+      return startAutoMode(this)
+    },
+
+    autoModeStop() {
+      return stopAutoMode(this)
+    },
+
+    comboMode(bubble, isHit) {
+      return applyCombo(this, bubble, isHit)
+    },
+
+    bombMode(x, y) {
+      return spawnBomb(this, x, y)
+    },
 
     // старт + генерация
     startGame() {
