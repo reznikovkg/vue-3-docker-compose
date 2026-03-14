@@ -16,15 +16,32 @@
         <FishingScene :bobber="sceneBobber" :location="selectedLocation" />
       </div>
 
-      <aside class="fishing-page__hud-panel fishing-page__hud-panel--left">
-        <h2 class="fishing-page__panel-title">Locations</h2>
-        <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
-        <LocationSelector
-          :disabled="!canCast"
-          :locations="locations"
-          :selected-location-id="selectedLocationId"
-          @select="selectLocation($event)"
-        />
+      <aside
+        class="fishing-page__hud-panel fishing-page__hud-panel--left"
+        :class="{
+          'fishing-page__hud-panel--collapsed': isLocationPanelCollapsed,
+        }"
+      >
+        <button
+          class="fishing-page__panel-toggle"
+          type="button"
+          @click="toggleLocationPanel()"
+        >
+          {{ isLocationPanelCollapsed ? '>' : '<' }}
+        </button>
+        <div
+          v-show="shouldShowLocationPanelContent"
+          class="fishing-page__panel-content"
+        >
+          <h2 class="fishing-page__panel-title">Locations</h2>
+          <p class="fishing-page__panel-copy">Choose the next water to fish.</p>
+          <LocationSelector
+            :disabled="!canCast"
+            :locations="locations"
+            :selected-location-id="selectedLocationId"
+            @select="selectLocation($event)"
+          />
+        </div>
       </aside>
 
       <aside class="fishing-page__hud-panel fishing-page__hud-panel--right">
@@ -174,6 +191,7 @@ import { defineConfig } from '@/utils/defineConfig'
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game'
 const HOOKED_BOBBER_Y = 92
+const LOCATION_PANEL_COLLAPSE_BREAKPOINT = 900
 const PHASE_PAGE_TITLES = defineConfig({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
@@ -192,6 +210,8 @@ export default {
     return {
       unsubscribePhaseSubscription: null,
       lastAppliedPhase: null,
+      isLocationPanelCollapsed: false,
+      viewportWidth: 0,
     }
   },
   computed: {
@@ -407,18 +427,28 @@ export default {
       const maxMs = this.minigameState.config?.maxTimeMs || 0
       return `${maxMs}ms`
     },
+    shouldShowLocationPanelContent() {
+      if (this.viewportWidth < LOCATION_PANEL_COLLAPSE_BREAKPOINT) {
+        return true
+      }
+
+      return !this.isLocationPanelCollapsed
+    },
   },
   mounted() {
+    this.syncViewportWidth()
     window.addEventListener('pointerup', this.onReelingStop)
     window.addEventListener('blur', this.onReelingStop)
     window.addEventListener('keydown', this.onWindowKeyDown)
     window.addEventListener('keyup', this.onWindowKeyUp)
+    window.addEventListener('resize', this.onWindowResize)
   },
   beforeUnmount() {
     window.removeEventListener('pointerup', this.onReelingStop)
     window.removeEventListener('blur', this.onReelingStop)
     window.removeEventListener('keydown', this.onWindowKeyDown)
     window.removeEventListener('keyup', this.onWindowKeyUp)
+    window.removeEventListener('resize', this.onWindowResize)
 
     if (this.unsubscribePhaseSubscription) {
       this.unsubscribePhaseSubscription()
@@ -451,6 +481,15 @@ export default {
   methods: {
     resolvePageTitle(phase) {
       return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE
+    },
+    toggleLocationPanel() {
+      this.isLocationPanelCollapsed = !this.isLocationPanelCollapsed
+    },
+    onWindowResize() {
+      this.syncViewportWidth()
+    },
+    syncViewportWidth() {
+      this.viewportWidth = window.innerWidth
     },
     applyPageTitle(phase) {
       document.title = this.resolvePageTitle(phase)
@@ -641,14 +680,45 @@ export default {
     top: 16px;
     width: min(260px, calc(50% - 28px));
     z-index: 2;
+    transition: transform 180ms ease;
 
     &--left {
       left: 16px;
+
+      &.fishing-page__hud-panel--collapsed {
+        min-height: 72px;
+        transform: translateX(calc(-100% + 48px));
+      }
     }
 
     &--right {
       right: 16px;
     }
+  }
+
+  &__panel-toggle {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid tokens.$fishing-panel-border;
+    border-radius: 8px;
+    color: tokens.$fishing-panel-text;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 14px;
+    font-weight: 700;
+    height: 28px;
+    justify-content: center;
+    padding: 0;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 28px;
+    z-index: 1;
+  }
+
+  &__panel-content {
+    display: grid;
+    margin-top: 36px;
   }
 
   &__panel-title {
@@ -846,7 +916,11 @@ export default {
   }
 
   a:focus-visible {
-    @include mixins.focus-ring(tokens.$button-soft-focus);
+    @include mixins.focus-ring(tokens.$button-focus-ring);
+  }
+
+  &__panel-toggle:focus-visible {
+    @include mixins.focus-ring(tokens.$button-focus-ring);
   }
 }
 
@@ -879,6 +953,14 @@ export default {
       top: auto;
       transform: none;
       width: 100%;
+    }
+
+    &__hud-panel--left.fishing-page__hud-panel--collapsed {
+      transform: none;
+    }
+
+    &__panel-toggle {
+      display: none;
     }
   }
 }

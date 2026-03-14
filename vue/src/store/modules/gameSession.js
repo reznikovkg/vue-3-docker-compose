@@ -62,16 +62,11 @@ const clearRafLoop = () => {
   }
 }
 
-const getBiteDelayMs = (rootGetters, activeLocationId) => {
+const getBiteDelayMs = (rootGetters) => {
   const tuning = rootGetters['content/getTuning']
-  const location = rootGetters['content/getLocationById'](activeLocationId)
-  const biteRateBase = location?.biteRateBase || 1
 
-  const baseMin = tuning?.biteDelayMs?.min || 900
-  const baseMax = tuning?.biteDelayMs?.max || 3200
-  const safeRate = Math.max(0.2, biteRateBase)
-  const min = Math.max(250, Math.floor(baseMin / safeRate))
-  const max = Math.max(min + 100, Math.floor(baseMax / safeRate))
+  const min = tuning?.biteDelayMs?.min || 900
+  const max = tuning?.biteDelayMs?.max || 3200
 
   return Math.floor(getRandomInRange(min, max))
 }
@@ -180,7 +175,7 @@ export default {
 
       const cycleToken = payload.cycleToken || biteCycleToken
       clearBiteTimeout()
-      const delayMs = getBiteDelayMs(rootGetters, state.activeLocationId)
+      const delayMs = getBiteDelayMs(rootGetters)
       commit(MUTATIONS.SET_PHASE, PHASES.WAITING_BITE)
       biteTimeoutId = setTimeout(() => {
         dispatch('triggerBite', {

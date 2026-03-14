@@ -10,7 +10,6 @@ export const LOCATIONS = defineConfig([
       y: 63,
     },
     fishTableId: 'freshwater-basic',
-    biteRateBase: 1,
     difficultyMultiplier: 1,
   },
   {
@@ -22,7 +21,6 @@ export const LOCATIONS = defineConfig([
       y: 66,
     },
     fishTableId: 'river-mixed',
-    biteRateBase: 1.12,
     difficultyMultiplier: 0.8,
   },
   {
@@ -34,7 +32,6 @@ export const LOCATIONS = defineConfig([
       y: 68,
     },
     fishTableId: 'marsh-predators',
-    biteRateBase: 0.92,
     difficultyMultiplier: 0.8,
   },
 ])

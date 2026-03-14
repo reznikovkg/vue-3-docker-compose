@@ -12,7 +12,7 @@ const buildBarriers = (encounter, tuning, rng = Math.random) => {
   const tier = encounter.tier || 1
   const clickRange = tuning?.minigame?.barrierClicksByTier?.[tier] || {
     min: 4,
-    max: 7,
+    max: 6,
   }
   const start = 0.22
   const end = 0.88

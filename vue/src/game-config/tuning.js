@@ -15,16 +15,16 @@ export const TUNING = defineConfig({
     },
     barrierClicksByTier: {
       1: {
-        min: 4,
-        max: 7,
+        min: 1,
+        max: 6,
       },
       2: {
-        min: 7,
-        max: 12,
+        min: 2,
+        max: 6,
       },
       3: {
-        min: 12,
-        max: 19,
+        min: 3,
+        max: 6,
       },
     },
   },
