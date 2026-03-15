@@ -115,7 +115,7 @@
         :style="{ left: laserX + 'px', top: laserY + 'px' }"
       ></div>
 
-      <div class="c-game__modes">
+      <div class="c-game__modes" @click="(e) => e.stopPropagation()">
         <button
           type="button"
           class="c-game__modeBtn"
