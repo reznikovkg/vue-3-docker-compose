@@ -7,7 +7,6 @@ const MUTATIONS = {
   RESET_SETTINGS: 'RESET_SETTINGS'
 }
 
-
 const DEFAULT_SETTINGS = {
   totalColors: 3,
   targetColor: 'red',
@@ -15,7 +14,6 @@ const DEFAULT_SETTINGS = {
   pointsForCorrect: 1,
   pointsForWrong: -5
 }
-
 
 export default createStore({
   state () {
