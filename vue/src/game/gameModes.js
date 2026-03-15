@@ -25,7 +25,7 @@ export function handleLaserMode(ctx, e) {
   }
 }
 
-export function startAutoMode(ctx) {
+export function startAutomatMode(ctx) {
   if (!ctx || !ctx.$refs || !ctx.$refs.gameField) {
     return null
   }
@@ -78,7 +78,7 @@ export function startAutoMode(ctx) {
   return ctx.autoShotTimerId
 }
 
-export function stopAutoMode(ctx) {
+export function stopAutomatMode(ctx) {
   if (!ctx) {
     return null
   }
@@ -133,9 +133,82 @@ export function applyCombo(ctx, bubble, x, y, index = 0) {
 }
 
 export function spawnBomb(ctx, x, y) {
-  return {
-    ctx,
-    x,
-    y
+  if (!ctx) {
+    return null
   }
+
+  //точка бомбы по полю
+  const bombX = Math.round(x)
+  const bombY = Math.round(y)
+  // id объекта бомбы
+  const id = Date.now() + Math.random()
+  const bomb = {
+    id,
+    x: bombX,
+    y: bombY,
+    isGrow: false
+  }
+
+  ctx.bombItems = [...ctx.bombItems, bomb]
+
+  setTimeout(() => {
+    //фаза увеличения бомбы
+    ctx.bombItems = ctx.bombItems.map((item) => {
+      if (item.id === id) {
+        return {
+          ...item,
+          isGrow: true
+        }
+      }
+
+      return item
+    })
+  }, 80)
+
+  setTimeout(() => {
+    //id и размер взрыва
+    const explosionId = Date.now() + Math.random()
+    const radius = 140
+    const explosion = {
+      id: explosionId,
+      x: bombX,
+      y: bombY,
+      size: radius * 2
+    }
+
+    let nextBubbles = [...ctx.bubbles]
+
+    ctx.bubbles.forEach((bubble) => {
+      //центр пузыря
+      const bubbleX = bubble.x + bubble.r
+      const bubbleY = bubble.y + bubble.r
+      //расстояние от взрыва до пузыря
+      const dx = bubbleX - bombX
+      const dy = bubbleY - bombY
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance > radius) {
+        return
+      }
+
+      if (bubble.size === 'big') {
+        const childBubbles = ctx.createChildBubbles(bubble, 7, 'small')
+        nextBubbles = nextBubbles.filter((item) => item.id !== bubble.id)
+        nextBubbles = [...nextBubbles, ...childBubbles]
+        return
+      }
+
+      nextBubbles = nextBubbles.filter((item) => item.id !== bubble.id)
+    })
+
+    ctx.bubbles = nextBubbles
+    ctx.bombItems = ctx.bombItems.filter((item) => item.id !== id)
+    ctx.bombExplosionItems = [...ctx.bombExplosionItems, explosion]
+
+    setTimeout(() => {
+      ctx.bombExplosionItems = ctx.bombExplosionItems.filter((item) => item.id !== explosionId)
+    }, 450)
+  }, 1200)
+
+  return bomb
 }

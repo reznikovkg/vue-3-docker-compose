@@ -80,10 +80,73 @@
       </div>
 
       <div
-        v-if="activeMode === 'laser'"
+        v-for="bomb in bombItems"
+        :key="bomb.id"
+        class="c-game__bomb"
+        :class="{ 'c-game__bomb--grow': bomb.isGrow }"
+        :style="{ left: bomb.x + 'px', top: bomb.y + 'px' }"
+      >
+        <img class="c-game__bombImage" :src="bombImage" alt="bomb">
+      </div>
+
+      <div
+        v-for="explosion in bombExplosionItems"
+        :key="explosion.id"
+        class="c-game__bombExplosion"
+        :style="{ left: explosion.x + 'px', top: explosion.y + 'px', width: explosion.size + 'px', height: explosion.size + 'px' }"
+      >
+        <img class="c-game__bombExplosionImage" :src="explosionImage" alt="explosion">
+      </div>
+
+      <div
+        v-if="modeState.laser.activeLeft > 0"
         class="c-game__laserCursor"
         :style="{ left: laserX + 'px', top: laserY + 'px' }"
       ></div>
+
+      <div class="c-game__modes">
+        <button
+          type="button"
+          class="c-game__modeBtn"
+          :class="{ 'c-game__modeBtn--active': activeMode === 'bomb' }"
+          @click="() => setGameMode('bomb')"
+        >
+          <span class="c-game__modeBtnText">💣 Bomb (X)</span>
+          <span class="c-game__modeBtnCount">{{ bombsCount }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="c-game__modeBtn"
+          :class="{
+            'c-game__modeBtn--active': modeState.laser.activeLeft > 0,
+            'c-game__modeBtn--disabled': isModeCooldown('laser')
+          }"
+          :disabled="isModeCooldown('laser')"
+          @click="() => setGameMode('laser')"
+        >
+          <span class="c-game__modeBtnText">⚡ Laser (C)</span>
+          <span v-if="getModeTime('laser')" class="c-game__modeBtnTime">
+            {{ getModeTime('laser') }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          class="c-game__modeBtn"
+          :class="{
+            'c-game__modeBtn--active': modeState.automat.activeLeft > 0,
+            'c-game__modeBtn--disabled': isModeCooldown('automat')
+          }"
+          :disabled="isModeCooldown('automat')"
+          @click="() => setGameMode('automat')"
+        >
+          <span class="c-game__modeBtnText">🔫 Automat (V)</span>
+          <span v-if="getModeTime('automat')" class="c-game__modeBtnTime">
+            {{ getModeTime('automat') }}
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -96,13 +159,15 @@ import {
 } from '@/constants/gameConfig.js'
 import {
   handleLaserMode,
-  startAutoMode,
-  stopAutoMode,
+  startAutomatMode,
+  stopAutomatMode,
   applyCombo,
   spawnBomb
 } from '@/game/gameModes'
 import { mapActions } from 'vuex'
 import Bubble from '@/components/ui/Bubble.vue'
+import bombAsset from '@/assets/game/bomb.png'
+import explosionAsset from '@/assets/game/expl.png'
 
 export default {
   name: 'BubbleGame',
@@ -164,12 +229,27 @@ export default {
       finishTimerId: null,
       timeLeft: GAME_DEFAULTS.maxTime,
       rafId: null,
-      activeMode: 'auto',
+      activeMode: 'normal',
       marks: [], // метки выстрелов автомата
       autoShotTimerId: null,  // интервал автовыстрелов
       hitComboMultiplier: 1,
       missComboMultiplier: 1,
       comboTextItems: [],
+      bombsCount: 0,
+      successfulHitsCount: 0,
+      bombItems: [],
+      bombExplosionItems: [],
+      modeTickTimerId: null,
+      modeState: {
+        laser: {
+          activeLeft: 0,
+          cooldownLeft: 0
+        },
+        automat: {
+          activeLeft: 0,
+          cooldownLeft: 0
+        }
+      },
       laserX: 0,
       laserY: 0,
       laserClientX: 0,
@@ -178,6 +258,14 @@ export default {
   },
 
   computed: {
+    bombImage() {
+      return bombAsset
+    },
+
+    explosionImage() {
+      return explosionAsset
+    },
+
     formattedTime() {
       const safeTime = this.timeLeft > 0 ? this.timeLeft : 0
       const mm = Math.floor(safeTime / 60)
@@ -194,25 +282,167 @@ export default {
       'setList'
     ]),
 
-    laserMode(e) {
-      return handleLaserMode(this, e)
+    activateAutomatMode() {
+      this.activeMode = 'automat'
+      startAutomatMode(this)
     },
 
-    autoModeStart() {
-      return startAutoMode(this)
+    deactivateAutomatMode() {
+      stopAutomatMode(this)
     },
 
-    autoModeStop() {
-      return stopAutoMode(this)
+    getModeConfig(mode) {
+      const map = {
+        laser: {
+          active: 8,
+          cooldown: 10
+        },
+        automat: {
+          active: 8,
+          cooldown: 10
+        }
+      }
+
+      return map[mode] || null
     },
 
-    activateAutoMode() {
-      this.activeMode = 'auto'
-      startAutoMode(this)
+    isModeCooldown(mode) {
+      const state = this.modeState[mode]
+      return state ? state.cooldownLeft > 0 : false
     },
 
-    deactivateAutoMode() {
-      stopAutoMode(this)
+    getModeTime(mode) {
+      const state = this.modeState[mode]
+      if (!state) {
+        return ''
+      }
+
+      if (state.activeLeft > 0) {
+        return state.activeLeft
+      }
+
+      if (state.cooldownLeft > 0) {
+        return state.cooldownLeft
+      }
+
+      return ''
+    },
+
+    clearMode(mode) {
+      if (mode === 'automat') {
+        this.deactivateAutomatMode()
+      }
+
+      if (mode === 'bomb' && this.activeMode === mode) {
+        this.activeMode = 'normal'
+      }
+    },
+
+    finishMode(mode) {
+      const config = this.getModeConfig(mode)
+      if (!config || !this.modeState[mode]) {
+        return
+      }
+
+      if (mode === 'automat') {
+        this.deactivateAutomatMode()
+      } else if (mode === 'bomb' && this.activeMode === mode) {
+        this.activeMode = 'normal'
+      }
+
+      this.modeState[mode].activeLeft = 0
+      this.modeState[mode].cooldownLeft = config.cooldown
+    },
+
+    tickModes() {
+      ;['laser', 'automat'].forEach((mode) => {
+        const state = this.modeState[mode]
+        if (!state) {
+          return
+        }
+
+        if (state.activeLeft > 0) {
+          state.activeLeft -= 1
+          if (state.activeLeft <= 0) {
+            this.finishMode(mode)
+          }
+          return
+        }
+
+        if (state.cooldownLeft > 0) {
+          state.cooldownLeft -= 1
+        }
+      })
+    },
+
+    startModeTick() {
+      if (this.modeTickTimerId) {
+        clearInterval(this.modeTickTimerId)
+      }
+
+      this.modeTickTimerId = setInterval(() => {
+        this.tickModes()
+      }, 1000)
+    },
+
+    setGameMode(mode) {
+      if (mode === 'bomb') {
+        if (this.activeMode === 'bomb') {
+          this.activeMode = 'normal'
+          return
+        }
+
+        if (!this.bombsCount) {
+          return
+        }
+
+        this.activeMode = 'bomb'
+        return
+      }
+
+      const state = this.modeState[mode]
+      if (this.isModeCooldown(mode)) {
+        return
+      }
+
+      if (this.activeMode === mode) {
+        return
+      }
+
+      if (state && state.activeLeft > 0) {
+        if (mode === 'automat') {
+          this.activateAutomatMode()
+          return
+        }
+
+        this.activeMode = mode
+        return
+      }
+
+      if (mode === 'automat') {
+        this.modeState.automat.activeLeft = this.getModeConfig('automat').active
+        this.modeState.automat.cooldownLeft = 0
+        this.activateAutomatMode()
+        return
+      }
+
+      this.modeState.laser.activeLeft = this.getModeConfig('laser').active
+      this.modeState.laser.cooldownLeft = 0
+      this.activeMode = mode
+    },
+
+    onKeyDown(e) {
+      if (e.code === 'KeyX') {
+        this.setGameMode('bomb')
+      }
+
+      if (e.code === 'KeyC') {
+        this.setGameMode('laser')
+      }
+
+      if (e.code === 'KeyV') {
+        this.setGameMode('automat')
+      }
     },
 
     comboMode(bubble, x, y, index = 0) {
@@ -234,7 +464,7 @@ export default {
         this.laserY = e.clientY - rect.top
       }
 
-      if (this.activeMode === 'laser') {
+      if (this.modeState.laser.activeLeft > 0) {
         handleLaserMode(this, e)
       }
     },
@@ -251,6 +481,15 @@ export default {
       this.hitComboMultiplier = 1
       this.missComboMultiplier = 1
       this.comboTextItems = []
+      this.bombsCount = 0
+      this.successfulHitsCount = 0
+      this.bombItems = []
+      this.bombExplosionItems = []
+      this.activeMode = 'normal'
+      this.modeState.laser.activeLeft = 0
+      this.modeState.laser.cooldownLeft = 0
+      this.modeState.automat.activeLeft = 0
+      this.modeState.automat.cooldownLeft = 0
 
       if (typeof this.onStart === 'function') {
         this.onStart()
@@ -479,7 +718,7 @@ export default {
     },
     tick() { // скорость пока тут
       if (this.isRunning) {
-        if (this.activeMode === 'laser' && this.laserClientX && this.laserClientY) {
+        if (this.modeState.laser.activeLeft > 0 && this.laserClientX && this.laserClientY) {
           handleLaserMode(this, {
             clientX: this.laserClientX,
             clientY: this.laserClientY
@@ -540,6 +779,14 @@ export default {
       const rect = this.$refs.gameField ? this.$refs.gameField.getBoundingClientRect() : null
       const localX = rect ? x - rect.left : x
       const localY = rect ? y - rect.top : y
+
+      if (this.activeMode === 'bomb' && this.bombsCount > 0) {
+        this.bombsCount -= 1
+        this.bombMode(localX, localY)
+        this.activeMode = 'normal'
+        return
+      }
+
       const elements = document.elementsFromPoint(x, y)
 
       const ids = []
@@ -554,6 +801,8 @@ export default {
       const deltas = []
       let nextScore = this.score
       let nextBubbles = [...this.bubbles]
+      const prevBombStep = Math.floor(this.successfulHitsCount / 10)
+      let nextHitsCount = this.successfulHitsCount
 
       // для каждого найти пузырь считать клик, копим и делитим иначе выход
       ids.forEach((id, index) => {
@@ -561,6 +810,10 @@ export default {
         const bubble = nextBubbles.find((item) => item.id === numericId)
         if (!bubble) {
           return
+        }
+
+        if (bubble.color === this.targetColor) {
+          nextHitsCount += 1
         }
 
         const delta = this.comboMode(bubble, localX, localY, index)
@@ -585,6 +838,12 @@ export default {
 
       this.score = nextScore
       this.bubbles = nextBubbles
+      this.successfulHitsCount = nextHitsCount
+
+      const nextBombStep = Math.floor(this.successfulHitsCount / 10)
+      if (nextBombStep > prevBombStep) {
+        this.bombsCount += nextBombStep - prevBombStep
+      }
 
       const list = this.$store.getters['list/getList']
       const newList = [...list, ...deltas.map((d) => ({ t: d }))]
@@ -597,7 +856,8 @@ export default {
   mounted() { // см.стаковерфлоу
     this.rafId = requestAnimationFrame(() => this.tick())
     this.startGame()
-    this.activateAutoMode()
+    this.startModeTick()
+    window.addEventListener('keydown', this.onKeyDown)
   },
 
   beforeUnmount() { // стоп анимка -- стоп спавн
@@ -620,6 +880,13 @@ export default {
       clearInterval(this.autoShotTimerId)
       this.autoShotTimerId = null
     }
+
+    if (this.modeTickTimerId) {
+      clearInterval(this.modeTickTimerId)
+      this.modeTickTimerId = null
+    }
+
+    window.removeEventListener('keydown', this.onKeyDown)
   }
 }
 </script>
@@ -679,6 +946,47 @@ export default {
     }
   }
 
+  &__bomb {
+    position: absolute;
+    z-index: 9;
+    width: 44px;
+    height: 44px;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.55s ease,
+      height 0.55s ease;
+
+    &--grow {
+      width: 72px;
+      height: 72px;
+    }
+  }
+
+  &__bombImage {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &__bombExplosion {
+    position: absolute;
+    z-index: 31;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+
+  &__bombExplosionImage {
+    display: block;
+    width: 50%;
+    height: 50%;
+    object-fit: contain;
+  }
+
   &__comboText {
     position: absolute;
     z-index: 9;
@@ -689,6 +997,71 @@ export default {
     white-space: nowrap;
     text-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
     animation: c-game-combo-fade 0.9s ease forwards;
+  }
+
+  &__modes {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__modeBtn {
+    position: relative;
+    min-width: 148px;
+    padding: 10px 14px;
+    border: 1px solid #d9d9d9;
+    border-radius: 12px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    text-align: left;
+    overflow: hidden;
+
+    &--active {
+      border-color: #ffd24c;
+      background: rgba(255, 210, 76, 0.2);
+    }
+
+    &--disabled {
+      border-color: #ff6b6b;
+      cursor: not-allowed;
+      background: rgba(255, 60, 60, 0.22);
+      color: #ffd1d1;
+    }
+  }
+
+  &__modeBtnText {
+    display: inline-block;
+    padding-right: 28px;
+  }
+
+  &__modeBtnCount {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    font-weight: 700;
+  }
+
+  &__modeBtnTime {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 20, 20, 0.48);
+    color: #ffffff;
+    font-weight: 700;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+  }
+
+  &__modeBtn--disabled &__modeBtnTime {
+    background: rgba(120, 0, 0, 0.48);
   }
 
   &__topbar {
