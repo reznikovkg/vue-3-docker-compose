@@ -1,4 +1,4 @@
-import { BUBBLE_RULES } from '@/constants/gameConfig.js'
+import { BUBBLE_RULES, COMBO_RULES, GAME_MODE_RULES } from '@/constants/gameConfig.js'
 
 export function handleLaserMode(ctx, e) {
   if (!ctx || !e) {
@@ -62,18 +62,18 @@ export function startAutomatMode(ctx) {
 
         return mark
       })
-    }, 1600)
+    }, GAME_MODE_RULES.automat.markHideDelay)
 
     setTimeout(() => {
       ctx.marks = ctx.marks.filter((mark) => mark.id !== id)
-    }, 2000)
+    }, GAME_MODE_RULES.automat.markLife)
 
     // для клика перевод
     ctx.handleFieldClick({
       clientX: rect.left + x,
       clientY: rect.top + y
     })
-  }, 500)
+  }, GAME_MODE_RULES.automat.shotDelay)
 
   return ctx.autoShotTimerId
 }
@@ -104,31 +104,33 @@ export function applyCombo(ctx, bubble, x, y, index = 0) {
 
   const addComboText = (text) => {
     const id = Date.now() + Math.random()
+    const isHit = bubble.color === ctx.targetColor
     const item = {
       id,
-      x: x + 12,
-      y: y - 12 - index * 18,
-      text
+      x: x + COMBO_RULES.textOffsetX,
+      y: y - COMBO_RULES.textOffsetY - index * COMBO_RULES.textStepY,
+      text,
+      type: isHit ? 'hit' : 'miss'
     }
 
     ctx.comboTextItems = [...ctx.comboTextItems, item]
 
     setTimeout(() => {
       ctx.comboTextItems = ctx.comboTextItems.filter((comboItem) => comboItem.id !== id)
-    }, 900)
+    }, COMBO_RULES.textLife)
   }
 
   if (bubble.color === ctx.targetColor) {
     const delta = getSafeValue(ctx.scoreHit * ctx.hitComboMultiplier)
-    ctx.hitComboMultiplier = getSafeValue(Math.min(ctx.hitComboMultiplier * 1.2, 5))
-    addComboText('Комбо x' + ctx.hitComboMultiplier.toFixed(1))
+    ctx.hitComboMultiplier = getSafeValue(Math.min(ctx.hitComboMultiplier * COMBO_RULES.hitStep, COMBO_RULES.hitMax))
+    addComboText('Бонус x' + ctx.hitComboMultiplier.toFixed(1))
     return delta
   }
 
   const penalty = BUBBLE_RULES.miss[bubble.size] || ctx.scoreMiss
   const delta = getSafeValue(penalty * ctx.missComboMultiplier)
-  ctx.missComboMultiplier = getSafeValue(Math.min(ctx.missComboMultiplier * 1.3, 7))
-  addComboText('Комбо x' + ctx.missComboMultiplier.toFixed(1))
+  ctx.missComboMultiplier = getSafeValue(Math.min(ctx.missComboMultiplier * COMBO_RULES.missStep, COMBO_RULES.missMax))
+  addComboText('Штраф x' + ctx.missComboMultiplier.toFixed(1))
   return delta
 }
 
@@ -163,12 +165,12 @@ export function spawnBomb(ctx, x, y) {
 
       return item
     })
-  }, 80)
+  }, GAME_MODE_RULES.bomb.growDelay)
 
   setTimeout(() => {
     //id и размер взрыва
     const explosionId = Date.now() + Math.random()
-    const radius = 140
+    const radius = GAME_MODE_RULES.bomb.radius
     const explosion = {
       id: explosionId,
       x: bombX,
@@ -207,8 +209,8 @@ export function spawnBomb(ctx, x, y) {
 
     setTimeout(() => {
       ctx.bombExplosionItems = ctx.bombExplosionItems.filter((item) => item.id !== explosionId)
-    }, 450)
-  }, 1200)
+    }, GAME_MODE_RULES.bomb.explosionLife)
+  }, GAME_MODE_RULES.bomb.explodeDelay)
 
   return bomb
 }

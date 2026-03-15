@@ -125,7 +125,8 @@ export default {
 
   computed: {
     lastResultScore() {
-      return this.$store.getters.getLastResultScore
+      const score = this.$store.getters.getLastResultScore
+      return typeof score === 'number' ? Math.round(score) : score
     },
 
     availableColors() {

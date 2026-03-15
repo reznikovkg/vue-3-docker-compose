@@ -121,8 +121,9 @@ export default {
 
     onFinish(res) {
       const score = res && typeof res.score === 'number' ? res.score : 0
-      this.lastResultScore = score
-      this.setLastResult(score).then(() => {
+      const roundedScore = Math.round(score)
+      this.lastResultScore = roundedScore
+      this.setLastResult(roundedScore).then(() => {
         this.showMenu = true
       })
     }

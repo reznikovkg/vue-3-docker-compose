@@ -69,3 +69,35 @@ export const BUBBLE_DEFAULTS = {
   bubbleId: 0,
   sizeType: 'medium'
 }
+
+export const GAME_MODE_RULES = {
+  bomb: {
+    hitsStep: 10,
+    growDelay: 80,
+    explodeDelay: 1200,
+    radius: 140,
+    explosionLife: 450
+  },
+  laser: {
+    active: 8,
+    cooldown: 10
+  },
+  automat: {
+    active: 8,
+    cooldown: 10,
+    shotDelay: 500,
+    markHideDelay: 1600,
+    markLife: 2000
+  }
+}
+
+export const COMBO_RULES = {
+  hitStep: 1.2,
+  hitMax: 5,
+  missStep: 1.3,
+  missMax: 7,
+  textLife: 900,
+  textOffsetX: 12,
+  textOffsetY: 12,
+  textStepY: 18
+}

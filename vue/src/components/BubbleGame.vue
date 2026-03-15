@@ -25,7 +25,17 @@
 
           <div class="c-game__score">
             <span class="c-game__scoreText">Очки:</span>
-            <span class="c-game__scoreValue">{{ score }}</span>
+            <span class="c-game__scoreValue">{{ scoreRounded }}</span>
+          </div>
+
+          <div class="c-game__comboBox c-game__comboBox--hit">
+            <span class="c-game__comboBoxLabel">Коэф.Попаданий</span>
+            <span class="c-game__comboBoxValue">x{{ hitComboMultiplier.toFixed(1) }}</span>
+          </div>
+
+          <div class="c-game__comboBox c-game__comboBox--miss">
+            <span class="c-game__comboBoxLabel">Коэф.Промаха</span>
+            <span class="c-game__comboBoxValue">x{{ missComboMultiplier.toFixed(1) }}</span>
           </div>
         </div>
 
@@ -74,6 +84,7 @@
         v-for="item in comboTextItems"
         :key="item.id"
         class="c-game__comboText"
+        :class="'c-game__comboText--' + item.type"
         :style="{ left: item.x + 'px', top: item.y + 'px' }"
       >
         {{ item.text }}
@@ -155,7 +166,8 @@
 import {
   GAME_COLORS,
   GAME_DEFAULTS,
-  BUBBLE_RULES
+  BUBBLE_RULES,
+  GAME_MODE_RULES
 } from '@/constants/gameConfig.js'
 import {
   handleLaserMode,
@@ -266,6 +278,10 @@ export default {
       return explosionAsset
     },
 
+    scoreRounded() {
+      return Math.round(this.score)
+    },
+
     formattedTime() {
       const safeTime = this.timeLeft > 0 ? this.timeLeft : 0
       const mm = Math.floor(safeTime / 60)
@@ -292,18 +308,7 @@ export default {
     },
 
     getModeConfig(mode) {
-      const map = {
-        laser: {
-          active: 8,
-          cooldown: 10
-        },
-        automat: {
-          active: 8,
-          cooldown: 10
-        }
-      }
-
-      return map[mode] || null
+      return GAME_MODE_RULES[mode] || null
     },
 
     isModeCooldown(mode) {
@@ -801,7 +806,7 @@ export default {
       const deltas = []
       let nextScore = this.score
       let nextBubbles = [...this.bubbles]
-      const prevBombStep = Math.floor(this.successfulHitsCount / 10)
+      const prevBombStep = Math.floor(this.successfulHitsCount / GAME_MODE_RULES.bomb.hitsStep)
       let nextHitsCount = this.successfulHitsCount
 
       // для каждого найти пузырь считать клик, копим и делитим иначе выход
@@ -840,7 +845,7 @@ export default {
       this.bubbles = nextBubbles
       this.successfulHitsCount = nextHitsCount
 
-      const nextBombStep = Math.floor(this.successfulHitsCount / 10)
+      const nextBombStep = Math.floor(this.successfulHitsCount / GAME_MODE_RULES.bomb.hitsStep)
       if (nextBombStep > prevBombStep) {
         this.bombsCount += nextBombStep - prevBombStep
       }
@@ -992,11 +997,45 @@ export default {
     z-index: 9;
     pointer-events: none;
     transform: translate(-50%, -50%) rotate(-8deg);
-    color: #ffd24c;
     font-weight: 700;
     white-space: nowrap;
     text-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
     animation: c-game-combo-fade 0.9s ease forwards;
+
+    &--hit {
+      color: #7fe36a;
+    }
+
+    &--miss {
+      color: #ff6b6b;
+    }
+  }
+
+  &__comboBox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid #d9d9d9;
+
+    &--hit {
+      background: rgba(84, 180, 84, 0.24);
+    }
+
+    &--miss {
+      background: rgba(190, 70, 70, 0.24);
+    }
+  }
+
+  &__comboBoxLabel {
+    line-height: 1;
+  }
+
+  &__comboBoxValue {
+    line-height: 1;
+    font-weight: 700;
   }
 
   &__modes {
@@ -1072,14 +1111,15 @@ export default {
     z-index: 10;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: center;
   }
 
   &__targetWrap {
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    position: absolute;
+    left: 0;
   }
 
   &__target {
@@ -1146,6 +1186,8 @@ export default {
     cursor: pointer;
     user-select: none;
     background: rgba(0, 0, 0, 0.35);
+    position: absolute;
+    right: 0;
   }
 
   &__stopIcon {
