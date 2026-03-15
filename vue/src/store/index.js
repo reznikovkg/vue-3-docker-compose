@@ -29,7 +29,7 @@ export default createStore({
     getPointsForCorrect: (state) => state.settings.pointsForCorrect,
     getPointsForWrong:  (state) => state.settings.pointsForWrong,
 
-    getSpawnInterval: (state) => (1/state.settings.spawnRate).toFixed(1),
+    getSpawnInterval: (state) => (1/state.settings.spawnRate).toFixed(2),
     isTargetColor: (state) => (color) => color == state.settings.targetColor
   },
   mutations: {

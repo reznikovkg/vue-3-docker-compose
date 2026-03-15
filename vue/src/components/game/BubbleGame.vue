@@ -124,6 +124,27 @@ export default {
         yellow: 'Жёлтый'
       }
       return names[this.targetColor] || this.targetColor
+    },
+    bubbleSizes() {
+      return [
+        { name: 'small', radius: 25 },
+        { name: 'medium', radius: 40 },
+        { name: 'large', radius: 60 }
+      ]
+    },
+    sizePenalties() {
+      return {
+        small: Math.min(0, this.pointsForWrong + 2),
+        medium: this.pointsForWrong,
+        large: this.pointsForWrong - 2
+      }
+    },
+    escapePenalties() {
+      return {
+        small: -3,
+        medium: -6,
+        large: -10
+      }
     }
   },
   mounted() {
@@ -181,7 +202,14 @@ export default {
       
       clickedBubbles.forEach(bubble => {
         const isCorrect = bubble.color === this.targetColor
-        const points = isCorrect ? this.pointsForCorrect : this.pointsForWrong
+        let points
+
+        if (isCorrect) {
+          points = this.pointsForCorrect
+        } else {
+          points = this.sizePenalties[bubble.sizeName]
+        }
+
         totalPoints += points * (isCorrect ? this.multiplier : 1)
         
         if (isCorrect) {
@@ -271,12 +299,17 @@ export default {
       })
 
       if (escapedBubbles.length > 0) {
-        const penaltyPoints = escapedBubbles.length * 5
-        this.score =  this.score - penaltyPoints
+        let totalPenalty = 0
+
+        escapedBubbles.forEach(bubble => {
+          totalPenalty += this.escapePenalties[bubble.sizeName]
+        })
+
+        this.score =  this.score + totalPenalty
         this.multiplier = 1
         
         this.$emit('score', { 
-          points: -penaltyPoints, 
+          points: totalPenalty, 
           count: escapedBubbles.length,
           reason: 'escaped'
         })
@@ -322,13 +355,15 @@ export default {
         colors = colors.slice(0, -1)
         colors.push(this.targetColor)
       }
-      
+      const randomSize = this.bubbleSizes[Math.floor(Math.random() * this.bubbleSizes.length)]
+
       const newBubble = {
         id: Date.now() + Math.random(),
         color: colors[Math.floor(Math.random() * colors.length)],
         x: randomX,
         y: -150,
-        radius: 40,
+        radius: randomSize.radius,
+        sizeName: randomSize.name,
         speedX: (Math.random() - 0.5) * 2,
         speedY: 1 + Math.random() * 2,
         wobble: Math.random() * Math.PI * 2,

@@ -152,7 +152,7 @@ export default {
       ]
     },
     getLocalSpawnInterval(): string {
-      return (1 / this.localSettings.spawnRate).toFixed(1)
+      return (1 / this.localSettings.spawnRate).toFixed(2)
     },
     hasChanges(): boolean {
       const saved = this.getSettings
