@@ -4,6 +4,9 @@
     <div class="game__hud">
       <div class="game__time">Время: {{ trueTime }}</div>
       <div class="game__killed">Убито: {{ enemiesKilled }}</div>
+      <div class="game__coins">Монеты: {{ coins }}</div>
+      <button class="game__pause-button" @click="() => doPause()">
+        {{ isPaused ? 'Продолжить' : 'Пауза' }}</button>
     </div>
 
     <div class="game__world">
@@ -25,10 +28,20 @@
         }"
       ></div>
 
+      <div v-for="(bullet,index) in enemyBullets"
+      :key="'eb-'+ index"
+      class="game__enemy-bullet"
+      :style="{
+        left: bullet.x + 'px',
+        top: bullet.y + 'px'
+      }"
+      ></div>
+
       <div
         v-for="(enemy, index) in enemies"
         :key="index"
         class="game__enemy"
+        :class="{'game__enemy--shoter': enemy.type === 'shooter'}"
         :style="{
           left: enemy.x + 'px',
           top: enemy.y + 'px'
@@ -42,6 +55,42 @@
       <p class="game__game-over-killed">Убито врагов: {{ enemiesKilled }}</p>
       <button class="game__game-over-button" @click="() => restartGame()">Играть снова</button>
     </div>
+
+    <div v-if="isPaused && gameActive" class="game__pause">
+      <h2 class="game__pause-title">Прокачка</h2>
+      <div class="game__stats">
+        <div>Здоровье: {{ playerStats.health }}/{{ playerStats.maxHealth }}</div>
+        <div>Мана: {{ playerStats.mana }}/{{ playerStats.maxMana }}</div>
+        <div>Урон: {{ playerStats.damage }}</div>
+        <div>Монеты: {{ coins }}</div>
+      </div>
+      <div class="game__shop">
+        <div class="game__shop-item">
+          <button @click="() => buyHealthPotion()" :disabled="coins<10">Купить хил</button>
+        </div>
+        <div class="game__shop-item">
+          <button @click="() => buyManaPotion()" :disabled="coins<10">Купить хил маны</button>
+        </div>
+        <div class="game__shop-item">
+          <button @click="() => upgradeDamage()" :disabled="coins<10">+1 к урону</button>
+        </div>
+        <div class="game__shop-item">
+          <button @click="() => upgradeMaxHealth()" :disabled="coins<10">+20 к максимальному здоровью</button>
+        </div>
+        <div class="game__shop-item">
+          <button @click="() => upgradeMaxMana()" :disabled="coins<10">+20 к максимальноq мане</button>
+        </div>
+        <div class="game__shop-item">
+          <button @click="() => useHealthPotion()" :disabled="playerStats.healthPotionCount === 0 ||
+          playerStats.health >= playerStats.maxHealth">хил (+30)</button>
+        </div>
+        <div class="game__shop-item">
+          <button @click="() => useManaPotion()" :disabled="playerStats.manaPotionCount === 0 ||
+          playerStats.mana >= playerStats.maxMana">хил маны (+20)</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -58,6 +107,9 @@ export default {
       lastEnemyAppear: 0,
       shotCD: 500,
       enemySpawnCD: 1000,
+      enemyShotCD: 2000,
+      damageCD: 500,
+      lastDamage: 0,
       gameTime: 0,
       lastTimeUpd: 0,
       enemiesKilled: 0,
@@ -83,7 +135,11 @@ export default {
       'getPlayer',
       'getMousePosition',
       'getEnemies',
-      'getBullets'
+      'getEnemyBullets',
+      'getBullets',
+      'getPauseState',
+      'getCoins',
+      'getStats'
     ]),
     player() { 
       return this.getPlayer 
@@ -102,6 +158,18 @@ export default {
       const minutes = Math.floor(totalSeconds / 60)
       const seconds = totalSeconds % 60
       return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    },
+    isPaused(){
+      return this.getPauseState
+    },
+    coins(){
+      return this.getCoins
+    },
+    playerStats() {
+    return this.getStats
+    },
+    enemyBullets(){
+      return this.getEnemyBullets
     }
   },
   mounted() {
@@ -123,7 +191,12 @@ export default {
       'addEnemy',
       'updateEnemies',
       'addBullet',
-      'updateBullets'
+      'updateBullets', 
+      'setPause',
+      'updateStats',
+      'addCoins',
+      'addEnemyBullets',
+      'updateEnemyBullets'
     ]),
 
     comMouseMove(e) {
@@ -183,6 +256,7 @@ export default {
       this.setPlayerPosition({ x: cX, y: cY })
       this.updateEnemies([])
       this.updateBullets([])
+      this.updateEnemyBullets([])
       
       cancelAnimationFrame(this.animationFrame)
       this.loop = (timestamp) => {
@@ -198,9 +272,12 @@ export default {
     },
 
     gameLoop(currentTime) {
-      this.updateGameTime(currentTime)
-      this.updatePlayerPosition()
-      this.updateGame(currentTime)
+      if(!this.isPaused){
+        this.updateGameTime(currentTime)
+        this.updatePlayerPosition()
+        this.updateGame(currentTime)
+      }
+
     },
 
     updateGameTime(currentTime) {
@@ -249,7 +326,8 @@ export default {
 
     updateGame(currentTime) {
       this.updateBulletsPosition()
-      this.updateEnemiesPosition()
+      this.updateEnemyBulletsPosition()
+      this.updateEnemiesPosition(currentTime)
       this.checkCollisions()
       this.spawnEnemyIfNeeded(currentTime)
       this.shoot(currentTime)
@@ -270,7 +348,21 @@ export default {
       this.updateBullets(updatedBullets)
     },
 
-    updateEnemiesPosition() {
+    updateEnemyBulletsPosition(){
+      const updated = this.enemyBullets.map((bullet)=>({
+        ...bullet,
+        x: bullet.x + bullet.direction.x * 5,
+        y: bullet.y + bullet.direction.y * 5,
+        lifeTime: bullet.lifeTime - 16
+      })).filter((bullet) =>
+      bullet.lifeTime > 0 &&
+      bullet.x >=0 && bullet.x <= this.worldSize.width &&
+      bullet.y >= 0 && bullet.y <= this.worldSize.height)
+      this.updateEnemyBullets(updated)
+    },
+
+    updateEnemiesPosition(currentTime) {
+      const newEnemyBullets = []
       const updatedEnemies = this.enemies.map((enemy) => {
         const direction = this.calculateDirection(
           enemy.x,
@@ -278,6 +370,28 @@ export default {
           this.player.x + 20,
           this.player.y + 20
         )
+        if(enemy.type === 'shooter'){
+          const lastShot = enemy.lastShot || 0
+          if(currentTime-lastShot>this.enemyShotCD){
+            newEnemyBullets.push({
+              x: enemy.x,
+              y: enemy.y,
+              direction,
+              lifeTime: 2500
+            })
+            return {
+              ...enemy,
+              x: enemy.x + direction.x * 2,
+              y: enemy.y + direction.y * 2,
+              lastShot: currentTime
+            }
+          }
+          return {
+              ...enemy,
+              x: enemy.x + direction.x * 2,
+              y: enemy.y + direction.y * 2,
+            }
+        }
         return {
           ...enemy,
           x: enemy.x + direction.x * 2,
@@ -286,6 +400,7 @@ export default {
       })
       
       this.updateEnemies(updatedEnemies)
+      newEnemyBullets.forEach(b => this.addEnemyBullets(b))
     },
 
     calculateDirection(fromX, fromY, toX, toY) {
@@ -296,7 +411,10 @@ export default {
     },
 
     checkCollisions() {
-      if (this.checkPlayerCollision()) {
+      this.checkPlayerCollision()
+      this.checkEnemyBulletsCollision()
+
+      if (this.playerStats.health <= 0) {
         this.gameActive = false
         return
       }
@@ -309,13 +427,31 @@ export default {
       }
     },
 
+    checkEnemyBulletsCollision() {
+      const px = this.player.x
+      const py = this.player.y
+      const survived = this.enemyBullets.filter((bullet) => {
+        if (this.checkRectCollision(px, py, 40, 40, bullet.x - 4, bullet.y - 4, 8, 8)) {
+          this.updateStats({ health: this.playerStats.health - 8 })
+          return false
+        }
+        return true
+      })
+      if (survived.length !== this.enemyBullets.length) {
+        this.updateEnemyBullets(survived)
+      }
+    },
+
     checkPlayerCollision() {
       for (const enemy of this.enemies) {
-        if (this.checkRectCollision(this.player.x, this.player.y, 40, 40, enemy.x - 15, enemy.y - 15, 30, 30)) {
-          return true
+        if (this.checkRectCollision(this.player.x, this.player.y, 40, 40, enemy.x - 15, enemy.y - 15, 30, 30)
+      && performance.now() - this.lastDamage > this.damageCD) {
+          this.updateStats({health: this.playerStats.health - 10})
+          this.lastDamage = performance.now()
+          return
         }
       }
-      return false
+      //return false
     },
 
     checkBulletCollisions() {
@@ -328,10 +464,13 @@ export default {
         for (let j = bullets.length - 1; j >= 0; j--) {
           if (this.checkRectCollision(enemies[i].x - 15, enemies[i].y - 15, 30, 30,
           bullets[j].x - 4, bullets[j].y - 4, 8, 8)) {
-            enemies.splice(i, 1)
+            enemies[i].health = (enemies[i].health || 3) - this.playerStats.damage
+            if(enemies[i].health<=0){
+              enemies.splice(i, 1)
+              killed++
+            }
             bullets.splice(j, 1)
             hasChanges = true
-            killed++
             break
           }
         }
@@ -339,6 +478,7 @@ export default {
       
       if (killed > 0) {
         this.enemiesKilled += killed
+        this.$store.dispatch('game/addCoins', killed*5)
       }
       return { enemies, bullets, hasChanges }
     },
@@ -350,7 +490,8 @@ export default {
     spawnEnemyIfNeeded(currentTime) {
       if (currentTime - this.lastEnemyAppear > this.enemySpawnCD) {
         const position = this.generateEnemyPosition()
-        this.addEnemy({ x: position.x, y: position.y })
+        const type = Math.random() < 0.30 ? 'shooter' : 'melee'
+        this.addEnemy({ x: position.x, y: position.y, health: 3, type, lastShot: 0 })
         this.lastEnemyAppear = currentTime
       }
     },
@@ -397,7 +538,64 @@ export default {
         })
         this.lastShotTime = curTime
       }
-    }
+    },
+
+    doPause(){
+      this.setPause(!this.isPaused)
+    },
+
+    buyHealthPotion() {
+      if (this.coins >= 10) {
+        this.addCoins(-10)
+        this.updateStats({healthPotionCount: this.playerStats.healthPotionCount + 1})
+      }
+    },
+
+    buyManaPotion() {
+      if (this.coins >= 10) {
+        this.addCoins(-10)
+        this.updateStats( {manaPotionCount: this.playerStats.manaPotionCount + 1})
+      }
+    },
+  
+    upgradeDamage() {
+      if (this.coins >= 20) {
+        this.addCoins(-20)
+        this.updateStats( {damage: this.playerStats.damage + 1})
+      }
+    },
+  
+    upgradeMaxHealth() {
+      if (this.coins >= 30) {
+        this.addCoins(-30)
+        this.updateStats( {maxHealth: this.playerStats.maxHealth + 20,
+          health: this.playerStats.health + 20})
+      }
+    },
+  
+    upgradeMaxMana() {
+      if (this.coins >= 30) {
+        this.addCoins(-30)
+        this.updateStats({maxMana: this.playerStats.maxMana + 20,
+          mana: this.playerStats.mana + 20})
+      }
+    },
+  
+    useHealthPotion() {
+      if (this.playerStats.healthPotionCount > 0 && this.playerStats.health < this.playerStats.maxHealth) {
+        const newHealth = Math.min(this.playerStats.health + 30, this.playerStats.maxHealth)
+        this.updateStats( {health: newHealth,
+          healthPotionCount: this.playerStats.healthPotionCount - 1})
+      }
+    },
+  
+    useManaPotion() {
+      if (this.playerStats.manaPotionCount > 0 && this.playerStats.mana < this.playerStats.maxMana) {
+        const newMana = Math.min(this.playerStats.mana + 20, this.playerStats.maxMana)
+        this.updateStats( {mana: newMana,
+          manaPotionCount: this.playerStats.manaPotionCount - 1})
+      }
+    },
   }
 }
 </script>
@@ -454,6 +652,19 @@ export default {
     will-change: left, top;
   }
 
+  &__enemy--shooter {
+    background: purple;
+  }
+
+  &__enemy-bullet {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: orange;
+    transform: translate(-50%, -50%);
+    will-change: left, top;
+  }
+
   &__game-over {
     position: absolute;
     top: 50%;
@@ -488,6 +699,91 @@ export default {
     &:hover {
       background-color: #2980b9;
     }
+  }
+
+  &__pause-button {
+    margin-left: 20px;
+    padding: 5px 15px;
+    background: #f1c40f;
+    color: #2c3e50;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+
+    &:hover {
+      background: #f39c12;
+    }
+  }
+
+  &__pause {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #34495e;
+    padding: 30px;
+    color: #ecf0f1;
+    z-index: 30;
+    min-width: 400px;
+  }
+
+  &__pause-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  &__stats {
+    background: #2c3e50;
+    padding: 15px;
+    margin-bottom: 20px;
+    
+    div {
+      margin: 5px 0;
+    }
+  }
+
+  &__shop {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #2c3e50;
+
+    button {
+      padding: 5px 15px;
+      background: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        background: #2980b9;
+      }
+
+      &:disabled {
+        background: #7f8c8d;
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+    }
+
+    span {
+      margin-left: 10px;
+    }
+  }
+
+  &__coins {
+    margin-left: 20px;
+    color: #f1c40f;
+    font-weight: bold;
   }
 }
 </style>

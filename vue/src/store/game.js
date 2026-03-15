@@ -7,7 +7,12 @@ export const MUTATIONS = {
   ADD_BULLET: 'ADD_BULLET',
   REMOVE_BULLET: 'REMOVE_BULLET',
   UPDATE_BULLETS: 'UPDATE_BULLETS',
-  SET_GRID_SIZE: 'SET_GRID_SIZE'
+  SET_GRID_SIZE: 'SET_GRID_SIZE',
+  SET_PAUSE: 'SET_PAUSE',
+  UPDATE_STATS: 'UPDATE_STATS',
+  ADD_COINS: 'ADD_COINS',
+  ADD_ENEMY_BULLET: 'ADD_ENEMY_BULLET',
+  UPDATE_ENEMY_BULLETS: 'UPDATE_ENEMY_BULLETS',
 }
 
 export default {
@@ -22,20 +27,36 @@ export default {
     mouseY: 0,
     enemies: [],
     bullets: [],
+    enemyBullets: [],
     gridRows: 20,
     gridCols: 20,
-    cellSize: 40
+    cellSize: 40,
+    isPause: false,
+    coins: 0,
+    playerStats: {
+      health: 100,
+      maxHealth: 100,
+      mana: 50,
+      maxMana: 50,
+      damage: 1,
+      healthPotionCount: 0,
+      manaPotionCount: 0
+    }
   },
   getters: {
     getPlayer: (state) => state.player,
     getMousePosition: (state) => ({ x: state.mouseX, y: state.mouseY }),
     getEnemies: (state) => state.enemies,
     getBullets: (state) => state.bullets,
+    getEnemyBullets: (state) => state.enemyBullets,
     getGridSize: (state) => ({
       rows: state.gridRows,
       cols: state.gridCols,
       cellSize: state.cellSize
-    })
+    }),
+    getPauseState: (state) => state.isPause,
+    getCoins: (state) => state.coins,
+    getStats: (state) => state.playerStats
   },
   mutations: {
     [MUTATIONS.SET_PLAYER_POSITION](state, { x, y }) {
@@ -63,6 +84,21 @@ export default {
     },
     [MUTATIONS.UPDATE_BULLETS](state, bullets) {
       state.bullets = bullets
+    },
+    [MUTATIONS.ADD_ENEMY_BULLET](state, bullet) {
+      state.enemyBullets.push(bullet)
+    },
+    [MUTATIONS.UPDATE_ENEMY_BULLETS](state, bullets) {
+      state.enemyBullets = bullets
+    },
+    [MUTATIONS.SET_PAUSE](state, isPaused) {
+      state.isPause = isPaused
+    },
+    [MUTATIONS.UPDATE_STATS](state, stats) {
+      state.playerStats = { ...state.playerStats, ...stats }
+    },
+    [MUTATIONS.ADD_COINS](state, amount) {
+      state.coins += amount
     }
   },
   actions: {
@@ -113,6 +149,34 @@ export default {
         commit(MUTATIONS.REMOVE_BULLET, index)
         resolve()
       })
-    }
+    },
+    addEnemyBullets({ commit }, bullet){
+      return new Promise((resolve) => {
+          commit(MUTATIONS.ADD_ENEMY_BULLET, bullet)
+          resolve()
+      })
+
+    },
+    updateEnemyBullets({ commit }, bullets) {
+      return new Promise((resolve) => {
+        commit(MUTATIONS.UPDATE_ENEMY_BULLETS, bullets)
+        resolve()
+      })
+    },
+    setPause({ commit }, isPaused) {
+      return new Promise((resolve) => {
+        commit(MUTATIONS.SET_PAUSE, isPaused)
+        resolve()})
+    },
+    updateStats({ commit }, stats) {
+      return new Promise((resolve) => {
+        commit(MUTATIONS.UPDATE_STATS, stats)
+        resolve()})
+    },
+    addCoins({ commit }, amount) {
+      return new Promise((resolve) => {
+        commit(MUTATIONS.ADD_COINS, amount)
+        resolve()})
+    },
   }
 }
