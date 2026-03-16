@@ -46,7 +46,6 @@ onMounted(() => {
 })
 
 const handleFlaskClick = (index) => {
-  console.log('Клик по колбе с индексом:', index)
   if (selectedFlaskIndex.value === null) {
     selectedFlaskIndex.value = index
     return
@@ -59,15 +58,12 @@ const handleFlaskClick = (index) => {
   selectedFlaskIndex.value = null
 }
 
-const getAvailableSpace = (flask) => {
-  if (flask.layers.length === 0) return 100;
-  const usedSpace = flask.layers.reduce((sum, layer) => sum + layer.percent, 0)
-  return 100 - usedSpace
-}
+const getAvailableSpace = (flask) =>
+  flask.layers.length === 0 
+    ? 100 
+    : 100 - flask.layers.reduce((sum, layer) => sum + layer.percent, 0)
 
 const pour = (fromIndex, toIndex) => {
-  console.log('Переливаем из', fromIndex, 'в', toIndex)
-
   const fromFlask = flasks.value[fromIndex]
   const toFlask = flasks.value[toIndex]
 
@@ -77,20 +73,17 @@ const pour = (fromIndex, toIndex) => {
 
   const availableSpace = getAvailableSpace(toFlask)
   if (availableSpace === 0) {
-    console.log('Целевая колба переполнена, нельзя перелить')
     return
   }
       
   if (availableSpace < 100) {
     const toTopLayer = toFlask.layers[toFlask.layers.length - 1]
     if (toTopLayer.color !== topLayer.color) {
-      console.log('Цвета не совпадают, нельзя перелить')
       return
     }
   }
 
   const pourAmount = Math.min(topLayer.percent, availableSpace)
-  console.log('Переливаем ', pourAmount, ' цвета ', topLayer.color)
 
   if (topLayer.percent === pourAmount) {
     fromFlask.layers.pop()
@@ -110,7 +103,6 @@ const pour = (fromIndex, toIndex) => {
 
   if (checkWin()) {
     showWinMessage.value = true
-    console.log('Победа')
     setTimeout(() => {
       showWinMessage.value = false
       newGame()
@@ -119,100 +111,91 @@ const pour = (fromIndex, toIndex) => {
   }
 }
 
-const generateRandomFlasks = () => {
-  const newFlasks = []
-  let percent = 100 / LAYERS_PER_FLASK.value
+const fillRandomFlask = (flask, percent, mapColors, mapCounts) => {
+  const layers = []
+  let fullness = 0
+  while (fullness < LAYERS_PER_FLASK.value) {
+    let colorIndex = Math.floor(Math.random() * mapColors.length)
+    let rndParts = mapCounts[colorIndex] != 1 ?
+      Math.min(
+        Math.floor(Math.random() * (mapCounts[colorIndex] - 1) + 1),
+        LAYERS_PER_FLASK.value - fullness
+      ) : 1
 
-  let fullFlasks = 0
-  if (FLASK_COUNT.value <= 5) {
-    fullFlasks = FLASK_COUNT.value - 1
-  } else if (FLASK_COUNT.value <= 11) {
-    fullFlasks = FLASK_COUNT.value - 2
-  } else {
-    fullFlasks = FLASK_COUNT.value - 3
+    if (layers.length > 0 && layers[layers.length - 1].color === mapColors[colorIndex]) {
+      layers[layers.length - 1].percent += percent * rndParts
+    } else {
+      layers.push({
+        color: mapColors[colorIndex],
+        percent: percent * rndParts
+      })
+    }
+    fullness += rndParts
+    mapCounts[colorIndex] -= rndParts
+    if (mapCounts[colorIndex] === 0) {
+      mapColors.splice(colorIndex, 1)
+      mapCounts.splice(colorIndex, 1)
+    }
   }
+  flask.layers = layers
+}
 
-  const mapColors = []
-  for (let i = 0; i < fullFlasks; i++) {
-    mapColors.push(COLORS[Math.floor(Math.random() * COLORS.length)])
-  }
-  console.log(mapColors)
-  const mapCounts = []
-  for (let i = 0; i < fullFlasks; i++) {
-    mapCounts.push(LAYERS_PER_FLASK.value)
-  }
-  console.log(mapCounts)
-
-  for (let i = 0; i < fullFlasks - 1; i++) {
-    const layers = []
-    let fullness = 0
-    console.log('Генерация слоев для колбы ', i)
-    do {
-      let colorIndex = Math.floor(Math.random() * mapColors.length)
-      console.log('Выбираем цвет: ', colorIndex)
-      let rndParts = 1
-      if (mapCounts[colorIndex] != 1) {
-        rndParts = Math.min(Math.floor(Math.random() * (mapCounts[colorIndex] - 1) + 1), LAYERS_PER_FLASK.value - fullness)
-      }
-      console.log('Берем ', rndParts, ' частей этого цвета')
-      console.log('Получаем ', percent * rndParts, ' процент цвета в колбе')
-      if (layers.length > 0 && layers[layers.length - 1].color === mapColors[colorIndex]) {
-        layers[layers.length - 1].percent += percent * rndParts
-      } else {
-        layers.push({
-          color: mapColors[colorIndex],
-          percent: percent * rndParts
-        })
-      }
-      fullness += rndParts
-      mapCounts[colorIndex] -= rndParts
-      console.log('Остается ', mapCounts[colorIndex], ' этого цвета')
-      if (mapCounts[colorIndex] === 0) {
-        mapColors.splice(colorIndex, 1)
-        mapCounts.splice(colorIndex, 1)
-      }
-    } while (fullness < LAYERS_PER_FLASK.value)
-    newFlasks.push( {layers} )
-  }
-  console.log('Генерация последней колбы')
-  const lastLayers = []
-  console.log('Помещаем, что осталось: ', mapColors, mapCounts)
+const lastFluskLayers = (percent, mapColors, mapCounts) => {
+  const layers = []
   for (let i = 0; i < mapColors.length; i++) {
-    lastLayers.push({
+    layers.push({
       color: mapColors[i],
       percent: percent * mapCounts[i]
     })
   }
-  for (let i = 1; i < lastLayers.length; i++) {
-    if (lastLayers[i].color === lastLayers[i - 1].color) {
-      console.log('Несколько слоев одного цвета подряд')
-      lastLayers[i - 1].percent += lastLayers[i].percent
-      lastLayers.splice(i, 1)
+
+  let i = 1
+  while (i < layers.length) {
+    if (layers[i].color === layers[i - 1].color) {
+      layers[i - 1].percent += layers[i].percent
+      layers.splice(i, 1)
+    } else {
+      i += 1
     }
   }
-  console.log(lastLayers)
-  newFlasks.push( {layers: lastLayers} )
+  return layers
+}
 
-  for (let i = 0; i < FLASK_COUNT.value - fullFlasks; i++) {
-    newFlasks.push( {layers: []} )
-  }
+const generateRandomFlasks = () => {
+  let percent = 100 / LAYERS_PER_FLASK.value
+
+  let fullFlasks = FLASK_COUNT.value <= 5 ? FLASK_COUNT.value - 1 :
+    (FLASK_COUNT.value <= 11 ? FLASK_COUNT.value - 2 : FLASK_COUNT.value - 3)
+
+  const mapColors = Array(fullFlasks).fill().map(() =>
+    COLORS[Math.floor(Math.random() * COLORS.length)]
+  )
+  const mapCounts = Array(fullFlasks).fill().map(() => LAYERS_PER_FLASK.value)
+
+  const newFlasks = Array(fullFlasks - 1).fill().map(() => {
+    const flask = { layers: [] }
+    fillRandomFlask(flask, percent, mapColors, mapCounts)
+    return flask
+  })
+  
+  newFlasks.push( {layers: lastFluskLayers(percent, mapColors, mapCounts)} )
+
+  newFlasks.push(
+    ...Array(FLASK_COUNT.value - fullFlasks).fill().map(() => ({layers: []}))
+  )
 
   return newFlasks
 }
 
-const checkWin = () => {
-  for (let flask of flasks.value) {
-    if (flask.layers.length === 0) continue
-    if (flask.layers.length > 1) return false
-    if (flask.layers[0].percent !== 100) return false
-  }
-  return true
-}
+const checkWin = () => 
+  flasks.value.every(flask =>
+    flask.layers.length === 0 ||
+    flask.layers.length === 1 && flask.layers[0].percent === 100
+  )
 
 const newGame = () => {
   selectedFlaskIndex.value = null
   flasks.value = generateRandomFlasks()
-  console.log('Новая игра', flasks)
 }
 
 const resetGame = () => {
