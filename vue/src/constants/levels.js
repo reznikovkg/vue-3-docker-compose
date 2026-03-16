@@ -1,7 +1,55 @@
 const ENEMY_TYPES = {
-  light: { health: 60, reward: 50, speed: 0.11, color: '#4CAF50' },
-  medium: { health: 120, reward: 80, speed: 0.09, color: '#FF9800' },
-  heavy: { health: 180, reward: 150, speed: 0.07, color: '#f44336' }
+  light: {
+    health: 60,
+    reward: 50,
+    speed: 0.11,
+    color: '#4CAF50',
+    type: 'melee'
+  },
+  medium: {
+    health: 120,
+    reward: 80,
+    speed: 0.09,
+    color: '#FF9800',
+    type: 'melee'
+  },
+  heavy: {
+    health: 180,
+    reward: 150,
+    speed: 0.07,
+    color: '#f44336',
+    type: 'melee'
+  },
+  shooter_light: {
+    health: 80,
+    reward: 100,
+    speed: 0.06,
+    color: '#9C27B0',
+    type: 'shooter',
+    shootDamage: 15,
+    shootRange: 90,
+    shootCooldown: 1000
+  },
+  shooter_medium: {
+    health: 150,
+    reward: 200,
+    speed: 0.05,
+    color: '#673AB7',
+    type: 'shooter',
+    shootDamage: 25,
+    shootRange: 100,
+    shootCooldown: 800
+  },
+  shooter_heavy: {
+    health: 250,
+    reward: 350,
+    speed: 0.04,
+    color: '#3F51B5',
+    type: 'shooter',
+    shootDamage: 40,
+    shootRange: 110,
+    shootCooldown: 1200
+  }
 }
 
 export const LEVELS_DATA = [
@@ -27,9 +75,9 @@ export const LEVELS_DATA = [
       { id: 'pos6', x: 650, y: 450 }
     ],
     enemyTypes: [
-      { type: 'light', chance: 0.5, ...ENEMY_TYPES.light },
-      { type: 'medium', chance: 0.5, ...ENEMY_TYPES.medium },
-      { type: 'heavy', chance: 0, ...ENEMY_TYPES.heavy }
+      { type: 'light', chance: 0.4, ...ENEMY_TYPES.light },
+      { type: 'medium', chance: 0.4, ...ENEMY_TYPES.medium },
+      { type: 'shooter_light', chance: 0.2, ...ENEMY_TYPES.shooter_light }
     ]
   },
   {
@@ -53,9 +101,10 @@ export const LEVELS_DATA = [
       { id: 'pos5', x: 720, y: 150 }
     ],
     enemyTypes: [
-      { type: 'light', chance: 0.4, ...ENEMY_TYPES.light },
-      { type: 'medium', chance: 0.4, ...ENEMY_TYPES.medium },
-      { type: 'heavy', chance: 0.2, ...ENEMY_TYPES.heavy }
+      { type: 'light', chance: 0.3, ...ENEMY_TYPES.light },
+      { type: 'medium', chance: 0.3, ...ENEMY_TYPES.medium },
+      { type: 'shooter_light', chance: 0.2, ...ENEMY_TYPES.shooter_light },
+      { type: 'shooter_medium', chance: 0.2, ...ENEMY_TYPES.shooter_medium }
     ]
   },
   {
@@ -82,9 +131,12 @@ export const LEVELS_DATA = [
       { id: 'pos7', x: 760, y: 300 }
     ],
     enemyTypes: [
-      { type: 'light', chance: 0.3, ...ENEMY_TYPES.light },
-      { type: 'medium', chance: 0.4, ...ENEMY_TYPES.medium },
-      { type: 'heavy', chance: 0.3, ...ENEMY_TYPES.heavy }
+      { type: 'light', chance: 0.4, ...ENEMY_TYPES.light },
+      { type: 'medium', chance: 0.1, ...ENEMY_TYPES.medium },
+      { type: 'heavy', chance: 0.2, ...ENEMY_TYPES.heavy },
+      { type: 'shooter_light', chance: 0.1, ...ENEMY_TYPES.shooter_light },
+      { type: 'shooter_medium', chance: 0.1, ...ENEMY_TYPES.shooter_medium },
+      { type: 'shooter_heavy', chance: 0.1, ...ENEMY_TYPES.shooter_heavy }
     ]
   }
 ]

@@ -34,7 +34,7 @@
         <button
           v-if="currentLevelId < levels.length"
           class="game__next-level-button"
-          @click="() => goToNextLevel()"
+          @click="() => nextLevel()"
         >
           Следующий уровень
         </button>
@@ -62,6 +62,33 @@
         <div class="game__kills">
           Убито: {{ totalKills }} / {{ maxEnemies }}
         </div>
+        <div class="game__build-controls">
+          <button
+            class="game__build-button"
+            :class="{
+              'game__build-button--active': placeMode === 'barricade'
+            }"
+            @click="() => SET_PLACE_MODE('barricade')"
+          >
+            Заграждение ({{ BARRICADE_COST }})
+          </button>
+          <button
+            class="game__build-button"
+            :class="{
+              'game__build-button--active': placeMode === 'artillery'
+            }"
+            @click="() => SET_PLACE_MODE('artillery')"
+          >
+            Артиллерия ({{ ARTILLERY_COST }})
+          </button>
+          <button
+            class="game__spawn-ally"
+            :disabled="points < ALLY_COST"
+            @click="() => spawnAlly()"
+          >
+            Союзник ({{ ALLY_COST }})
+          </button>
+        </div>
       </div>
     </div>
 
@@ -70,7 +97,6 @@
         ref="gameArea"
         class="game__area"
         @click="(e) => handleClick(e)"
-        @contextmenu.prevent="(e) => handleRightClick(e)"
       >
         <Path
           class="game__path"
@@ -86,17 +112,42 @@
           :radius="getTowerAtPosition(position.id)?.radius || 80"
           :selected="selectedTowerId === position.id"
           :has-tower="!!getTowerAtPosition(position.id)"
+          :health="getTowerAtPosition(position.id)?.health || 100"
+          :max-health="getTowerAtPosition(position.id)?.maxHealth || 100"
+          :is-hit="getTowerAtPosition(position.id)?.isHit || false"
           class="game__tower"
           @click="() => selectTowerPosition(position.id)"
         />
 
+        <Barricade
+          v-for="barricade in barricades"
+          :key="barricade.id"
+          :x="barricade.x"
+          :y="barricade.y"
+          :health="barricade.health"
+          :max-health="barricade.maxHealth"
+          class="game__barricade"
+        />
+
+        <ArtilleryStrike
+          v-for="strike in artilleryStrikes"
+          :key="strike.id"
+          :x="strike.x"
+          :y="strike.y"
+          :max-radius="strike.maxRadius"
+          :elapsed="strike.elapsed"
+          :duration="strike.duration"
+          class="game__artillery"
+        />
+
         <Shot
-          v-for="shot in shots"
+          v-for="shot in allShots"
           :key="shot.id"
           :x1="shot.x1"
           :y1="shot.y1"
           :length="shot.length"
           :angle="shot.angle"
+          :variant="shot.type"
           class="game__shot"
         />
 
@@ -110,6 +161,32 @@
           :color="enemy.color"
           class="game__enemy"
         />
+
+        <ShooterEnemy
+          v-for="enemy in shooterEnemies"
+          :key="enemy.id"
+          :x="enemy.x"
+          :y="enemy.y"
+          :health="enemy.health"
+          :max-health="enemy.maxHealth"
+          :color="enemy.color"
+          :shoot-range="enemy.shootRange || 90"
+          :is-shooting="enemy.isShooting"
+          class="game__shooter-enemy"
+        />
+
+        <Ally
+          v-for="ally in allies"
+          :key="ally.id"
+          :x="ally.x"
+          :y="ally.y"
+          :health="ally.health"
+          :max-health="ally.maxHealth"
+          :color="ally.color"
+          :attack-range="ally.attackRange || 80"
+          :is-attacking="ally.isAttacking"
+          class="game__ally"
+        />
       </div>
 
       <InfoPanel
@@ -121,22 +198,29 @@
         @upgrade-tower="() => upgradeTower()"
       />
     </div>
+
+    <div
+      v-if="showInsufficientFunds"
+      class="game__notification game__notification--error"
+    >
+      Недостаточно очков!
+    </div>
   </div>
 </template>
 
 <script>
+import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
 import LevelButtons from '@/components/ui/LevelButtons.vue'
 import InfoPanel from '@/components/ui/InfoPanel.vue'
 import Path from '@/components/game/Path.vue'
 import Tower from '@/components/game/Tower.vue'
 import Enemy from '@/components/game/Enemy.vue'
+import ShooterEnemy from '@/components/game/ShooterEnemy.vue'
+import Ally from '@/components/game/Ally.vue'
+import Barricade from '@/components/game/Barricade.vue'
+import ArtilleryStrike from '@/components/game/ArtilleryStrike.vue'
 import Shot from '@/components/game/Shot.vue'
-
-import { createGameState } from '@/composables/useGameState'
-import { createGameLoop } from '@/composables/useGameLoop'
-import { calculatePathPoints } from '@/composables/usePathUtils'
-
-const UPGRADE_COST = [150, 250, 400, 600]
+import { COSTS } from '@/store/game/constants'
 
 export default {
   name: 'Game',
@@ -146,348 +230,105 @@ export default {
     Path,
     Tower,
     Enemy,
-    Shot
+    Shot,
+    ShooterEnemy,
+    Ally,
+    Barricade,
+    ArtilleryStrike
   },
   data() {
     return {
-      ...createGameState()
+      TOWER_COST: COSTS.TOWER,
+      ALLY_COST: COSTS.ALLY,
+      BARRICADE_COST: COSTS.BARRICADE,
+      ARTILLERY_COST: COSTS.ARTILLERY,
+      lastFrameTime: 0,
+      animationFrameId: null
     }
   },
   computed: {
-    selectedTower() {
-      if (!this.selectedTowerId) {
-        return null
-      }
-
-      return this.towers.find(t => t.positionId === this.selectedTowerId) || null
-    },
-    pathPoints() {
-      return calculatePathPoints(this.currentPath)
-    },
-    currentLevel() {
-      return this.levels.find(l => l.id === this.currentLevelId)
-    },
-    getUpgradeCost() {
-      if (!this.selectedTower) {
-        return 0
-      }
-      const level = this.selectedTower.level
-      if (level >= 5) {
-        return 0
-      }
-      return UPGRADE_COST[level - 1] || 0
+    ...mapState('game', [
+      'levels',
+      'currentLevelId',
+      'maxEnemies',
+      'towerPositions',
+      'towers',
+      'enemies',
+      'allies',
+      'barricades',
+      'artilleryStrikes',
+      'allShots',
+      'points',
+      'totalKills',
+      'selectedTowerId',
+      'gameOver',
+      'victory',
+      'placeMode',
+      'showInsufficientFunds'
+    ]),
+    ...mapGetters('game', {
+      selectedTower: 'getSelectedTower',
+      getUpgradeCost: 'getUpgradeCost',
+      pathPoints: 'getPathPoints'
+    }),
+    shooterEnemies() {
+      return this.enemies.filter(e => e.type === 'shooter')
     }
   },
   mounted() {
-    this.loadLevel(1)
-    this.gameLoop = createGameLoop(this)
-    this.gameLoop.startLoop()
+    this.initGame()
+    this.startGameLoop()
   },
   beforeUnmount() {
-    if (this.gameLoop) {
-      this.gameLoop.stopLoop()
-    }
-    if (this.spawnInterval) {
-      clearInterval(this.spawnInterval)
-    }
+    this.stopGameLoop()
   },
   methods: {
+    ...mapActions('game', [
+      'initGame',
+      'loadLevel',
+      'restartLevel',
+      'nextLevel',
+      'spawnAlly',
+      'selectTowerPosition',
+      'upgradeTower',
+      'updateGame',
+      'handleGameClick'
+    ]),
+    ...mapMutations('game', [
+      'SET_PLACE_MODE'
+    ]),
     getTowerAtPosition(positionId) {
       return this.towers.find(t => t.positionId === positionId) || null
     },
-
-    getRandomEnemyType() {
-      const level = this.currentLevel
-      if (!level?.enemyTypes?.length) {
-        return {
-          type: 'medium',
-          health: 100,
-          reward: 50,
-          speed: 0.08,
-          color: '#FF9800'
-        }
-      }
-
-      const rand = Math.random()
-      let cumulative = 0
-
-      const selectedType = level.enemyTypes.find(enemyType => {
-        cumulative += enemyType.chance
-        return rand < cumulative
-      })
-
-      if (selectedType) {
-        return {
-          type: selectedType.type,
-          health: selectedType.health,
-          reward: selectedType.reward,
-          speed: selectedType.speed,
-          color: selectedType.color
-        }
-      }
-
-      const first = level.enemyTypes[0]
-      return {
-        type: first.type,
-        health: first.health,
-        reward: first.reward,
-        speed: first.speed,
-        color: first.color
-      }
-    },
-
-    goToNextLevel() {
-      const nextLevelId = this.currentLevelId + 1
-      if (nextLevelId <= this.levels.length) {
-        this.loadLevel(nextLevelId)
-      }
-    },
-
-    checkVictory() {
-      if (this.enemies.length === 0 && this.enemiesSpawned >= this.maxEnemies && !this.gameOver) {
-        this.victory = true
-        if (this.spawnInterval) {
-          clearInterval(this.spawnInterval)
-          this.spawnInterval = null
-        }
-      }
-    },
-
-    initLevel(level) {
-      this.currentPath = level.path.map(p => ({ ...p }))
-      this.towerPositions = level.towerPositions ? level.towerPositions.map(p => ({ ...p, id: p.id })) : []
-      this.towers = []
-      this.enemies = []
-      this.enemiesSpawned = 0
-      this.selectedTowerId = null
-      this.totalKills = 0
-      this.points = level.startCapital || 200
-      this.shots = []
-      this.maxEnemies = level.maxEnemies || 15
-
-      this.spawnEnemies(level)
-    },
-
-    spawnEnemies(level) {
-      const spawnRate = level.spawnRate || 2000
-      const startPoint = { ...level.path[0] }
-
-      const spawnOne = () => {
-        const config = this.getRandomEnemyType()
-
-        const enemyPath = level.path.map(p => ({
-          x: p.x,
-          y: p.y
-        }))
-
-        this.enemies.push({
-          id: Date.now() + Math.random(),
-          x: startPoint.x,
-          y: startPoint.y,
-          health: config.health,
-          maxHealth: config.health,
-          type: config.type,
-          color: config.color,
-          reward: config.reward,
-          path: enemyPath,
-          currentTargetIndex: 1,
-          currentTarget: enemyPath[1] ? { ...enemyPath[1] } : { ...enemyPath[0] },
-          speed: config.speed
-        })
-
-        this.enemiesSpawned++
-      }
-
-      spawnOne()
-
-      this.spawnInterval = setInterval(() => {
-        if (this.enemiesSpawned < this.maxEnemies && !this.gameOver && !this.victory) {
-          spawnOne()
-        } else {
-          clearInterval(this.spawnInterval)
-          this.spawnInterval = null
-        }
-      }, spawnRate)
-    },
-
-    loadLevel(levelId) {
-      const level = this.levels.find(l => l.id === levelId)
-      if (!level) {
-        return
-      }
-
-      if (this.spawnInterval) {
-        clearInterval(this.spawnInterval)
-        this.spawnInterval = null
-      }
-
-      this.gameOver = false
-      this.victory = false
-      this.currentLevelId = levelId
-      this.enemies = []
-      this.towers = []
-      this.shots = []
-      this.selectedTowerId = null
-      this.initLevel(level)
-    },
-
-    restartLevel() {
-      const level = this.levels.find(l => l.id === this.currentLevelId)
-      if (!level) {
-        return
-      }
-
-      this.gameOver = false
-      this.victory = false
-
-      this.initLevel(level)
-    },
-    buildTower(positionId) {
-      if (this.gameOver || this.victory) {
-        return
-      }
-
-      const pos = this.towerPositions.find(p => p.id === positionId)
-      if (!pos) {
-        return
-      }
-
-      if (this.points < this.TOWER_COST) {
-        this.showInsufficientFunds = true
-        setTimeout(() => {
-          this.showInsufficientFunds = false
-        }, 2000)
-        return
-      }
-
-      this.points -= this.TOWER_COST
-
-      this.towers.push({
-        positionId: pos.id,
-        x: pos.x,
-        y: pos.y,
-        level: 1,
-        damage: 6,
-        radius: 80,
-        attackSpeed: 2,
-        health: 100,
-        maxHealth: 100,
-        kills: 0,
-        cooldown: 0,
-        targetId: null
-      })
-
-      this.selectedTowerId = null
-    },
-    upgradeTower() {
-      if (!this.selectedTower || this.selectedTower.level >= 5 || this.gameOver || this.victory) {
-        return
-      }
-
-      const cost = this.getUpgradeCost
-      if (this.points < cost) {
-        this.showInsufficientFunds = true
-        setTimeout(() => {
-          this.showInsufficientFunds = false
-        }, 2000)
-        return
-      }
-
-      this.points -= cost
-
-      const t = this.selectedTower
-      t.level++
-      t.damage = 6 + t.level * 2.5
-      t.attackSpeed = 2 + t.level * 0.7
-      t.radius = 80 + t.level * 8
-      t.maxHealth += 20
-      t.health = t.maxHealth
-      this.selectedTowerId = null
-    },
-    selectTowerPosition(positionId) {
-      if (this.gameOver || this.victory) {
-        return
-      }
-
-      const existingTower = this.getTowerAtPosition(positionId)
-      if (!existingTower) {
-        this.buildTower(positionId)
-      } else {
-        this.selectedTowerId = positionId
-      }
-    },
     handleClick(event) {
-      if (this.gameOver || this.victory) {
-        return
-      }
-
       const rect = this.$refs.gameArea.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const clickY = event.clientY - rect.top
-
-      const clickedPosition = this.towerPositions.find(
-        pos => Math.hypot(clickX - pos.x, clickY - pos.y) < 20
-      )
-
-      if (clickedPosition) {
-        this.selectTowerPosition(clickedPosition.id)
-      }
+      this.handleGameClick({ event, rect })
     },
-
-    handleRightClick(event) {
-      if (this.gameOver || this.victory) {
-        return
+    startGameLoop() {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId)
       }
-
-      const rect = this.$refs.gameArea.getBoundingClientRect()
-      const clickX = event.clientX - rect.left
-      const clickY = event.clientY - rect.top
-
-      const clickedPosition = this.towerPositions.find(
-        pos => Math.hypot(clickX - pos.x, clickY - pos.y) < 20
-      )
-
-      if (!clickedPosition) {
-        return
-      }
-
-      const idx = this.towers.findIndex(t => t.positionId === clickedPosition.id)
-      if (idx !== -1) {
-        this.towers.splice(idx, 1)
-      }
-
-      if (this.selectedTowerId === clickedPosition.id) {
-        this.selectedTowerId = null
-      }
+      this.lastFrameTime = performance.now()
+      this.gameLoop()
     },
-
-    isEnemyAtEnd(enemy) {
-      if (!enemy.path?.length) {
-        return false
+    gameLoop() {
+      const now = performance.now()
+      const deltaTime = now - this.lastFrameTime
+      
+      if (deltaTime > 5 && deltaTime < 200) {
+        this.updateGame(deltaTime)
+        this.lastFrameTime = now
+      } else if (deltaTime >= 200) {
+        this.lastFrameTime = now
       }
-      const lastPoint = enemy.path[enemy.path.length - 1]
-      const distanceToEnd = Math.hypot(enemy.x - lastPoint.x, enemy.y - lastPoint.y)
-      return distanceToEnd < 5
+      
+      this.animationFrameId = requestAnimationFrame(() => this.gameLoop())
     },
-
-    gameOverByEnemyAtEnd() {
-      this.gameOver = true
-      if (this.spawnInterval) {
-        clearInterval(this.spawnInterval)
-        this.spawnInterval = null
+    stopGameLoop() {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId)
+        this.animationFrameId = null
       }
-      this.enemies = []
-      this.shots = []
-    },
-    checkEnemiesAtEnd() {
-      if (this.enemies.some(enemy => this.isEnemyAtEnd(enemy))) {
-        this.gameOverByEnemyAtEnd()
-      }
-    },
-    rewardForKill(enemy) {
-      this.points += enemy.reward || 50
-      this.totalKills++
-      this.checkVictory()
     }
   }
 }
@@ -625,6 +466,72 @@ export default {
 
     &:hover {
       background: #1976d2;
+    }
+  }
+
+  &__build-controls {
+    display: flex;
+    gap: 10px;
+    margin-left: 20px;
+  }
+
+  &__build-button {
+    padding: 8px 16px;
+    background: #ddd;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #ccc;
+    }
+
+    &--active {
+      background: #4caf50;
+      color: white;
+
+      &:hover {
+        background: #45a049;
+      }
+    }
+  }
+
+  &__spawn-ally {
+    padding: 8px 16px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+
+    &:hover:not(:disabled) {
+      background: #357abd;
+    }
+
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+  }
+
+  &__notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    z-index: 2000;
+
+    &--error {
+      background: #f44336;
+      color: white;
+      box-shadow: 0 2px 10px rgba(244, 67, 54, 0.5);
     }
   }
 }

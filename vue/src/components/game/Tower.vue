@@ -3,7 +3,8 @@
     class="tower"
     :class="[
       selected ? 'tower--selected' : '',
-      !hasTower ? 'tower--empty' : ''
+      !hasTower ? 'tower--empty' : '',
+      isHit ? 'tower--hit' : ''
     ]"
     :style="{
       left: x + 'px',
@@ -19,6 +20,18 @@
     >
       <span v-if="hasTower">{{ level }}</span>
       <span v-else class="tower__plus">+</span>
+    </div>
+
+    <div
+      v-if="hasTower"
+      class="tower__health-bar-container"
+    >
+      <div
+        class="tower__health-bar"
+        :style="{
+          width: (health / maxHealth) * 100 + '%'
+        }"
+      ></div>
     </div>
 
     <div
@@ -52,6 +65,18 @@ export default {
       default: false
     },
     hasTower: {
+      type: Boolean,
+      default: false
+    },
+    health: {
+      type: Number,
+      default: 100
+    },
+    maxHealth: {
+      type: Number,
+      default: 100
+    },
+    isHit: {
       type: Boolean,
       default: false
     }
@@ -89,6 +114,11 @@ export default {
     }
   }
 
+  &--hit &__circle {
+    border-color: #ff4444;
+    transform: scale(1.1);
+  }
+
   &__circle {
     width: 30px;
     height: 30px;
@@ -108,6 +138,24 @@ export default {
     font-size: 20px;
     font-weight: bold;
     color: #4caf50;
+  }
+
+  &__health-bar-container {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  &__health-bar {
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.2s;
   }
 
   &__range {
