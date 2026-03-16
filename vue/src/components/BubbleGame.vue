@@ -333,16 +333,6 @@ export default {
       return ''
     },
 
-    clearMode(mode) {
-      if (mode === 'automat') {
-        this.deactivateAutomatMode()
-      }
-
-      if (mode === 'bomb' && this.activeMode === mode) {
-        this.activeMode = 'normal'
-      }
-    },
-
     finishMode(mode) {
       const config = this.getModeConfig(mode)
       if (!config || !this.modeState[mode]) {
@@ -500,11 +490,6 @@ export default {
         this.onStart()
       }
 
-      // ТОЛЬКО ТЕСТ
-      //this.createBubble()
-      //this.createBubble()
-      //this.createBubble()
-
       this.$emit('update:score', this.score)
 
       const safeIntensity = this.intensity > 0 ? this.intensity : 1
@@ -556,14 +541,6 @@ export default {
       return 'small'
     },
 
-    // штраф
-    getClickDelta(bubble) {
-      if (bubble.color === this.targetColor) {
-        return this.scoreHit
-      }
-      return BUBBLE_RULES.miss[bubble.size] || this.scoreMiss
-    },
-
     getFallDelta(bubble) {
       if (bubble.color !== this.targetColor) {
         return 0
@@ -607,7 +584,6 @@ export default {
       const bubble = {
         id: this.nextId,
         color,
-        // imageUrl,
         x,
         y,
         r,
@@ -941,9 +917,7 @@ export default {
     background: rgba(255, 210, 60, 0.95);
     box-shadow: 0 0 10px rgba(255, 210, 60, 0.65); //светяшка
     opacity: 1;
-    transition:
-      opacity 0.35s ease,
-      transform 0.35s ease;
+    transition: all 0.35s ease;
 
     &--hide {
       opacity: 0;
@@ -958,9 +932,7 @@ export default {
     height: 44px;
     pointer-events: none;
     transform: translate(-50%, -50%);
-    transition:
-      width 0.55s ease,
-      height 0.55s ease;
+    transition: all 0.35s ease;
 
     &--grow {
       width: 72px;
@@ -999,7 +971,6 @@ export default {
     transform: translate(-50%, -50%) rotate(-8deg);
     font-weight: 700;
     white-space: nowrap;
-    text-shadow: 0 0 8px rgba(0, 0, 0, 0.45);
     animation: c-game-combo-fade 0.9s ease forwards;
 
     &--hit {
@@ -1095,7 +1066,6 @@ export default {
     background: rgba(20, 20, 20, 0.48);
     color: #ffffff;
     font-weight: 700;
-    text-shadow: 0 0 6px rgba(0, 0, 0, 0.55);
     pointer-events: none;
   }
 

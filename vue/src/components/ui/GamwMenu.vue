@@ -82,6 +82,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { GAME_COLORS, GAME_COLOR_HEX, GAME_DEFAULTS } from '@/constants/gameConfig.js'
 
 export default {
@@ -124,8 +125,12 @@ export default {
   },
 
   computed: {
+    ...mapGetters([
+      'getLastResultScore'
+    ]),
+
     lastResultScore() {
-      const score = this.$store.getters.getLastResultScore
+      const score = this.getLastResultScore
       return typeof score === 'number' ? Math.round(score) : score
     },
 
@@ -202,13 +207,10 @@ export default {
 
 <style lang="scss" scoped>
 .c-menu {
-  --menu-width: 640px; // Пока будет так
-  --menu-height: auto; // Сделать авто по экрану(см.стаковерфлоу)
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: var(--menu-width);
-  min-height: var(--menu-height);
+  width: 640px;
   max-width: 100%;
   padding: 24px;
   border: 1px solid #d9d9d9;
