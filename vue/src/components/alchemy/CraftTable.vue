@@ -350,8 +350,8 @@ export default {
         font-size: 12px;
       }
     }
-}
-
+  }
+ 
 .craft-container {
   width: 300px;
   background: white;
