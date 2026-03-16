@@ -351,7 +351,7 @@ export default {
       }
     }
   }
- 
+  
 .craft-container {
   width: 300px;
   background: white;
