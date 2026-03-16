@@ -40,6 +40,7 @@ const selectedFlaskIndex = ref(null)
 const flasks = ref([])
 const showWinMessage = ref(false)
 const winCount = computed(() => store.getters.getWinCount)
+const curPercent = ref(Math.floor(100 / LAYERS_PER_FLASK.value))
 
 onMounted(() => {
   newGame()
@@ -60,8 +61,9 @@ const handleFlaskClick = (index) => {
 
 const getAvailableSpace = (flask) =>
   flask.layers.length === 0 
-    ? 100 
-    : 100 - flask.layers.reduce((sum, layer) => sum + layer.percent, 0)
+    ? curPercent.value * LAYERS_PER_FLASK.value
+    : curPercent.value * LAYERS_PER_FLASK.value
+      - flask.layers.reduce((sum, layer) => sum + layer.percent, 0)
 
 const pour = (fromIndex, toIndex) => {
   const fromFlask = flasks.value[fromIndex]
@@ -76,7 +78,7 @@ const pour = (fromIndex, toIndex) => {
     return
   }
       
-  if (availableSpace < 100) {
+  if (availableSpace < curPercent.value * LAYERS_PER_FLASK.value) {
     const toTopLayer = toFlask.layers[toFlask.layers.length - 1]
     if (toTopLayer.color !== topLayer.color) {
       return
@@ -111,7 +113,7 @@ const pour = (fromIndex, toIndex) => {
   }
 }
 
-const fillRandomFlask = (flask, percent, mapColors, mapCounts) => {
+const fillRandomFlask = (flask, mapColors, mapCounts) => {
   const layers = []
   let fullness = 0
   while (fullness < LAYERS_PER_FLASK.value) {
@@ -123,11 +125,11 @@ const fillRandomFlask = (flask, percent, mapColors, mapCounts) => {
       ) : 1
 
     if (layers.length > 0 && layers[layers.length - 1].color === mapColors[colorIndex]) {
-      layers[layers.length - 1].percent += percent * rndParts
+      layers[layers.length - 1].percent += curPercent.value * rndParts
     } else {
       layers.push({
         color: mapColors[colorIndex],
-        percent: percent * rndParts
+        percent: curPercent.value * rndParts
       })
     }
     fullness += rndParts
@@ -140,12 +142,12 @@ const fillRandomFlask = (flask, percent, mapColors, mapCounts) => {
   flask.layers = layers
 }
 
-const lastFluskLayers = (percent, mapColors, mapCounts) => {
+const lastFluskLayers = (mapColors, mapCounts) => {
   const layers = []
   for (let i = 0; i < mapColors.length; i++) {
     layers.push({
       color: mapColors[i],
-      percent: percent * mapCounts[i]
+      percent: curPercent.value * mapCounts[i]
     })
   }
 
@@ -162,8 +164,6 @@ const lastFluskLayers = (percent, mapColors, mapCounts) => {
 }
 
 const generateRandomFlasks = () => {
-  let percent = 100 / LAYERS_PER_FLASK.value
-
   let fullFlasks = FLASK_COUNT.value <= 5 ? FLASK_COUNT.value - 1 :
     (FLASK_COUNT.value <= 11 ? FLASK_COUNT.value - 2 : FLASK_COUNT.value - 3)
 
@@ -174,11 +174,11 @@ const generateRandomFlasks = () => {
 
   const newFlasks = Array(fullFlasks - 1).fill().map(() => {
     const flask = { layers: [] }
-    fillRandomFlask(flask, percent, mapColors, mapCounts)
+    fillRandomFlask(flask, mapColors, mapCounts)
     return flask
   })
   
-  newFlasks.push( {layers: lastFluskLayers(percent, mapColors, mapCounts)} )
+  newFlasks.push( {layers: lastFluskLayers(mapColors, mapCounts)} )
 
   newFlasks.push(
     ...Array(FLASK_COUNT.value - fullFlasks).fill().map(() => ({layers: []}))
@@ -190,7 +190,8 @@ const generateRandomFlasks = () => {
 const checkWin = () => 
   flasks.value.every(flask =>
     flask.layers.length === 0 ||
-    flask.layers.length === 1 && flask.layers[0].percent === 100
+    flask.layers.length === 1 &&
+    flask.layers[0].percent === curPercent.value * LAYERS_PER_FLASK.value
   )
 
 const newGame = () => {
