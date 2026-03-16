@@ -1,42 +1,79 @@
 import { createStore } from 'vuex'
-import list from './list'
 
 const MUTATIONS = {
-  INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+  SET_FLASK_COUNT: 'SET_FLASK_COUNT',
+  SET_LAYERS_PER_FLASK: 'SET_LAYERS_PER_FLASK',
+  INC_FLASK_COUNT: 'INC_FLASK_COUNT',
+  DEC_FLASK_COUNT: 'DEC_FLASK_COUNT',
+  INC_LAYERS_PER_FLASK: 'INC_LAYERS_PER_FLASK',
+  DEC_LAYERS_PER_FLASK: 'DEC_LAYERS_PER_FLASK',
+  NULL_WIN_COUNT: 'NULL_WIN_COUNT',
+  INC_WIN_COUNT: 'INC_WIN_COUNT'
 }
 
 export default createStore({
   state () {
     return {
-      count: 0
+      flaskCount: 5,
+      layersPerFlask: 4,
+      winCount: 0
     }
   },
   getters: {
-    getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
+    getFlaskCount: (state) => state.flaskCount,
+    getLayersPerFlask: (state) => state.layersPerFlask,
+    getWinCount: (state) => state.winCount
   },
   mutations: {
-    [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
+    [MUTATIONS.SET_FLASK_COUNT]: (state, value) => {
+      state.flaskCount = value
     },
-    [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
+    [MUTATIONS.SET_LAYERS_PER_FLASK]: (state, value) => {
+      state.layersPerFlask = value
     },
+    [MUTATIONS.INC_FLASK_COUNT]: (state) => {
+      state.flaskCount += 1
+    },
+    [MUTATIONS.DEC_FLASK_COUNT]: (state) => {
+      state.flaskCount -= 1
+    },
+    [MUTATIONS.INC_LAYERS_PER_FLASK]: (state) => {
+      state.layersPerFlask += 1
+    },
+    [MUTATIONS.DEC_LAYERS_PER_FLASK]: (state) => {
+      state.layersPerFlask -= 1
+    },
+    [MUTATIONS.NULL_WIN_COUNT]: (state) => {
+      state.winCount = 0
+    },
+    [MUTATIONS.INC_WIN_COUNT]: (state) => {
+      state.winCount += 1
+    }
   },
   actions: {
-    runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
+    setFlaskCount: (store, value) => {
+      store.commit(MUTATIONS.SET_FLASK_COUNT, value)
     },
-    setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
+    setLayersPerFlask: (store, value) => {
+      store.commit(MUTATIONS.SET_LAYERS_PER_FLASK, value)
     },
-  },
-  modules: {
-    list
+    incFlaskCount: (store) => {
+      store.commit(MUTATIONS.INC_FLASK_COUNT)
+    },
+    incLayersPerFlask: (store) => {
+      store.commit(MUTATIONS.INC_LAYERS_PER_FLASK)
+    },
+    decFlaskCount: (store) => {
+      store.commit(MUTATIONS.DEC_FLASK_COUNT)
+    },
+    decLayersPerFlask: (store) => {
+      store.commit(MUTATIONS.DEC_LAYERS_PER_FLASK)
+    },
+    nullWinCount: (store) => {
+      store.commit(MUTATIONS.NULL_WIN_COUNT)
+    },
+    incWinCount: (store) => {
+      store.commit(MUTATIONS.INC_WIN_COUNT)
+    }
   }
 })
