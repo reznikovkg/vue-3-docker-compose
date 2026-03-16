@@ -1,5 +1,6 @@
 <template>
   <div class="controls">
+    <h1>Настройки</h1>
     <div class="control-row">
       Количество колб
       <button @click="delFlask" class="setting-btn">-</button>
@@ -55,6 +56,7 @@ $btn-color: #36c9ff;
 $text-btn-color: #333;
 
 .controls {
+  text-align: center;
   padding: 20px;
   gap: 15px;
   display: flex;
