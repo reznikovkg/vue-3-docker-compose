@@ -164,6 +164,10 @@ export default {
     padding: 15px;
     overflow-x: auto;
     min-height: 200px;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+    }
   }
 
   h3 {
@@ -184,6 +188,11 @@ export default {
     background: rgba(0,0,0,0.1);
     border-radius: 8px;
     padding: 10px;
+
+    @media (max-width: 600px) {
+      width: 100%;
+      min-width: auto;
+    }
   }
 
   .progress-section {
@@ -193,6 +202,10 @@ export default {
   .inventory {
     flex: 1;
     min-width: 400px;
+
+    @media (max-width: 600px) {
+      min-width: auto;
+    }
   }
 
   .workers-group {
@@ -285,6 +298,11 @@ export default {
     max-height: 300px;
     overflow-y: auto;
     padding: 5px;
+
+    @media (max-width: 600px) {
+      max-height: none;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
   }
 
   .inventory-item {
@@ -355,20 +373,6 @@ export default {
     font-style: italic;
     padding: 5px;
     text-align: center;
-  }
-
-  @media (max-width: 600px) {
-    &__content {
-      flex-direction: column;
-    }
-    .workers-section, .progress-section, .inventory {
-      width: 100%;
-      min-width: auto;
-    }
-    .inventory-grid { 
-      max-height: none;
-      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    }
   }
 }
 </style>
