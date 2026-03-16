@@ -17,8 +17,11 @@ export default{
 
   components:{ElementCard},
 
-  computed:{
-    ...mapGetters(['discoveredElements']),
+  computed: {
+    ...mapGetters([
+      'discoveredElements', 
+      'inventory'
+    ]),
     elements(){
       return this.discoveredElements
     }
@@ -28,7 +31,9 @@ export default{
     ...mapActions(['addToTable']),
 
     add(id){
-      this.addToTable(id)
+      if (this.inventory[id] && this.inventory[id] > 0) {
+        this.addToTable(id)
+      }
     }
   }
 }

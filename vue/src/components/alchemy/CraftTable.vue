@@ -44,7 +44,7 @@
         </button>
         
         <button class="reset" @click="() => clear()">Сброс</button>
-        <button class="mix" @click="() => mix()">Смешать</button>
+        <button class="mix" @click="() => mix()" :disabled="!!tableCrafting || Object.keys(table).length === 0">{{ tableCrafting ? 'Крафтится...' : 'Смешать' }}</button>
       </div>
     </div>
   </div>
@@ -69,7 +69,11 @@ export default {
   },
 
   computed: {
-    ...mapGetters(['tableElements']),
+    ...mapGetters([
+      'tableElements', 
+      'inventory', 
+      'tableCrafting'
+    ]),
     table() { return this.tableElements },
     elements(){
       return ELEMENTS
@@ -273,9 +277,14 @@ export default {
     transition: 0.2s;
     font-weight: bold;
 
-    &:hover {
+    &:hover:not(:disabled) {
       transform: scale(1.02);
       filter: brightness(1.1);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 
@@ -290,59 +299,59 @@ export default {
   }
 
   @media (max-width: 600px) {
-      flex-direction: row;
-      width: 100%;
-      min-height: 60px;
+    flex-direction: row;
+    width: 100%;
+    min-height: 60px;
   }
 }
 
 .craft-toggle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
-    }
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
+  }
 
-    &.active {
-      background: linear-gradient(135deg, #8e44ad, #7d3c98);
-      box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
-    }
+  &.active {
+    background: linear-gradient(135deg, #8e44ad, #7d3c98);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  &__icon {
+    font-size: 24px;
+  }
+
+  &__text {
+    font-size: 14px;
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: row;
+    padding: 8px;
 
     &__icon {
-      font-size: 24px;
+      font-size: 20px;
     }
 
     &__text {
-      font-size: 14px;
-    }
-
-    @media (max-width: 600px) {
-      flex-direction: row;
-      padding: 8px;
-
-      &__icon {
-        font-size: 20px;
-      }
-
-      &__text {
-        font-size: 12px;
-      }
+      font-size: 12px;
     }
   }
-  
+}
+
 .craft-container {
   width: 300px;
   background: white;
