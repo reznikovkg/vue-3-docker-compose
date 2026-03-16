@@ -1,6 +1,6 @@
 import { BUBBLE_RULES, COMBO_RULES, GAME_MODE_RULES } from '@/constants/gameConfig.js'
 
-export function handleLaserMode(ctx, e) {
+export const handleLaserMode = (ctx, e) => {
   if (!ctx || !e) {
     return null
   }
@@ -25,7 +25,7 @@ export function handleLaserMode(ctx, e) {
   }
 }
 
-export function startAutomatMode(ctx) {
+export const startAutomatMode = (ctx) => {
   if (!ctx || !ctx.$refs || !ctx.$refs.gameField) {
     return null
   }
@@ -78,7 +78,7 @@ export function startAutomatMode(ctx) {
   return ctx.autoShotTimerId
 }
 
-export function stopAutomatMode(ctx) {
+export const stopAutomatMode = (ctx) => {
   if (!ctx) {
     return null
   }
@@ -93,7 +93,7 @@ export function stopAutomatMode(ctx) {
   return null
 }
 
-export function applyCombo(ctx, bubble, x, y, index = 0) {
+export const applyCombo = (ctx, bubble, x, y, index = 0) => {
   if (!ctx || !bubble) {
     return 0
   }
@@ -134,7 +134,7 @@ export function applyCombo(ctx, bubble, x, y, index = 0) {
   return delta
 }
 
-export function spawnBomb(ctx, x, y) {
+export const spawnBomb = (ctx, x, y) => {
   if (!ctx) {
     return null
   }

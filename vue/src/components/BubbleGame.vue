@@ -350,24 +350,30 @@ export default {
     },
 
     tickModes() {
-      ;['laser', 'automat'].forEach((mode) => {
-        const state = this.modeState[mode]
-        if (!state) {
-          return
+      this.tickMode('laser')
+      this.tickMode('automat')
+    },
+
+    tickMode(mode) {
+      const state = this.modeState[mode]
+
+      if (!state) {
+        return
+      }
+
+      if (state.activeLeft > 0) {
+        state.activeLeft -= 1
+
+        if (state.activeLeft <= 0) {
+          this.finishMode(mode)
         }
 
-        if (state.activeLeft > 0) {
-          state.activeLeft -= 1
-          if (state.activeLeft <= 0) {
-            this.finishMode(mode)
-          }
-          return
-        }
+        return
+      }
 
-        if (state.cooldownLeft > 0) {
-          state.cooldownLeft -= 1
-        }
-      })
+      if (state.cooldownLeft > 0) {
+        state.cooldownLeft -= 1
+      }
     },
 
     startModeTick() {
