@@ -1,6 +1,7 @@
 <template>
   <div
     class="flask-container"
+    @click="onFlaskClick"
   >
     <div
       class="flask"
@@ -15,19 +16,26 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Flask',
-  props: {
-    layers: {
-      type: Array,
-      default: () => []
-    },
-    isSelected: {
-      type: Boolean,
-      default: false
-    }
+<script setup>
+const props = defineProps({
+  layers: {
+    type: Array,
+    default: () => []
+  },
+  isSelected: {
+    type: Boolean,
+    default: false
+  },
+  flaskIndex: {
+    type: Number,
+    required: true
   }
+})
+
+const emit = defineEmits(['flask-click'])
+
+const onFlaskClick = () => {
+  emit('flask-click', props.flaskIndex)
 }
 </script>
 

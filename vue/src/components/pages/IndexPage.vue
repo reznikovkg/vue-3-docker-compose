@@ -7,7 +7,8 @@
         :key="index"
         :layers="flask.layers"
         :is-selected="selectedFlaskIndex === index"
-        @click="handleFlaskClick(index)"
+        :flask-index="index"
+        @flask-click="handleFlaskClick"
       />
     </div>
     <div class="win-counter">
