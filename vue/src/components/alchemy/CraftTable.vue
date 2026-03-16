@@ -299,57 +299,57 @@ export default {
   }
 
   @media (max-width: 600px) {
-    flex-direction: row;
-    width: 100%;
-    min-height: 60px;
+      flex-direction: row;
+      width: 100%;
+      min-height: 60px;
   }
 }
 
 .craft-toggle {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  background: linear-gradient(135deg, #9b59b6, #8e44ad);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: bold;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
-  }
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
+    }
 
-  &.active {
-    background: linear-gradient(135deg, #8e44ad, #7d3c98);
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
-  }
-
-  &__icon {
-    font-size: 24px;
-  }
-
-  &__text {
-    font-size: 14px;
-  }
-
-  @media (max-width: 600px) {
-    flex-direction: row;
-    padding: 8px;
+    &.active {
+      background: linear-gradient(135deg, #8e44ad, #7d3c98);
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    }
 
     &__icon {
-      font-size: 20px;
+      font-size: 24px;
     }
 
     &__text {
-      font-size: 12px;
+      font-size: 14px;
     }
-  }
+
+    @media (max-width: 600px) {
+      flex-direction: row;
+      padding: 8px;
+
+      &__icon {
+        font-size: 20px;
+      }
+
+      &__text {
+        font-size: 12px;
+      }
+    }
 }
 
 .craft-container {
