@@ -1,17 +1,17 @@
 <template>
   <div class="economy-panel">
     <div class="economy-panel__content">
-      <div class="workers-section">
-        <h3>Рабочие ({{ workers.free }}/{{ workers.total }})</h3>
+      <div class="economy-panel__section">
+        <h3 class="economy-panel__title">Рабочие ({{ workers.free }}/{{ workers.total }})</h3>
         <div class="workers-group">
-          <h4>Добыча ресурсов</h4>
+          <h4 class="economy-panel__subtitle">Добыча ресурсов</h4>
           <div class="workers-list">
             <div v-for="(count, elementId) in workers.assigned" :key="elementId" class="worker-item">
               <span>{{ elements[elementId]?.icon }} {{ elements[elementId]?.name }}: {{ count }}</span>
-              <div class="worker-controls">
-                <button @click="unassignWorker(Number(elementId))" :disabled="count === 0">−</button>
-                <span class="worker-count">{{ count }}</span>
-                <button @click="assignWorker(Number(elementId))" :disabled="workers.free === 0">+</button>
+              <div class="worker-item__controls">
+                <button @click="() =>unassignWorker(Number(elementId))" :disabled="count === 0">−</button>
+                <span class="count">{{ count }}</span>
+                <button @click="() =>assignWorker(Number(elementId))" :disabled="workers.free === 0">+</button>
               </div>
             </div>
             <div v-if="Object.keys(workers.assigned).length === 0" class="no-workers">
@@ -20,81 +20,81 @@
           </div>
         </div>
         <div class="workers-group" v-if="craftingQueue.length">
-          <h4>Крафт в слотах</h4>
+          <h4 class="economy-panel__subtitle">Крафт в слотах</h4>
           <div class="workers-list">
             <div v-for="(craft, index) in craftingQueue" :key="index" class="worker-item">
               <span>{{ elements[craft.resultId]?.icon }} {{ elements[craft.resultId]?.name }}</span>
-              <div class="worker-controls">
+              <div class="worker-item__controls">
                 <button @click="() =>unassignWorkerFromSlot(craft.slotIndex)" :disabled="!craft.workers">−</button>
-                <span class="worker-count">{{ craft.workers || 0 }}</span>
+                <span class="count">{{ craft.workers || 0 }}</span>
                 <button @click="() =>assignWorkerToSlot(craft.slotIndex)" :disabled="workers.free === 0">+</button>
               </div>
             </div>
           </div>
         </div>
         <div class="workers-group" v-if="tableCrafting">
-          <h4>Крафт на столе</h4>
+          <h4 class="economy-panel__subtitle">Крафт на столе</h4>
           <div class="worker-item">
             <span>{{ elements[tableCrafting.resultId]?.icon }} {{ elements[tableCrafting.resultId]?.name }}</span>
-            <div class="worker-controls">
+            <div class="worker-item__controls">
               <button @click="() =>unassignWorkerFromTable()" :disabled="!tableCrafting.workers">−</button>
-              <span class="worker-count">{{ tableCrafting.workers }}</span>
+              <span class="count">{{ tableCrafting.workers }}</span>
               <button @click="() =>assignWorkerToTable()" :disabled="workers.free === 0">+</button>
             </div>
           </div>
         </div>
       </div>
-      <div class="progress-section">
+      <div class="economy-panel__section economy-panel__section--progress">
         <div v-if="Object.keys(miningJobs).length" class="progress-group">
-          <h3>Добыча</h3>
+          <h3 class="economy-panel__title">Добыча</h3>
           <div v-for="(job, elementId) in miningJobs" :key="elementId" class="progress-item">
-            <div class="job-info">
+            <div class="progress-item__info">
               <span>{{ elements[elementId]?.icon }} {{ elements[elementId]?.name }}</span>
               <span>👷 {{ job.workers }}</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: job.progress + '%' }"></div>
+              <div class="progress-bar__fill" :style="{ width: job.progress + '%' }"></div>
             </div>
             <div class="time-remaining">{{ formatTime(getRemainingTime(job)) }}</div>
           </div>
         </div>
         <div v-if="craftingQueue.length" class="progress-group">
-          <h3>Крафт в слотах</h3>
+          <h3 class="economy-panel__title">Крафт в слотах</h3>
           <div v-for="(craft, index) in craftingQueue" :key="index" class="progress-item">
-            <div class="job-info">
+            <div class="progress-item__info">
               <span>{{ elements[craft.resultId]?.icon }} {{ elements[craft.resultId]?.name }}</span>
               <span>👷 {{ craft.workers || 0 }}</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: craft.progress + '%' }"></div>
+              <div class="progress-bar__fill" :style="{ width: craft.progress + '%' }"></div>
             </div>
             <div class="time-remaining">{{ formatTime(getRemainingTime(craft)) }}</div>
           </div>
         </div>
         <div v-if="tableCrafting" class="progress-group">
-          <h3>Крафт на столе</h3>
+          <h3 class="economy-panel__title">Крафт на столе</h3>
           <div class="progress-item">
-            <div class="job-info">
+            <div class="progress-item__info">
               <span>{{ elements[tableCrafting.resultId]?.icon }} {{ elements[tableCrafting.resultId]?.name }}</span>
               <span>👷 {{ tableCrafting.workers }}</span>
             </div>
             <div class="progress-bar">
-              <div class="progress-fill" :style="{ width: tableCrafting.progress + '%' }"></div>
+              <div class="progress-bar__fill" :style="{ width: tableCrafting.progress + '%' }"></div>
             </div>
             <div class="time-remaining">{{ formatTime(getRemainingTime(tableCrafting)) }}</div>
           </div>
         </div>
       </div>
-      <div class="inventory">
-        <h3>Инвентарь</h3>
+      <div class="economy-panel__section economy-panel__section--inventory">
+        <h3 class="economy-panel__title">Инвентарь</h3>
         <div class="inventory-grid">
           <div v-for="(count, id) in inventory" :key="id" class="inventory-item">
-            <span class="item-icon">{{ elements[id]?.icon }}</span>
-            <span class="item-name">{{ elements[id]?.name }}</span>
-            <span class="item-count">x{{ count }}</span>
+            <span class="inventory-item__icon">{{ elements[id]?.icon }}</span>
+            <span class="inventory-item__name">{{ elements[id]?.name }}</span>
+            <span class="inventory-item__count">x{{ count }}</span>
             <button 
               v-if="id <= 4"
-              class="mine-btn" 
+              class="inventory-item__mine-btn" 
               @click="() =>assignWorker(Number(id))"
               :disabled="workers.free === 0"
               :title="getMiningTime(Number(id))"
@@ -170,43 +170,43 @@ export default {
     }
   }
 
-  h3 {
+  &__title {
     margin: 0 0 10px;
     font-size: 16px;
     border-bottom: 1px solid rgba(255,255,255,0.2);
     padding-bottom: 5px;
   }
 
-  h4 {
+  &__subtitle {
     margin: 0 0 8px;
     font-size: 14px;
     color: #bdc3c7;
   }
 
-  .workers-section, .progress-section, .inventory {
+    &__section {
     min-width: 280px;
     background: rgba(0,0,0,0.1);
     border-radius: 8px;
     padding: 10px;
 
-    @media (max-width: 600px) {
-      width: 100%;
-      min-width: auto;
+      @media (max-width: 600px) {
+        width: 100%;
+        min-width: auto;
+      }
+
+      &--progress {
+        flex: 2;
+      }
+
+      &--inventory {
+        flex: 1;
+        min-width: 400px;
+
+        @media (max-width: 600px) {
+          min-width: auto;
+        }
+      }
     }
-  }
-
-  .progress-section {
-    flex: 2;
-  }
-
-  .inventory {
-    flex: 1;
-    min-width: 400px;
-
-    @media (max-width: 600px) {
-      min-width: auto;
-    }
-  }
 
   .workers-group {
     margin-bottom: 15px;
@@ -230,11 +230,11 @@ export default {
     border-radius: 6px;
     font-size: 13px;
 
-    .worker-controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      
+    &__controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
       button {
         width: 24px;
         height: 24px;
@@ -244,12 +244,12 @@ export default {
         color: white;
         cursor: pointer;
         font-weight: bold;
-        
+
         &:disabled { opacity: 0.3; cursor: not-allowed; }
         &:hover:not(:disabled) { background: #2980b9; }
       }
-      
-      .worker-count { min-width: 24px; text-align: center; font-weight: bold; }
+
+      .count { min-width: 24px; text-align: center; font-weight: bold; }
     }
   }
 
@@ -263,7 +263,7 @@ export default {
     border-radius: 8px;
     padding: 10px;
 
-    .job-info {
+    &__info {
       display: flex;
       justify-content: space-between;
       margin-bottom: 8px;
@@ -277,7 +277,7 @@ export default {
     border-radius: 4px;
     overflow: hidden;
     
-    .progress-fill {
+    &__fill {
       height: 100%;
       background: linear-gradient(90deg, #3498db, #9b59b6);
       transition: width 0.3s;
@@ -322,23 +322,23 @@ export default {
       background: rgba(255,255,255,0.15);
     }
 
-    .item-icon {
+    &__icon {
       font-size: 24px;
       margin-bottom: 4px;
     }
 
-    .item-name {
+    &__name {
       font-size: 12px;
       font-weight: bold;
       margin-bottom: 2px;
     }
 
-    .item-count {
+    &__count {
       font-size: 11px;
       color: #bdc3c7;
     }
 
-    .mine-btn {
+    &__mine-btn {
       position: absolute;
       top: 4px;
       right: 4px;
