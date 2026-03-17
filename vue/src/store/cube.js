@@ -84,8 +84,9 @@ export default {
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
         store.dispatch('field/changeCentralCubePosition', 
             { oldPosition, newPosition }, 
-            { root: true })
-        store.dispatch('field/checkFigureAttachment', null, { root: true })
+            { root: true }).then(
+                () => store.dispatch('field/checkFigureAttachment', null, { root: true })
+            )
     },
     rotateIsland: (store, rotateDirection) => {
         let xs = store.state.attachedPieces.map(pieceCoord => pieceCoord.x).sort()
@@ -156,7 +157,6 @@ export default {
 
         let fieldSize = store.rootGetters["field/getFieldSize"]
 
-        // Новая область фигуры не выходит за границы поля
         if (!(newEdgeXLeft > 0 && newEdgeXRight < fieldSize &&
             newEdgeYTop > 0 && newEdgeYBottom < fieldSize
         ))
@@ -164,15 +164,12 @@ export default {
 
         let currentPieceCoords = store.rootGetters["field/getCurrentFigureCoords"]
 
-        // Надвигающиеся фигура вне старой и новой области фигуры
         if (currentPieceCoords.some(
             ({x, y}) => 
                 (x >= edgeXLeft && x <= edgeXRight && y >= edgeYTop && y <= edgeYBottom) || 
                 (x >= newEdgeXLeft && x <= newEdgeXRight && y >= newEdgeYTop && y <= newEdgeYBottom))
         )
             return
-
-        // поворот
 
         let rotate = (rotateDirection, { x, y }) => {
             switch (rotateDirection) {

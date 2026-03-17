@@ -1,19 +1,21 @@
 <template>
+  <div>
     <table class="field-table">
       <tbody>
         <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
-          <td class="field-td" :style="{ '--grid-size': this.getFieldSize }" v-for="(cell, colIdx) in row" :key="colIdx">
-            <div 
-              class="cell"
-              :class="{
+          <td class="field-td"
+          :class="{
                 'is-central': isCentral(rowIdx + 1, colIdx + 1),
                 'piece': cell === 2,
                 'attached-piece': cell === 3
-            }"></div>
+            }"
+          :style="{ '--grid-size': this.getFieldSize }"
+          v-for="(cell, colIdx) in row" :key="colIdx">
           </td>
         </tr>
       </tbody>
     </table>
+  </div>
 </template>
 
 <script>
