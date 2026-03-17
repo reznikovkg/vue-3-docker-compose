@@ -358,9 +358,9 @@ export default {
         } else {
             const updatedPiece = { ...piece, x, y }
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
-            store.dispatch('drawPieceOnField')
-            
-            store.dispatch('checkFigureAttachment')
+            store.dispatch('drawPieceOnField').then(
+                () => store.dispatch('checkFigureAttachment')
+            )
         }
     },
     isHomogeneousLevel: (store, {level, number}) => {
@@ -451,21 +451,25 @@ export default {
                 value => {
                     if (value) {
                         minDisappearLevel = level
-                        store.dispatch('game/addScore', level * 8 * 5, { root: true })
-                        store.dispatch('cube/removeLevelPieces', level, { root: true })
-                        store.dispatch('game/updateTimer', {
-                            isIncrease: true,
-                            decreaseValue: DECREASE_TIMER_VALUE_DEFAULT,
-                            increaseValue: INCREASE_TIMER_VALUE_DEFAULT
-                        }, { root: true })
+                        store.dispatch('game/addScore', level * 8 * 5, { root: true }).then(
+                            () => store.dispatch('cube/removeLevelPieces', level, { root: true })
+                        ).then(
+                            () => store.dispatch('game/updateTimer', {
+                                isIncrease: true,
+                                decreaseValue: DECREASE_TIMER_VALUE_DEFAULT,
+                                increaseValue: INCREASE_TIMER_VALUE_DEFAULT
+                            }, { root: true })
+                        )
+                        
                     }
                     else if (minDisappearLevel != -1) {
                         store.dispatch('countLevelValues', {level: level, value: 3}).then(
                             count => {
                                 store.dispatch('game/addScore', count, { root: true })
                             }
+                        ).then(
+                            () => store.dispatch('cube/removeLevelPieces', level, { root: true })
                         )
-                        store.dispatch('cube/removeLevelPieces', level, { root: true })
                     }
                 }
             )
@@ -475,9 +479,10 @@ export default {
         for (let level = 0; level < fieldSize; level++)
             store.dispatch('checkLevel', level)
             
-        store.dispatch('scoreSquareLevels')
-
-        store.dispatch('game/checkGameEnd', null, { root: true })
+        store.dispatch('scoreSquareLevels').then(
+            () => store.dispatch('game/checkGameEnd', null, { root: true })
+        )
+        
         const shape = store.state.currentPiece.shape
         if (store.state.currentPiece != null) {
             let isSpawn = false

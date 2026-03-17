@@ -1,5 +1,9 @@
 <template>
-  <div>
+  <div
+    @keydown.up="move(0, -1)"
+    @keydown.down="move(0, 1)"
+    @keydown.left="move(-1, 0)"
+    @keydown.right="move(1, 0)">
     <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
     <div class="start-size-menu">
       <button class="start-button button" @click="handleStart" :disabled="isGameActive">Start</button>
@@ -36,7 +40,8 @@ export default {
   },
   computed: {
     ...mapGetters('field', ['getFieldSize', 'isGameActive']),
-    ...mapGetters('game', ['getTimer','getScore']),
+    ...mapGetters('game', ['getTimer','getScore', 'getIsGameStarted']),
+    ...mapGetters('cube', ['getCentralCubePosition']),
 
     timerValue() {
       return Math.ceil(this.getTimer)
@@ -63,7 +68,7 @@ export default {
       'startSpeedUp',
       'stopSpeedUp'
     ]),
-    ...mapActions('cube', ['rotateIsland']),
+    ...mapActions('cube', ['rotateIsland','changeCentralCubePosition']),
 
     updateFieldSize() {
       this.changeFieldSize(this.fieldSize)
@@ -99,6 +104,18 @@ export default {
         this.isSpeedPressed = false
         this.stopSpeedUp()
       }
+    },
+    move(dx, dy){
+      if (!this.getIsGameStarted) {
+        return
+      }
+
+      let {x, y} = this.getCentralCubePosition
+      
+      x += dx
+      y += dy
+
+      this.changeCentralCubePosition({x: x, y: y})
     }
   }
 }

@@ -102,10 +102,12 @@ export default {
                     y: center
                 }
 
-                store.dispatch('cube/setPositionCentralCubeToDefault', null, { root: true })
-                store.dispatch('field/changeCentralCubePosition', 
+                store.dispatch('cube/setPositionCentralCubeToDefault', null, { root: true }).then(
+                    () => store.dispatch('field/changeCentralCubePosition', 
                     { oldPosition, newPosition }, { root: true })
-                store.dispatch('game/stopGame', null, { root: true })
+                ).then(
+                    () => store.dispatch('game/stopGame', null, { root: true })
+                )
             }
         },
         updateTimer: (store, { isIncrease, decreaseValue, increaseValue }) => {
@@ -126,10 +128,13 @@ export default {
             store.commit(MUTATIONS.SET_ISSTARTED, false)
             store.commit(MUTATIONS.SET_TIMER, 60)
             store.commit(MUTATIONS.SET_TIMER_INTERVAL, null)
-            store.dispatch("field/initStopGame", null, { root: true })
-            store.dispatch("cube/resetCentralCubePosition", null, {root: true})
-            store.dispatch("cube/clearAttachedPieces", null, { root: true })
-            store.dispatch("field/clearField", null, { root: true })
+            store.dispatch("field/initStopGame", null, { root: true }).then(
+                () => store.dispatch("cube/resetCentralCubePosition", null, {root: true})
+            ).then(
+                () => store.dispatch("cube/clearAttachedPieces", null, { root: true })
+            ).then(
+                store.dispatch("field/clearField", null, { root: true })
+            )
         },
 
         startSpeedUp: store => {
@@ -169,8 +174,9 @@ export default {
                     increaseValue: INCREASE_TIMER_VALUE_DEFAULT
                 })
             }, BASE_GAME_SPEED))
-            store.dispatch("field/initStartGame", null, { root: true })
-            store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
+            store.dispatch("field/initStartGame", null, { root: true }).then(
+                () => store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
+            )
         }
     }
 }

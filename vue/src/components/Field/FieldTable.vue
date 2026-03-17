@@ -1,26 +1,17 @@
 <template>
-  <table 
-    class="field-table"
-    @keydown.up="move(0, -1)"
-    @keydown.down="move(0, 1)"
-    @keydown.left="move(-1, 0)"
-    @keydown.right="move(1, 0)">
-    <tbody>
-      <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
-        <td 
-        class="field-td" 
-        :style="{ '--grid-size': this.getFieldSize }"
-        :class="{
-          'is-central': isCentral(rowIdx + 1, colIdx + 1),
-          'piece': cell === 2,
-          'attached-piece': cell === 3
-        }"
-        v-for="(cell, colIdx) in row"
-        :key="colIdx">
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div>
+    <div class="field-row" v-for="(row, rowIdx) in grid" :key="rowIdx">
+        <div class="field-cell"
+          :class="{
+              'is-central': isCentral(rowIdx + 1, colIdx + 1),
+              'piece': cell === 2,
+              'attached-piece': cell === 3
+          }"
+          :style="{ '--grid-size': getFieldSize }"
+          v-for="(cell, colIdx) in row" :key="colIdx">
+        </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -64,13 +55,15 @@ export default {
 </script>
 
 <style scoped>
-.field-table {
-  border-collapse: collapse;
-  width: fit-content;
-  table-layout: fixed;
+
+.field-row {
+  display: flex;
 }
-.field-td {
-  border: 0.5vmin solid #000000;
+
+.field-cell {
+  border-right: 0.5vmin solid #000000;
+  border-bottom: 0.5vmin solid #000000;
+  
   width: calc(80vmin / var(--grid-size));
   height: calc(80vmin / var(--grid-size));
   background-color: white;
