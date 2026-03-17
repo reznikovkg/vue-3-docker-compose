@@ -1,20 +1,16 @@
 <template>
   <div>
-    <table class="field-table">
-      <tbody>
-        <tr v-for="(row, rowIdx) in grid" :key="rowIdx">
-          <td class="field-td"
+    <div class="field-row" v-for="(row, rowIdx) in grid" :key="rowIdx">
+        <div class="field-cell"
           :class="{
-                'is-central': isCentral(rowIdx + 1, colIdx + 1),
-                'piece': cell === 2,
-                'attached-piece': cell === 3
-            }"
-          :style="{ '--grid-size': this.getFieldSize }"
+              'is-central': isCentral(rowIdx + 1, colIdx + 1),
+              'piece': cell === 2,
+              'attached-piece': cell === 3
+          }"
+          :style="{ '--grid-size': getFieldSize }"
           v-for="(cell, colIdx) in row" :key="colIdx">
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -59,22 +55,18 @@ export default {
 </script>
 
 <style scoped>
-.field-table {
-  border-collapse: collapse;
-  width: fit-content;
-  table-layout: fixed;
+
+.field-row {
+  display: flex;
 }
-.field-td {
-  border: 0.5vmin solid #000000;
+
+.field-cell {
+  border-right: 0.5vmin solid #000000;
+  border-bottom: 0.5vmin solid #000000;
+  
   width: calc(80vmin / var(--grid-size));
   height: calc(80vmin / var(--grid-size));
   background-color: white;
-}
-.cell {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  max-height: 100%;
 }
 
 .piece {
