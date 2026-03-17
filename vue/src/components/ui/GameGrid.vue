@@ -26,7 +26,7 @@
       >                                     
         <img
           class="grid__img"
-          :src="cellEmoji(cell.branch, cell.level)"
+          :src="cellImage(cell.branch, cell.level)"
           :alt="`${cell.branch} ${cell.level}`"
         />
      </div>
@@ -34,43 +34,37 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'GameGrid',
-  props: {
-    grid: Array,
-    gridSize: Number,
-    maxLevel: Number,
-    cellEmoji: Function
-  },
-  emits: ['drag-start', 'drop', 'spawn-from-max', 'sell'],
+<script setup>
+import { useStore } from 'vuex'
+import { computed } from 'vue'
+
+const props = defineProps({
+  grid: Array,
+  gridSize: Number
+})
   
-  computed: {
-    flatGrid() {
-      return this.grid || []
-    }
-  },
-  methods: {
-     onDragStart(e, index, cell) {
-      if (cell) {
-        this.$emit('drag-start', { index, cell })
-      }
-    },
-    onDrop(e, index) {
-        this.$emit('drop', { index })
-    },
-    onCellClick (index, cell) {
-      if (cell && cell.level >= this.maxLevel) {
-        this.$emit('spawn-from-max', index)
-      }
-    },
-    onSell (e, index, cell) {
-      if (cell) {
-        this.$emit('sell', { index, cell })
-      }
-    }
+const store = useStore()
+const maxLevel = computed(() => store.state.maxLevel)
+const cellImage = (branch, level) => store.getters.cellImage(branch, level)
+const onDragStart = (e, index, cell) => {
+  if (cell) {
+    store.dispatch('handleDragStart', { index, cell })
+  }
+} 
+const onDrop = (e, index) => {
+  store.dispatch('handleDrop', index)
+}
+const onCellClick = (index, cell) => {
+  if (cell && cell.level >= maxLevel.value){
+    store.dispatch('spawnFromMax', index)
   }
 }
+const onSell = (e, index, cell) => {
+  if (cell) {
+    store.dispatch('sellItem', index)
+  }
+}
+const flatGrid = computed(() => props.grid || [])
 </script>
 
 <style lang="scss">
