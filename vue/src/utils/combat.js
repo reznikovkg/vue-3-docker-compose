@@ -1,9 +1,7 @@
-import { MUTATIONS } from '@/store/game/constants'
-
 export const findClosestInRange = (source, targets, range) => {
   const inRange = targets.filter(target => {
-    if (!target) 
-        return false
+    if (!target || target.health <= 0) 
+      return false
     const distance = Math.hypot(source.x - target.x, source.y - target.y)
     return distance <= range
   })
@@ -18,158 +16,160 @@ export const findClosestInRange = (source, targets, range) => {
   }, null)
 }
 
-export const createShot = (source, target, variant, commit, lifetime) => {
-  const shotId = Date.now() + Math.random()
-  
-  commit(MUTATIONS.ADD_SHOT, {
-    id: shotId,
-    x1: source.x,
-    y1: source.y,
-    length: Math.hypot(target.x - source.x, target.y - source.y),
-    angle: Math.atan2(target.y - source.y, target.x - source.x),
-    type: variant
-  })
-  
-  setTimeout(() => commit(MUTATIONS.REMOVE_SHOT, shotId), lifetime)
-}
+export const createShot = (source, target, type) => ({
+  id: Date.now() + Math.random(),
+  x1: source.x,
+  y1: source.y,
+  length: Math.hypot(target.x - source.x, target.y - source.y),
+  angle: Math.atan2(target.y - source.y, target.x - source.x),
+  type
+})
 
-export const processKilledEnemies = (state, commit) => {
-  const killed = state.enemies.filter(e => e.health <= 0)
+export const processTowerAttacks = (towers, enemies, now) => {
+  const updatedTowers = []
+  const updatedEnemies = enemies.map(e => ({ ...e }))
+  const newShots = []
+  const killedEnemies = []
   
-  killed.forEach(enemy => {
-    commit(MUTATIONS.ADD_POINTS, enemy.reward || 50)
-    commit(MUTATIONS.INCREMENT_KILLS)
-  })
-  
-  commit(MUTATIONS.UPDATE_ENEMIES, state.enemies.filter(e => e.health > 0))
-}
-
-export const updateTowers = (state, commit) => {
-  const updatedEnemies = state.enemies.map(e => ({ ...e }))
-  
-  state.towers.forEach(tower => {
-    const t = { ...tower }
+  towers.forEach(tower => {
+    let cooldown = tower.cooldown || 0
+    let kills = tower.kills || 0
     
-    t.cooldown = Math.max(0, (t.cooldown || 0) - 100)
+    cooldown = Math.max(0, cooldown - 100)
     
-    if (t.cooldown > 0) {
-      commit(MUTATIONS.UPDATE_TOWER, {
-        positionId: t.positionId,
-        updates: { cooldown: t.cooldown }
-      })
-      return
-    }
-    
-    const target = updatedEnemies.find(e => 
-      Math.hypot(e.x - t.x, e.y - t.y) <= t.radius && e.health > 0
-    )
-    
-    if (!target) {
-      commit(MUTATIONS.UPDATE_TOWER, {
-        positionId: t.positionId,
-        updates: { cooldown: t.cooldown }
-      })
-      return
-    }
-    
-    target.health -= t.damage
-    t.cooldown = 1000 / t.attackSpeed
-    
-    createShot(t, target, 'tower', commit, 80)
-    
-    if (target.health <= 0) {
-      t.kills = (t.kills || 0) + 1
-    }
-    
-    commit(MUTATIONS.UPDATE_TOWER, {
-      positionId: t.positionId,
-      updates: {
-        cooldown: t.cooldown,
-        kills: t.kills
+    if (cooldown <= 0) {
+      const target = updatedEnemies.find(e => 
+        e.health > 0 && Math.hypot(e.x - tower.x, e.y - tower.y) <= tower.radius
+      )
+      
+      if (target) {
+        target.health -= tower.damage
+        cooldown = 1000 / tower.attackSpeed
+        
+        newShots.push(createShot(tower, target, 'tower'))
+        
+        if (target.health <= 0) {
+          kills++
+          killedEnemies.push(target)
+        }
       }
-    })
-  })
-  
-  commit(MUTATIONS.UPDATE_ENEMIES, updatedEnemies)
-  
-  const killed = updatedEnemies.filter(e => e.health <= 0)
-  killed.forEach(enemy => {
-    commit(MUTATIONS.ADD_POINTS, enemy.reward || 50)
-    commit(MUTATIONS.INCREMENT_KILLS)
-  })
-  
-  commit(MUTATIONS.UPDATE_ENEMIES, updatedEnemies.filter(e => e.health > 0))
-}
-
-export const updateShooters = (state, commit) => {
-  const now = Date.now()
-  
-  state.enemies.filter(e => e.type === 'shooter').forEach(s => {
-    s.shootCooldown = s.shootCooldown || 1000
-    s.lastShotTime = s.lastShotTime || 0
-    s.shootDamage = s.shootDamage || 15
-    s.shootRange = s.shootRange || 90
-    
-    if (now - s.lastShotTime < s.shootCooldown) 
-        return
-    
-    const target = findClosestInRange(s, [...state.towers, ...state.allies], s.shootRange)
-    if (!target) 
-        return
-    
-    target.health -= s.shootDamage
-    s.lastShotTime = now
-    s.isShooting = true
-    
-    setTimeout(() => s.isShooting = false, 200)
-    
-    if (target.positionId) {
-      commit(MUTATIONS.SET_TOWER_HIT, {
-        positionId: target.positionId,
-        isHit: true
-      })
-      
-      setTimeout(() => {
-        commit(MUTATIONS.SET_TOWER_HIT, {
-          positionId: target.positionId,
-          isHit: false
-        })
-      }, 200)
     }
     
-    createShot(s, target, 'shooter', commit, 150)
+    updatedTowers.push({
+      ...tower,
+      cooldown,
+      kills
+    })
   })
   
-  state.towers.filter(t => t.health <= 0).forEach(t => {
-    commit(MUTATIONS.REMOVE_TOWER, t.positionId)
-  })
+  const finalEnemies = updatedEnemies.filter(e => e.health > 0)
   
-  commit(MUTATIONS.UPDATE_ALLIES, state.allies.filter(a => a.health > 0))
+  return {
+    towers: updatedTowers,
+    enemies: finalEnemies,
+    newShots,
+    killedEnemies
+  }
 }
 
-export const updateAllies = (state, commit) => {
-  const now = Date.now()
+export const processShooterAttacks = (enemies, towers, allies, now) => {
+  const updatedEnemies = []
+  const updatedTowers = [...towers]
+  const updatedAllies = [...allies]
+  const newShots = []
+  const hitTowerIds = []
   
-  const updated = state.allies
-    .filter(a => a.health > 0)
-    .map(a => {
-      if (now - (a.lastAttackTime || 0) < (a.attackCooldown || 800)) 
-        return a
+  enemies.forEach(enemy => {
+    if (enemy.type !== 'shooter') {
+      updatedEnemies.push(enemy)
+      return
+    }
+    
+    const shooter = { ...enemy }
+    shooter.shootCooldown = shooter.shootCooldown || 1000
+    shooter.lastShotTime = shooter.lastShotTime || 0
+    shooter.shootDamage = shooter.shootDamage || 15
+    shooter.shootRange = shooter.shootRange || 90
+    shooter.isShooting = false
+    
+    if (now - shooter.lastShotTime >= shooter.shootCooldown) {
+      const targets = [...updatedTowers, ...updatedAllies]
+      const target = findClosestInRange(shooter, targets, shooter.shootRange)
       
-      const target = findClosestInRange(a, state.enemies, a.attackRange || 80)
-      if (!target) 
-        return a
-      
-      target.health -= a.attackDamage || 20
-      a.lastAttackTime = now
-      a.isAttacking = true
-      
-      setTimeout(() => a.isAttacking = false, 200)
-      createShot(a, target, 'ally', commit, 150)
-      
-      return a
-    })
+      if (target) {
+        target.health -= shooter.shootDamage
+        shooter.lastShotTime = now
+        shooter.isShooting = true
+        
+        newShots.push(createShot(shooter, target, 'shooter'))
+        
+        if (target.positionId) {
+          hitTowerIds.push(target.positionId)
+        }
+      }
+    }
+    
+    updatedEnemies.push(shooter)
+  })
   
-  commit(MUTATIONS.UPDATE_ALLIES, updated)
-  processKilledEnemies(state, commit)
+  const aliveTowers = updatedTowers.filter(t => t.health > 0)
+  const aliveAllies = updatedAllies.filter(a => a.health > 0)
+  
+  return {
+    enemies: updatedEnemies,
+    towers: aliveTowers,
+    allies: aliveAllies,
+    newShots,
+    hitTowerIds
+  }
+}
+
+export const processAllyAttacks = (allies, enemies, now) => {
+  const updatedAllies = []
+  const updatedEnemies = enemies.map(e => ({ ...e }))
+  const newShots = []
+  const killedEnemies = []
+  
+  allies.forEach(ally => {
+    let allyCopy = { ...ally }
+    
+    if (now - (allyCopy.lastAttackTime || 0) >= (allyCopy.attackCooldown || 800)) {
+      const target = findClosestInRange(allyCopy, updatedEnemies, allyCopy.attackRange || 80)
+      
+      if (target) {
+        target.health -= allyCopy.attackDamage || 20
+        allyCopy.lastAttackTime = now
+        allyCopy.isAttacking = true
+        
+        newShots.push(createShot(allyCopy, target, 'ally'))
+        
+        if (target.health <= 0) {
+          killedEnemies.push(target)
+        }
+      } else {
+        allyCopy.isAttacking = false
+      }
+    }
+    
+    updatedAllies.push(allyCopy)
+  })
+  
+  const finalEnemies = updatedEnemies.filter(e => e.health > 0)
+  
+  return {
+    allies: updatedAllies,
+    enemies: finalEnemies,
+    newShots,
+    killedEnemies
+  }
+}
+
+export const processKilledEnemies = (enemies, killedEnemies) => {
+  const rewards = killedEnemies.reduce((sum, e) => sum + (e.reward || 50), 0)
+  
+  return {
+    enemies: enemies.filter(e => e.health > 0),
+    rewards,
+    killCount: killedEnemies.length
+  }
 }

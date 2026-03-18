@@ -13,7 +13,7 @@
         </div>
         <button
           class="game__restart-button"
-          @click="() => restartLevel()"
+          @click="() => loadLevel(currentLevelId)"
         >
           Начать заново
         </button>
@@ -34,13 +34,13 @@
         <button
           v-if="currentLevelId < levels.length"
           class="game__next-level-button"
-          @click="() => nextLevel()"
+          @click="() => loadLevel(currentLevelId + 1)"
         >
           Следующий уровень
         </button>
         <button
           class="game__restart-button"
-          @click="() => restartLevel()"
+          @click="() => loadLevel(currentLevelId)"
         >
           Начать заново
         </button>
@@ -68,7 +68,7 @@
             :class="{
               'game__build-button--active': placeMode === 'barricade'
             }"
-            @click="() => SET_PLACE_MODE('barricade')"
+            @click="() => setPlaceMode('barricade')"
           >
             Заграждение ({{ BARRICADE_COST }})
           </button>
@@ -77,7 +77,7 @@
             :class="{
               'game__build-button--active': placeMode === 'artillery'
             }"
-            @click="() => SET_PLACE_MODE('artillery')"
+            @click="() => setPlaceMode('artillery')"
           >
             Артиллерия ({{ ARTILLERY_COST }})
           </button>
@@ -209,7 +209,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions, mapMutations } from 'vuex'
+import { mapState, mapGetters, mapActions } from 'vuex'
 import LevelButtons from '@/components/ui/LevelButtons.vue'
 import InfoPanel from '@/components/ui/InfoPanel.vue'
 import Path from '@/components/game/Path.vue'
@@ -286,16 +286,12 @@ export default {
     ...mapActions('game', [
       'initGame',
       'loadLevel',
-      'restartLevel',
-      'nextLevel',
       'spawnAlly',
       'selectTowerPosition',
       'upgradeTower',
       'updateGame',
-      'handleGameClick'
-    ]),
-    ...mapMutations('game', [
-      'SET_PLACE_MODE'
+      'handleGameClick',
+      'setPlaceMode'
     ]),
     getTowerAtPosition(positionId) {
       return this.towers.find(t => t.positionId === positionId) || null

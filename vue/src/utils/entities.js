@@ -1,8 +1,4 @@
-import { MUTATIONS } from '@/store/game/constants'
-
-const getRandomEnemyType = (state) => {
-  const level = state.levels.find(l => l.id === state.currentLevelId)
-  
+const getRandomEnemyType = (level) => {
   if (!level?.enemyTypes?.length) {
     return {
       type: 'medium',
@@ -33,8 +29,8 @@ const getRandomEnemyType = (state) => {
   }
 }
 
-export const createEnemy = (state, level) => {
-  const config = getRandomEnemyType(state)
+export const createEnemy = (level) => {
+  const config = getRandomEnemyType(level)
   const path = level.path.map(p => ({ x: p.x, y: p.y }))
   
   const enemy = {
@@ -78,47 +74,31 @@ export const createTower = (pos) => ({
   isHit: false
 })
 
-export const spawnEnemy = (state, commit, level) => {
-  if (state.enemiesSpawned >= state.maxEnemies || state.gameOver || state.victory) 
-    return
-  commit(MUTATIONS.ADD_ENEMY, createEnemy(state, level))
-}
-
-export const checkVictoryCondition = (state, commit) => {
-  if (
-    !state.enemies.length &&
-    state.enemiesSpawned >= state.maxEnemies &&
-    !state.gameOver &&
-    !state.victory
-  ) {
-    commit(MUTATIONS.SET_VICTORY, true)
+export const checkVictoryCondition = (enemies, enemiesSpawned, maxEnemies, gameOver, victory) => {
+  if (!enemies.length && enemiesSpawned >= maxEnemies && !gameOver && !victory) {
+    return true
   }
+  return false
 }
 
-export const checkEnemiesAtEnd = (state, commit) => {
-  const atEnd = state.enemies.some(e => {
+export const checkEnemiesAtEnd = (enemies) => {
+  return enemies.some(e => {
     if (!e.path?.length) 
-        return false
-    
+      return false
     const last = e.path[e.path.length - 1]
     return Math.hypot(e.x - last.x, e.y - last.y) < 5
   })
-  
-  if (atEnd) {
-    commit(MUTATIONS.SET_GAME_OVER, true)
-    commit(MUTATIONS.UPDATE_ENEMIES, [])
-  }
 }
 
-export const checkAlliesAtEnd = (state, commit) => {
-  commit(
-    MUTATIONS.UPDATE_ALLIES,
-    state.allies.filter(a => {
-      if (!a.path?.length) 
-        return true
-      
-      const last = a.path[a.path.length - 1]
-      return Math.hypot(a.x - last.x, a.y - last.y) >= 5
-    })
-  )
+export const checkAlliesAtEnd = (allies) => {
+  return allies.filter(a => {
+    if (!a.path?.length) 
+      return true
+    const last = a.path[a.path.length - 1]
+    return Math.hypot(a.x - last.x, a.y - last.y) >= 5
+  })
+}
+
+export const canSpawnEnemy = (enemiesSpawned, maxEnemies, gameOver, victory) => {
+  return enemiesSpawned < maxEnemies && !gameOver && !victory
 }

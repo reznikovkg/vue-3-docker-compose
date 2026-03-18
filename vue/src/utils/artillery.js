@@ -1,32 +1,42 @@
-import { MUTATIONS } from '@/store/game/constants'
-
-export const updateArtilleryStrikes = (state, commit, deltaTime) => {
-  const active = state.artilleryStrikes
-    .map(s => {
-      s.elapsed += deltaTime
-      return s
-    })
-    .filter(s => s.elapsed < s.duration)
+export const processArtilleryStrikes = (strikes, enemies, deltaTime) => {
+  const updatedStrikes = strikes
+    .map(strike => ({
+      ...strike,
+      elapsed: strike.elapsed + deltaTime
+    }))
+    .filter(strike => strike.elapsed < strike.duration)
   
-  commit(MUTATIONS.UPDATE_ARTILLERY_STRIKES, active)
+  const damagingStrikes = updatedStrikes.filter(s => s.elapsed < 100)
   
-  const damaging = state.artilleryStrikes.filter(s => s.elapsed < 100)
-  if (!damaging.length) 
-    return
+  if (damagingStrikes.length === 0) {
+    return { strikes: updatedStrikes, enemies, killedEnemies: [] }
+  }
   
-  const updated = state.enemies.map(enemy => {
-    const newEnemy = { ...enemy }
+  const killedEnemies = []
+  const updatedEnemies = enemies.map(enemy => {
+    let health = enemy.health
     
-    damaging.forEach(strike => {
-      const d = Math.hypot(newEnemy.x - strike.x, newEnemy.y - strike.y)
+    damagingStrikes.forEach(strike => {
+      const distance = Math.hypot(enemy.x - strike.x, enemy.y - strike.y)
       
-      if (d <= strike.maxRadius) {
-        newEnemy.health -= Math.floor(strike.maxDamage * (1 - d / strike.maxRadius))
+      if (distance <= strike.maxRadius) {
+        const damage = Math.floor(strike.maxDamage * (1 - distance / strike.maxRadius))
+        health -= damage
       }
     })
     
-    return newEnemy
-  })
+    const updatedEnemy = { ...enemy, health }
+    
+    if (health <= 0 && enemy.health > 0) {
+      killedEnemies.push(updatedEnemy)
+    }
+    
+    return updatedEnemy
+  }).filter(e => e.health > 0)
   
-  commit(MUTATIONS.UPDATE_ENEMIES, updated)
+  return {
+    strikes: updatedStrikes,
+    enemies: updatedEnemies,
+    killedEnemies
+  }
 }

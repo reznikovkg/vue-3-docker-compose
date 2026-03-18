@@ -1,51 +1,41 @@
-import { COSTS, MUTATIONS } from '@/store/game/constants'
 import { createTower } from './entities'
 
-export const hasEnoughPoints = (state, commit, cost) => {
-  if (state.points >= cost) {
-    return true
-  }
-
-  commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
-
-  setTimeout(() => {
-    commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false)
-  }, 2000)
-
-  return false
+export const hasEnoughPoints = (points, cost) => {
+  return points >= cost
 }
 
-export const buildTower = (state, commit, pos) => {
-  const existingTower = state.towers.find(t => t.positionId === pos.id)
-
+export const buildTower = (towers, pos) => {
+  const existingTower = towers.find(t => t.positionId === pos.id)
+  
   if (!existingTower) {
-    if (!hasEnoughPoints(state, commit, COSTS.TOWER)) 
-        return
-
-    commit(MUTATIONS.REMOVE_POINTS, COSTS.TOWER)
-    commit(MUTATIONS.ADD_TOWER, createTower(pos))
-    commit(MUTATIONS.SET_SELECTED_TOWER, null)
+    return {
+      action: 'build',
+      tower: createTower(pos)
+    }
   } else {
-    commit(MUTATIONS.SET_SELECTED_TOWER, pos.id)
+    return {
+      action: 'select',
+      positionId: pos.id
+    }
   }
 }
 
-export const canPlaceBarricade = (state, point) => {
-  if (!state.currentPath?.length) 
+export const canPlaceBarricade = (point, currentPath, barricades, towers) => {
+  if (!currentPath?.length) 
     return false
   
   const threshold = 30
   let onPath = false
   
-  state.currentPath.slice(0, -1).some((start, i) => {
-    const end = state.currentPath[i + 1]
+  currentPath.slice(0, -1).some((start, i) => {
+    const end = currentPath[i + 1]
     
     const dx = end.x - start.x
     const dy = end.y - start.y
     const length = Math.hypot(dx, dy)
     
     if (length === 0) 
-        return false
+      return false
     
     const t = ((point.x - start.x) * dx + (point.y - start.y) * dy) / (length * length)
     
@@ -65,8 +55,8 @@ export const canPlaceBarricade = (state, point) => {
   if (!onPath) 
     return false
   
-  const isTaken = state.barricades.some(b => Math.hypot(b.x - point.x, b.y - point.y) < 40)
-  const isOnTower = state.towers.some(t => Math.hypot(t.x - point.x, t.y - point.y) < 30)
+  const isTaken = barricades.some(b => Math.hypot(b.x - point.x, b.y - point.y) < 40)
+  const isOnTower = towers.some(t => Math.hypot(t.x - point.x, t.y - point.y) < 30)
   
   return !isTaken && !isOnTower
 }

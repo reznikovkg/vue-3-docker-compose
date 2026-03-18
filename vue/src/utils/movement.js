@@ -1,6 +1,4 @@
-import { MUTATIONS } from '@/store/game/constants'
-
-export const findClosestPathPointIndex = (entity, path) => {
+const findClosestPathPointIndex = (entity, path) => {
   let minDist = Infinity
   let closestIndex = 0
 
@@ -15,73 +13,79 @@ export const findClosestPathPointIndex = (entity, path) => {
   return closestIndex
 }
 
-export const moveAlongPath = (entity, deltaTime) => {
+export const moveEntity = (entity, deltaTime) => {
   if (!entity?.path?.length) 
-    return false
+    return entity
   
-  entity.speed = entity.speed || 0.05
-  const moveDistance = entity.speed * deltaTime
-
-  if (entity.currentTargetIndex === undefined || entity.currentTargetIndex >= entity.path.length) {
-    entity.currentTargetIndex = findClosestPathPointIndex(entity, entity.path)
-    entity.currentTarget = entity.path[entity.currentTargetIndex]
+  const speed = entity.speed || 0.05
+  const moveDistance = speed * deltaTime
+  
+  let currentTargetIndex = entity.currentTargetIndex
+  let currentTarget = entity.currentTarget
+  let x = entity.x
+  let y = entity.y
+  
+  if (currentTargetIndex === undefined || currentTargetIndex >= entity.path.length) {
+    currentTargetIndex = findClosestPathPointIndex(entity, entity.path)
+    currentTarget = entity.path[currentTargetIndex]
   }
-
-  const target = entity.currentTarget
-  if (!target) 
-    return false
-
-  const dx = target.x - entity.x
-  const dy = target.y - entity.y
+  
+  if (!currentTarget) 
+    return entity
+  
+  const dx = currentTarget.x - x
+  const dy = currentTarget.y - y
   const distance = Math.hypot(dx, dy)
-
+  
   if (distance <= moveDistance) {
-    entity.x = target.x
-    entity.y = target.y
-    entity.currentTargetIndex++
-
-    if (entity.currentTargetIndex < entity.path.length) {
-      entity.currentTarget = entity.path[entity.currentTargetIndex]
+    x = currentTarget.x
+    y = currentTarget.y
+    currentTargetIndex++
+    
+    if (currentTargetIndex < entity.path.length) {
+      currentTarget = entity.path[currentTargetIndex]
     }
   } else {
     const angle = Math.atan2(dy, dx)
-    entity.x += Math.cos(angle) * moveDistance
-    entity.y += Math.sin(angle) * moveDistance
+    x += Math.cos(angle) * moveDistance
+    y += Math.sin(angle) * moveDistance
   }
   
-  return true
+  return {
+    ...entity,
+    x,
+    y,
+    currentTargetIndex,
+    currentTarget
+  }
 }
 
-export const updateEnemies = (state, commit, deltaTime) => {
-  if (!state.enemies?.length) 
-    return
-  
-  const updated = state.enemies.map(enemy => {
-    if (!enemy || enemy.isBlockedByBarricade || !enemy.path?.length) 
-        return enemy
+export const processEnemyMovement = (enemies, barricades, deltaTime) => {
+  return enemies.map(enemy => {
+    const isBlocked = barricades.some(b => Math.hypot(enemy.x - b.x, enemy.y - b.y) < 30)
     
-    if (enemy.currentTargetIndex === undefined || enemy.currentTargetIndex >= enemy.path.length) {
-      enemy.currentTargetIndex = findClosestPathPointIndex(enemy, enemy.path)
-      enemy.currentTarget = enemy.path[enemy.currentTargetIndex]
+    if (isBlocked || !enemy.path?.length) {
+      return {
+        ...enemy,
+        isBlockedByBarricade: isBlocked
+      }
     }
     
-    moveAlongPath(enemy, deltaTime)
-    return enemy
+    return moveEntity(enemy, deltaTime)
   })
-  
-  commit(MUTATIONS.UPDATE_ENEMIES, updated)
 }
 
-export const updateAlliesMovement = (state, commit, deltaTime) => {
-  const updated = state.allies.map(a => {
-    const hasTarget = state.enemies.some(e => Math.hypot(a.x - e.x, a.y - e.y) <= (a.attackRange || 80))
+export const processAlliesMovement = (allies, enemies, deltaTime) => {
+  return allies.map(ally => {
+    const hasTarget = enemies.some(e => 
+      Math.hypot(ally.x - e.x, ally.y - e.y) <= (ally.attackRange || 80)
+    )
     
-    if (!hasTarget) 
-        moveAlongPath(a, deltaTime)
-    return a
+    if (hasTarget) 
+      return ally
+    
+    return moveEntity(ally, deltaTime)
   })
-  
-  commit(MUTATIONS.UPDATE_ALLIES, updated)
 }
 
 const normalize = (x, y) => {
@@ -105,11 +109,11 @@ export const calculatePathPoints = (path) => {
     
     let dir
     if (!prev) 
-        dir = nextDir
+      dir = nextDir
     else if (!next) 
-        dir = prevDir
+      dir = prevDir
     else 
-        dir = normalize(prevDir.x + nextDir.x, prevDir.y + nextDir.y)
+      dir = normalize(prevDir.x + nextDir.x, prevDir.y + nextDir.y)
     
     const perp = { x: -dir.y, y: dir.x }
     

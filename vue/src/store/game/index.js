@@ -1,16 +1,9 @@
 import { COSTS, ATTACK, MUTATIONS, ACTIONS, GETTERS } from './constants'
 import { LEVELS_DATA } from '@/constants/levels'
-import { 
-  updateTowers, updateShooters, updateAllies 
-} from '@/utils/combat'
-import { updateArtilleryStrikes } from '@/utils/artillery'
-import { updateEnemies, updateAlliesMovement, calculatePathPoints } from '@/utils/movement'
-import { 
-  createEnemy, spawnEnemy, 
-  checkVictoryCondition, checkEnemiesAtEnd, checkAlliesAtEnd 
-} from '@/utils/entities'
-import { updateBarricades } from '@/utils/barricades'
-import { buildTower, canPlaceBarricade, hasEnoughPoints } from '@/utils/placement'
+import { createEnemy } from '@/utils/entities'
+import { calculatePathPoints } from '@/utils/movement'
+import { hasEnoughPoints, buildTower, canPlaceBarricade } from '@/utils/placement'
+import { gameEngine } from '@/engine/gameEngine'
 
 export default {
   namespaced: true,
@@ -136,10 +129,8 @@ export default {
       state.towers.push(tower)
     },
     
-    [MUTATIONS.UPDATE_TOWER]: (state, { positionId, updates }) => {
-      state.towers = state.towers.map(t =>
-        t.positionId === positionId ? { ...t, ...updates } : t
-      )
+    [MUTATIONS.UPDATE_TOWERS]: (state, towers) => {
+      state.towers = towers
     },
     
     [MUTATIONS.REMOVE_TOWER]: (state, positionId) => {
@@ -176,11 +167,12 @@ export default {
     
     [MUTATIONS.REMOVE_SHOT]: (state, shotId) => {
       const index = state.allShots.findIndex(s => s.id === shotId)
-      if (index !== -1) state.allShots.splice(index, 1)
+      if (index !== -1) 
+        state.allShots.splice(index, 1)
     },
     
-    [MUTATIONS.INCREMENT_KILLS]: (state) => {
-      state.totalKills++
+    [MUTATIONS.INCREMENT_KILLS]: (state, amount = 1) => {
+      state.totalKills += amount
     },
     
     [MUTATIONS.SET_SELECTED_TOWER]: (state, towerId) => {
@@ -201,7 +193,19 @@ export default {
     
     [MUTATIONS.RESET_SPAWN_TIMER]: (state) => {
       state.spawnTimer = 0
-    }
+    },
+
+    [MUTATIONS.SET_SHOTS]: (state, shots) => {
+      state.allShots = shots
+    },
+
+    [MUTATIONS.SET_SPAWN_TIMER]: (state, value) => {
+      state.spawnTimer = value
+    },
+
+    [MUTATIONS.SET_ENEMIES_SPAWNED]: (state, value) => {
+      state.enemiesSpawned = value
+    },
   },
   
   actions: {
@@ -210,47 +214,29 @@ export default {
       
       const level = LEVELS_DATA[0]
       commit(MUTATIONS.SET_LEVEL, level)
-      commit(MUTATIONS.ADD_ENEMY, createEnemy(state, level))
+      commit(MUTATIONS.ADD_ENEMY, createEnemy(level))
     },
     
     [ACTIONS.LOAD_LEVEL]: ({ commit, state }, levelId) => {
-      const level = state.levels.find(l => l.id === levelId)
+      const targetLevelId = levelId || state.currentLevelId
+      const level = state.levels.find(l => l.id === targetLevelId)
       if (!level) 
         return
       
       commit(MUTATIONS.RESET_GAME_STATE)
       commit(MUTATIONS.SET_LEVEL, level)
-      commit(MUTATIONS.ADD_ENEMY, createEnemy(state, level))
-    },
-    
-    [ACTIONS.RESTART_LEVEL]: ({ commit, state }) => {
-      const level = state.levels.find(l => l.id === state.currentLevelId)
-      if (!level) 
-        return
-      
-      commit(MUTATIONS.RESET_GAME_STATE)
-      commit(MUTATIONS.SET_LEVEL, level)
-      commit(MUTATIONS.ADD_ENEMY, createEnemy(state, level))
-    },
-    
-    [ACTIONS.NEXT_LEVEL]: ({ commit, state }) => {
-      const nextLevelId = state.currentLevelId + 1
-      if (nextLevelId <= state.levels.length) {
-        const level = state.levels.find(l => l.id === nextLevelId)
-        if (level) {
-          commit(MUTATIONS.RESET_GAME_STATE)
-          commit(MUTATIONS.SET_LEVEL, level)
-          commit(MUTATIONS.ADD_ENEMY, createEnemy(state, level))
-        }
-      }
+      commit(MUTATIONS.ADD_ENEMY, createEnemy(level))
     },
     
     [ACTIONS.SPAWN_ALLY]: ({ commit, state, getters }) => {
       if (state.gameOver || state.victory) 
         return
       
-      if (!hasEnoughPoints(state, commit, COSTS.ALLY)) 
+      if (!hasEnoughPoints(state.points, COSTS.ALLY)) {
+        commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
+        setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
         return
+      }
       
       const path = getters[GETTERS.GET_REVERSE_PATH_POINTS]
       if (!path.length) 
@@ -283,22 +269,30 @@ export default {
         return
       
       const cost = getters[GETTERS.GET_UPGRADE_COST]
-      if (!hasEnoughPoints(state, commit, cost)) 
+      if (!hasEnoughPoints(state.points, cost)) {
+        commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
+        setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
         return
+      }
       
       commit(MUTATIONS.REMOVE_POINTS, cost)
-      commit(MUTATIONS.UPDATE_TOWER, {
-        positionId: tower.positionId,
-        updates: {
-          level: tower.level + 1,
-          damage: 4 + (tower.level + 1) * 1.1,
-          attackSpeed: 1 + (tower.level + 1) * 0.3,
-          radius: 70 + (tower.level + 1) * 6,
-          maxHealth: tower.maxHealth + 15,
-          health: tower.maxHealth + 15
+
+      const updatedTowers = state.towers.map(t => {
+        if (t.positionId === tower.positionId) {
+          return {
+            ...t,
+            level: t.level + 1,
+            damage: 4 + (t.level + 1) * 1.1,
+            attackSpeed: 1 + (t.level + 1) * 0.3,
+            radius: 70 + (t.level + 1) * 6,
+            maxHealth: t.maxHealth + 15,
+            health: t.maxHealth + 15
+          }
         }
+        return t
       })
       
+      commit(MUTATIONS.UPDATE_TOWERS, updatedTowers)
       commit(MUTATIONS.SET_SELECTED_TOWER, null)
     },
     
@@ -306,39 +300,65 @@ export default {
       const pos = state.towerPositions.find(p => p.id === positionId)
       if (!pos) 
         return
-      buildTower(state, commit, pos)
+      
+      const result = buildTower(state.towers, pos)
+      
+      if (result.action === 'build') {
+        if (!hasEnoughPoints(state.points, COSTS.TOWER)) {
+          commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
+          setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
+          return
+        }
+        
+        commit(MUTATIONS.REMOVE_POINTS, COSTS.TOWER)
+        commit(MUTATIONS.ADD_TOWER, result.tower)
+        commit(MUTATIONS.SET_SELECTED_TOWER, null)
+      } else if (result.action === 'select') {
+        commit(MUTATIONS.SET_SELECTED_TOWER, result.positionId)
+      }
     },
     
-    [ACTIONS.UPDATE_GAME]: ({ commit, state }, deltaTime) => {
-      if (state.gameOver || state.victory || !state.currentLevel) 
-        return
-      
-      const level = state.currentLevel
-      
-      commit(MUTATIONS.UPDATE_SPAWN_TIMER, deltaTime)
-      
-      const spawnRate = level.spawnRate || 2000
-      while (state.spawnTimer >= spawnRate && state.enemiesSpawned < state.maxEnemies) {
-        spawnEnemy(state, commit, level)
-        commit(MUTATIONS.RESET_SPAWN_TIMER)
+    [ACTIONS.UPDATE_GAME]: ({ state, commit }, deltaTime) => {
+      if (state.gameOver || state.victory) return
+
+      const result = gameEngine.update(state, deltaTime)
+
+      commit(MUTATIONS.UPDATE_ENEMIES, result.enemies)
+      commit(MUTATIONS.UPDATE_TOWERS, result.towers)
+      commit(MUTATIONS.UPDATE_ALLIES, result.allies)
+      commit(MUTATIONS.UPDATE_BARRICADES, result.barricades)
+      commit(MUTATIONS.UPDATE_ARTILLERY_STRIKES, result.artilleryStrikes)
+      commit(MUTATIONS.SET_SHOTS, result.allShots)
+
+      commit(MUTATIONS.SET_SPAWN_TIMER, result.spawnTimer)
+      commit(MUTATIONS.SET_ENEMIES_SPAWNED, result.enemiesSpawned)
+
+      if (result.pointsDelta) {
+        commit(MUTATIONS.ADD_POINTS, result.pointsDelta)
       }
-      
-      if (state.enemies?.length) {
-        updateEnemies(state, commit, deltaTime)
+
+      if (result.killsDelta) {
+        commit(MUTATIONS.INCREMENT_KILLS, result.killsDelta)
       }
-      
-      updateArtilleryStrikes(state, commit, deltaTime)
-      updateBarricades(state, commit, deltaTime)
-      updateAlliesMovement(state, commit, deltaTime)
-      updateTowers(state, commit)
-      updateShooters(state, commit)
-      updateAllies(state, commit)
-      checkVictoryCondition(state, commit)
-      checkEnemiesAtEnd(state, commit)
-      checkAlliesAtEnd(state, commit)
+
+      if (result.victory) {
+        commit(MUTATIONS.SET_VICTORY, true)
+      }
+
+      if (result.gameOver) {
+        commit(MUTATIONS.SET_GAME_OVER, true)
+        commit(MUTATIONS.UPDATE_ENEMIES, [])
+      }
+
+      result.hitTowerIds?.forEach(id => {
+        commit(MUTATIONS.SET_TOWER_HIT, { positionId: id, isHit: true })
+        setTimeout(() => {
+          commit(MUTATIONS.SET_TOWER_HIT, { positionId: id, isHit: false })
+        }, 200)
+      })
     },
     
-    [ACTIONS.HANDLE_GAME_CLICK]: ({ state, commit }, { event, rect }) => {
+    [ACTIONS.HANDLE_GAME_CLICK]: ({ state, commit, dispatch }, { event, rect }) => {
       if (state.gameOver || state.victory) 
         return
       
@@ -351,15 +371,18 @@ export default {
         )
 
         if (pos) {
-          buildTower(state, commit, pos)
+          dispatch(ACTIONS.SELECT_TOWER_POSITION, pos.id)
         }
       } else if (state.placeMode === 'barricade') {
-        if (!hasEnoughPoints(state, commit, COSTS.BARRICADE)) 
+        if (!hasEnoughPoints(state.points, COSTS.BARRICADE)) {
+          commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
+          setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
           return
+        }
         
         const point = { x, y }
         
-        if (canPlaceBarricade(state, point)) {
+        if (canPlaceBarricade(point, state.currentPath, state.barricades, state.towers)) {
           commit(MUTATIONS.ADD_BARRICADE, {
             id: Date.now() + Math.random(),
             x: point.x,
@@ -371,8 +394,11 @@ export default {
           commit(MUTATIONS.REMOVE_POINTS, COSTS.BARRICADE)
         }
       } else if (state.placeMode === 'artillery') {
-        if (!hasEnoughPoints(state, commit, COSTS.ARTILLERY)) 
+        if (!hasEnoughPoints(state.points, COSTS.ARTILLERY)) {
+          commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
+          setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
           return
+        }
         
         commit(MUTATIONS.ADD_ARTILLERY_STRIKE, {
           id: Date.now() + Math.random(),
@@ -386,6 +412,10 @@ export default {
         
         commit(MUTATIONS.REMOVE_POINTS, COSTS.ARTILLERY)
       }
+    },
+    
+    [ACTIONS.SET_PLACE_MODE]: ({ commit }, mode) => {
+      commit(MUTATIONS.SET_PLACE_MODE, mode)
     }
   }
 }
