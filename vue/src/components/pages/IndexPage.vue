@@ -2,9 +2,14 @@
   <div class="page">
     <div class="controls">
       <div class="controls__score">Счет: {{ score }}</div>
+      <div>Комбо: x{{ combo.toFixed(2) }}</div>
+      <div>Бомбы: {{ bombs }}</div>
+      <button @click="() => setMode('manual')">Manual</button>
+      <button @click="() => setMode('auto')">Auto</button>
+      <button @click="() => setMode('laser')">Laser</button>
+      <button @click="() => useBombClick()">БОМБА</button>
       <button class="controls__button" @click="() => start()">Начать игру</button>
     </div>
-
     <BubbleGame
       :colors-count="5"
       :target-color="2"
@@ -14,41 +19,46 @@
       :bubble-size="80"
       :duration="30"
       :start-game="(cb) => registerStart(cb)"
-      @score="(val) => onScore(val)"
       @finish="(val) => onFinish(val)"
     />
   </div>
 </template>
-
 <script>
-import BubbleGame from '../ui/BubbleGame.vue'
 
+import BubbleGame from '../ui/BubbleGame.vue'
+import { mapGetters, mapMutations } from 'vuex'
 export default {
   components: { BubbleGame },
   data() {
     return {
-      score: 0,
       startHandler: null
     }
   },
+  computed: {
+    ...mapGetters(['score', 'combo', 'bombs'])
+  },
   methods: {
+    ...mapMutations(['SET_MODE', 'RESET_GAME']),
     registerStart(cb) {
       this.startHandler = cb
     },
     start() {
-      this.score = 0
+      this.RESET_GAME()
       if (this.startHandler) this.startHandler()
     },
-    onScore(val) {
-      this.score = val
+    setMode(mode) {
+      this.SET_MODE(mode)
+    },
+    useBombClick() {
+      const ok = this.$store.dispatch('useBomb')
+      if(!ok) alert('Бомб нет')
     },
     onFinish(val) {
-      alert(`Игра окончена. Итоговый счет: ${val}`)
+      alert(`Игра окончена. Итоговый счет: ${this.score}`)
     }
   }
 }
 </script>
-
 <style scoped lang="scss">
 .page {
   margin: 0;

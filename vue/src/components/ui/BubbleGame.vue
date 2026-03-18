@@ -3,14 +3,25 @@
     <div
       v-for="bubble in bubbles"
       :key="bubble.id"
-      class="bubble"
+      class="game-area__bubble"
       :style="bubbleStyle(bubble)"
-      @click.stop="() => popBubble(bubble)"
+      @click.stop="() => onBubbleClick(bubble)"
     />
+    <div
+      v-for="shot in shots"
+      :key="shot.id"
+      class="game-area__shot"
+      :style="{ left: shot.x + '%', top: shot.y + '%' }"
+    />
+    <div v-if="bombMode" 
+     class="game-area__bomb-indicator" 
+     :style="{ left: mouseX + '%', top: mouseY + '%', width: '30%', height: '30%' }">
+    </div>
   </div>
 </template>
 
 <script>
+import { mapGetters, mapActions } from 'vuex'
 export default {
   name: 'BubbleGame',
   props: {
@@ -23,38 +34,48 @@ export default {
     bubbleSize: { type: Number, default: 60 },
     duration: { type: Number, default: 30 }
   },
-  emits: ['finish', 'score'],
+  emits: ['finish'],
   data() {
     return {
       bubbles: [],
-      score: 0,
       running: false,
       spawnTimer: null,
-      lastSpawn: 0,
+      autoTimer: null,
       startTime: 0,
-      animationFrame: null
+      animationFrame: null,
+      mouseX: 0, 
+      mouseY: 0 
     }
+  },
+  computed: {
+    ...mapGetters(['mode', 'shots', 'bombMode'])
   },
   mounted() {
     this.startGame(() => this.run())
+    window.addEventListener('mousemove', (e) => this.onMouseMove(e))
   },
   beforeUnmount() {
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame)
-    }
-    if (this.spawnTimer) {
       clearInterval(this.spawnTimer)
-    }
+      clearInterval(this.autoTimer)
+      cancelAnimationFrame(this.animationFrame)
   },
   methods: {
+    ...mapActions([
+      'hitSuccess',
+      'hitFail',
+      'fallPenalty',
+      'addShot',
+      'removeShot'
+    ]),
     run() {
       this.running = true
-      this.score = 0
       this.bubbles = []
-      this.lastSpawn = performance.now()
       this.startTime = performance.now()
       const interval = 1000 / this.intensity
       this.spawnTimer = setInterval(() => this.addBubble(), interval)
+      if (this.mode === 'auto') {
+        this.autoTimer = setInterval(() => this.autoShoot(), 800)
+      }
       this.animate()
     },
     animate() {
@@ -89,27 +110,107 @@ export default {
         b.dy *= 0.99
       })
       this.bubbles = this.bubbles.filter(b => {
-        if(b.y >= 110){
-          if(b.color === this.targetColor){
-            const penalty =
-              b.size === 'large' ? -10 :
-              b.size === 'medium' ? -6 : -3
-            this.score += penalty
-            this.$emit('score', this.score)
+        if (b.y >= 110) {
+          if (b.color === this.targetColor) {
+            this.fallPenalty(b.size)
           }
           return false
         }
         return true
       })
     },
-    popBubble(bubble) {
+    explodeBomb(x, y) {
+      const radius = 15
+      const targets = this.bubbles.filter(b => {
+        const dx = b.x - x
+        const dy = b.y - y
+        return Math.hypot(dx, dy) <= radius
+      })
+      targets.forEach(b => {
+        if (b.size === 'large') {
+          this.processHit(b, 7, true) 
+        } else {
+          this.processHit(b, 0, true) 
+        }
+      })
+    },
+     onBubbleClick(bubble) {
+      this.processHit(bubble)
+    },
+    spawnChildrenCustom(bubble, count, size) {
+      const parentRadiusPx = this.sizePx(bubble.size) / 2
+      const parentRadiusPercent = parentRadiusPx / (this.$el.clientWidth / 100)
+      const spawnRadius = parentRadiusPercent * 2
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 / count) * i
+        const color =
+          i === 0
+            ? bubble.color 
+            : Math.floor(Math.random() * this.colorsCount)
+        this.bubbles.push({
+          id: crypto.randomUUID(),
+          x: bubble.x + Math.cos(angle) * spawnRadius,
+          y: bubble.y + Math.sin(angle) * spawnRadius,
+          dx: Math.cos(angle) * 0.05,
+          dy: 0.15 + Math.random() * 0.05,
+          color,
+          size
+        })
+      }
+    },
+    checkHit(x, y) {
+      if (this.bombMode) return 
+      if (!this.$el || this.$el.clientWidth === 0) return
+      if (this.bubbles.length === 0) return
+      const hitBubbles = this.bubbles.filter(b => {
+        const dx = b.x - x
+        const dy = b.y - y
+        const radiusPercent =
+          (this.sizePx(b.size) / this.$el.clientWidth) * 100 / 2
+        return Math.hypot(dx, dy) <= radiusPercent
+      })
+      if (hitBubbles.length === 0) return
+      hitBubbles.forEach(b => this.processHit(b))
+    },
+    processHit(bubble, countOverride = null, isBomb = false) {
       this.pushNearby(bubble)
-      this.spawnChildren(bubble)
-      const hit = bubble.color === this.targetColor
-      const penalty = bubble.size === 'large' ? -5 : bubble.size === 'medium' ? -3 : -1
-      this.score += hit ? this.scoreHit : penalty
-      this.$emit('score', this.score)
+      if (isBomb) {
+        if (bubble.size === 'large') {
+          this.spawnChildrenCustom(bubble, 7, 'small')
+        }
+      } else {
+        this.spawnChildren(bubble)
+      }
+      if (bubble.color === this.targetColor) {
+        this.hitSuccess(bubble.size)
+      } else {
+        if (this.mode !== 'auto') {
+          this.hitFail(bubble.size)
+        }
+      }
       this.bubbles = this.bubbles.filter(b => b.id !== bubble.id)
+    },
+    onMouseMove(e) {
+      if (!this.running) return
+      const { x, y } = this.getCoords(e)
+      this.mouseX = x
+      this.mouseY = y
+      if (this.mode === 'laser' && !this.bombMode) {
+        this.checkHit(x, y)
+      }
+    },
+    autoShoot() {
+      if (!this.running) return
+      if (this.bubbles.length === 0) return
+      const target = this.bubbles[Math.floor(Math.random() * this.bubbles.length)]
+      const x = target.x
+      const y = target.y
+      const shotId = crypto.randomUUID()
+      this.addShot({ x, y, id: shotId })
+      this.checkHit(x, y)
+      setTimeout(() => {
+        this.removeShot(shotId)
+      }, 2000)
     },
     spawnChildren(bubble){
       const count =
@@ -163,26 +264,21 @@ export default {
         b.dy += pushY * 0.03
       })
     },
+    getCoords(e) {
+      return {
+        x: (e.clientX / window.innerWidth) * 100,
+        y: (e.clientY / window.innerHeight) * 100
+      }
+    },
     onAreaClick(e) {
-      const rect = this.$el.getBoundingClientRect()
-      const clickX = e.clientX
-      const clickY = e.clientY
-      const hitBubbles = this.bubbles.filter(b => {
-        const bubbleX = rect.left + (b.x / 100) * rect.width
-        const bubbleY = rect.top + (b.y / 100) * rect.height
-        const radius = this.sizePx(b.size) / 2
-        const distance = Math.hypot(bubbleX - clickX, bubbleY - clickY)
-        return distance <= radius
-      })
-      if (hitBubbles.length === 0) {
-        this.score += this.scoreMiss
-        this.$emit('score', this.score)
+      const { x, y } = this.getCoords(e)
+      if (this.bombMode) {
+        this.explodeBomb(x, y)        
+        this.$store.commit('SET_BOMB_MODE', false) 
         return
       }
-      hitBubbles.forEach(bubble => {
-        this.popBubble(bubble)
-      })
-      this.$emit('score', this.score)
+      if (this.mode === 'laser') return
+      this.checkHit(x, y)
     },
     finishGame() {
       this.running = false
@@ -192,7 +288,7 @@ export default {
       if (this.animationFrame) {
         cancelAnimationFrame(this.animationFrame)
       }
-      this.$emit('finish', this.score)
+      this.$emit('finish')
     },
     bubbleStyle(bubble) {
       return {
@@ -216,7 +312,6 @@ export default {
   }
 }
 </script>
-
 <style scoped lang="scss">
 .game-area {
   position: fixed;
@@ -228,8 +323,7 @@ export default {
   overflow: hidden;
   cursor: crosshair;
 }
-
-.bubble {
+.game-area__bubble {
   position: absolute;
   border-radius: 50%;
   opacity: 0.9;
@@ -241,5 +335,20 @@ export default {
     transform: translate(-50%, -50%) scale(1.1);
     opacity: 1;
   }
+}
+.game-area__shot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: yellow;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.game-area__bomb-indicator {
+  position: absolute;
+  border: 2px dashed red;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 </style>
