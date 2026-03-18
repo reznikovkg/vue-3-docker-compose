@@ -353,7 +353,9 @@ export default {
         if (outside) {
             store.commit(MUTATIONS.SET_CURRENT_PIECE, null)
             if (store.state.gameActive) {
-                store.dispatch('spawnPiece')
+                store.dispatch('game/addScore', -10, { root: true }).then(
+                    () => store.dispatch('spawnPiece')
+                )
             }
         } else {
             const updatedPiece = { ...piece, x, y }
