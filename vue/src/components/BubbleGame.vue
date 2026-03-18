@@ -1,19 +1,5 @@
 <template>
   <div class="c-game">
-    <!--
-    <slot name="start">
-      <button type="button" class="c-game__start" @click="() => startGame()">
-        <slot name="start-label"></slot>
-      </button>
-    </slot>
-
-    <div class="c-game__controls">
-      <div class="c-game__time">Time: {{ timeLeft }}</div>
-      <button type="button" class="c-game__stop" @click="() => stopGame(false)">
-        Stop
-      </button>
-    </div>
-    -->
 
     <div ref="gameField" class="c-game__field" @click="(e) => handleFieldClick(e)" @mousemove="(e) => onFieldMouseMove(e)">
       <div class="c-game__topbar" @click="(e) => e.stopPropagation()">
@@ -48,18 +34,6 @@
           <span class="c-game__stopText">Стоп</span>
         </div>
       </div>
-
-      <!--
-      <button
-        v-for="bubble in bubbles"
-        :key="bubble.id"
-        type="button"
-        class="c-game__bubble"
-        :data-id="bubble.id"
-        :class="'c-game__bubble--' + bubble.color"
-        :style="{ left: bubble.x + 'px', top: bubble.y + 'px', width: bubble.r * 2 + 'px', height: bubble.r * 2 + 'px', backgroundImage: bubble.imageUrl ? 'url(' + bubble.imageUrl + ')' : 'none' }"
-      ></button>
-      -->
 
       <Bubble
         v-for="bubble in bubbles"
@@ -214,11 +188,6 @@ export default {
     scoreMiss: {
       type: Number,
       default: GAME_DEFAULTS.scoreMiss
-    },
-    // вне колбэк при старте
-    onStart: {
-      type: Function,
-      default: null
     },
     maxTime: {
       type: Number,
@@ -491,10 +460,6 @@ export default {
       this.modeState.laser.cooldownLeft = 0
       this.modeState.automat.activeLeft = 0
       this.modeState.automat.cooldownLeft = 0
-
-      if (typeof this.onStart === 'function') {
-        this.onStart()
-      }
 
       this.$emit('update:score', this.score)
 

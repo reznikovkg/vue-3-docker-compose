@@ -59,8 +59,6 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.45);
   opacity: 0.86;
 
-  // Добавить ли тень блику??!!
-
   &--blik {
     position: absolute;
     top: 15%;
