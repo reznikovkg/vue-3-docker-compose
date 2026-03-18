@@ -1,36 +1,36 @@
 export const baseElements = [
-  { id: 1, name: 'Огонь', icon: '🔥' },
-  { id: 2, name: 'Вода', icon: '💧' },
-  { id: 3, name: 'Земля', icon: '🌍' },
-  { id: 4, name: 'Воздух', icon: '💨' }
+  { id: 1, name: 'Огонь', icon: '🔥', level: 1 },
+  { id: 2, name: 'Вода', icon: '💧', level: 1 },
+  { id: 3, name: 'Земля', icon: '🌍', level: 1 },
+  { id: 4, name: 'Воздух', icon: '💨', level: 1 }
 ]
 
 export const elementsMap = {
-  1: { id: 1, name: 'Огонь', icon: '🔥' },
-  2: { id: 2, name: 'Вода', icon: '💧' },
-  3: { id: 3, name: 'Земля', icon: '🌍' },
-  4: { id: 4, name: 'Воздух', icon: '💨' },
-  5: { id: 5, name: 'Пар', icon: '💨' },
-  6: { id: 6, name: 'Грязь', icon: '💩' },
-  7: { id: 7, name: 'Лава', icon: '🌋' },
-  8: { id: 8, name: 'Туман', icon: '🌫️' },
-  10: { id: 10, name: 'Пыль', icon: '🏜️' },
-  11: { id: 11, name: 'Глина', icon: '🏺' },
-  13: { id: 13, name: 'Гейзер', icon: '⛲' },
-  14: { id: 14, name: 'Камень', icon: '🪨' },
-  15: { id: 15, name: 'Спирт', icon: '🥃' },
-  17: { id: 17, name: 'Облако', icon: '☁️' },
-  18: { id: 18, name: 'Кремень', icon: '🔪' },
-  19: { id: 19, name: 'Керамика', icon: '🍶' },
-  20: { id: 20, name: 'Лекарство', icon: '💊' },
-  22: { id: 22, name: 'Инструменты', icon: '🔧' },
-  23: { id: 23, name: 'Бактерии', icon: '🦠' },
+  1: { id: 1, name: 'Огонь', icon: '🔥', level: 1 },
+  2: { id: 2, name: 'Вода', icon: '💧', level: 1 },
+  3: { id: 3, name: 'Земля', icon: '🌍', level: 1},
+  4: { id: 4, name: 'Воздух', icon: '💨', level: 1 },
+  5: { id: 5, name: 'Пар', icon: '💨', level: 2 },
+  6: { id: 6, name: 'Грязь', icon: '💩', level: 2 },
+  7: { id: 7, name: 'Лава', icon: '🌋', level: 2 },
+  8: { id: 8, name: 'Туман', icon: '🌫️', level: 2 },
+  10: { id: 10, name: 'Пыль', icon: '🏜️', level: 2 },
+  11: { id: 11, name: 'Глина', icon: '🏺', level: 3 },
+  13: { id: 13, name: 'Гейзер', icon: '⛲', level: 3 },
+  14: { id: 14, name: 'Камень', icon: '🪨', level: 3 },
+  15: { id: 15, name: 'Спирт', icon: '🥃', level: 3 },
+  17: { id: 17, name: 'Облако', icon: '☁️', level: 3 },
+  18: { id: 18, name: 'Кремень', icon: '🔪', level: 4 },
+  19: { id: 19, name: 'Керамика', icon: '🍶', level: 4 },
+  20: { id: 20, name: 'Лекарство', icon: '💊', level: 4 },
+  22: { id: 22, name: 'Инструменты', icon: '🔧', level: 4 },
+  23: { id: 23, name: 'Бактерии', icon: '🦠', level: 4 },
 
   //элементы через крафт 3х3
-  9: { id: 9, name: 'Энергия', icon: '⚡' },
-  12: { id: 12, name: 'Дождь', icon: '🌧️' },
-  16: { id: 16, name: 'Жизнь', icon: '🧬' },
-  21: { id: 21, name: 'Душа', icon: '👻' },
+  9: { id: 9, name: 'Энергия', icon: '⚡', level: 2 },
+  12: { id: 12, name: 'Дождь', icon: '🌧️', level: 2 },
+  16: { id: 16, name: 'Жизнь', icon: '🧬', level: 3 },
+  21: { id: 21, name: 'Душа', icon: '👻', level: 4 },
 }
 
 export const recipes = [
@@ -227,4 +227,22 @@ export const findCraftRecipeByPattern = (slots) => {
   }
   
   return false
+}
+
+const BASE_TIME = 5
+
+export const getCraftTimeByLevel = (level) => {
+  return BASE_TIME * Math.pow(3, level - 1)
+}
+
+export const getMiningTime = (level) => {
+  return Math.max(1, Math.floor(BASE_TIME * Math.pow(3, level - 1)))
+}
+
+export const getCraftingTime = (level) => {
+  return Math.max(1, Math.floor(BASE_TIME * Math.pow(3, level - 1)))
+}
+
+export const getElementLevel = (id) => {
+  return elementsMap[id]?.level || 1
 }

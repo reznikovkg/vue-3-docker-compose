@@ -6,18 +6,20 @@
       <button 
         class="workspace-item__button workspace-item__button--decrease"
         @click="() => decreaseQuantity()" 
-        :disabled="item.quantity <= 1"
+        :disabled="item.quantity <= 0"
       >-</button>
       <span class="workspace-item__quantity">{{ item.quantity }}</span>
       <button 
         class="workspace-item__button workspace-item__button--increase"
         @click="() => increaseQuantity()"
+        :disabled="item.quantity >= discoveredElement.quantity"
       >+</button>
     </div>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useStore } from 'vuex'
 
 const props = defineProps(['item'])
@@ -26,6 +28,7 @@ const store = useStore()
 
 const increaseQuantity = () => store.dispatch('alchemy/increaseQuantity', { id: props.item.id })
 const decreaseQuantity = () => store.dispatch('alchemy/decreaseQuantity', { id: props.item.id })
+const discoveredElement = computed(() => store.getters['alchemy/getDiscoveredElement'](props.item.id))
 </script>
 
 <style scoped lang="scss">

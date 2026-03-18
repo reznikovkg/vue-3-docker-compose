@@ -49,7 +49,7 @@ const craftResult = computed(() => store.getters['alchemy/craftResult'])
 const canCraft = computed(() => store.getters['alchemy/canCraft'])
 
 const craftElement = () => {
-  store.dispatch('alchemy/craftElement')
+  store.dispatch('alchemy/startCraft3x3')
 }
 
 const clearCraftSlots = () => {

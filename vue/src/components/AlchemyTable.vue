@@ -1,6 +1,8 @@
 <template>
   <div class="workspace">
 
+    <EconomyPanel />
+
     <div class="workspace__craft-header">
       <button 
         class="workspace__craft-button"
@@ -33,7 +35,8 @@
     <div class="workspace__actions">
       <button 
         class="workspace__button workspace__button--mix" 
-        @click="() => mixElements()"
+        @click="() => startCrafting()"
+        :disabled="!canStartCrafting"
       >
         Смешать
       </button>
@@ -50,15 +53,26 @@
 <script setup>
 import AlchemyTableItem from './AlchemyTableItem.vue'
 import AlchemyCraftGrid from './AlchemyCraftGrid.vue'
+import EconomyPanel from './EconomyPanel.vue'
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
 const tableItems = computed(() => store.getters['alchemy/tableItems'])
+const freeWorkers = computed(() => store.getters['alchemy/freeWorkers'])
 
 const resetTable = () => store.dispatch('alchemy/resetTable')
 const mixElements = () => store.dispatch('alchemy/mixElements')
 const toggleCraftMode = () => store.dispatch('alchemy/toggleCraftMode')
+
+const canStartCrafting = computed(() => {
+  return freeWorkers.value > 0
+})
+
+const startCrafting = () => {
+  store.dispatch('alchemy/startCrafting')
+}
+
 </script>
 
 <style scoped lang="scss">

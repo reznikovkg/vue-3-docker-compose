@@ -9,6 +9,11 @@
   >
     <span class="grid-item__icon">{{ element.icon }}</span>
     <span class="grid-item__name">{{ element.name }}</span>
+    <span class="grid-item__quantity"> {{ element.quantity }}</span>
+    <div 
+      class="grid-item__mining"
+      @click.stop="() => startMining()"
+    >Добыть</div>
   </div>
 </template>
 
@@ -22,6 +27,7 @@ const store = useStore()
 const isSelected = computed(() => store.getters['alchemy/isSelected'](props.element))
 
 const selectElement = () => store.dispatch('alchemy/selectElement', props.element)
+const startMining = () => store.dispatch('alchemy/startMining', props.element.id)
 </script>
 
 <style scoped lang="scss">
@@ -56,6 +62,27 @@ const selectElement = () => store.dispatch('alchemy/selectElement', props.elemen
     font-size: 11px;
     font-weight: bold;
     text-align: center;
+  }
+
+  &__quantity {
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  &__mining {
+    width: 100%;
+    padding: 6px 0;
+    background: #fbbf24;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #1e293b;
+    
+    &:hover {
+      background: #f59e0b;
+    }
   }
 }
 </style>
