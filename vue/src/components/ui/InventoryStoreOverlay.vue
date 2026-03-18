@@ -15,7 +15,7 @@
         <button
           class="inventory-overlay__close"
           type="button"
-          @click="() => $emit('close')"
+          @click="() => emitClose()"
         >
           x
         </button>
@@ -30,7 +30,7 @@
             'inventory-overlay__switch-button--active': modeOption.id === mode,
           }"
           type="button"
-          @click="() => $emit('mode-change', modeOption.id)"
+          @click="() => emitModeChange(modeOption.id)"
         >
           {{ modeOption.label }}
         </button>
@@ -45,7 +45,7 @@
             'inventory-overlay__tab--active': tabOption.id === activeTab,
           }"
           type="button"
-          @click="() => $emit('tab-change', tabOption.id)"
+          @click="() => emitTabChange(tabOption.id)"
         >
           {{ tabOption.label }}
         </button>
@@ -99,7 +99,7 @@
               v-if="isInventoryMode && isFishTab"
               class="inventory-overlay__action inventory-overlay__action--sell"
               type="button"
-              @click="() => $emit('sell-item', item)"
+              @click="() => emitSellItem(item)"
             >
               Sell
             </button>
@@ -108,7 +108,7 @@
               class="inventory-overlay__action inventory-overlay__action--equip"
               :disabled="item.isEquipped || !item.canEquip"
               type="button"
-              @click="() => $emit('equip-item', item)"
+              @click="() => emitEquipItem(item)"
             >
               {{ item.isEquipped ? 'Equipped' : 'Equip' }}
             </button>
@@ -117,7 +117,7 @@
               class="inventory-overlay__action inventory-overlay__action--buy"
               :disabled="!item.canBuy"
               type="button"
-              @click="() => $emit('buy-item', item)"
+              @click="() => emitBuyItem(item)"
             >
               Buy
             </button>
@@ -130,7 +130,7 @@
           v-if="showBulkSell"
           class="inventory-overlay__bulk-sell"
           type="button"
-          @click="() => $emit('sell-all-fish')"
+          @click="() => emitSellAllFish()"
         >
           Sell all fish
         </button>
@@ -277,6 +277,27 @@ export default {
     window.removeEventListener('keydown', this.onWindowKeyDown)
   },
   methods: {
+    emitClose() {
+      this.$emit('close')
+    },
+    emitModeChange(modeId) {
+      this.$emit('mode-change', modeId)
+    },
+    emitTabChange(tabId) {
+      this.$emit('tab-change', tabId)
+    },
+    emitSellItem(item) {
+      this.$emit('sell-item', item)
+    },
+    emitEquipItem(item) {
+      this.$emit('equip-item', item)
+    },
+    emitBuyItem(item) {
+      this.$emit('buy-item', item)
+    },
+    emitSellAllFish() {
+      this.$emit('sell-all-fish')
+    },
     onWindowKeyDown(event) {
       if (!this.isOpen) {
         return
@@ -287,14 +308,14 @@ export default {
       }
 
       event.preventDefault()
-      this.$emit('close')
+      this.emitClose()
     },
     onBackdropClick(event) {
       if (event.target !== event.currentTarget) {
         return
       }
 
-      this.$emit('close')
+      this.emitClose()
     },
   },
 }

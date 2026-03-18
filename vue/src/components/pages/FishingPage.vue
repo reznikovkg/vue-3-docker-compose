@@ -243,6 +243,7 @@ import FishingScene from '@/components/fishing/FishingScene.vue'
 import InventoryStoreOverlay from '@/components/ui/InventoryStoreOverlay.vue'
 import LocationSelector from '@/components/fishing/LocationSelector.vue'
 import { defineConfig } from '@/utils/defineConfig'
+import { mapGetters } from 'vuex'
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game'
 const HOOKED_BOBBER_Y = 92
@@ -274,45 +275,40 @@ export default {
     }
   },
   computed: {
-    locations() {
-      return this.$store.getters['content/getLocations']
-    },
-    configWarnings() {
-      return this.$store.getters['content/getConfigWarnings']
-    },
-    money() {
-      return this.$store.getters['progress/getMoney']
-    },
-    inventoryFish() {
-      return this.$store.getters['progress/getInventoryFish']
-    },
-    boostedLocationId() {
-      return this.$store.getters['progress/getBoostedLocationId']
-    },
-    boostedCastsRemaining() {
-      return this.$store.getters['progress/getBoostedCastsRemaining']
-    },
-    inventoryRods() {
-      return this.$store.getters['progress/getInventoryRods']
-    },
-    inventoryLines() {
-      return this.$store.getters['progress/getInventoryLines']
-    },
-    inventoryBait() {
-      return this.$store.getters['progress/getInventoryBait']
-    },
-    gearDefinitions() {
-      return this.$store.getters['content/getGearDefinitions']
-    },
-    currentRodId() {
-      return this.$store.getters['progress/getCurrentRodId']
-    },
-    currentLineId() {
-      return this.$store.getters['progress/getCurrentLineId']
-    },
-    currentBaitId() {
-      return this.$store.getters['progress/getCurrentBaitId']
-    },
+    ...mapGetters('content', {
+      locations: 'getLocations',
+      configWarnings: 'getConfigWarnings',
+      gearDefinitions: 'getGearDefinitions',
+      getLocationWarnings: 'getLocationWarnings',
+      getLocationById: 'getLocationById',
+    }),
+    ...mapGetters('progress', {
+      money: 'getMoney',
+      inventoryFish: 'getInventoryFish',
+      boostedLocationId: 'getBoostedLocationId',
+      boostedCastsRemaining: 'getBoostedCastsRemaining',
+      inventoryRods: 'getInventoryRods',
+      inventoryLines: 'getInventoryLines',
+      inventoryBait: 'getInventoryBait',
+      currentRodId: 'getCurrentRodId',
+      currentLineId: 'getCurrentLineId',
+      currentBaitId: 'getCurrentBaitId',
+      selectedLocationId: 'getSelectedLocationId',
+    }),
+    ...mapGetters('gameSession', {
+      phase: 'getPhase',
+      castAnchor: 'getCastAnchor',
+      castStartedAt: 'getCastStartedAt',
+      encounter: 'getEncounter',
+      result: 'getResult',
+      minigameState: 'getMinigameState',
+      activeBarrier: 'getActiveBarrier',
+      barrierRemainingClicks: 'getBarrierRemainingClicks',
+      isBarrierBlocking: 'getIsBarrierBlocking',
+    }),
+    ...mapGetters('ui', {
+      resultPanel: 'getResultPanel',
+    }),
     inventoryGearItems() {
       return {
         rods: this.buildInventoryGearRows('rods'),
@@ -335,15 +331,12 @@ export default {
         return []
       }
 
-      return this.$store.getters['content/getLocationWarnings'](locationId)
+      return this.getLocationWarnings(locationId)
     },
     sceneWarnings() {
       return [
         ...new Set([...this.configWarnings, ...this.selectedLocationWarnings]),
       ]
-    },
-    phase() {
-      return this.$store.getters['gameSession/getPhase']
     },
     phaseMessage() {
       if (this.phase === 'waitingBite') {
@@ -365,9 +358,6 @@ export default {
     },
     canOpenInventoryOverlay() {
       return this.phase === 'idle' || this.phase === 'result'
-    },
-    castAnchor() {
-      return this.$store.getters['gameSession/getCastAnchor']
     },
     sceneBobber() {
       if (!this.selectedLocation) {
@@ -419,24 +409,12 @@ export default {
         isVisible: false,
       }
     },
-    castStartedAt() {
-      return this.$store.getters['gameSession/getCastStartedAt']
-    },
     castStartedAtLabel() {
       if (!this.castStartedAt) {
         return 'n/a'
       }
 
       return new Date(this.castStartedAt).toLocaleTimeString()
-    },
-    encounter() {
-      return this.$store.getters['gameSession/getEncounter']
-    },
-    result() {
-      return this.$store.getters['gameSession/getResult']
-    },
-    resultPanel() {
-      return this.$store.getters['ui/getResultPanel']
     },
     resultEncounter() {
       return this.result?.encounter || null
@@ -494,17 +472,12 @@ export default {
 
       return `${this.encounter.fishName} (tier ${this.encounter.tier}, diff ${this.encounter.difficultyScore})`
     },
-    selectedLocationId() {
-      return this.$store.getters['progress/getSelectedLocationId']
-    },
     selectedLocation() {
       if (!this.selectedLocationId) {
         return this.locations[0] || null
       }
 
-      return this.$store.getters['content/getLocationById'](
-        this.selectedLocationId,
-      )
+      return this.getLocationById(this.selectedLocationId)
     },
     selectedLocationName() {
       return this.selectedLocation?.name || 'none'
@@ -518,20 +491,8 @@ export default {
     equippedBaitName() {
       return this.resolveGearName('bait', this.currentBaitId)
     },
-    minigameState() {
-      return this.$store.getters['gameSession/getMinigameState']
-    },
     minigameBarriers() {
       return this.minigameState.config?.barriers || []
-    },
-    activeBarrier() {
-      return this.$store.getters['gameSession/getActiveBarrier']
-    },
-    barrierRemainingClicks() {
-      return this.$store.getters['gameSession/getBarrierRemainingClicks']
-    },
-    isBarrierBlocking() {
-      return this.$store.getters['gameSession/getIsBarrierBlocking']
     },
     isReeling() {
       return Boolean(this.minigameState.isReeling)
@@ -590,7 +551,7 @@ export default {
         return
       }
 
-      const nextPhase = this.$store.getters['gameSession/getPhase']
+      const nextPhase = this.phase
       if (nextPhase === this.lastAppliedPhase) {
         return
       }

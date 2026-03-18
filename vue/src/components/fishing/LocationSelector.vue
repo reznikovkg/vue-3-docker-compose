@@ -9,7 +9,7 @@
         'location-selector__item--boosted': location.id === boostedLocationId,
       }"
       :disabled="disabled"
-      @click="() => $emit('select', location.id)"
+      @click="() => emitSelect(location.id)"
     >
       <span class="location-selector__item-label">
         <span
@@ -61,6 +61,11 @@ export default {
     },
   },
   emits: ['select'],
+  methods: {
+    emitSelect(locationId) {
+      this.$emit('select', locationId)
+    },
+  },
 }
 </script>
 
