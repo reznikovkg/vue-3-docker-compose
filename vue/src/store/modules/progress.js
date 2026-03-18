@@ -22,6 +22,7 @@ const MUTATIONS = {
   REMOVE_INVENTORY_FISH: 'REMOVE_INVENTORY_FISH',
   CLEAR_INVENTORY_FISH: 'CLEAR_INVENTORY_FISH',
   SET_GEAR_INVENTORY_COUNT: 'SET_GEAR_INVENTORY_COUNT',
+  SET_GROUNDBAIT_INVENTORY_COUNT: 'SET_GROUNDBAIT_INVENTORY_COUNT',
   SET_BOOSTED_LOCATION_ID: 'SET_BOOSTED_LOCATION_ID',
   SET_BOOSTED_CASTS_REMAINING: 'SET_BOOSTED_CASTS_REMAINING',
 }
@@ -75,11 +76,15 @@ const getDefaultGearIdBySlot = (slot) => {
 
 const getGearDefinition = (rootGetters, slot, id) =>
   rootGetters['content/getGearBySlotAndId'](slot, id)
+const getGroundbaitDefinition = (rootGetters, id) =>
+  rootGetters['content/getGroundbaitById'](id)
 
 const getOwnedCount = (state, slot, id) => {
   const inventoryKey = getGearInventoryKey(slot)
   return Number(state[inventoryKey]?.[id] || 0)
 }
+const getOwnedGroundbaitCount = (state, id) =>
+  Number(state.inventoryGroundbait?.[id] || 0)
 
 const getRandomIntInRange = (min, max, rng = Math.random) =>
   Math.floor(rng() * (max - min + 1)) + min
@@ -139,6 +144,7 @@ const buildInitialState = () => ({
   inventoryRods: {},
   inventoryLines: {},
   inventoryBait: {},
+  inventoryGroundbait: {},
   boostedLocationId: null,
   boostedCastsRemaining: 0,
   stats: {
@@ -149,7 +155,7 @@ const buildInitialState = () => ({
 })
 
 const buildSaveState = (state) => ({
-  version: 3,
+  version: 4,
   selectedLocationId: state.selectedLocationId,
   currentRodId: state.currentRodId,
   currentLineId: state.currentLineId,
@@ -165,6 +171,7 @@ const buildSaveState = (state) => ({
   inventoryRods: state.inventoryRods,
   inventoryLines: state.inventoryLines,
   inventoryBait: state.inventoryBait,
+  inventoryGroundbait: state.inventoryGroundbait,
   boostedLocationId: state.boostedLocationId,
   boostedCastsRemaining: state.boostedCastsRemaining,
 })
@@ -190,6 +197,7 @@ export default {
     getInventoryRods: (state) => state.inventoryRods,
     getInventoryLines: (state) => state.inventoryLines,
     getInventoryBait: (state) => state.inventoryBait,
+    getInventoryGroundbait: (state) => state.inventoryGroundbait,
     getBoostedLocationId: (state) => state.boostedLocationId,
     getBoostedCastsRemaining: (state) => state.boostedCastsRemaining,
     getIsLocationBoosted: (state) => (locationId) =>
@@ -200,6 +208,7 @@ export default {
       ),
     getGearInventoryCount: (state) => (slot, id) =>
       getOwnedCount(state, slot, id),
+    getGroundbaitCount: (state) => (id) => getOwnedGroundbaitCount(state, id),
     getStats: (state) => state.stats,
     getCatchRate: (state) => {
       if (state.stats.attempts === 0) {
@@ -231,6 +240,11 @@ export default {
       state.inventoryBait =
         payload.inventoryBait && typeof payload.inventoryBait === 'object'
           ? payload.inventoryBait
+          : {}
+      state.inventoryGroundbait =
+        payload.inventoryGroundbait &&
+        typeof payload.inventoryGroundbait === 'object'
+          ? payload.inventoryGroundbait
           : {}
       state.boostedLocationId = payload.boostedLocationId ?? null
       state.boostedCastsRemaining = payload.boostedCastsRemaining ?? 0
@@ -297,6 +311,19 @@ export default {
       }
 
       state[inventoryKey] = nextInventory
+    },
+    [MUTATIONS.SET_GROUNDBAIT_INVENTORY_COUNT]: (state, payload) => {
+      const nextInventory = {
+        ...state.inventoryGroundbait,
+      }
+
+      if (payload.count > 0) {
+        nextInventory[payload.id] = payload.count
+      } else {
+        delete nextInventory[payload.id]
+      }
+
+      state.inventoryGroundbait = nextInventory
     },
     [MUTATIONS.SET_BOOSTED_LOCATION_ID]: (state, locationId) => {
       state.boostedLocationId = locationId
@@ -515,6 +542,60 @@ export default {
           { root: true },
         ).then(() => true),
       )
+    },
+    buyGroundbaitItem({ state, commit, dispatch, rootGetters }, groundbaitId) {
+      const definition = getGroundbaitDefinition(rootGetters, groundbaitId)
+      if (!definition) {
+        return Promise.resolve(false)
+      }
+
+      const price = Number(definition.price || 0)
+      if (state.money < price) {
+        return dispatch(
+          'ui/pushNotification',
+          {
+            type: 'error',
+            message: `Not enough money for ${definition.name}.`,
+          },
+          { root: true },
+        ).then(() => false)
+      }
+
+      const usesPerPurchase = Number(definition.usesPerPurchase || 0)
+      const ownedCount = getOwnedGroundbaitCount(state, definition.id)
+      commit(MUTATIONS.SPEND_MONEY, price)
+      commit(MUTATIONS.SET_GROUNDBAIT_INVENTORY_COUNT, {
+        id: definition.id,
+        count: ownedCount + usesPerPurchase,
+      })
+
+      return dispatch('persistProgress').then(() =>
+        dispatch(
+          'ui/pushNotification',
+          {
+            type: 'success',
+            message: `Bought ${definition.name} for ${price}. (+${usesPerPurchase} throws)`,
+          },
+          { root: true },
+        ).then(() => true),
+      )
+    },
+    consumeGroundbaitUse({ state, commit, dispatch }, groundbaitId) {
+      if (!groundbaitId) {
+        return Promise.resolve(false)
+      }
+
+      const ownedCount = getOwnedGroundbaitCount(state, groundbaitId)
+      if (ownedCount <= 0) {
+        return Promise.resolve(false)
+      }
+
+      commit(MUTATIONS.SET_GROUNDBAIT_INVENTORY_COUNT, {
+        id: groundbaitId,
+        count: ownedCount - 1,
+      })
+
+      return dispatch('persistProgress').then(() => true)
     },
     equipGearItem({ state, commit, dispatch, rootGetters }, payload) {
       const slot = payload?.slot

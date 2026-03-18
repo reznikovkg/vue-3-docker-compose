@@ -1,5 +1,5 @@
 const SAVE_KEY = 'fishing_game_save_v1'
-const SAVE_VERSION = 3
+const SAVE_VERSION = 4
 const DEFAULT_ROD_ID = 'spinning'
 const DEFAULT_LINE_ID = 'monofilament'
 const DEFAULT_BAIT_ID = 'worm'
@@ -21,6 +21,7 @@ const buildDefaultSaveState = () => ({
   inventoryRods: {},
   inventoryLines: {},
   inventoryBait: {},
+  inventoryGroundbait: {},
   boostedLocationId: null,
   boostedCastsRemaining: 0,
 })
@@ -97,7 +98,7 @@ const normalizeInventoryMap = (payload) => {
   }, {})
 }
 
-const normalizeSaveStateV3 = (payload) => {
+const normalizeSaveStateV4 = (payload) => {
   const selectedLocationId =
     typeof payload.selectedLocationId === 'string'
       ? payload.selectedLocationId
@@ -142,11 +143,20 @@ const normalizeSaveStateV3 = (payload) => {
     inventoryRods: normalizeInventoryMap(payload.inventoryRods),
     inventoryLines: normalizeInventoryMap(payload.inventoryLines),
     inventoryBait: normalizeInventoryMap(payload.inventoryBait),
+    inventoryGroundbait: normalizeInventoryMap(payload.inventoryGroundbait),
     boostedLocationId:
       typeof payload.boostedLocationId === 'string'
         ? payload.boostedLocationId
         : null,
     boostedCastsRemaining: toSafeNumber(payload.boostedCastsRemaining),
+  }
+}
+
+const normalizeSaveStateV3 = (payload) => {
+  const v4State = normalizeSaveStateV4(payload)
+  return {
+    ...v4State,
+    inventoryGroundbait: {},
   }
 }
 
@@ -156,6 +166,10 @@ const normalizeSaveState = (payload) => {
   }
 
   if (payload.version === SAVE_VERSION) {
+    return normalizeSaveStateV4(payload)
+  }
+
+  if (payload.version === 3) {
     return normalizeSaveStateV3(payload)
   }
 

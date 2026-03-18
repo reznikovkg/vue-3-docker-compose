@@ -18,6 +18,15 @@
           @load="() => (backgroundImageFailed = false)"
           @error="() => (backgroundImageFailed = true)"
         />
+        <div
+          v-if="hasGroundbaitArea"
+          class="fishing-scene__groundbait-area"
+          :style="groundbaitAreaStyle"
+        >
+          <span class="fishing-scene__groundbait-label">
+            {{ groundbaitAreaLabel }}
+          </span>
+        </div>
         <BobberView
           v-if="showBobber"
           :anchor-position="bobber.anchorPosition"
@@ -55,6 +64,10 @@ export default {
       type: Object,
       default: null,
     },
+    groundbaitArea: {
+      type: Object,
+      default: null,
+    },
   },
   emits: ['cast'],
   data() {
@@ -82,6 +95,37 @@ export default {
     },
     showWaterOverlay() {
       return !this.hasRenderableBackgroundImage
+    },
+    hasGroundbaitArea() {
+      const area = this.groundbaitArea
+      return Boolean(
+        area &&
+        Number.isFinite(area.center?.x) &&
+        Number.isFinite(area.center?.y) &&
+        Number.isFinite(area.radiusPct) &&
+        area.radiusPct > 0,
+      )
+    },
+    groundbaitAreaStyle() {
+      if (!this.hasGroundbaitArea) {
+        return {}
+      }
+
+      const diameter = Number((this.groundbaitArea.radiusPct * 2).toFixed(2))
+      return {
+        left: `${this.groundbaitArea.center.x}%`,
+        top: `${this.groundbaitArea.center.y}%`,
+        width: `${diameter}%`,
+        height: `${diameter}%`,
+      }
+    },
+    groundbaitAreaLabel() {
+      if (!this.hasGroundbaitArea) {
+        return ''
+      }
+
+      const castsRemaining = Number(this.groundbaitArea.castsRemaining || 0)
+      return `${this.groundbaitArea.baitName} | Tier ${this.groundbaitArea.tier} | ${castsRemaining} casts remain`
     },
     showBobber() {
       return Boolean(
@@ -197,6 +241,37 @@ export default {
     position: absolute;
     right: 0;
     top: 45%;
+  }
+
+  &__groundbait-area {
+    align-items: center;
+    background: rgba(232, 193, 84, 0.18);
+    border: 2px dashed rgba(255, 220, 120, 0.88);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(52, 32, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    top: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  &__groundbait-label {
+    background: rgba(15, 20, 29, 0.84);
+    border-radius: 8px;
+    color: #ecf2fb;
+    font-size: 11px;
+    opacity: 0;
+    padding: 4px 6px;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 120ms ease;
+    white-space: nowrap;
+  }
+
+  &__groundbait-area:hover &__groundbait-label {
+    opacity: 1;
   }
 
   &__caption {

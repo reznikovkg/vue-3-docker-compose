@@ -9,6 +9,7 @@ const buildInitialState = () => ({
   fishDefinitions: GAME_CONFIG.fishDefinitions,
   fishTables: GAME_CONFIG.fishTables,
   gearDefinitions: GAME_CONFIG.gearDefinitions,
+  groundbaitDefinitions: GAME_CONFIG.groundbaitDefinitions,
   tuning: GAME_CONFIG.tuning,
 })
 
@@ -22,6 +23,7 @@ export default {
     getFishDefinitions: (state) => state.fishDefinitions,
     getFishTables: (state) => state.fishTables,
     getGearDefinitions: (state) => state.gearDefinitions,
+    getGroundbaitDefinitions: (state) => state.groundbaitDefinitions,
     getGearBySlotAndId: (state) => (slot, id) => {
       const slotItems = state.gearDefinitions?.[slot]
       if (!Array.isArray(slotItems)) {
@@ -29,6 +31,10 @@ export default {
       }
 
       return slotItems.find((item) => item.id === id) || null
+    },
+    getGroundbaitById: (state) => (groundbaitId) => {
+      const definitions = state.groundbaitDefinitions || []
+      return definitions.find((item) => item.id === groundbaitId) || null
     },
     getTuning: (state) => state.tuning,
     getLocationById: (state) => (locationId) =>
@@ -128,6 +134,7 @@ export default {
       state.fishDefinitions = payload.fishDefinitions
       state.fishTables = payload.fishTables
       state.gearDefinitions = payload.gearDefinitions
+      state.groundbaitDefinitions = payload.groundbaitDefinitions
       state.tuning = payload.tuning
     },
   },

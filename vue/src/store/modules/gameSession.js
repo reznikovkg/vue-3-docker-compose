@@ -14,12 +14,20 @@ let biteTimeoutId = null
 let biteCycleToken = 0
 let rafId = null
 let rafCycleToken = 0
+const GROUNDBAIT_BASE_RADIUS_PCT = 10
+const GROUNDBAIT_RADIUS_MULTIPLIER_PER_TIER = 1.1
+const GROUNDBAIT_MAX_TIER = 5
+const GROUNDBAIT_BASE_CASTS_REMAINING = 5
+const GROUNDBAIT_CAST_BONUS_PER_TIER_STEP = 1
+const GROUNDBAIT_TIER_WEIGHT_STEP = 0.2
 
 const MUTATIONS = {
   RESET_SESSION: 'RESET_SESSION',
   SET_ACTIVE_LOCATION_ID: 'SET_ACTIVE_LOCATION_ID',
   SET_PHASE: 'SET_PHASE',
   START_CAST: 'START_CAST',
+  UPSERT_GROUNDBAIT_AREA: 'UPSERT_GROUNDBAIT_AREA',
+  REMOVE_GROUNDBAIT_AREA: 'REMOVE_GROUNDBAIT_AREA',
   SET_ENCOUNTER: 'SET_ENCOUNTER',
   SET_MINIGAME_STATE: 'SET_MINIGAME_STATE',
   SET_RESULT: 'SET_RESULT',
@@ -43,6 +51,7 @@ const buildInitialState = () => ({
   activeLocationId: null,
   castStartedAt: null,
   castAnchor: null,
+  groundbaitAreasByLocation: {},
   encounter: null,
   minigame: buildInitialMinigameState(),
   result: null,
@@ -50,6 +59,7 @@ const buildInitialState = () => ({
 
 const getRandomInRange = (min, max) => min + Math.random() * (max - min)
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+const roundValue = (value, precision = 2) => Number(value.toFixed(precision))
 const normalizeCastAnchor = (castAnchor) => {
   if (
     !castAnchor ||
@@ -60,8 +70,103 @@ const normalizeCastAnchor = (castAnchor) => {
   }
 
   return {
-    x: Number(clamp(castAnchor.x, 0, 100).toFixed(2)),
-    y: Number(clamp(castAnchor.y, 0, 100).toFixed(2)),
+    x: roundValue(clamp(castAnchor.x, 0, 100)),
+    y: roundValue(clamp(castAnchor.y, 0, 100)),
+  }
+}
+const getGroundbaitAreaByLocationId = (state, locationId) => {
+  if (!locationId) {
+    return null
+  }
+
+  return state.groundbaitAreasByLocation?.[locationId] || null
+}
+const isAnchorInsideGroundbaitArea = (anchor, area) => {
+  if (
+    !anchor ||
+    !area ||
+    !Number.isFinite(anchor.x) ||
+    !Number.isFinite(anchor.y) ||
+    !Number.isFinite(area.center?.x) ||
+    !Number.isFinite(area.center?.y) ||
+    !Number.isFinite(area.radiusPct) ||
+    area.radiusPct <= 0
+  ) {
+    return false
+  }
+
+  const dx = anchor.x - area.center.x
+  const dy = anchor.y - area.center.y
+  return dx * dx + dy * dy <= area.radiusPct * area.radiusPct
+}
+const buildNewGroundbaitArea = (definition, anchor) => ({
+  baitId: definition.id,
+  baitName: definition.name,
+  targetFishId: definition.targetFishId,
+  tier: 1,
+  center: anchor,
+  radiusPct: GROUNDBAIT_BASE_RADIUS_PCT,
+  castsRemaining: GROUNDBAIT_BASE_CASTS_REMAINING,
+})
+const getNextGroundbaitArea = (currentArea, definition, anchor) => {
+  if (!currentArea) {
+    return buildNewGroundbaitArea(definition, anchor)
+  }
+
+  if (currentArea.baitId !== definition.id) {
+    return buildNewGroundbaitArea(definition, anchor)
+  }
+
+  if (!isAnchorInsideGroundbaitArea(anchor, currentArea)) {
+    return buildNewGroundbaitArea(definition, anchor)
+  }
+
+  const canTierUp = currentArea.tier < GROUNDBAIT_MAX_TIER
+  const nextTier = canTierUp ? currentArea.tier + 1 : currentArea.tier
+  const nextRadius = canTierUp
+    ? roundValue(currentArea.radiusPct * GROUNDBAIT_RADIUS_MULTIPLIER_PER_TIER)
+    : currentArea.radiusPct
+  const castBonus = canTierUp ? GROUNDBAIT_CAST_BONUS_PER_TIER_STEP : 0
+
+  return {
+    ...currentArea,
+    tier: nextTier,
+    center: anchor,
+    radiusPct: nextRadius,
+    castsRemaining: currentArea.castsRemaining + castBonus,
+  }
+}
+const consumeGroundbaitCastFromArea = (area) => {
+  if (!area) {
+    return null
+  }
+
+  const remaining = Math.max(0, Number(area.castsRemaining || 0) - 1)
+  if (remaining <= 0) {
+    return null
+  }
+
+  return {
+    ...area,
+    castsRemaining: remaining,
+  }
+}
+const buildGroundbaitWeightMultipliers = (castAnchor, area) => {
+  if (!isAnchorInsideGroundbaitArea(castAnchor, area)) {
+    return null
+  }
+
+  const tier = Math.max(
+    1,
+    Math.min(Number(area.tier || 1), GROUNDBAIT_MAX_TIER),
+  )
+  const multiplier = roundValue(1 + (tier - 1) * GROUNDBAIT_TIER_WEIGHT_STEP)
+  if (!area.targetFishId) {
+    return null
+  }
+
+  return {
+    [area.targetFishId]: multiplier,
   }
 }
 const getDurabilityFailReason = (encounter, rng = Math.random) => {
@@ -141,6 +246,11 @@ export default {
     getActiveLocationId: (state) => state.activeLocationId,
     getCastStartedAt: (state) => state.castStartedAt,
     getCastAnchor: (state) => state.castAnchor,
+    getGroundbaitAreasByLocation: (state) => state.groundbaitAreasByLocation,
+    getGroundbaitAreaByLocation: (state) => (locationId) =>
+      getGroundbaitAreaByLocationId(state, locationId),
+    getActiveGroundbaitArea: (state) =>
+      getGroundbaitAreaByLocationId(state, state.activeLocationId),
     getEncounter: (state) => state.encounter,
     getMinigameState: (state) => state.minigame,
     getActiveBarrier: (state) =>
@@ -167,6 +277,7 @@ export default {
       state.activeLocationId = initialState.activeLocationId
       state.castStartedAt = initialState.castStartedAt
       state.castAnchor = initialState.castAnchor
+      state.groundbaitAreasByLocation = initialState.groundbaitAreasByLocation
       state.encounter = initialState.encounter
       state.minigame = initialState.minigame
       state.result = initialState.result
@@ -189,6 +300,19 @@ export default {
       state.result = null
       state.encounter = null
       state.minigame = buildInitialMinigameState()
+    },
+    [MUTATIONS.UPSERT_GROUNDBAIT_AREA]: (state, payload) => {
+      state.groundbaitAreasByLocation = {
+        ...state.groundbaitAreasByLocation,
+        [payload.locationId]: payload.area,
+      }
+    },
+    [MUTATIONS.REMOVE_GROUNDBAIT_AREA]: (state, locationId) => {
+      const nextAreas = {
+        ...state.groundbaitAreasByLocation,
+      }
+      delete nextAreas[locationId]
+      state.groundbaitAreasByLocation = nextAreas
     },
     [MUTATIONS.SET_ENCOUNTER]: (state, encounter) => {
       state.encounter = encounter
@@ -228,6 +352,7 @@ export default {
         timestamp: Date.now(),
         castAnchor: normalizeCastAnchor(payload.castAnchor),
       })
+      dispatch('consumeGroundbaitAreaCast', state.activeLocationId) // synchronous action body; immediate local state update
       dispatch('progress/consumeLocationBoostCast', state.activeLocationId, {
         root: true,
       }) // Promise-returning action; fire-and-forget is intentional
@@ -235,6 +360,86 @@ export default {
       dispatch('scheduleBite', {
         cycleToken: currentCycleToken,
       }) // synchronous action body; schedules timeout-driven flow
+      return true
+    },
+    throwGroundbait({ state, rootGetters, commit, dispatch }, payload = {}) {
+      if (state.phase !== PHASES.IDLE && state.phase !== PHASES.RESULT) {
+        return Promise.resolve(false)
+      }
+
+      if (!state.activeLocationId) {
+        return Promise.resolve(false)
+      }
+
+      const baitId = payload?.baitId
+      const castAnchor = normalizeCastAnchor(payload?.castAnchor)
+      if (!baitId || !castAnchor) {
+        return Promise.resolve(false)
+      }
+
+      const definition = rootGetters['content/getGroundbaitById'](baitId)
+      if (!definition) {
+        return Promise.resolve(false)
+      }
+
+      return dispatch('progress/consumeGroundbaitUse', baitId, {
+        root: true,
+      }).then((didConsume) => {
+        if (!didConsume) {
+          return dispatch(
+            'ui/pushNotification',
+            {
+              type: 'error',
+              message: `${definition.name} is out of stock.`,
+            },
+            { root: true },
+          ).then(() => false)
+        }
+
+        const currentArea = getGroundbaitAreaByLocationId(
+          state,
+          state.activeLocationId,
+        )
+        const nextArea = getNextGroundbaitArea(
+          currentArea,
+          definition,
+          castAnchor,
+        )
+        commit(MUTATIONS.UPSERT_GROUNDBAIT_AREA, {
+          locationId: state.activeLocationId,
+          area: nextArea,
+        })
+
+        return dispatch(
+          'ui/pushNotification',
+          {
+            type: 'success',
+            message: `${definition.name} deployed.`,
+          },
+          { root: true },
+        ).then(() => true)
+      })
+    },
+    consumeGroundbaitAreaCast({ state, commit }, locationId) {
+      if (!locationId) {
+        return false
+      }
+
+      const currentArea = getGroundbaitAreaByLocationId(state, locationId)
+      if (!currentArea) {
+        return false
+      }
+
+      const nextArea = consumeGroundbaitCastFromArea(currentArea)
+      if (!nextArea) {
+        commit(MUTATIONS.REMOVE_GROUNDBAIT_AREA, locationId)
+        return true
+      }
+
+      commit(MUTATIONS.UPSERT_GROUNDBAIT_AREA, {
+        locationId,
+        area: nextArea,
+      })
       return true
     },
     scheduleBite({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -270,11 +475,20 @@ export default {
       const fishTables = rootGetters['content/getFishTables']
       const fishDefinitions = rootGetters['content/getFishDefinitions']
       const gearContext = buildGearContext(rootGetters)
+      const groundbaitArea = getGroundbaitAreaByLocationId(
+        state,
+        state.activeLocationId,
+      )
+      const fishWeightMultipliers = buildGroundbaitWeightMultipliers(
+        state.castAnchor,
+        groundbaitArea,
+      )
       const rolledEncounter = rollEncounter(
         location,
         fishTables,
         fishDefinitions,
         gearContext,
+        fishWeightMultipliers,
       )
       if (!rolledEncounter) {
         commit(MUTATIONS.SET_PHASE, PHASES.IDLE)

@@ -104,7 +104,7 @@
               Sell
             </button>
             <button
-              v-else-if="isInventoryMode"
+              v-else-if="isInventoryMode && activeTab !== 'groundbait'"
               class="inventory-overlay__action inventory-overlay__action--equip"
               :disabled="item.isEquipped || !item.canEquip"
               type="button"
@@ -145,6 +145,7 @@ const INVENTORY_TABS = [
   { id: 'rods', label: 'Rods' },
   { id: 'lines', label: 'Lines' },
   { id: 'bait', label: 'Bait' },
+  { id: 'groundbait', label: 'Groundbait' },
 ]
 
 const STORE_TABS = INVENTORY_TABS.filter((tab) => tab.id !== 'fish')
@@ -183,6 +184,7 @@ export default {
         rods: [],
         lines: [],
         bait: [],
+        groundbait: [],
       }),
     },
     storeGearItems: {
@@ -191,6 +193,7 @@ export default {
         rods: [],
         lines: [],
         bait: [],
+        groundbait: [],
       }),
     },
   },

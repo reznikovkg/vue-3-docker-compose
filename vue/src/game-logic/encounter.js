@@ -19,6 +19,15 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 const rollRange = (range, rng) =>
   roundValue(getRandomInRange(range[0], range[1], rng))
 
+const getFishWeightMultiplier = (fishWeightMultipliers, fishId) => {
+  const rawMultiplier = Number(fishWeightMultipliers?.[fishId])
+  if (!Number.isFinite(rawMultiplier) || rawMultiplier <= 0) {
+    return 1
+  }
+
+  return rawMultiplier
+}
+
 const pickWeightedEntry = (weightedEntries, rng) => {
   if (!weightedEntries.length) {
     return null
@@ -82,7 +91,11 @@ const computeDifficulty = (encounter, location = null, gearContext = null) => {
   return roundValue(baseScore * locationMultiplier * gearMultiplier)
 }
 
-const buildWeightedTable = (table, gearContext = null) => {
+const buildWeightedTable = (
+  table,
+  gearContext = null,
+  fishWeightMultipliers = null,
+) => {
   if (!Array.isArray(table) || !table.length) {
     return []
   }
@@ -93,9 +106,17 @@ const buildWeightedTable = (table, gearContext = null) => {
     const rodAffinity = getGearAffinityMultiplier(gearContext?.rod, fishId)
     const lineAffinity = getGearAffinityMultiplier(gearContext?.line, fishId)
     const baitAffinity = getGearAffinityMultiplier(gearContext?.bait, fishId)
+    const fishWeightMultiplier = getFishWeightMultiplier(
+      fishWeightMultipliers,
+      fishId,
+    )
     const adjustedWeight = Math.max(
       0,
-      baseWeight * rodAffinity * lineAffinity * baitAffinity,
+      baseWeight *
+        rodAffinity *
+        lineAffinity *
+        baitAffinity *
+        fishWeightMultiplier,
     )
 
     return {
@@ -123,6 +144,7 @@ const rollEncounter = (
   fishTables,
   fishDefinitions,
   gearContext = null,
+  fishWeightMultipliers = null,
   rng = Math.random,
 ) => {
   if (!location) {
@@ -130,7 +152,7 @@ const rollEncounter = (
   }
 
   const rawTable = fishTables?.[location.fishTableId] || []
-  const table = buildWeightedTable(rawTable, gearContext)
+  const table = buildWeightedTable(rawTable, gearContext, fishWeightMultipliers)
   const weightedEntry = pickWeightedEntry(table, rng)
   if (!weightedEntry) {
     return null
