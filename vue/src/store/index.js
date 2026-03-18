@@ -37,6 +37,6 @@ export default createStore({
     },
   },
   modules: {
-    list
+    list,
   }
 })
