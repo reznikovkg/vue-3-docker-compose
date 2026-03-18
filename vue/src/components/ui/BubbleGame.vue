@@ -322,8 +322,8 @@ export default {
   background-color: #979ccc;
   overflow: hidden;
   cursor: crosshair;
-}
-.game-area__bubble {
+
+&__bubble {
   position: absolute;
   border-radius: 50%;
   opacity: 0.9;
@@ -336,7 +336,7 @@ export default {
     opacity: 1;
   }
 }
-.game-area__shot {
+&__shot {
   position: absolute;
   width: 10px;
   height: 10px;
@@ -344,11 +344,12 @@ export default {
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
-.game-area__bomb-indicator {
+ &__bomb-indicator {
   position: absolute;
   border: 2px dashed red;
   border-radius: 50%;
   pointer-events: none;
   transform: translate(-50%, -50%);
+}
 }
 </style>
