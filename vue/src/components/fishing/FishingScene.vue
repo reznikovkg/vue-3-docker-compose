@@ -35,6 +35,13 @@
           :progress="bobber.progress"
           :target-position="bobber.targetPosition"
         />
+        <div
+          v-if="showLandingNetBadge && bobberPosition"
+          class="fishing-scene__landing-net-badge"
+          :style="landingNetBadgeStyle"
+        >
+          Use landing net
+        </div>
         <div v-if="showWaterOverlay" class="fishing-scene__water"></div>
         <div v-if="showFallbackNote" class="fishing-scene__fallback-note">
           {{ fallbackNote }}
@@ -67,6 +74,10 @@ export default {
     groundbaitArea: {
       type: Object,
       default: null,
+    },
+    showLandingNetBadge: {
+      type: Boolean,
+      default: false,
     },
   },
   emits: ['cast'],
@@ -131,6 +142,41 @@ export default {
       return Boolean(
         this.bobber?.isVisible && this.hasRenderableBackgroundImage,
       )
+    },
+    bobberPosition() {
+      if (!this.showBobber) {
+        return null
+      }
+
+      const mode = this.bobber?.mode
+      if (mode !== 'hooked') {
+        return this.bobber.anchorPosition
+      }
+
+      const progress = Math.min(
+        Math.max(Number(this.bobber?.progress || 0), 0),
+        1,
+      )
+      return {
+        x:
+          this.bobber.anchorPosition.x +
+          (this.bobber.targetPosition.x - this.bobber.anchorPosition.x) *
+            progress,
+        y:
+          this.bobber.anchorPosition.y +
+          (this.bobber.targetPosition.y - this.bobber.anchorPosition.y) *
+            progress,
+      }
+    },
+    landingNetBadgeStyle() {
+      if (!this.bobberPosition) {
+        return {}
+      }
+
+      return {
+        left: `${this.bobberPosition.x}%`,
+        top: `${this.bobberPosition.y}%`,
+      }
     },
     locationName() {
       return this.location?.name || 'Unknown location'
@@ -286,6 +332,23 @@ export default {
       tokens.$fishing-scene-caption-padding-x;
     position: absolute;
     text-transform: uppercase;
+  }
+
+  &__landing-net-badge {
+    background: rgba(12, 24, 37, 0.88);
+    border: 1px solid rgba(244, 217, 134, 0.9);
+    border-radius: 999px;
+    color: #f6de9f;
+    font-size: 11px;
+    font-weight: 700;
+    left: 0;
+    letter-spacing: 0.02em;
+    padding: 4px 9px;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    transform: translate(-50%, -170%);
+    z-index: 4;
   }
 
   &__fallback-note {

@@ -145,6 +145,7 @@ const INVENTORY_TABS = [
   { id: 'rods', label: 'Rods' },
   { id: 'lines', label: 'Lines' },
   { id: 'bait', label: 'Bait' },
+  { id: 'landingNets', label: 'Landing Nets' },
   { id: 'groundbait', label: 'Groundbait' },
 ]
 
@@ -184,6 +185,7 @@ export default {
         rods: [],
         lines: [],
         bait: [],
+        landingNets: [],
         groundbait: [],
       }),
     },
@@ -193,6 +195,7 @@ export default {
         rods: [],
         lines: [],
         bait: [],
+        landingNets: [],
         groundbait: [],
       }),
     },

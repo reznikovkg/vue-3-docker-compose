@@ -1,5 +1,5 @@
 const SAVE_KEY = 'fishing_game_save_v1'
-const SAVE_VERSION = 4
+const SAVE_VERSION = 5
 const DEFAULT_ROD_ID = 'spinning'
 const DEFAULT_LINE_ID = 'monofilament'
 const DEFAULT_BAIT_ID = 'worm'
@@ -10,6 +10,7 @@ const buildDefaultSaveState = () => ({
   currentRodId: DEFAULT_ROD_ID,
   currentLineId: DEFAULT_LINE_ID,
   currentBaitId: DEFAULT_BAIT_ID,
+  currentLandingNetId: null,
   money: 0,
   stats: {
     attempts: 0,
@@ -22,6 +23,7 @@ const buildDefaultSaveState = () => ({
   inventoryLines: {},
   inventoryBait: {},
   inventoryGroundbait: {},
+  inventoryLandingNets: {},
   boostedLocationId: null,
   boostedCastsRemaining: 0,
 })
@@ -117,6 +119,10 @@ const normalizeSaveStateV4 = (payload) => {
     typeof payload.currentBaitId === 'string'
       ? payload.currentBaitId
       : DEFAULT_BAIT_ID
+  const currentLandingNetId =
+    typeof payload.currentLandingNetId === 'string'
+      ? payload.currentLandingNetId
+      : null
   const catchLog = Array.isArray(payload.catchLog)
     ? payload.catchLog.filter((item) => item && typeof item === 'object')
     : []
@@ -132,6 +138,7 @@ const normalizeSaveStateV4 = (payload) => {
     currentRodId,
     currentLineId,
     currentBaitId,
+    currentLandingNetId,
     money: toSafeNumber(payload.money),
     stats: {
       attempts: toSafeNumber(payload.stats?.attempts),
@@ -144,6 +151,7 @@ const normalizeSaveStateV4 = (payload) => {
     inventoryLines: normalizeInventoryMap(payload.inventoryLines),
     inventoryBait: normalizeInventoryMap(payload.inventoryBait),
     inventoryGroundbait: normalizeInventoryMap(payload.inventoryGroundbait),
+    inventoryLandingNets: normalizeInventoryMap(payload.inventoryLandingNets),
     boostedLocationId:
       typeof payload.boostedLocationId === 'string'
         ? payload.boostedLocationId
@@ -157,6 +165,17 @@ const normalizeSaveStateV3 = (payload) => {
   return {
     ...v4State,
     inventoryGroundbait: {},
+    inventoryLandingNets: {},
+    currentLandingNetId: null,
+  }
+}
+
+const normalizeSaveStateV4AsV5 = (payload) => {
+  const v5State = normalizeSaveStateV4(payload)
+  return {
+    ...v5State,
+    inventoryLandingNets: {},
+    currentLandingNetId: null,
   }
 }
 
@@ -171,6 +190,10 @@ const normalizeSaveState = (payload) => {
 
   if (payload.version === 3) {
     return normalizeSaveStateV3(payload)
+  }
+
+  if (payload.version === 4) {
+    return normalizeSaveStateV4AsV5(payload)
   }
 
   return null

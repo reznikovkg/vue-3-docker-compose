@@ -20,6 +20,7 @@ const GROUNDBAIT_MAX_TIER = 5
 const GROUNDBAIT_BASE_CASTS_REMAINING = 5
 const GROUNDBAIT_CAST_BONUS_PER_TIER_STEP = 1
 const GROUNDBAIT_TIER_WEIGHT_STEP = 0.2
+const LANDING_NET_MIN_PROGRESS = 0.825
 
 const MUTATIONS = {
   RESET_SESSION: 'RESET_SESSION',
@@ -176,6 +177,33 @@ const getDurabilityFailReason = (encounter, rng = Math.random) => {
   }
 
   return 'line_snapped'
+}
+const canUseLandingNetForMinigame = (state, rootGetters) => {
+  if (state.phase !== PHASES.MINIGAME) {
+    return false
+  }
+
+  const encounterSize = Number(state.encounter?.size)
+  if (!Number.isFinite(encounterSize)) {
+    return false
+  }
+
+  const greenProgress = Number(state.minigame?.greenProgress || 0)
+  if (greenProgress < LANDING_NET_MIN_PROGRESS) {
+    return false
+  }
+
+  const landingNetId = rootGetters['progress/getCurrentLandingNetId']
+  if (!landingNetId) {
+    return false
+  }
+
+  const landingNet = rootGetters['content/getLandingNetById'](landingNetId)
+  if (!landingNet) {
+    return false
+  }
+
+  return true
 }
 
 const clearBiteTimeout = () => {
@@ -334,6 +362,26 @@ export default {
     },
     enterPhase({ commit }, phase) {
       commit(MUTATIONS.SET_PHASE, phase)
+    },
+    attemptLandingNetCatch({ state, rootGetters, dispatch }) {
+      if (!canUseLandingNetForMinigame(state, rootGetters)) {
+        return Promise.resolve(false)
+      }
+
+      const encounterSize = Number(state.encounter?.size || 0)
+      const landingNetId = rootGetters['progress/getCurrentLandingNetId']
+      const landingNet = rootGetters['content/getLandingNetById'](landingNetId)
+      const capacityKg = Number(landingNet?.capacityKg || 0)
+      if (encounterSize <= capacityKg) {
+        return dispatch('resolveMinigame', {
+          status: 'success',
+          reason: 'landing_net',
+        }).then(() => true)
+      }
+
+      return dispatch('progress/consumeEquippedLandingNetOnBreak', null, {
+        root: true,
+      }).then(() => false)
     },
     startCast({ state, commit, dispatch }, payload = {}) {
       if (state.phase !== PHASES.IDLE && state.phase !== PHASES.RESULT) {

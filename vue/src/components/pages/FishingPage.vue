@@ -17,6 +17,7 @@
           :bobber="sceneBobber"
           :groundbait-area="activeGroundbaitArea"
           :location="selectedLocation"
+          :show-landing-net-badge="showLandingNetBadge"
           @cast="(castAnchor) => onSceneCast(castAnchor)"
         />
       </div>
@@ -91,6 +92,10 @@
           <div class="fishing-page__status-row">
             <dt>Bait</dt>
             <dd>{{ equippedBaitName }}</dd>
+          </div>
+          <div class="fishing-page__status-row">
+            <dt>Landing net</dt>
+            <dd>{{ equippedLandingNetName }}</dd>
           </div>
         </dl>
         <section
@@ -323,6 +328,7 @@ export default {
       configWarnings: 'getConfigWarnings',
       gearDefinitions: 'getGearDefinitions',
       groundbaitDefinitions: 'getGroundbaitDefinitions',
+      landingNetDefinitions: 'getLandingNetDefinitions',
       fishDefinitions: 'getFishDefinitions',
       getLocationWarnings: 'getLocationWarnings',
       getLocationById: 'getLocationById',
@@ -336,9 +342,12 @@ export default {
       inventoryLines: 'getInventoryLines',
       inventoryBait: 'getInventoryBait',
       inventoryGroundbait: 'getInventoryGroundbait',
+      inventoryLandingNets: 'getInventoryLandingNets',
       currentRodId: 'getCurrentRodId',
       currentLineId: 'getCurrentLineId',
       currentBaitId: 'getCurrentBaitId',
+      currentLandingNetId: 'getCurrentLandingNetId',
+      equippedLandingNet: 'getEquippedLandingNet',
       selectedLocationId: 'getSelectedLocationId',
     }),
     ...mapGetters('gameSession', {
@@ -361,6 +370,7 @@ export default {
         rods: this.buildInventoryGearRows('rods'),
         lines: this.buildInventoryGearRows('lines'),
         bait: this.buildInventoryGearRows('bait'),
+        landingNets: this.buildInventoryLandingNetRows(),
         groundbait: this.buildInventoryGroundbaitRows(),
       }
     },
@@ -369,6 +379,7 @@ export default {
         rods: this.buildStoreGearRows('rods'),
         lines: this.buildStoreGearRows('lines'),
         bait: this.buildStoreGearRows('bait'),
+        landingNets: this.buildStoreLandingNetRows(),
         groundbait: this.buildStoreGroundbaitRows(),
       }
     },
@@ -458,6 +469,21 @@ export default {
     },
     canOpenInventoryOverlay() {
       return this.phase === 'idle' || this.phase === 'result'
+    },
+    canUseLandingNetNow() {
+      if (this.phase !== 'minigame') {
+        return false
+      }
+
+      if (!this.equippedLandingNet) {
+        return false
+      }
+
+      const greenProgress = Number(this.minigameState.greenProgress || 0)
+      return greenProgress >= 0.825
+    },
+    showLandingNetBadge() {
+      return this.canUseLandingNetNow
     },
     sceneBobber() {
       if (!this.selectedLocation) {
@@ -590,6 +616,9 @@ export default {
     },
     equippedBaitName() {
       return this.resolveGearName('bait', this.currentBaitId)
+    },
+    equippedLandingNetName() {
+      return this.equippedLandingNet?.name || 'none'
     },
     minigameBarriers() {
       return this.minigameState.config?.barriers || []
@@ -736,6 +765,11 @@ export default {
         return
       }
 
+      if (item.slot === 'landingNets') {
+        this.$store.dispatch('progress/buyLandingNetItem', item.id) // Promise-returning action; UI updates from store reactivity
+        return
+      }
+
       if (item.slot === 'groundbait') {
         this.$store.dispatch('progress/buyGroundbaitItem', item.id) // Promise-returning action; UI updates from store reactivity
         return
@@ -748,6 +782,11 @@ export default {
     },
     onInventoryEquipItem(item) {
       if (!item?.id || !item?.slot) {
+        return
+      }
+
+      if (item.slot === 'landingNets') {
+        this.$store.dispatch('progress/equipLandingNetItem', item.id) // Promise-returning action; UI updates from store reactivity
         return
       }
 
@@ -812,6 +851,14 @@ export default {
 
       return rodImageById[itemId] || null
     },
+    resolveLandingNetImageSrc(itemId) {
+      const landingNetImageById = {
+        'landing-net-small': '/images/nets/net-default.png',
+        'landing-net-big': '/images/nets/net-square.png',
+      }
+
+      return landingNetImageById[itemId] || null
+    },
     buildInventoryGearRows(slot) {
       const items = this.gearDefinitions?.[slot]
       if (!Array.isArray(items)) {
@@ -853,6 +900,34 @@ export default {
           canBuy: this.money >= Number(item.price || 0),
           imageSrc: this.resolveGearImageSrc(slot, item.id),
         }))
+    },
+    buildInventoryLandingNetRows() {
+      return (this.landingNetDefinitions || []).map((item) => {
+        const ownedCount = Number(this.inventoryLandingNets?.[item.id] || 0)
+        const isEquipped = item.id === this.currentLandingNetId
+        return {
+          id: item.id,
+          slot: 'landingNets',
+          name: item.name,
+          meta: `Capacity ${Number(item.capacityKg || 0).toFixed(2)} kg`,
+          ownedLabel: String(ownedCount),
+          isEquipped,
+          canEquip: ownedCount > 0,
+          price: Number(item.price || 0),
+          imageSrc: this.resolveLandingNetImageSrc(item.id),
+        }
+      })
+    },
+    buildStoreLandingNetRows() {
+      return (this.landingNetDefinitions || []).map((item) => ({
+        id: item.id,
+        slot: 'landingNets',
+        name: item.name,
+        meta: `Capacity ${Number(item.capacityKg || 0).toFixed(2)} kg`,
+        price: Number(item.price || 0),
+        canBuy: this.money >= Number(item.price || 0),
+        imageSrc: this.resolveLandingNetImageSrc(item.id),
+      }))
     },
     buildInventoryGroundbaitRows() {
       return (this.groundbaitDefinitions || []).map((item) => {
@@ -927,6 +1002,16 @@ export default {
     },
     onWindowKeyDown(event) {
       if (this.isEditableTarget(event.target)) {
+        return
+      }
+
+      if (event.key?.toLowerCase() === 's') {
+        if (this.phase !== 'minigame' || event.repeat) {
+          return
+        }
+
+        event.preventDefault()
+        this.$store.dispatch('gameSession/attemptLandingNetCatch') // Promise-returning action; no dependent UI work
         return
       }
 
