@@ -61,8 +61,10 @@ export default {
 }
 
 .field-cell {
-  border-right: 0.5vmin solid #000000;
-  border-bottom: 0.5vmin solid #000000;
+  border-left: 0.25vmin solid #000000;
+  border-top: 0.25vmin solid #000000;
+  border-right: 0.25vmin solid #000000;
+  border-bottom: 0.25vmin solid #000000;
   
   width: calc(80vmin / var(--grid-size));
   height: calc(80vmin / var(--grid-size));
