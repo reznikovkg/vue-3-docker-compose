@@ -1,7 +1,7 @@
 <template>
   <div class="game">
     <div class="game__header">
-      Cчёт: {{ Math.floor(score) }} м
+      Cчёт: {{ Math.floor(score) }} м. Осталось жизней: {{ player.lives }}.
     </div>
     <div v-if="isOver" class="game__finished">
       Игра окончена! Итоговый счёт: {{ Math.floor(score) }} м
@@ -39,6 +39,7 @@ export default {
       player: {
         image: violetCar,
         lane: 2,
+        lives: 3,
       },
       obstacles: [] as any[],
       isMoving: false,
@@ -74,10 +75,18 @@ export default {
           newLane = this.player.lane + 1
         }
       }
-      const accident = this.isAccident(newLane)
-      if (accident) {
+      if (this.player.lives <= 0)
+      {
         this.gameOver()
         return
+      }
+      const accident = this.isAccident(newLane)
+      if (accident) {
+        if (this.player.lives <= 0)
+        {
+          this.gameOver()
+          return
+        }
       }
       if (newLane !== this.player.lane) {
         this.player.lane = newLane
@@ -97,6 +106,7 @@ export default {
         lane: lane,
         direction: 1,
         y: -50,
+        hit: false,
       })
     },
     spawn() {
@@ -111,7 +121,9 @@ export default {
     },
     isAccident(lane: number) {
       for (let obstacle of this.obstacles) {
-        if (obstacle.lane === lane && obstacle.y > 55 && obstacle.y < 110) {
+        if (!obstacle.hit && obstacle.lane === lane && obstacle.y > 55 && obstacle.y < 110) {
+          this.player.lives -= 1
+          obstacle.hit = true
           return true
         }
       }
@@ -124,11 +136,19 @@ export default {
         this.obstacles.forEach(obstacle => {
           obstacle.y += 1.5 * this.speed
         })
+        if (this.player.lives <= 0)
+        {
+          this.gameOver()
+          return
+        }
         let newLane = this.player.lane
         const accident = this.isAccident(newLane)
         if (accident){
-          this.gameOver()
-          return
+          if (this.player.lives <= 0)
+          {
+            this.gameOver()
+            return
+          }
         }
         this.obstacles = this.obstacles.filter(obstacle => obstacle.y < 120)
       }, 50)
