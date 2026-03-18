@@ -26,54 +26,27 @@
 
     <div class="puzzle__mode-control">
       <button 
+        v-for="mode in modes"
+        :key="mode.value"
         class="puzzle__mode-button" 
-        :class="{ 'puzzle__mode-button--active': currentMode === 'normal' }"
-        @click="() => setMode('normal')"
+        :class="{ 'puzzle__mode-button--active': currentMode === mode.value }"
+        @click="() => setMode(mode.value)"
       >
-        Обычный режим
-      </button>
-      <button 
-        class="puzzle__mode-button" 
-        :class="{ 'puzzle__mode-button--active': currentMode === 'block' }"
-        @click="() => setMode('block')"
-      >
-        Режим блокировок
-      </button>
-      <button 
-        class="puzzle__mode-button" 
-        :class="{ 'puzzle__mode-button--active': currentMode === 'freeze' }"
-        @click="() => setMode('freeze')"
-      >
-        Режим заморозки
+        {{ mode.label }}
       </button>
     </div>
 
     <div class="puzzle__bonus" v-if="bonusActive">
       Бонусный ход
     </div>
-
-    <div 
-      class="puzzle__grid" 
-      :style="{ gridTemplateColumns: `repeat(${size}, 1fr)` }"
-    >
-      <div 
-        v-for="(cell, i) in cells" 
-        :key="i"
-        class="puzzle__cell-wrapper"
-      >
-        <div 
-          class="puzzle__cell" 
-          :class="{ 
-            'puzzle__cell--empty': cell === size * size,
-            'puzzle__cell--blocked': (currentMode === 'block' && blockedCell === i),
-            'puzzle__cell--frozen': isFrozen(i)
-          }"
-          @click="handleClick(i)"
-        >
-          <span v-if="cell !== size * size">{{ cell }}</span>
-        </div>
-      </div>
-    </div>
+    <Grid
+      :cells="cells"
+      :size="size"
+      :current-mode="currentMode"
+      :blocked-cell="blockedCell"
+      :is-frozen="isFrozen"
+      @cell-click="handleClick"
+    />
     <div class="puzzle__controls">
       <button class="puzzle__button" @click="() => newGame()">Новая игра</button>
     </div>
@@ -83,19 +56,22 @@
       <div>Ходов: {{ moves }}</div>
       <div v-if="isNewRecord" class="puzzle__record">Новый рекорд</div>
     </div>
-
-    <div class="puzzle__records">
-      <div class="puzzle__records-title">Рекорды</div>
-      <div v-for="(rec, idx) in records" :key="idx" class="puzzle__record-item">
-        {{ rec.size }}x{{ rec.size }} - {{ formatTime(rec.time) }} - {{ rec.moves }} ходов
-      </div>
-    </div>
+    <Records
+      :records="records"
+      :format-time="formatTime"
+    />
   </div>
 </template>
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import Grid from '@/components/Grid.vue'
+import Records from '@/components/Records.vue'
 export default {
   name: 'IndexPage',
+  components: {
+    Grid,
+    Records
+  },
   data() {
     return {
       sizeInput: 3,
@@ -107,7 +83,12 @@ export default {
       lastMoves: [],
       timerInterval: null,
       boostInterval: null,
-      bonusInterval: null
+      bonusInterval: null,
+      modes: [
+        { value: 'normal', label: 'Обычный режим' },
+        { value: 'block', label: 'Режим блокировок' },
+        { value: 'freeze', label: 'Режим заморозки' }
+      ]
     }
   },
   computed: {
@@ -368,73 +349,23 @@ export default {
     color: #856404;
     font-weight: bold;
   }
-  &__grid {
-    display: grid;
-    gap: 8px;
-    background: #ccc;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    aspect-ratio: 1;
-  }
-  &__cell-wrapper {
-    width: 100%;
-    height: 100%;
-  }
-  &__cell {
-    width: 100%;
-    height: 100%;
-    background: white;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(14px, 5vw, 36px);
-    font-weight: bold;
-    color: #333;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: all 0.2s;
-    user-select: none;
-    &:active:not(&--empty):not(&--blocked):not(&--frozen) {
-      transform: scale(0.95);
-      background: #f0f0f0;
-    }
-    &--empty {
-      background: transparent;
-      box-shadow: none;
-      cursor: default;
-      pointer-events: none;
-    }
-    &--blocked {
-      background: #ffcdd2;
-      cursor: not-allowed;
-      opacity: 0.7;
-    }
-    &--frozen {
-      background: #e0e0e0;
-      color: #999;
-      cursor: not-allowed;
-      border: 2px solid #2196F3;
+  &__controls {
+    .puzzle__button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+      transition: all 0.2s;
+      &:active {
+        transform: scale(0.98);
+        background: #45a049;
+      }
     }
   }
-
-  &__button {
-    padding: 10px 20px;
-    font-size: 16px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin: 10px;
-    transition: all 0.2s;
-    &:active {
-      transform: scale(0.98);
-      background: #45a049;
-    }
-  }
-
   &__win {
     text-align: center;
     font-size: 24px;
@@ -450,29 +381,7 @@ export default {
     font-size: 20px;
     margin-top: 10px;
   }
-  &__records {
-    margin-top: 30px;
-    padding: 20px;
-    background: #f5f5f5;
-    border-radius: 12px;
-  }
-  &__records-title {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: #333;
-  }
-  &__record-item {
-    padding: 8px;
-    background: white;
-    border-radius: 6px;
-    margin-bottom: 5px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .puzzle {
+  @media (max-width: 480px) {
     padding: 10px;
     &__title { 
       font-size: 20px;
@@ -501,9 +410,6 @@ export default {
     &__mode-button {
       font-size: 14px;
       padding: 8px;
-    }
-    &__cell {
-      font-size: clamp(12px, 4vw, 24px);
     }
     &__button {
       padding: 8px 16px;
