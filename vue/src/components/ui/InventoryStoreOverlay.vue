@@ -113,7 +113,7 @@
               {{ item.isEquipped ? 'Equipped' : 'Equip' }}
             </button>
             <button
-              v-else
+              v-else-if="!isInventoryMode"
               class="inventory-overlay__action inventory-overlay__action--buy"
               :disabled="!item.canBuy"
               type="button"
