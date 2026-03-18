@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'FieldTable',
@@ -32,24 +32,10 @@ export default {
     }
   },
   methods: {
-    ...mapActions('cube', ['changeCentralCubePosition']),
     isCentral(row, col) {
       let {x, y} = this.getCentralCubePosition
-
       return y === row && x === col
     },
-    move(dx, dy){
-      if (!this.getIsGameStarted) {
-        return
-      }
-
-      let {x, y} = this.getCentralCubePosition
-      
-      x += dx
-      y += dy
-
-      this.changeCentralCubePosition({x: x, y: y})
-    }
   }
 }
 </script>

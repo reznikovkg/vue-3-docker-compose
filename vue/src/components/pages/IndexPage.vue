@@ -5,8 +5,8 @@
     @keydown.left="move(-1, 0)"
     @keydown.right="move(1, 0)">
     <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
-    <div class="start-size-menu">
-      <button class="start-button button" @click="handleStart" :disabled="isGameActive">Start</button>
+    <div class="game-menu">
+      <button class="start-button" @click="handleStart" :disabled="isGameActive">Start</button>
       <input
         class="field-size-input"
         v-model.number="fieldSize"
@@ -18,14 +18,30 @@
         @input="updateFieldSize"
       >
       <div>Размер: {{ getFieldSize }}</div>
-      <div class="timer">Таймер: {{ timerValue }}</div>
-      <div class="timer">Очки: {{ getScore }}</div>
+      <div>Таймер: {{ timerValue }}</div>
+      <div>Очки: {{ getScore }}</div>
+      <div>
+        Режим: 
+        <select class="mode-selector" :disabled="isGameActive">
+          <option value="" disabled>Выберите режим</option>
+          <option 
+            v-for="(label, key) in MODES" 
+            :key="key" 
+            :value="label"
+            @click="() => setMode(label)"
+          >
+            {{ label }}
+          </option>
+        </select>
+      </div>
+      
     </div>
   </div>
 </template>
 
 <script>
 import FieldTable from '@/components/Field/FieldTable.vue'
+import { MODES } from "@/store/game"
 import { ROTATE_DIRECTION } from "@/store/cube"
 import { mapActions, mapGetters } from 'vuex'
 
@@ -35,7 +51,8 @@ export default {
   data() {
     return {
       fieldSize: 15,
-      isSpeedPressed: false
+      isSpeedPressed: false,
+      MODES
     }
   },
   computed: {
@@ -45,7 +62,7 @@ export default {
 
     timerValue() {
       return Math.ceil(this.getTimer)
-    }
+    },
   },
   mounted() {
     this.updateFieldSize()
@@ -66,7 +83,8 @@ export default {
       'startGame',
       'stopGame',
       'startSpeedUp',
-      'stopSpeedUp'
+      'stopSpeedUp',
+      'setMode'
     ]),
     ...mapActions('cube', ['rotateIsland','changeCentralCubePosition']),
 
@@ -123,19 +141,20 @@ export default {
 
 <style scoped>
 .field-size-input {
-  width: 11vmin;
-  height: 4vmin;
-  font-size: 3vmin;
+  font-size: 2.3vmin;
 }
-.start-size-menu {
+.game-menu {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 3vmin;
+  font-size: 2.3vmin;
   gap: 1vmin;
 }
-.button {
-  font-size: 3vmin;
+.start-button {
+  font-size: 2.3vmin;
+}
+.mode-selector {
+  font-size: 2.3vmin;
 }
 .game-field {
   background-color: white;

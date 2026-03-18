@@ -8,7 +8,14 @@ const MUTATIONS = {
     INCREASE_TIMER: "INCREASE_TIMER",
     SET_TIMER: "SET_TIMER",
     SET_TIMER_INTERVAL: "SET_TIMER_INTERVAL",
-    SET_SPEED_UP: "SET_SPEED_UP"
+    SET_SPEED_UP: "SET_SPEED_UP",
+    SET_MODE: "SET_MODE"
+}
+
+export const MODES = {
+    CLASSIC: "классический",
+    ACCELERATION: "с ускорением",
+    BOMBS: "с бомбами",
 }
 
 export const DECREASE_TIMER_VALUE_DEFAULT = 0.5
@@ -26,7 +33,8 @@ export default {
             moveInterval: null,
             timerInterval: null,
             score: 0,
-            timer: 60
+            timer: 60,
+            mode: MODES.CLASSIC
         }
     },
     getters: {
@@ -34,7 +42,8 @@ export default {
         getIsGameStarted: (state) => state.isGameStarted,
         getScore: (state) => state.score,
         getTimer: state => state.timer,
-        getIsSpeedUp: state => state.isSpeedUp
+        getIsSpeedUp: state => state.isSpeedUp,
+        getMode: state => state.mode
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
@@ -69,6 +78,10 @@ export default {
         },
         [MUTATIONS.SET_SPEED_UP]: (state, value) => {
             state.isSpeedUp = value
+        },
+        [MUTATIONS.SET_MODE]: (state, value) => {
+            if (Object.values(MODES).includes(value))
+                state.mode = value
         }
     },
     actions: {
@@ -80,6 +93,9 @@ export default {
         },
         addScore: (store, value) => {
             store.commit(MUTATIONS.ADD_SCORE, value)
+        },
+        setMode: (store, value) => {
+            store.commit(MUTATIONS.SET_MODE, value)
         },
         checkGameEnd: (store) => {
             const centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
