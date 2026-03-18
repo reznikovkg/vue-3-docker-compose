@@ -400,7 +400,6 @@ export default {
         timestamp: Date.now(),
         castAnchor: normalizeCastAnchor(payload.castAnchor),
       })
-      dispatch('consumeGroundbaitAreaCast', state.activeLocationId) // synchronous action body; immediate local state update
       dispatch('progress/consumeLocationBoostCast', state.activeLocationId, {
         root: true,
       }) // Promise-returning action; fire-and-forget is intentional
@@ -531,6 +530,7 @@ export default {
         state.castAnchor,
         groundbaitArea,
       )
+      dispatch('consumeGroundbaitAreaCast', state.activeLocationId) // synchronous action body; consume after this cast snapshots multiplier
       const rolledEncounter = rollEncounter(
         location,
         fishTables,
