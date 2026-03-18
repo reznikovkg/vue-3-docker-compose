@@ -95,26 +95,18 @@ export default createStore({
       commit('updateCell', { index, value: { branch, level: 0 } })
     },
     addMultipleRandomItems ({ state, commit, dispatch }, count) {
-      const addNextItem = (remaining) => {
-        if (remaining <= 0) {
-          dispatch('saveGame')
-          return
-        }
+      for (let i = 0; i < count; i++) {
         const emptyCells = []
         state.grid.forEach((cell, index) => {
           if (!cell) emptyCells.push(index)
         })
-        if (emptyCells.length > 0) {
+        if (!emptyCells.length) break
           const index = emptyCells[Math.floor(Math.random() * emptyCells.length)]
           const keys = Object.keys(BRANCHES)
           const branch = keys[Math.floor(Math.random() * keys.length)]
           commit('updateCell', { index, value: { branch, level: 0 } })
-          setTimeout(() => addNextItem(remaining - 1), 10)
-        } else {
-          addNextItem(0)
-        }
-      }
-      addNextItem(count)
+        } 
+      dispatch('saveGame')
     },
     newGame({ dispatch, commit }) {
       commit('setExpandLevel', 0)
