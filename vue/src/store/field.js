@@ -151,7 +151,6 @@ export default {
 
         if (store.state.currentPiece) {
             store.dispatch('clearPieceFromField')
-                .then(() => store.dispatch("game/increaseSpeed", null, {root: true}))
         }
 
         let availableSides = [0, 1, 2, 3]
@@ -328,10 +327,9 @@ export default {
 
         const newPiece = { shape, x, y, direction }
         store.commit(MUTATIONS.SET_CURRENT_PIECE, newPiece)
-        
+
         store.dispatch("game/increaseSpeed", null, {root: true})
             .then(() => store.dispatch('drawPieceOnField'))
-        // store.dispatch('drawPieceOnField')
     },
     movePiece: (store) => {
         if (!store.state.gameActive || !store.state.currentPiece) return

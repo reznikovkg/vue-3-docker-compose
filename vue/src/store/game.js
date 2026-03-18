@@ -48,7 +48,7 @@ export default {
         getTimer: state => state.timer,
         getIsSpeedUp: state => state.isSpeedUp,
         getMode: state => state.mode,
-        getCurrentAccelerationSpeed: state => state.currentAccelerationSpeed
+        getCurrentSpeed: state => state.currentSpeed
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
