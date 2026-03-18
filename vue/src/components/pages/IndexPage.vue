@@ -22,13 +22,16 @@
       <div>Очки: {{ getScore }}</div>
       <div>
         Режим: 
-        <select class="mode-selector" :disabled="isGameActive">
-          <option value="" disabled>Выберите режим</option>
+        <select
+        class="mode-selector"
+        v-model="selectedMode"
+        @change="() => setMode(selectedMode)"
+        :disabled="isGameActive">
+          <option value="">Выберите режим</option>
           <option 
             v-for="(label, key) in MODES" 
             :key="key" 
             :value="label"
-            @click="() => setMode(label)"
           >
             {{ label }}
           </option>
@@ -52,7 +55,8 @@ export default {
     return {
       fieldSize: 15,
       isSpeedPressed: false,
-      MODES
+      MODES,
+      selectedMode: 'классический'
     }
   },
   computed: {
@@ -141,20 +145,20 @@ export default {
 
 <style scoped>
 .field-size-input {
-  font-size: 2.3vmin;
+  font-size: 2.2vmin;
 }
 .game-menu {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 2.3vmin;
+  font-size: 2.2vmin;
   gap: 1vmin;
 }
 .start-button {
-  font-size: 2.3vmin;
+  font-size: 2.2vmin;
 }
 .mode-selector {
-  font-size: 2.3vmin;
+  font-size: 2.2vmin;
 }
 .game-field {
   background-color: white;
