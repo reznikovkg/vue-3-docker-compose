@@ -1,15 +1,9 @@
 <template>
-  Index
-
-  <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
-  </div>
+  <MainMenu />
 </template>
 
-<script setup lang="ts">
-
+<script setup>
+import MainMenu from '@/components/ui/MainMenu.vue'
 </script>
 
 <style scoped>
