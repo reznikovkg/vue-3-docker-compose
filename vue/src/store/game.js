@@ -9,7 +9,8 @@ const MUTATIONS = {
     SET_TIMER: "SET_TIMER",
     SET_TIMER_INTERVAL: "SET_TIMER_INTERVAL",
     SET_SPEED_UP: "SET_SPEED_UP",
-    SET_MODE: "SET_MODE"
+    SET_MODE: "SET_MODE",
+    SET_CURRENT_SPEED: "SET_CURRENT_ACCELERATION_SPEED"
 }
 
 export const MODES = {
@@ -22,6 +23,8 @@ export const DECREASE_TIMER_VALUE_DEFAULT = 0.5
 export const INCREASE_TIMER_VALUE_DEFAULT = 60
 const BASE_GAME_SPEED = 500
 const BASE_SPEED_KOEF = 7
+const MIN_ACCELERATION_SPEED = 70
+const ACCELERATION_DELTA_SPEED = (BASE_GAME_SPEED - MIN_ACCELERATION_SPEED) / 15
 
 export default {
     namespaced: true,
@@ -34,7 +37,8 @@ export default {
             timerInterval: null,
             score: 0,
             timer: 60,
-            mode: MODES.CLASSIC
+            mode: MODES.CLASSIC,
+            currentSpeed: BASE_GAME_SPEED
         }
     },
     getters: {
@@ -43,7 +47,8 @@ export default {
         getScore: (state) => state.score,
         getTimer: state => state.timer,
         getIsSpeedUp: state => state.isSpeedUp,
-        getMode: state => state.mode
+        getMode: state => state.mode,
+        getCurrentAccelerationSpeed: state => state.currentAccelerationSpeed
     },
     mutations: {
         [MUTATIONS.SET_ISFINISHED]: (state, value) => {
@@ -82,6 +87,9 @@ export default {
         [MUTATIONS.SET_MODE]: (state, value) => {
             if (Object.values(MODES).includes(value))
                 state.mode = value
+        },
+        [MUTATIONS.SET_CURRENT_SPEED]: (state, value) => {
+            state.currentSpeed = value
         }
     },
     actions: {
@@ -96,6 +104,10 @@ export default {
         },
         setMode: (store, value) => {
             store.commit(MUTATIONS.SET_MODE, value)
+
+            if (store.state.mode == MODES.ACCELERATION) {
+                store.dispatch("startAccelerationMode")
+            }
         },
         checkGameEnd: (store) => {
             const centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
@@ -143,6 +155,7 @@ export default {
             store.commit(MUTATIONS.SET_ISFINISHED, true)
             store.commit(MUTATIONS.SET_ISSTARTED, false)
             store.commit(MUTATIONS.SET_TIMER, 60)
+            store.commit(MUTATIONS.SET_CURRENT_SPEED, BASE_GAME_SPEED)
             store.commit(MUTATIONS.SET_TIMER_INTERVAL, null)
             store.dispatch("field/initStopGame", null, { root: true }).then(
                 () => store.dispatch("cube/resetCentralCubePosition", null, {root: true})
@@ -160,7 +173,7 @@ export default {
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })
-            }, BASE_GAME_SPEED / BASE_SPEED_KOEF))
+            }, store.state.currentSpeed / BASE_SPEED_KOEF))
         },
 
         stopSpeedUp: store => {
@@ -168,9 +181,33 @@ export default {
 
             store.commit(MUTATIONS.SET_SPEED_UP, false)
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
+
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
+                    store.dispatch("field/movePiece", null, { root: true })
+                }, store.state.currentSpeed))
+        },
+
+        startAccelerationMode: (store) => {
+            if (!store.state.isGameStarted) return
+
+            store.commit(MUTATIONS.SET_MODE, MODES.ACCELERATION)
+            store.dispatch('game/increaseSpeed');
+        },
+
+        increaseSpeed: (store) => {
+            if (store.state.mode != MODES.ACCELERATION || 
+                store.state.currentSpeed <= MIN_ACCELERATION_SPEED
+            )
+                return
+
+            store.commit(
+                MUTATIONS.SET_CURRENT_SPEED, 
+                store.state.currentSpeed - ACCELERATION_DELTA_SPEED
+            )
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
                 store.dispatch("field/movePiece", null, { root: true })
-            }, BASE_GAME_SPEED))
+            }, store.state.currentSpeed))
         },
 
         startGame: (store) => {
