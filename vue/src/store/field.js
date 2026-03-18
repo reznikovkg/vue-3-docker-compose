@@ -200,6 +200,7 @@ export default {
         const newPiece = { shape, x, y, direction }
 
         store.commit(MUTATIONS.SET_CURRENT_PIECE, newPiece)
+
         store.dispatch('drawPieceOnField')
     },
     changeCentralCubePosition: (store, { oldPosition, newPosition }) => {
@@ -326,7 +327,9 @@ export default {
 
         const newPiece = { shape, x, y, direction }
         store.commit(MUTATIONS.SET_CURRENT_PIECE, newPiece)
-        store.dispatch('drawPieceOnField')
+
+        store.dispatch("game/increaseSpeed", null, {root: true})
+            .then(() => store.dispatch('drawPieceOnField'))
     },
     movePiece: (store) => {
         if (!store.state.gameActive || !store.state.currentPiece) return
