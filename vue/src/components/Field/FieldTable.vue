@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="field-table">
     <div class="field-row" v-for="(row, rowIdx) in grid" :key="rowIdx">
         <div class="field-cell"
           :class="{
@@ -41,6 +41,10 @@ export default {
 </script>
 
 <style scoped>
+
+.field-table {
+  border: 0.25vmin solid #000000;
+}
 
 .field-row {
   display: flex;
