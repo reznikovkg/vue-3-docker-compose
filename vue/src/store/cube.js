@@ -204,6 +204,18 @@ export default {
 
         store.dispatch('field/setField', fieldCopy, {root: true}).then(() =>
         store.commit(MUTATIONS.SET_ATTACHED_PIECES, attachedPiecesCopy))
+    },
+    bombClearAllAttachedPieces: ({ state, dispatch }) => {
+        const attached = state.attachedPieces
+        const count = attached.length
+        const levels = new Set()
+        attached.forEach(piece => {
+        levels.add(Math.max(Math.abs(piece.x), Math.abs(piece.y)))
+        })
+        for (const level of levels) {
+            dispatch('removeLevelPieces', level)
+        }
+        return count
     }
   }
 }

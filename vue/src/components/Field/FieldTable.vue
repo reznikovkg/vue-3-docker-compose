@@ -5,7 +5,10 @@
           :class="{
               'is-central': isCentral(rowIdx + 1, colIdx + 1),
               'piece': cell === 2,
-              'attached-piece': cell === 3
+              'attached-piece': cell === 3,
+              'black-bomb': cell === 11,
+              'red-bomb': cell === 12,
+              'green-bomb': cell === 13
           }"
           :style="{ '--grid-size': getFieldSize }"
           v-for="(cell, colIdx) in row" :key="colIdx">
@@ -70,5 +73,15 @@ export default {
 }
 .attached-piece {
   background-color: rgb(7, 36, 199);
+}
+
+.black-bomb {
+  background-color: black;
+}
+.red-bomb {
+  background-color: red;
+}
+.green-bomb {
+  background-color: green;
 }
 </style>

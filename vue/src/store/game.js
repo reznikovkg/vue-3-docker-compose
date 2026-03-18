@@ -10,7 +10,9 @@ const MUTATIONS = {
     SET_TIMER_INTERVAL: "SET_TIMER_INTERVAL",
     SET_SPEED_UP: "SET_SPEED_UP",
     SET_MODE: "SET_MODE",
-    SET_CURRENT_SPEED: "SET_CURRENT_ACCELERATION_SPEED"
+    SET_CURRENT_SPEED: "SET_CURRENT_ACCELERATION_SPEED",
+    SET_BOMB_MOVE_INTERVAL: "SET_BOMB_MOVE_INTERVAL",
+    SET_BOMB_SPAWN_INTERVAL: "SET_BOMB_SPAWN_INTERVAL"
 }
 
 export const MODES = {
@@ -38,7 +40,9 @@ export default {
             score: 0,
             timer: 60,
             mode: MODES.CLASSIC,
-            currentSpeed: BASE_GAME_SPEED
+            currentSpeed: BASE_GAME_SPEED,
+            bombMoveInterval: null,
+            bombSpawnInterval: null
         }
     },
     getters: {
@@ -90,7 +94,15 @@ export default {
         },
         [MUTATIONS.SET_CURRENT_SPEED]: (state, value) => {
             state.currentSpeed = value
-        }
+        },
+        [MUTATIONS.SET_BOMB_MOVE_INTERVAL]: (state, value) => {
+            if (!value) clearInterval(state.bombMoveInterval)
+            state.bombMoveInterval = value
+        },
+        [MUTATIONS.SET_BOMB_SPAWN_INTERVAL]: (state, value) => {
+            if (!value) clearInterval(state.bombSpawnInterval)
+            state.bombSpawnInterval = value
+        },
     },
     actions: {
         changeIsFinished: (store, value) => {
@@ -157,10 +169,14 @@ export default {
             store.commit(MUTATIONS.SET_TIMER, 60)
             store.commit(MUTATIONS.SET_CURRENT_SPEED, BASE_GAME_SPEED)
             store.commit(MUTATIONS.SET_TIMER_INTERVAL, null)
+            store.commit(MUTATIONS.SET_BOMB_MOVE_INTERVAL, null)
+            store.commit(MUTATIONS.SET_BOMB_SPAWN_INTERVAL, null)
             store.dispatch("field/initStopGame", null, { root: true }).then(
                 () => store.dispatch("cube/resetCentralCubePosition", null, {root: true})
             ).then(
                 () => store.dispatch("cube/clearAttachedPieces", null, { root: true })
+            ).then(
+                store.dispatch("field/clearBombs", null, { root: true })
             ).then(
                 store.dispatch("field/clearField", null, { root: true })
             )
@@ -227,6 +243,18 @@ export default {
                     increaseValue: INCREASE_TIMER_VALUE_DEFAULT
                 })
             }, BASE_GAME_SPEED))
+
+            if (store.state.mode === MODES.BOMBS) {
+                const bombMove = setInterval(() => {
+                    store.dispatch('field/moveBombs', null, { root: true })
+                }, BASE_GAME_SPEED)
+                const bombSpawn = setInterval(() => {
+                    store.dispatch('field/spawnBomb', null, { root: true })
+                }, 4000)
+                store.commit(MUTATIONS.SET_BOMB_MOVE_INTERVAL, bombMove)
+                store.commit(MUTATIONS.SET_BOMB_SPAWN_INTERVAL, bombSpawn)
+            }
+
             store.dispatch("field/initStartGame", null, { root: true }).then(
                 () => store.dispatch("cube/setPositionCentralCubeToDefault", null, { root: true })
             )
