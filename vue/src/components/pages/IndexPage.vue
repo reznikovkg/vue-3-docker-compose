@@ -35,6 +35,8 @@
           :isSelected="selectedIndex === index"
           :isBlocked="blockedFlaskIndex === index"
           @select="() => selectFlask(index)"
+          @dragStart="() => handleDragStart(index)"
+          @dropFlask="(place) => handleDrop(index, place)"
         />
       </div>
 
@@ -71,7 +73,6 @@ export default {
 
   data () {
     return {
-      flasks: [],
       selectedIndex: null,
       blockedFlaskIndex: null,
       MAX_LAYERS: 4,
@@ -87,6 +88,14 @@ export default {
   },
 
   computed: {
+    flasks () {
+      return this.$store.getters['game/getFlasks']
+    },
+
+    dragIndex () {
+      return this.$store.getters['game/getDragIndex']
+    },
+
     formattedTime () {
       return this.formatTime(this.time)
     }
@@ -110,8 +119,11 @@ export default {
       const layers = this.createLayers()
       this.shuffle(layers)
 
-      this.flasks = this.createEmptyFlasks()
-      this.distributeLayers(layers)
+      const flasks = this.createEmptyFlasks()
+      this.distributeLayers(flasks, layers)
+
+      this.$store.commit('game/SET_FLASKS', flasks)
+      this.$store.commit('game/SET_DRAG_INDEX', null)
 
       this.resetTimer()
     },
@@ -162,15 +174,15 @@ export default {
       return result
     },
 
-    distributeLayers (layers) {
+    distributeLayers (flasks, layers) {
       layers.forEach(layer => {
         let placed = false
 
         while (!placed) {
-          const randomIndex = Math.floor(Math.random() * this.flasks.length)
+          const randomIndex = Math.floor(Math.random() * flasks.length)
 
-          if (this.flasks[randomIndex].length < this.MAX_LAYERS) {
-            this.flasks[randomIndex].push(layer)
+          if (flasks[randomIndex].length < this.MAX_LAYERS) {
+            flasks[randomIndex].push(layer)
             placed = true
           }
         }
@@ -205,8 +217,9 @@ export default {
     },
 
     pour (fromIndex, toIndex) {
-      const from = this.flasks[fromIndex]
-      const to = this.flasks[toIndex]
+      const flasks = this.flasks.map(flask => [...flask])
+      const from = flasks[fromIndex]
+      const to = flasks[toIndex]
 
       if (!from.length) return false
       if (to.length >= this.MAX_LAYERS) return false
@@ -231,7 +244,9 @@ export default {
         to.push(from.pop())
       }
 
-      if (this.checkWin()) {
+      this.$store.commit('game/SET_FLASKS', flasks)
+
+      if (this.checkWin(flasks)) {
         this.isFinished = true
         this.stopTimer()
         this.addRecord()
@@ -241,8 +256,8 @@ export default {
       return true
     },
 
-    checkWin () {
-      return this.flasks.every(flask => {
+    checkWin (flasks) {
+      return flasks.every(flask => {
         if (!flask.length) return true
         if (flask.length !== this.MAX_LAYERS) return false
         return flask.every(color => color === flask[0])
@@ -319,6 +334,49 @@ export default {
 
       const random = Math.floor(Math.random() * available.length)
       this.blockedFlaskIndex = available[random]
+    },
+
+    handleDragStart (index) {
+      this.$store.commit('game/SET_DRAG_INDEX', index)
+    },
+
+    handleDrop (index, place) {
+      if (this.dragIndex === null) return
+
+      let targetIndex = index
+
+      if (place === 'right') {
+        targetIndex++
+      }
+
+      if (this.dragIndex === targetIndex) {
+        this.$store.commit('game/SET_DRAG_INDEX', null)
+        return
+      }
+
+      if (this.dragIndex + 1 === targetIndex) {
+        this.$store.commit('game/SET_DRAG_INDEX', null)
+        return
+      }
+
+      let blockedFlask = null
+
+      if (this.blockedFlaskIndex !== null) {
+        blockedFlask = this.flasks[this.blockedFlaskIndex]
+      }
+
+      this.$store.commit('game/MOVE_FLASK', {
+        fromIndex: this.dragIndex,
+        toIndex: targetIndex
+      })
+
+      this.selectedIndex = null
+
+      if (blockedFlask) {
+        this.blockedFlaskIndex = this.flasks.findIndex(flask => flask === blockedFlask)
+      }
+
+      this.$store.commit('game/SET_DRAG_INDEX', null)
     },
 
     openRecords () {

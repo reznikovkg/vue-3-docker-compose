@@ -5,7 +5,11 @@
       'flask--selected': isSelected,
       'flask--blocked': isBlocked
     }"
+    draggable="true"
     @click="() => handleClick()"
+    @dragstart="() => handleDragStart()"
+    @dragover.prevent
+    @drop="(event) => handleDrop(event)"
   >
     <div
       v-for="(layer, index) in layers"
@@ -27,7 +31,7 @@ export default {
     isBlocked: { type: Boolean, default: false }
   },
 
-  emits: ['select'],
+  emits: ['select', 'dragStart', 'dropFlask'],
 
   computed: {
     layerHeight () {
@@ -38,6 +42,17 @@ export default {
   methods: {
     handleClick () {
       this.$emit('select')
+    },
+
+    handleDragStart () {
+      this.$emit('dragStart')
+    },
+
+    handleDrop (event) {
+      const width = event.currentTarget.offsetWidth
+      const place = event.offsetX < width / 2 ? 'left' : 'right'
+
+      this.$emit('dropFlask', place)
     }
   }
 }
