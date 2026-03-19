@@ -1,0 +1,64 @@
+$purpleDark: #3d2a5c;
+$purpleDarker: #2e2240;
+$purpleLight: #b69fda;
+$purpleMedium: #8d71b5;
+
+$purpleBorder: #433261;
+$purpleText: #241b33;
+$purpleBg: #c6b1ed;
+$purplePrimary: #a48cd3;
+$purpleBorder: #d3c1ff;
+$purpleShadow: #6b5494;
+$purpleGlow: #ac96d1;
+
+$boardBg: #d9c9fc;
+$tileBg: #b59fe6;
+$tileEmptyBg: #cbb9f0;
+$tileBorder: #f0eaff;
+$tileShadow: #7d67ac;
+$tileEmptyBorder: #9e8ac9;
+$tileEmptyShadow: #6d5996;
+$tileText: #2e1f47;
+$tileEmptySymbol: #8b77b5;
+
+$shadowColor: rgba(87, 55, 128, 0.2);
+$shadowColorActive: rgba(87, 55, 128, 0.3);
+$textColor: #241b33;
+
+$black: rgba(9, 9, 9, 0.5);
+
+@mixin gradientLine {
+  background: linear-gradient(
+                  90deg,
+                  transparent,
+                  $purpleLight,
+                  $purpleMedium,
+                  $purpleLight,
+                  transparent
+  );
+}
+
+@mixin containerPadding {
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+@mixin tileShadow($offset: 4px, $spread: 16px) {
+  box-shadow: 0 $offset 0 $tileShadow, 0 $spread $spread $shadowColor;
+}
+
+@mixin tileBase {
+  background: $tileBg;
+  border-radius: 24px;
+  font-size: 35px;
+  font-weight: 500;
+  color: $tileText;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 2px solid $tileBorder;
+  width: 85px;
+  height: 85px;
+}
