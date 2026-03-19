@@ -1,4 +1,7 @@
-# ADMIN APP
+# Игра в пятнашки
+
+## Видео-демонстрация работы приложения
+[Смотреть видео на Google Drive](https://drive.google.com/file/d/1uCaxUEGs68KQo4F5jqaXNpKs5TlhsSWG/view?usp=drive_link)
 
 ## Copy files from container
 ```
