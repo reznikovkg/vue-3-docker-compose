@@ -125,26 +125,12 @@ export default {
       }
       return names[this.targetColor] || this.targetColor
     },
-    bubbleSizes() {
+    bubbleConfig() {
       return [
-        { name: 'small', radius: 25 },
-        { name: 'medium', radius: 40 },
-        { name: 'large', radius: 60 }
+        { name: 'small',  radius: 25, sizePenalties: this.pointsForWrong * 0.6, escapePenalties: -3,  speedMultiplier: 1.0 },
+        { name: 'medium', radius: 40, sizePenalties: this.pointsForWrong,       escapePenalties: -5,  speedMultiplier: 0.8 },
+        { name: 'large',  radius: 60, sizePenalties: this.pointsForWrong * 1.4, escapePenalties: -10, speedMultiplier: 0.6 }
       ]
-    },
-    sizePenalties() {
-      return {
-        small: Math.min(0, this.pointsForWrong + 2),
-        medium: this.pointsForWrong,
-        large: this.pointsForWrong - 2
-      }
-    },
-    escapePenalties() {
-      return {
-        small: -3,
-        medium: -6,
-        large: -10
-      }
     }
   },
   mounted() {
@@ -199,6 +185,7 @@ export default {
 
       let totalPoints = 0
       let hadCorrect = false
+      const allNewBubbles = []
       
       clickedBubbles.forEach(bubble => {
         const isCorrect = bubble.color === this.targetColor
@@ -207,7 +194,8 @@ export default {
         if (isCorrect) {
           points = this.pointsForCorrect
         } else {
-          points = this.sizePenalties[bubble.sizeName]
+          const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
+          points = config.sizePenalties
         }
 
         totalPoints += points * (isCorrect ? this.multiplier : 1)
@@ -216,6 +204,9 @@ export default {
           hadCorrect = true
           this.multiplier = Math.min(3, this.multiplier + 0.1)
         }
+
+        const childBubbles = this.handleBubbleSplit(bubble)
+        allNewBubbles.push(...childBubbles)
       })
       
       if (!hadCorrect && clickedBubbles.length > 0) {
@@ -232,6 +223,11 @@ export default {
             actualBubble.active = false
           }
         })
+
+        if (allNewBubbles.length > 0) {
+          this.bubbles.push(...allNewBubbles)
+        }
+
         this.pressedBubbleIds.clear()
         this.bubbles = this.bubbles.filter(b => b.active)
       }, 100)
@@ -302,7 +298,8 @@ export default {
         let totalPenalty = 0
 
         escapedBubbles.forEach(bubble => {
-          totalPenalty += this.escapePenalties[bubble.sizeName]
+          const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
+          totalPenalty += config.escapePenalties
         })
 
         this.score =  this.score + totalPenalty
@@ -355,21 +352,16 @@ export default {
         colors = colors.slice(0, -1)
         colors.push(this.targetColor)
       }
-      const randomSize = this.bubbleSizes[Math.floor(Math.random() * this.bubbleSizes.length)]
 
-      const newBubble = {
-        id: Date.now() + Math.random(),
-        color: colors[Math.floor(Math.random() * colors.length)],
+      const randomConfig = this.bubbleConfig[Math.floor(Math.random() * this.bubbleConfig.length)]
+      const randomColor = colors[Math.floor(Math.random() * colors.length)]
+
+      const newBubble = this.createBubble({
+        color: randomColor,
         x: randomX,
         y: -150,
-        radius: randomSize.radius,
-        sizeName: randomSize.name,
-        speedX: (Math.random() - 0.5) * 2,
-        speedY: 1 + Math.random() * 2,
-        wobble: Math.random() * Math.PI * 2,
-        wobbleSpeed: 0.02 + Math.random() * 0.03,
-        active: true
-      }
+        sizeName: randomConfig.name
+      })
       
       this.bubbles.push(newBubble)
     },
@@ -436,6 +428,88 @@ export default {
       canvas.height = window.innerHeight
       this.canvasWidth = canvas.width
       this.canvasHeight = canvas.height
+    },
+    createBubble({color, x, y, sizeName}) {
+      const config = this.bubbleConfig.find(c => c.name === sizeName)
+
+      const speedX = ((Math.random() - 0.5) * 2) * config.speedMultiplier
+      const speedY = (1 + Math.random() * 2) * config.speedMultiplier
+
+      return {
+        id: Date.now() + Math.random(),
+        color: color,
+        x: x,
+        y: y,
+        radius: config.radius,
+        sizeName: sizeName,
+        speedX: speedX,
+        speedY: speedY,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.02 + Math.random() * 0.03,
+        active: true
+      }
+    },
+    handleBubbleSplit(bubble) {
+      const newBubbles = []
+      const allColors = ['white', 'blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange']
+      let colors = allColors.slice(0, this.totalColors)
+      if (!colors.includes(this.targetColor)) {
+        colors = colors.slice(0, -1)
+        colors.push(this.targetColor)
+      }
+
+
+      if (bubble.sizeName === 'large') {
+        for (let i = 0; i < 3; i++) {
+          const angle = (i * 2 * Math.PI / 3) + Math.random() * 0.2
+          const distance = bubble.radius + 20
+          const childX = bubble.x + Math.cos(angle) * distance
+          const childY = bubble.y + Math.sin(angle) * distance
+
+          let childColor
+          if (i == 0) {
+            childColor = bubble.color
+          } else {
+            childColor = colors[Math.floor(Math.random() * colors.length)]
+          }
+          
+          const childBubble = this.createBubble({
+            color: childColor,
+            x: childX,
+            y: childY,
+            sizeName: 'medium'
+          })
+          
+          newBubbles.push(childBubble)
+        }
+      }
+      else if (bubble.sizeName === 'medium') {
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 2 * Math.PI / 5) + Math.random() * 0.2
+          
+          const distance = bubble.radius + 10
+          const childX = bubble.x + Math.cos(angle) * distance
+          const childY = bubble.y + Math.sin(angle) * distance
+          
+          let childColor
+          if (i == 0) {
+            childColor = bubble.color
+          } else {
+            childColor = colors[Math.floor(Math.random() * colors.length)]
+          }
+          
+          const childBubble = this.createBubble({
+            color: childColor,
+            x: childX,
+            y: childY,
+            sizeName: 'small'
+          })
+          
+          newBubbles.push(childBubble)
+        }
+      }
+
+      return newBubbles
     },
     playPopSound() {
       soundManager.play('pop')
