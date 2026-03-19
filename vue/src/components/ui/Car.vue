@@ -6,7 +6,7 @@
 
 
 export default {
-  name: 'car',
+  name: 'Car',
   props: {
     image: {
       type: String,
