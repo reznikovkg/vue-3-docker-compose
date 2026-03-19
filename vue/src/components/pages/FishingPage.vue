@@ -288,7 +288,7 @@ import FishingScene from '@/components/fishing/FishingScene.vue'
 import InventoryStoreOverlay from '@/components/ui/InventoryStoreOverlay.vue'
 import LocationSelector from '@/components/fishing/LocationSelector.vue'
 import { defineConfig } from '@/utils/defineConfig'
-import { mapGetters } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 
 const DEFAULT_PAGE_TITLE = 'Fishing Game'
 const HOOKED_BOBBER_Y = 92
@@ -690,6 +690,26 @@ export default {
     })
   },
   methods: {
+    ...mapActions('progress', {
+      dispatchSellFishByInstanceId: 'sellFishByInstanceId',
+      dispatchSellAllFish: 'sellAllFish',
+      dispatchBuyLandingNetItem: 'buyLandingNetItem',
+      dispatchBuyGroundbaitItem: 'buyGroundbaitItem',
+      dispatchBuyGearItem: 'buyGearItem',
+      dispatchEquipLandingNetItem: 'equipLandingNetItem',
+      dispatchEquipGearItem: 'equipGearItem',
+      dispatchSelectLocation: 'selectLocation',
+    }),
+    ...mapActions('gameSession', {
+      dispatchStartCast: 'startCast',
+      dispatchThrowGroundbait: 'throwGroundbait',
+      dispatchAttemptLandingNetCatch: 'attemptLandingNetCatch',
+      dispatchSetReeling: 'setReeling',
+      dispatchRegisterBarrierClick: 'registerBarrierClick',
+    }),
+    ...mapActions('ui', {
+      dispatchHideResultPanel: 'hideResultPanel',
+    }),
     resolvePageTitle(phase) {
       return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE
     },
@@ -752,48 +772,52 @@ export default {
     },
     onInventorySellItem(item) {
       if (!item?.id) {
-        return
+        return Promise.resolve(false)
       }
 
-      this.$store.dispatch('progress/sellFishByInstanceId', item.id) // Promise-returning action; UI does not depend on completion
+      return this.dispatchSellFishByInstanceId(item.id)
     },
     onInventorySellAllFish() {
-      this.$store.dispatch('progress/sellAllFish') // Promise-returning action; UI updates from store reactivity
+      return this.dispatchSellAllFish()
     },
     onInventoryBuyItem(item) {
       if (!item?.id || !item?.slot) {
-        return
+        return Promise.resolve(false)
       }
 
-      if (item.slot === 'landingNets') {
-        this.$store.dispatch('progress/buyLandingNetItem', item.id) // Promise-returning action; UI updates from store reactivity
-        return
+      const specialBuyHandlers = {
+        landingNets: () => this.dispatchBuyLandingNetItem(item.id),
+        groundbait: () => this.dispatchBuyGroundbaitItem(item.id),
       }
 
-      if (item.slot === 'groundbait') {
-        this.$store.dispatch('progress/buyGroundbaitItem', item.id) // Promise-returning action; UI updates from store reactivity
-        return
+      const specialHandler = specialBuyHandlers[item.slot]
+      if (specialHandler) {
+        return specialHandler()
       }
 
-      this.$store.dispatch('progress/buyGearItem', {
+      return this.dispatchBuyGearItem({
         slot: item.slot,
         itemId: item.id,
-      }) // Promise-returning action; UI updates from store reactivity
+      })
     },
     onInventoryEquipItem(item) {
       if (!item?.id || !item?.slot) {
-        return
+        return Promise.resolve(false)
       }
 
-      if (item.slot === 'landingNets') {
-        this.$store.dispatch('progress/equipLandingNetItem', item.id) // Promise-returning action; UI updates from store reactivity
-        return
+      const specialEquipHandlers = {
+        landingNets: () => this.dispatchEquipLandingNetItem(item.id),
       }
 
-      this.$store.dispatch('progress/equipGearItem', {
+      const specialHandler = specialEquipHandlers[item.slot]
+      if (specialHandler) {
+        return specialHandler()
+      }
+
+      return this.dispatchEquipGearItem({
         slot: item.slot,
         itemId: item.id,
-      }) // Promise-returning action; UI updates from store reactivity
+      })
     },
     resolveGearName(slot, gearId) {
       const items = this.gearDefinitions?.[slot]
@@ -960,35 +984,33 @@ export default {
       document.title = this.resolvePageTitle(phase)
     },
     selectLocation(locationId) {
-      this.$store.dispatch('progress/selectLocation', locationId) // Promise-returning action; no immediate UI dependency
+      this.dispatchSelectLocation(locationId)
     },
     startCast(castAnchor = null) {
-      this.$store.dispatch('gameSession/startCast', {
+      this.dispatchStartCast({
         castAnchor,
-      }) // synchronous action body; schedules timeout/RAF flow internally
+      })
     },
     onSceneCast(castAnchor) {
       if (!this.canCast) {
-        return
+        return Promise.resolve(false)
       }
 
       if (this.isGroundbaitArmed && this.effectiveSelectedGroundbaitId) {
-        this.$store
-          .dispatch('gameSession/throwGroundbait', {
-            baitId: this.effectiveSelectedGroundbaitId,
-            castAnchor,
-          }) // Promise-returning action; UI updates from store reactivity
-          .then((didThrow) => {
-            if (!didThrow) {
-              return
-            }
+        return this.dispatchThrowGroundbait({
+          baitId: this.effectiveSelectedGroundbaitId,
+          castAnchor,
+        }).then((didThrow) => {
+          if (!didThrow) {
+            return false
+          }
 
-            this.isGroundbaitArmed = false
-          })
-        return
+          this.isGroundbaitArmed = false
+          return true
+        })
       }
 
-      this.startCast(castAnchor)
+      return this.startCast(castAnchor).then(() => true)
     },
     isEditableTarget(target) {
       const element = target
@@ -1011,7 +1033,7 @@ export default {
         }
 
         event.preventDefault()
-        this.$store.dispatch('gameSession/attemptLandingNetCatch') // Promise-returning action; no dependent UI work
+        this.dispatchAttemptLandingNetCatch()
         return
       }
 
@@ -1025,7 +1047,7 @@ export default {
           return
         }
 
-        this.$store.dispatch('gameSession/setReeling', true) // synchronous action body; immediate state toggle
+        this.dispatchSetReeling(true)
         return
       }
 
@@ -1042,7 +1064,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/registerBarrierClick') // synchronous action body; immediate click handling
+      this.dispatchRegisterBarrierClick()
     },
     onWindowKeyUp(event) {
       if (this.isEditableTarget(event.target)) {
@@ -1058,7 +1080,7 @@ export default {
       }
 
       event.preventDefault()
-      this.$store.dispatch('gameSession/setReeling', false) // synchronous action body; immediate state toggle
+      this.dispatchSetReeling(false)
     },
     onReelingStart() {
       if (this.phase !== 'minigame') {
@@ -1066,21 +1088,21 @@ export default {
       }
 
       if (this.isBarrierBlocking) {
-        this.$store.dispatch('gameSession/registerBarrierClick') // synchronous action body; immediate click handling
+        this.dispatchRegisterBarrierClick()
         return
       }
 
-      this.$store.dispatch('gameSession/setReeling', true) // synchronous action body; immediate state toggle
+      this.dispatchSetReeling(true)
     },
     onReelingStop() {
       if (this.phase !== 'minigame') {
         return
       }
 
-      this.$store.dispatch('gameSession/setReeling', false) // synchronous action body; immediate state toggle
+      this.dispatchSetReeling(false)
     },
     closeResultPanel() {
-      this.$store.dispatch('ui/hideResultPanel') // synchronous action body; immediate UI reset
+      this.dispatchHideResultPanel()
     },
   },
 }
