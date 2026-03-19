@@ -218,12 +218,21 @@ export default {
   background: #f5f5f7;
   color: #111;
 
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 16px;
+  }
+
   &__title {
     margin: 0;
     font-size: 40px;
     line-height: 1.1;
     font-weight: 700;
     text-align: center;
+
+    @media (max-width: 768px) {
+      font-size: 30px;
+    }
   }
 
   &__row {
@@ -231,6 +240,10 @@ export default {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     align-items: center;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
   }
 
   &__label {
@@ -276,6 +289,10 @@ export default {
     font-size: 28px;
     font-weight: 700;
     cursor: pointer;
+
+    @media (max-width: 768px) {
+      font-size: 24px;
+    }
   }
 
   &__btn--start {
@@ -286,25 +303,6 @@ export default {
   &__result {
     font-size: 22px;
     font-weight: 700;
-  }
-}
-
-@media (max-width: 768px) {
-  .c-menu {
-    width: 100%;
-    padding: 16px;
-
-    &__title {
-      font-size: 30px;
-    }
-
-    &__btn {
-      font-size: 24px;
-    }
-
-    &__row {
-      grid-template-columns: 1fr;
-    }
   }
 }
 </style>
