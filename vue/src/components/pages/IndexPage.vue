@@ -12,14 +12,14 @@
         <line class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" x1="50%" y1="0" x2="50%" y2="100%" stroke="#ffffff" stroke-width="2%" />
         <line class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" x1="75.5%" y1="0" x2="75.5%" y2="100%" stroke="#ffffff" stroke-width="2%" />
       </svg>
-      <car :image="player.image" :lane="player.lane" :y="65"/>
-      <car v-for="obstacle in obstacles" :key="obstacle.id" :image="obstacle.image" :lane="obstacle.lane" :direction="obstacle.direction" :y="obstacle.y"/>
+      <Car :image="player.image" :lane="player.lane" :y="65"/>
+      <Car v-for="obstacle in obstacles" :key="obstacle.id" :image="obstacle.image" :lane="obstacle.lane" :direction="obstacle.direction" :y="obstacle.y"/>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import car from '../ui/car.vue';
+import Car from '../ui/Car.vue';
 import blueCar from './../../assets/cars/blue.png'
 import greenCar from './../../assets/cars/green.png'
 import redCar from './../../assets/cars/red.png'
@@ -29,7 +29,7 @@ import yellowCar from './../../assets/cars/yellow.png'
 export default {
   name: 'IndexPage',
   components: {
-    car
+    Car
   },
   data () {
     return {
@@ -46,7 +46,6 @@ export default {
       isOver: false,
       gameInterval: null as any,
       spawnInterval: null as any,
-      colors: [blueCar, greenCar, redCar, yellowCar],
     }
   },
   computed: {
@@ -59,7 +58,20 @@ export default {
       return {
         animationDuration: 1 / this.speed + 's'
       }
-    }
+    },
+    colors() {
+      return [blueCar, greenCar, redCar, yellowCar]
+    },
+  },
+  mounted() {
+    window.addEventListener('keydown', this.arrow)
+    this.runGame()
+    this.spawn()
+  },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.arrow)
+    clearInterval(this.gameInterval)
+    clearInterval(this.spawnInterval)
   },
   methods: {
     arrow(event: KeyboardEvent) {
@@ -153,16 +165,6 @@ export default {
         this.obstacles = this.obstacles.filter(obstacle => obstacle.y < 120)
       }, 50)
     },
-  },
-  mounted() {
-    window.addEventListener('keydown', this.arrow)
-    this.runGame()
-    this.spawn()
-  },
-  beforeUnmount() {
-    window.removeEventListener('keydown', this.arrow)
-    clearInterval(this.gameInterval)
-    clearInterval(this.spawnInterval)
   },
 }
 </script>
