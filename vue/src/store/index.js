@@ -83,36 +83,45 @@ export default createStore({
     },
   },
   actions: {
-  hitSuccess({ commit, state }, size) {
-    const combo = state.combo
-    commit(MUTATIONS.HIT_SUCCESS)
-    const baseScore = SCORE.HIT[size] 
-    const value = Math.round(baseScore * combo)
-    commit(MUTATIONS.ADD_SCORE, value)
-    state.missCombo = 1
-  },
-  hitFail({ commit, state }, size) {
-    const missCombo = state.missCombo
-    commit(MUTATIONS.HIT_FAIL)
-    const penalty = Math.round(SCORE.MISS[size] * missCombo)
-    commit(MUTATIONS.ADD_SCORE, penalty)
-    state.combo = 1
-  },
-  fallPenalty({ commit, state }, size) {
-    const penalty = SCORE.FALL[size]
-    commit(MUTATIONS.ADD_SCORE, penalty)
-  },
-  addShot({ commit }, shot) {
-    commit(MUTATIONS.ADD_SHOT, shot)
-  },
-  removeShot({ commit }, id) {
-    commit(MUTATIONS.REMOVE_SHOT, id)
-  },
-  useBomb({ commit, state }) {
-    if (state.bombs <= 0) return false
-    commit(MUTATIONS.USE_BOMB)
-    commit(MUTATIONS.SET_BOMB_MODE, true)
-    return true
+    setMode({ commit }, mode) {
+      commit(MUTATIONS.SET_MODE, mode)
+    },
+    resetGame({ commit }) {
+      commit(MUTATIONS.RESET_GAME)
+    },
+    hitSuccess({ commit, state }, size) {
+      const combo = state.combo
+      commit(MUTATIONS.HIT_SUCCESS)
+      const baseScore = SCORE.HIT[size] 
+      const value = Math.round(baseScore * combo)
+      commit(MUTATIONS.ADD_SCORE, value)
+      state.missCombo = 1
+    },
+    hitFail({ commit, state }, size) {
+      const missCombo = state.missCombo
+      commit(MUTATIONS.HIT_FAIL)
+      const penalty = Math.round(SCORE.MISS[size] * missCombo)
+      commit(MUTATIONS.ADD_SCORE, penalty)
+      state.combo = 1
+    },
+    fallPenalty({ commit }, size) {
+      const penalty = SCORE.FALL[size]
+      commit(MUTATIONS.ADD_SCORE, penalty)
+    },
+    addShot({ commit }, shot) {
+      commit(MUTATIONS.ADD_SHOT, shot)
+    },
+    removeShot({ commit }, id) {
+      commit(MUTATIONS.REMOVE_SHOT, id)
+    },
+    setBombMode({ commit }, value) {
+      commit(MUTATIONS.SET_BOMB_MODE, value)
+    },
+    useBomb({ commit, state }) {
+      if (state.bombs <= 0) return false
+      commit(MUTATIONS.USE_BOMB)
+      commit(MUTATIONS.SET_BOMB_MODE, true)
+      return true
+    }
   }
-}
 })

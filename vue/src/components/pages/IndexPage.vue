@@ -26,7 +26,7 @@
 <script>
 
 import BubbleGame from '../ui/BubbleGame.vue'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 export default {
   components: { BubbleGame },
   data() {
@@ -38,20 +38,19 @@ export default {
     ...mapGetters(['score', 'combo', 'bombs'])
   },
   methods: {
-    ...mapMutations(['SET_MODE', 'RESET_GAME']),
+    ...mapActions(['setMode', 'resetGame', 'useBomb']),
     registerStart(cb) {
       this.startHandler = cb
     },
     start() {
-      this.RESET_GAME()
-      if (this.startHandler) this.startHandler()
-    },
-    setMode(mode) {
-      this.SET_MODE(mode)
+      this.resetGame()
+      if (this.startHandler) {
+        this.startHandler()
+      }
     },
     useBombClick() {
-      const ok = this.$store.dispatch('useBomb')
-      if(!ok) alert('Бомб нет')
+      const ok = this.useBomb()
+      if (!ok) alert('Бомб нет')
     },
     onFinish(val) {
       alert(`Игра окончена. Итоговый счет: ${this.score}`)

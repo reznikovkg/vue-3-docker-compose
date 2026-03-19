@@ -65,7 +65,8 @@ export default {
       'hitFail',
       'fallPenalty',
       'addShot',
-      'removeShot'
+      'removeShot',
+      'setBombMode'
     ]),
     run() {
       this.running = true
@@ -274,7 +275,7 @@ export default {
       const { x, y } = this.getCoords(e)
       if (this.bombMode) {
         this.explodeBomb(x, y)        
-        this.$store.commit('SET_BOMB_MODE', false) 
+        this.setBombMode(false) 
         return
       }
       if (this.mode === 'laser') return
@@ -322,34 +323,32 @@ export default {
   background-color: #979ccc;
   overflow: hidden;
   cursor: crosshair;
-
-&__bubble {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.9;
-  box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
-  transition: transform 0.1s;
-  pointer-events: auto;
-
-  &:hover {
-    transform: translate(-50%, -50%) scale(1.1);
-    opacity: 1;
+  &__bubble {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.9;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
+    transition: transform 0.1s;
+    pointer-events: auto;
+    &:hover {
+      transform: translate(-50%, -50%) scale(1.1);
+      opacity: 1;
+    }
   }
-}
-&__shot {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: yellow;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
- &__bomb-indicator {
-  position: absolute;
-  border: 2px dashed red;
-  border-radius: 50%;
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
+  &__shot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: yellow;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  &__bomb-indicator {
+    position: absolute;
+    border: 2px dashed red;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
 }
 </style>
