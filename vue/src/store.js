@@ -4,6 +4,19 @@ import { TOWERS } from './towers.js'
 
 let enemyId = 1
 
+const SET_LEVEL = 'SET_LEVEL'
+const SET_GOLD = 'SET_GOLD'
+const SET_SELECTED_SLOT = 'SET_SELECTED_SLOT'
+const ADD_TOWER = 'ADD_TOWER'
+const REMOVE_TOWER = 'REMOVE_TOWER'
+const UPGRADE_TOWER = 'UPGRADE_TOWER'
+const SET_TOWER_LAST_SHOT = 'SET_TOWER_LAST_SHOT'
+const ADD_ENEMY = 'ADD_ENEMY'
+const REMOVE_ENEMY = 'REMOVE_ENEMY'
+const MOVE_ENEMY = 'MOVE_ENEMY'
+const DAMAGE_ENEMY = 'DAMAGE_ENEMY'
+const SET_SELECTED_ENEMY = 'SET_SELECTED_ENEMY'
+
 export default createStore({
     state: {
         level: LEVELS[0],
@@ -25,10 +38,13 @@ export default createStore({
         selectedTower(state) {
             return state.towers[state.selectedSlot] || null
         },
+        selectedEnemyId(state){
+            return state.selectedEnemy
+        },
     },
 
     mutations: {
-        SET_LEVEL(state, level) {
+        [SET_LEVEL](state, level) {
             state.level = level
             state.gold = level.gold
             state.lives = level.lives
@@ -39,22 +55,22 @@ export default createStore({
             enemyId = 1
         },
 
-        SET_GOLD(state, v) { state.gold = v },
+        [SET_GOLD](state, v) { state.gold = v },
 
-        SET_SELECTED_SLOT(state, slotId) { state.selectedSlot = slotId },
+        [SET_SELECTED_SLOT](state, slotId) { state.selectedSlot = slotId },
 
-        ADD_TOWER(state, { slotId, tower }) {
+        [ADD_TOWER](state, { slotId, tower }) {
             state.towers = { ...state.towers, [slotId]: tower }
         },
 
-        REMOVE_TOWER(state, slotId) {
+        [REMOVE_TOWER](state, slotId) {
             const next = { ...state.towers }
             delete next[slotId]
             state.towers = next
             state.selectedSlot = null
         },
 
-        UPGRADE_TOWER(state, slotId) {
+        [UPGRADE_TOWER](state, slotId) {
             const tower = state.towers[slotId]
             const cfg = TOWERS[tower.type]
             const nextLvl = tower.level + 1
@@ -64,29 +80,29 @@ export default createStore({
             }
         },
 
-        SET_TOWER_LAST_SHOT(state, { slotId, now }) {
+        [SET_TOWER_LAST_SHOT](state, { slotId, now }) {
             const tower = state.towers[slotId]
             if (!tower) return
             state.towers = { ...state.towers, [slotId]: { ...tower, lastShot: now } }
         },
 
-        ADD_ENEMY(state, enemy) {
+        [ADD_ENEMY](state, enemy) {
             state.enemies = { ...state.enemies, [enemy.id]: enemy }
         },
 
-        REMOVE_ENEMY(state, id) {
+        [REMOVE_ENEMY](state, id) {
             const next = { ...state.enemies }
             delete next[id]
             state.enemies = next
             if (state.selectedEnemy === id) state.selectedEnemy = null
         },
 
-        MOVE_ENEMY(state, { id, x, y }) {
+        [MOVE_ENEMY](state, { id, x, y }) {
             if (!state.enemies[id]) return
             state.enemies = { ...state.enemies, [id]: { ...state.enemies[id], x, y } }
         },
 
-        DAMAGE_ENEMY(state, { id, amount }) {
+        [DAMAGE_ENEMY](state, { id, amount }) {
             if (!state.enemies[id]) return
             const enemy = state.enemies[id]
             const hp = Math.max(0, enemy.hp - amount)
@@ -101,7 +117,7 @@ export default createStore({
             }
         },
 
-        SET_SELECTED_ENEMY(state, id) {
+        [SET_SELECTED_ENEMY](state, id) {
             state.selectedEnemy = state.selectedEnemy === id ? null : id
         },
     },
