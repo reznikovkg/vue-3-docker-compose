@@ -42,5 +42,19 @@ export default {
   getters: {
     getFlasks: (state) => state.flasks,
     getDragIndex: (state) => state.dragIndex
+  },
+
+  actions: {
+    setFlasks: (store, payload) => {
+      store.commit(MUTATIONS.SET_FLASKS, payload)
+    },
+
+    setDragIndex: (store, payload) => {
+      store.commit(MUTATIONS.SET_DRAG_INDEX, payload)
+    },
+
+    moveFlask: (store, payload) => {
+      store.commit(MUTATIONS.MOVE_FLASK, payload)
+    }
   }
 }

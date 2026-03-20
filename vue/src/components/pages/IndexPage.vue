@@ -62,6 +62,8 @@
 <script>
 import Flask from './Flask.vue'
 import RecordsModal from './RecordsModal.vue'
+import { mapGetters } from 'vuex';
+import { mapActions } from 'vuex';
 
 export default {
   name: 'IndexPage',
@@ -88,12 +90,17 @@ export default {
   },
 
   computed: {
+    ...mapGetters('game', [
+      'getFlasks',
+      'getDragIndex'
+    ]),
+
     flasks () {
-      return this.$store.getters['game/getFlasks']
+      return this.getFlasks
     },
 
     dragIndex () {
-      return this.$store.getters['game/getDragIndex']
+      return this.getDragIndex
     },
 
     formattedTime () {
@@ -111,6 +118,12 @@ export default {
   },
 
   methods: {
+    ...mapActions('game', [
+      'setFlasks',
+      'setDragIndex',
+      'moveFlask'
+    ]),
+
     generateGame () {
       this.selectedIndex = null
       this.blockedFlaskIndex = null
@@ -122,8 +135,8 @@ export default {
       const flasks = this.createEmptyFlasks()
       this.distributeLayers(flasks, layers)
 
-      this.$store.commit('game/SET_FLASKS', flasks)
-      this.$store.commit('game/SET_DRAG_INDEX', null)
+      this.setFlasks(flasks)
+      this.setDragIndex(null)
 
       this.resetTimer()
     },
@@ -244,7 +257,7 @@ export default {
         to.push(from.pop())
       }
 
-      this.$store.commit('game/SET_FLASKS', flasks)
+      this.setFlasks(flasks)
 
       if (this.checkWin(flasks)) {
         this.isFinished = true
@@ -337,7 +350,7 @@ export default {
     },
 
     handleDragStart (index) {
-      this.$store.commit('game/SET_DRAG_INDEX', index)
+      this.setDragIndex(index)
     },
 
     handleDrop (index, place) {
@@ -350,12 +363,12 @@ export default {
       }
 
       if (this.dragIndex === targetIndex) {
-        this.$store.commit('game/SET_DRAG_INDEX', null)
+        this.setDragIndex(null)
         return
       }
 
       if (this.dragIndex + 1 === targetIndex) {
-        this.$store.commit('game/SET_DRAG_INDEX', null)
+        this.setDragIndex(null)
         return
       }
 
@@ -365,7 +378,7 @@ export default {
         blockedFlask = this.flasks[this.blockedFlaskIndex]
       }
 
-      this.$store.commit('game/MOVE_FLASK', {
+      this.moveFlask({
         fromIndex: this.dragIndex,
         toIndex: targetIndex
       })
@@ -376,7 +389,7 @@ export default {
         this.blockedFlaskIndex = this.flasks.findIndex(flask => flask === blockedFlask)
       }
 
-      this.$store.commit('game/SET_DRAG_INDEX', null)
+      this.setDragIndex(null)
     },
 
     openRecords () {
