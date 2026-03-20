@@ -468,7 +468,7 @@ export default {
     },
     checkCell: (store, {x, y}) => {
       let cur_cell = store.state.field[y][x]
-      if (cur_cell != OBJECTS.NONE && cur_cell != OBJECTS.EXTERNAL_FIGURE) {
+      if (cur_cell == OBJECTS.CENTRAL_CUBE || cur_cell == OBJECTS.ATTACHED_CUBE) {
         const queue = []
         store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
         while (queue.length > 0) {
@@ -556,8 +556,27 @@ export default {
             if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
                 store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
             }
-            store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
-            store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
+            const piece = store.state.currentPiece
+            const { shape, xf, yf } = piece
+
+            let isCrash = false
+
+            for (let r = 0; r < shape.length && !isCrash; r++) {
+                for (let c = 0; c < shape[0].length && !isCrash; c++) {
+                    if (shape[r][c] === 1) {
+                        const nx = xf + c
+                        const ny = yf + r
+                        isCrash ||= x == nx && y == ny
+                    }
+                }
+            }
+            if (isCrash) {
+                store.dispatch('spawnPiece')
+                store.commit(MUTATIONS.REMOVE_BOMB, index)
+            } else {
+                store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
+                store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
+            }
         }
     },
 
