@@ -1,5 +1,6 @@
 import { ALL_ORIENTATIONS } from './pieces'
 import { DECREASE_TIMER_VALUE_DEFAULT, INCREASE_TIMER_VALUE_DEFAULT } from './game'
+import store from '.'
 
 const MUTATIONS = {
     CHANGE_FIELD_SIZE: 'CHANGE_FIELD_SIZE',
@@ -10,13 +11,20 @@ const MUTATIONS = {
     SET_FIELD: 'SET_FIELD',
     CLEAR_FIELD: 'CLEAR_FIELD',
     SET_CURRENT_FIGURE_COORDS: 'SET_CURRENT_FIGURE_COORDS',
+    ADD_BOMB: 'ADD_BOMB',
+    REMOVE_BOMB: 'REMOVE_BOMB',
+    CLEAR_BOMBS: 'CLEAR_BOMBS',
+    UPDATE_BOMB_POSITION: 'UPDATE_BOMB_POSITION',
 }
 
 export const OBJECTS = {
   NONE: 0,
   CENTRAL_CUBE: 1,
   EXTERNAL_FIGURE: 2,
-  ATTACHED_CUBE: 3
+  ATTACHED_CUBE: 3,
+  BLACK_BOMB: 11,
+  RED_BOMB: 12,
+  GREEN_BOMB: 13
 }
 
 export default {
@@ -29,6 +37,7 @@ export default {
         currentPiece: null,
         currentFigureCoords: null,
         lastSide: null,
+        bombs: []
     }
   },
   getters: {
@@ -36,7 +45,8 @@ export default {
     getFieldSize: (state) => state.size,
     isGameActive: (state) => state.gameActive,
     getCurrentPiece: (state) => state.currentPiece,
-    getCurrentFigureCoords: state => state.currentFigureCoords
+    getCurrentFigureCoords: state => state.currentFigureCoords,
+    getBombs: (state) => state.bombs
   },
   mutations: {
     [MUTATIONS.CHANGE_FIELD_SIZE]: (state, newSize) => {
@@ -85,7 +95,22 @@ export default {
     },
     [MUTATIONS.SET_CURRENT_FIGURE_COORDS]: (state, value) => {
         state.currentFigureCoords = value
-    }
+    },
+    [MUTATIONS.ADD_BOMB]: (state, bomb) => {
+        state.bombs.push(bomb)
+    },
+    [MUTATIONS.REMOVE_BOMB]: (state, index) => {
+        state.bombs.splice(index, 1)
+    },
+    [MUTATIONS.CLEAR_BOMBS]: (state) => {
+        state.bombs = []
+    },
+    [MUTATIONS.UPDATE_BOMB_POSITION]: (state, { index, x, y }) => {
+        if (state.bombs[index]) {
+            state.bombs[index].x = x
+            state.bombs[index].y = y
+        }
+    },
   },
   actions: {
     setField: (store, newField) => {
@@ -95,6 +120,7 @@ export default {
       store.commit(MUTATIONS.CHANGE_FIELD_SIZE, newSize)
     },
     clearField: (store) => {
+      store.commit(MUTATIONS.CLEAR_BOMBS)
       store.commit(MUTATIONS.CLEAR_FIELD)
     },
     startGame: (store) => {
@@ -110,98 +136,8 @@ export default {
     setNumber: (store, {position, number}) => {
         store.commit(MUTATIONS.SET_NUMBER, {position: position, number: number})
     },
-    clearPieceFromField: (store) => {
-        if (!store.state.currentPiece || !store.state.field) return
-        const fieldSize = store.state.size
-        const piece = store.state.currentPiece
-        const { shape, x, y } = piece
-        for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[0].length; c++) {
-                if (shape[r][c] === 1) {
-                    const nx = x + c
-                    const ny = y + r
-                    if (nx >= 0 && nx < fieldSize && ny >= 0 && ny < fieldSize)
-                        if (store.state.field[ny][nx] === OBJECTS.EXTERNAL_FIGURE)
-                            store.dispatch('clearCell', {x: nx, y: ny})
-                }
-            }
-        }
-    },
     clearCell: (store, position) => {
         store.commit(MUTATIONS.SET_NUMBER, { position: position, number: OBJECTS.NONE })
-    },
-    drawPieceOnField: (store) => {
-        if (!store.state.currentPiece || !store.state.field) return
-        const fieldSize = store.state.size
-        const piece = state.currentPiece
-        const { shape, x, y } = piece
-        for (let r = 0; r < shape.length; r++) {
-            for (let c = 0; c < shape[0].length; c++) {
-                if (shape[r][c] === 1) {
-                    const nx = x + c
-                    const ny = y + r
-                    if (nx >= 0 && nx < fieldSize && ny >= 0 && ny < fieldSize)
-                        store.commit(MUTATIONS.SET_NUMBER, { position: {x: nx, y: ny}, number: OBJECTS.EXTERNAL_FIGURE })
-                }
-            }
-        }
-    },
-    spawnPiece: (store) => {
-        if (!store.state.gameActive) return
-
-        if (store.state.currentPiece) {
-            store.dispatch('clearPieceFromField')
-        }
-
-        let availableSides = [0, 1, 2, 3]
-        if (store.state.lastSide !== null) {
-            availableSides = availableSides.filter(s => s !== store.state.lastSide)
-        }
-        const side = availableSides[Math.floor(Math.random() * availableSides.length)]
-        store.commit(MUTATIONS.SET_LAST_SIDE, side)
-
-        const shape = ALL_ORIENTATIONS[Math.floor(Math.random() * ALL_ORIENTATIONS.length)]
-        const height = shape.length
-        const width = shape[0].length
-
-        const getPosition = (minPossible, maxPossible) => {
-            if (maxPossible - minPossible >= 2) {
-                const newMin = minPossible + 1
-                const newMax = maxPossible - 1
-                return Math.floor(Math.random() * (newMax - newMin + 1)) + newMin
-            }
-            return Math.floor(Math.random() * (maxPossible - minPossible + 1)) + minPossible
-        }
-
-        let x, y, direction
-        switch (side) {
-            case 0:
-                x = getPosition(0, store.state.size - width)
-                y = -height
-                direction = 0
-                break
-            case 1:
-                x = store.state.size
-                y = getPosition(0, store.state.size - height)
-                direction = 1
-                break
-            case 2:
-                x = getPosition(0, store.state.size - width)
-                y = store.state.size
-                direction = 2
-                break
-            case 3:
-                x = -width
-                y = getPosition(0, store.state.size - height)
-                direction = 3
-                break
-        }
-
-        const newPiece = { shape, x, y, direction }
-
-        store.commit(MUTATIONS.SET_CURRENT_PIECE, newPiece)
-
-        store.dispatch('drawPieceOnField')
     },
     changeCentralCubePosition: (store, { oldPosition, newPosition }) => {
       const realOldPosition = {x: oldPosition.x - 1, y: oldPosition.y - 1}
@@ -363,8 +299,16 @@ export default {
         } else {
             const updatedPiece = { ...piece, x, y }
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
+            const bombs = store.state.bombs
             store.dispatch('drawPieceOnField').then(
                 () => store.dispatch('checkFigureAttachment')
+            ).then(
+                () => {
+                    for (let i = 0; i < bombs.length; i++) {
+                        const bomb = bombs[i]
+                        store.dispatch('checkCrash', {index: i, x: bomb.x, y: bomb.y})
+                    }
+                }
             )
         }
     },
@@ -534,7 +478,7 @@ export default {
     },
     checkCell: (store, {x, y}) => {
       let cur_cell = store.state.field[y][x]
-      if (cur_cell != OBJECTS.NONE && cur_cell != OBJECTS.EXTERNAL_FIGURE) {
+      if (cur_cell == OBJECTS.CENTRAL_CUBE || cur_cell == OBJECTS.ATTACHED_CUBE) {
         const queue = []
         store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
         while (queue.length > 0) {
@@ -560,6 +504,137 @@ export default {
           store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y}, number: OBJECTS.ATTACHED_CUBE})
           queue.push({x: x, y: y})
           store.dispatch('cube/addPiece', {x: x - centralCubePosition.x, y: y - centralCubePosition.y}, { root: true })
+    },
+    spawnBomb: (store) => {
+        if (!store.state.gameActive) return
+        if (store.state.bombs.length >= 3) return
+
+        const rand = Math.random()
+        let color
+        if (rand <= 0.1) {
+            color = OBJECTS.GREEN_BOMB
+        } else {
+            color = rand < 0.55 ? OBJECTS.BLACK_BOMB : OBJECTS.RED_BOMB
+        }
+
+        const side = Math.floor(Math.random() * 4)
+        const fieldSize = store.state.size
+        let x, y, direction
+
+        const getPosition = (minPossible, maxPossible) => {
+            if (maxPossible - minPossible >= 2) {
+                const newMin = minPossible + 1
+                const newMax = maxPossible - 1
+                return Math.floor(Math.random() * (newMax - newMin + 1)) + newMin
+            }
+            return Math.floor(Math.random() * (maxPossible - minPossible + 1)) + minPossible
+        }
+
+        switch (side) {
+            case 0:
+                x = getPosition(0, fieldSize - 1)
+                y = -1
+                direction = 0
+                break
+            case 1:
+                x = fieldSize
+                y = getPosition(0, fieldSize - 1)
+                direction = 1
+                break
+            case 2:
+                x = getPosition(0, fieldSize - 1)
+                y = fieldSize
+                direction = 2
+                break
+            case 3:
+                x = -1
+                y = getPosition(0, fieldSize - 1)
+                direction = 3
+                break
+        }
+        const bomb = { x, y, direction, color }
+        store.commit(MUTATIONS.ADD_BOMB, bomb)
+    },
+
+    moveBombs: (store) => {
+        if (!store.state.gameActive) return
+        const fieldSize = store.state.size
+        const bombs = store.state.bombs
+        for (let i = 0; i < bombs.length; i++) {
+            const bomb = bombs[i]
+            let { x, y, direction, color } = bomb
+            const oldX = x, oldY = y
+
+            switch (direction) {
+                case 0: y++; break
+                case 1: x--; break
+                case 2: y--; break
+                case 3: x++; break
+            }
+
+            if (x < 0 || x >= fieldSize || y < 0 || y >= fieldSize) {
+                if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
+                    store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
+                }
+                store.commit(MUTATIONS.REMOVE_BOMB, i)
+                continue
+            }
+
+            const cell = store.state.field[y][x]
+            if (cell === OBJECTS.CENTRAL_CUBE || cell === OBJECTS.ATTACHED_CUBE) {
+                store.dispatch('handleBombCollision', { bomb: { ...bomb, x: oldX, y: oldY }, index: i })
+                continue
+            }
+
+            if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
+                store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
+            }
+            store.dispatch('checkCrash', {index: i, x, y}).then(
+                isCrash => {
+                    if (!isCrash) {
+                        store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
+                        store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
+                    }
+                }
+            )
+        }
+    },
+    checkCrash: (store, {index, x, y}) => {
+        const piece = store.state.currentPiece
+
+        let isCrash = false
+
+        for (let r = 0; r < piece.shape.length && !isCrash; r++) {
+            for (let c = 0; c < piece.shape[0].length && !isCrash; c++) {
+                if (piece.shape[r][c] === 1) {
+                    const nx = piece.x + c
+                    const ny = piece.y + r
+                    isCrash ||= x == nx && y == ny
+                }
+            }
+        }
+        if (isCrash) {
+            store.dispatch('spawnPiece')
+            store.commit(MUTATIONS.REMOVE_BOMB, index)
+        }
+        return isCrash
+    },
+    handleBombCollision: (store, { bomb, index }) => {
+        const color = bomb.color
+        store.commit(MUTATIONS.REMOVE_BOMB, index)
+        if (bomb.x >= 0 && bomb.x < store.state.size && bomb.y >= 0 && bomb.y < store.state.size) {
+            store.commit(MUTATIONS.SET_NUMBER, { position: {x: bomb.x, y: bomb.y}, number: OBJECTS.NONE })
+        }
+
+        if (color === OBJECTS.BLACK_BOMB) {
+            store.dispatch('cube/bombClearAllAttachedPieces', null, { root: true }).then(count => {
+            store.dispatch('game/addScore', -count, { root: true })
+            })
+        } else if (color === OBJECTS.RED_BOMB) {
+            store.dispatch('game/updateTimer', { isIncrease: false, decreaseValue: 30, increaseValue: 0 }, { root: true })
+        } else if (color === OBJECTS.GREEN_BOMB) {
+            store.dispatch('game/updateTimer', { isIncrease: true, decreaseValue: 0, increaseValue: 10 }, { root: true })
+        }
     }
   }
 }

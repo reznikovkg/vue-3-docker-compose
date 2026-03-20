@@ -17,7 +17,6 @@ export default {
   namespaced: true,
   state () {
     return {
-            // от (1, 1)
         centralCubePosition: {
             x: 0,
             y: 0    
@@ -72,7 +71,6 @@ export default {
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, { x: center, y: center })
     },
     changeCentralCubePosition: (store, newPosition) => {
-        let center = Math.ceil(store.rootGetters['field/getFieldSize'] / 2)
         let edge = store.rootGetters['field/getFieldSize']
         let oldPosition = store.state.centralCubePosition
 
@@ -80,6 +78,10 @@ export default {
         store.state.attachedPieces.forEach(piece => {
             attachedPiecesAbroad ||= newPosition.x + piece.x <= 1 || newPosition.x + piece.x >= edge ||
             newPosition.y + piece.y <= 1 || newPosition.y + piece.y >= edge
+        })
+        store.dispatch('checkBomb', { x: newPosition.x - 1 , y: newPosition.y - 1})
+        store.state.attachedPieces.forEach(piece => {
+            store.dispatch('checkBomb', { x: newPosition.x - 1 + piece.x , y: newPosition.y - 1 + piece.y})
         })
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
         store.dispatch('field/changeCentralCubePosition', 
@@ -204,6 +206,34 @@ export default {
 
         store.dispatch('field/setField', fieldCopy, {root: true}).then(() =>
         store.commit(MUTATIONS.SET_ATTACHED_PIECES, attachedPiecesCopy))
-    }
+    },
+    bombClearAllAttachedPieces: ({ state, dispatch }) => {
+        const attached = state.attachedPieces
+        const count = attached.length
+        const levels = new Set()
+        attached.forEach(piece => {
+        levels.add(Math.max(Math.abs(piece.x), Math.abs(piece.y)))
+        })
+        for (const level of levels) {
+            dispatch('removeLevelPieces', level)
+        }
+        return count
+    },
+    checkBomb: (store, {x, y}) => {
+        const fieldSize = store.rootGetters['field/getFieldSize']
+        if (x >= 0 && x < fieldSize && y >= 0 && y < fieldSize) {
+            const field = store.rootGetters['field/getField']
+            const cell = field[y][x] 
+            if (cell > 10) {
+                const bombs = store.rootGetters['field/getBombs']
+                for (let i = 0; i < bombs.length; i++) {
+                    const bomb = bombs[i]
+                    if (bomb.x == x && bomb.y == y)
+                        store.dispatch('field/handleBombCollision', 
+                            { bomb: { ...bomb, x: x, y: y }, index: i }, { root: true })
+                }
+            }
+        }
+    },
   }
 }
