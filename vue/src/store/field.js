@@ -1,5 +1,6 @@
 import { ALL_ORIENTATIONS } from './pieces'
 import { DECREASE_TIMER_VALUE_DEFAULT, INCREASE_TIMER_VALUE_DEFAULT } from './game'
+import store from '.'
 
 const MUTATIONS = {
     CHANGE_FIELD_SIZE: 'CHANGE_FIELD_SIZE',
@@ -297,6 +298,11 @@ export default {
         } else {
             const updatedPiece = { ...piece, x, y }
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
+            const bombs = store.state.bombs
+            for (let i = 0; i < bombs.length; i++) {
+                const bomb = bombs[i]
+                store.dispatch('checkCrash', {x: bomb.x, y: bomb.y})
+            }
             store.dispatch('drawPieceOnField').then(
                 () => store.dispatch('checkFigureAttachment')
             )
@@ -524,7 +530,7 @@ export default {
         if (!store.state.gameActive) return
         const fieldSize = store.state.size
         const bombs = store.state.bombs
-        for (let i = bombs.length - 1; i >= 0; i--) {
+        for (let i = 0; i < bombs.length; i++) {
             const bomb = bombs[i]
             let { x, y, direction, color } = bomb
             const oldX = x, oldY = y
@@ -556,30 +562,37 @@ export default {
             if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
                 store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
             }
-            const piece = store.state.currentPiece
-            const { shape, xf, yf } = piece
-
-            let isCrash = false
-
-            for (let r = 0; r < shape.length && !isCrash; r++) {
-                for (let c = 0; c < shape[0].length && !isCrash; c++) {
-                    if (shape[r][c] === 1) {
-                        const nx = xf + c
-                        const ny = yf + r
-                        isCrash ||= x == nx && y == ny
+            store.dispatch('checkCrash', {x, y}).then(
+                isCrash => {
+                    if (!isCrash) {
+                        store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
+                        store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
                     }
                 }
-            }
-            if (isCrash) {
-                store.dispatch('spawnPiece')
-                store.commit(MUTATIONS.REMOVE_BOMB, index)
-            } else {
-                store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
-                store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
-            }
+            )
         }
     },
+    checkCrash: (store, {x, y}) => {
+        const piece = store.state.currentPiece
+        const { shape, xf, yf } = piece
 
+        let isCrash = false
+
+        for (let r = 0; r < shape.length && !isCrash; r++) {
+            for (let c = 0; c < shape[0].length && !isCrash; c++) {
+                if (shape[r][c] === 1) {
+                    const nx = xf + c
+                    const ny = yf + r
+                    isCrash ||= x == nx && y == ny
+                }
+            }
+        }
+        if (isCrash) {
+            store.dispatch('spawnPiece')
+            store.commit(MUTATIONS.REMOVE_BOMB, i)
+        }
+        return isCrash
+    },
     handleBombCollision: (store, { bomb, index }) => {
         const color = bomb.color
         store.commit(MUTATIONS.REMOVE_BOMB, index)
