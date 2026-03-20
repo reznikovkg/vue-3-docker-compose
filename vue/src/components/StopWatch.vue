@@ -1,7 +1,7 @@
 <template>
-<div class="c-stopwatch">
-  <span class="c-stopwatch__time">{{ formattedTime }}</span>
-</div>
+  <div class="c-stopwatch">
+    <span class="c-stopwatch__time">{{ formattedTime }}</span>
+  </div>
 </template>
 
 <script>
@@ -18,12 +18,6 @@ export default {
       const seconds = Math.floor(this.getCurrentTime % 60)
       return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
     }
-  },
-  mounted() {
-    // Компонент только отображает время, не управляет им
-  },
-  beforeUnmount() {
-    // Компонент не влияет на состояние игры при уничтожении
   },
   methods: {
     ...mapActions('game', [])

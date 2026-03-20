@@ -1,72 +1,73 @@
 <template>
-<div class="c-game">
-  <div class="c-game__container">
-    <transition name="c-game__fade">
-      <div v-if="getGameStatus === 'active'" class="c-game__field">
-        <div
-          v-for="(cell, index) in getGrid"
-          :key="index"
-          :class="[
-            'c-game__cell',
-            cell.t === 0 ? 'c-game__cell--empty' : 
-            cell.t === 1 ? 'c-game__cell--tree' : 
-            'c-game__cell--wall'
-          ]"
-        >
-          <transition :name="`move--${getDirection}`">
-            <div
-              v-if="index === getPlayerIndex"
-              class="c-game__player"
-              :key="getPlayerIndex"
-            >
-              <slot name="player">🔥</slot>
-            </div>
-          </transition>
-          <Cloud
-            v-if="index === getCloudIndex && getGameStatus === 'active'"
-            :show-cloud="index === getCloudIndex"
-            class="c-game__cloud"
+  <div class="c-game">
+    <div class="c-game__container">
+      <transition name="c-game__fade">
+        <div v-if="getGameStatus === 'active'" class="c-game__field">
+          <div
+            v-for="(cell, index) in getGrid"
+            :key="index"
+            :class="[
+              'c-game__cell',
+              cell.t === 0 ? 'c-game__cell--empty' : 
+              cell.t === 1 ? 'c-game__cell--tree' : 
+              'c-game__cell--wall'
+            ]"
           >
-            ☁️
-          </Cloud>
-          <template v-for="spark in getSparks" :key="spark.id">
-            <Spark
-              v-if="index === spark.index"
-              :show-spark="true"
-              :spark-index="spark.index"
-              :spark-direction="spark.direction"
-              :spark-id="spark.id"
-              class="c-game__spark"
+            <transition :name="`c-game__move--${direction}`">
+              <div
+                v-if="index === getPlayerIndex"
+                class="c-game__player"
+                :key="getPlayerIndex"
+              >
+                <slot name="player">🔥</slot>
+              </div>
+            </transition>
+            <MovingElement
+              v-if="index === getCloudIndex && getGameStatus === 'active'"
+              type="cloud"
+              :show="index === getCloudIndex"
+              :direction="getCloudDirection"
+              :key-value="getCloudIndex"
+              default-emoji="☁️"
+              class="c-game__cloud"
             />
-          </template>
-          <span v-if="cell.t === 1" class="c-game__emoji">
-            <slot name="tree">🌲</slot>
-          </span>
-          <span v-else-if="cell.t === 2" class="c-game__emoji">
-            <slot name="wall">⛰️</slot>
-          </span>
+            <template v-for="spark in getSparks" :key="spark.id">
+              <MovingElement
+                v-if="index === spark.index"
+                type="spark"
+                :show="true"
+                :direction="spark.direction"
+                :key-value="`${spark.id}-${spark.index}`"
+                default-emoji="💥"
+              />
+            </template>
+            <span v-if="cell.t === 1" class="c-game__emoji">
+              <slot name="tree">🌲</slot>
+            </span>
+            <span v-else-if="cell.t === 2" class="c-game__emoji">
+              <slot name="wall">⛰️</slot>
+            </span>
+          </div>
         </div>
-      </div>
-    </transition>
-    <aside class="c-game__stats">
-      <div class="c-game__stat-item">
-        <span class="c-game__stat-label">Время:</span>
-        <StopWatch class="c-game__stopwatch" />
-      </div>
-      <div class="c-game__stat-item">
-        <span class="c-game__stat-label">Деревья:</span>
-        <span class="c-game__stat-value">{{ getTreeCount }}/{{ getTotalTrees }}</span>
-      </div>
-    </aside>
+      </transition>
+      <aside class="c-game__stats">
+        <div class="c-game__stat-item">
+          <span class="c-game__stat-label">Время:</span>
+          <StopWatch class="c-game__stopwatch" />
+        </div>
+        <div class="c-game__stat-item">
+          <span class="c-game__stat-label">Деревья:</span>
+          <span class="c-game__stat-value">{{ getTreeCount }}/{{ getTotalTrees }}</span>
+        </div>
+      </aside>
+    </div>
   </div>
-</div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import StopWatch from '../StopWatch.vue'
-import Cloud from '../Cloud.vue'
-import Spark from '../Spark.vue'
+import MovingElement from '../MovingElement.vue'
 
 const MOVEMENT_INTERVAL = 300
 const CELL_SIZE = 60
@@ -75,8 +76,7 @@ export default {
   name: 'IndexPage',
   components: {
     StopWatch,
-    Cloud,
-    Spark
+    MovingElement
   },
   props: {},
   emits: ['game-win', 'game-lose', 'game-error'],
@@ -104,7 +104,8 @@ export default {
       'getCloudIndex',
       'getCloudDirection',
       'isGameOver',
-      'getSparks'
+      'getSparks',
+      'getLastShotTime'
     ]),
     isGameActive() {
       return this.getGameStatus === 'active'
@@ -126,6 +127,7 @@ export default {
     this.initGame()
     window.addEventListener('keydown', this.handleKeyDown)
     this.startMovement()
+    this.startCloudMovement()
     this.startSparkMovement()
   },
   beforeUnmount() {
@@ -255,7 +257,7 @@ export default {
           })
       }
     },
-        handleGameOver() {
+    handleGameOver() {
       const alertMessage = 'Вы проиграли, попробуйте снова'
       setTimeout(() => {
         alert(alertMessage)
@@ -437,66 +439,70 @@ export default {
   &__fade-leave-to {
     opacity: 0;
   }
- &__move {
-  &-enter-active {
-    transition: all 0.2s ease-out;
-  }
-  &-leave-active {
-    transition: all 0.2s ease-in;
-    position: absolute;
+  &__move {
+    &-enter-active {
+      transition: all 0.2s ease-out;
+    }
+    &-leave-active {
+      transition: all 0.2s ease-in;
+      position: absolute;
+    }
+    
+    &__move--up,
+    &__move--down,
+    &__move--left,
+    &__move--right {
+      &-enter-from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      &-enter-to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      &-leave-to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+    }
+    
+    &__move--up {
+      &-enter-from {
+        transform: translate(-50%, 100%) scale(0.8);
+      }
+      &-leave-to {
+        transform: translate(-50%, -200%) scale(0.8);
+      }
+    }
+    
+    &__move--down {
+      &-enter-from {
+        transform: translate(-50%, -200%) scale(0.8);
+      }
+      &-leave-to {
+        transform: translate(-50%, 100%) scale(0.8);
+      }
+    }
+    
+    &__move--left {
+      &-enter-from {
+        transform: translate(100%, -50%) scale(0.8);
+      }
+      &-leave-to {
+        transform: translate(-200%, -50%) scale(0.8);
+      }
+    }
+    
+    &__move--right {
+      &-enter-from {
+        transform: translate(-200%, -50%) scale(0.8);
+      }
+      &-leave-to {
+        transform: translate(100%, -50%) scale(0.8);
+      }
+    }
   }
   
-  &--up, &--down, &--left, &--right {
-    &-enter-from {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8);
-    }
-    &-enter-to {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    &-leave-to {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.8);
-    }
-  }
-  
-  &--up {
-    &-enter-from {
-      transform: translate(-50%, 100%) scale(0.8);
-    }
-    &-leave-to {
-      transform: translate(-50%, -200%) scale(0.8);
-    }
-  }
-  
-  &--down {
-    &-enter-from {
-      transform: translate(-50%, -200%) scale(0.8);
-    }
-    &-leave-to {
-      transform: translate(-50%, 100%) scale(0.8);
-    }
-  }
-  
-  &--left {
-    &-enter-from {
-      transform: translate(100%, -50%) scale(0.8);
-    }
-    &-leave-to {
-      transform: translate(-200%, -50%) scale(0.8);
-    }
-  }
-  
-  &--right {
-    &-enter-from {
-      transform: translate(-200%, -50%) scale(0.8);
-    }
-    &-leave-to {
-      transform: translate(100%, -50%) scale(0.8);
-    }
-  }
-}
   &__emoji {
     font-size: 40px;
     line-height: 1;
@@ -505,15 +511,6 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
-  }
-    &__cloud {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 9;
   }
 }
 </style>

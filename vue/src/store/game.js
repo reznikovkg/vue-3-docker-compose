@@ -17,16 +17,16 @@ export const MUTATIONS = {
 }
 // 0 - empty, 1 - tree, 2 - wall
 const getInitialGrid = () => [
-  { t: 0 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 },
-  { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 },
-  { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 },
-  { t: 2 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
-  { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 2 }, { t: 2 },
-  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
-  { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }
+  { t: 0 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
+  { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
+  { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
+  { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 },
+  { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
+  { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
+  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 },
+  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 2 }, { t: 1 },
+  { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 },
+  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }
 ]
 export default {
   namespaced: true,
@@ -117,7 +117,7 @@ export default {
     [MUTATIONS.SET_TIMER_INTERVAL](state, interval) {
       state.timerInterval = interval
     },
-        [MUTATIONS.SET_CLOUD_INDEX](state, index) {
+    [MUTATIONS.SET_CLOUD_INDEX](state, index) {
       if (index === null || (index >= 0 && index < state.rows * state.cols)) {
         state.cloudIndex = index
       }
@@ -217,7 +217,7 @@ export default {
         resolve()
       })
     },
-        setCloudIndex({ commit }, index) {
+    setCloudIndex({ commit }, index) {
       return new Promise((resolve) => {
         commit(MUTATIONS.SET_CLOUD_INDEX, index)
         resolve()
@@ -242,45 +242,45 @@ export default {
       })
     },
     initCloud({ commit, state }) {
-    return new Promise((resolve) => {
-    try {
-      if (!state.grid || !Array.isArray(state.grid)) {
-        console.warn('Grid is not available for cloud initialization')
-        commit(MUTATIONS.SET_CLOUD_INDEX, null)
-        commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
-        resolve()
-        return
-      }
-      if (state.gameStatus !== 'active') {
-        resolve()
-        return
-      }
-      const treeIndices = state.grid.reduce((indices, cell, index) => {
-        if (cell && typeof cell.t === 'number' && cell.t === 1) {
-          indices.push(index)
-        }
-        return indices
-      }, [])
-      if (treeIndices.length > 0) {
-        const randomIndex = treeIndices[Math.floor(Math.random() * treeIndices.length)]
-        if (randomIndex >= 0 && randomIndex < state.rows * state.cols) {
-          commit(MUTATIONS.SET_CLOUD_INDEX, randomIndex)
-          commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
-        } else {
-          console.warn('Invalid cloud index generated')
+      return new Promise((resolve) => {
+        try {
+          if (!state.grid || !Array.isArray(state.grid)) {
+            console.warn('Grid is not available for cloud initialization')
+            commit(MUTATIONS.SET_CLOUD_INDEX, null)
+            commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
+            resolve()
+            return
+          }
+          if (state.gameStatus !== 'active') {
+            resolve()
+            return
+          }
+          const treeIndices = state.grid.reduce((indices, cell, index) => {
+            if (cell && typeof cell.t === 'number' && cell.t === 1) {
+              indices.push(index)
+            }
+            return indices
+          }, [])
+          if (treeIndices.length > 0) {
+            const randomIndex = treeIndices[Math.floor(Math.random() * treeIndices.length)]
+            if (randomIndex >= 0 && randomIndex < state.rows * state.cols) {
+              commit(MUTATIONS.SET_CLOUD_INDEX, randomIndex)
+              commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
+            } else {
+              console.warn('Invalid cloud index generated')
+              commit(MUTATIONS.SET_CLOUD_INDEX, null)
+            }
+          } else {
+            commit(MUTATIONS.SET_CLOUD_INDEX, null)
+          }
+          resolve()
+        } catch (error) {
+          console.error('Error in initCloud:', error)
           commit(MUTATIONS.SET_CLOUD_INDEX, null)
+          commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
         }
-      } else {
-        commit(MUTATIONS.SET_CLOUD_INDEX, null)
-      }
-      resolve()
-    } catch (error) {
-      console.error('Error in initCloud:', error)
-      commit(MUTATIONS.SET_CLOUD_INDEX, null)
-      commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
-    }
-  })
-},
+      })
+    },
     moveCloud({ commit, getters, state }) {
       return new Promise((resolve) => {
         if (state.cloudIndex === null || state.gameStatus !== 'active' || state.gameOver) {
