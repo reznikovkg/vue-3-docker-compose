@@ -7,6 +7,7 @@
   >
     <span v-if="!isEmpty">{{ value }}</span>
     <span v-if="isBlocked" class="puzzle__tile__blocked">🚫</span>
+    <span v-if="isFrozen" class="puzzle__tile__frozen">❄️</span>
   </div>
 </template>
 
@@ -30,6 +31,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    isFrozen: {
+      type: Boolean,
+      default: false,
+    },
     tileStyle: {
       type: Object,
       default: () => ({}),
@@ -47,12 +52,13 @@ export default {
         'puzzle__tile--win': this.isWin,
         'puzzle__tile--blocked': this.isBlocked,
         'puzzle__tile--special': this.allowAnyMove && !this.isEmpty,
+        'puzzle__tile--frozen': this.isFrozen,
       }
     },
   },
   methods: {
     handleClick() {
-      if (!this.isEmpty) {
+      if (!this.isEmpty && !this.isFrozen) {
         this.$emit('click')
       }
     },
@@ -75,8 +81,8 @@ export default {
   font-family: sans-serif;
   cursor: pointer;
   user-select: none;
-  transition: all 0.15s ease;
   box-sizing: border-box;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 
   &:active {
     transform: scale(0.95);
@@ -86,6 +92,7 @@ export default {
   &--empty {
     background-color: transparent;
     cursor: default;
+    transform: scale(0);
   }
 
   &--win {
@@ -114,7 +121,26 @@ export default {
     }
   }
 
+  &--frozen {
+    background-color: #00bcd4;
+    cursor: not-allowed;
+    opacity: 0.8;
+
+    &::after {
+      content: '❄️';
+      position: absolute;
+      font-size: 20px;
+      opacity: 0.8;
+    }
+  }
+
   &__blocked {
+    position: absolute;
+    font-size: 20px;
+    opacity: 0.8;
+  }
+
+  &__frozen {
     position: absolute;
     font-size: 20px;
     opacity: 0.8;

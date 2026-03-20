@@ -1,3 +1,9 @@
+const TIMER_DELAY = 1000
+const SPECIAL_MOVE_DELAY = 60000
+const IDLE_TIME_THRESHOLD = 5
+const PENALTY_TIME = 10
+const FAST_TIMER_MULTIPLIER = 2
+
 export default {
     namespaced: true,
 
@@ -10,6 +16,16 @@ export default {
         blockedIndex: null,
         records: {},
         isGameActive: false,
+        lastMoveIndex: null,
+        secondLastMoveIndex: null,
+        penaltyTime: 0,
+        bonusTime: 0,
+        idleTime: 0,
+        isFastTimer: false,
+        frozenTiles: [],
+        timerTimeout: null,
+        specialMoveTimeout: null,
+        idleTimeout: null,
     }),
 
     getters: {
@@ -21,6 +37,9 @@ export default {
         records: (state) => state.records,
         isGameActive: (state) => state.isGameActive,
         tiles: (state) => state.tiles,
+        penaltyTime: (state) => state.penaltyTime,
+        bonusTime: (state) => state.bonusTime,
+        frozenTiles: (state) => state.frozenTiles,
 
         isWin: (state) => {
             if (!state.tiles || state.tiles.length === 0) {
@@ -55,6 +74,7 @@ export default {
                     value: value,
                     isEmpty: value === 0,
                     isBlocked: index === state.blockedIndex,
+                    isFrozen: state.frozenTiles.includes(index),
                 }
             })
         },
@@ -62,6 +82,11 @@ export default {
         recordTime: (state) => {
             const key = `${state.gridSize}x${state.gridSize}`
             return state.records[key] || null
+        },
+
+        displayTime: (state) => {
+            const total = state.timer + state.penaltyTime - state.bonusTime
+            return total < 0 ? 0 : total
         },
     },
 
@@ -98,6 +123,43 @@ export default {
             state.isGameActive = active
         },
 
+        SET_LAST_MOVE_INDEX: (state, index) => {
+            state.secondLastMoveIndex = state.lastMoveIndex
+            state.lastMoveIndex = index
+        },
+
+        SET_PENALTY_TIME: (state, time) => {
+            state.penaltyTime = time
+        },
+
+        SET_BONUS_TIME: (state, time) => {
+            state.bonusTime = time
+        },
+
+        SET_IDLE_TIME: (state, time) => {
+            state.idleTime = time
+        },
+
+        SET_FAST_TIMER: (state, isFast) => {
+            state.isFastTimer = isFast
+        },
+
+        SET_FROZEN_TILES: (state, tiles) => {
+            state.frozenTiles = tiles
+        },
+
+        SET_TIMER_TIMEOUT: (state, timeout) => {
+            state.timerTimeout = timeout
+        },
+
+        SET_SPECIAL_MOVE_TIMEOUT: (state, timeout) => {
+            state.specialMoveTimeout = timeout
+        },
+
+        SET_IDLE_TIMEOUT: (state, timeout) => {
+            state.idleTimeout = timeout
+        },
+
         SWAP_TILES: (state, { idx1, idx2 }) => {
             const temp = state.tiles[idx1]
             state.tiles[idx1] = state.tiles[idx2]
@@ -106,7 +168,11 @@ export default {
 
         INCREMENT_TIMER: (state) => {
             if (state.isGameActive) {
-                state.timer++
+                if (state.isFastTimer) {
+                    state.timer += FAST_TIMER_MULTIPLIER
+                } else {
+                    state.timer++
+                }
             }
         },
 
@@ -115,39 +181,76 @@ export default {
                 state.specialMoves++
             }
         },
+
+        INCREMENT_IDLE_TIME: (state) => {
+            if (state.isGameActive) {
+                state.idleTime++
+
+                if (state.idleTime >= IDLE_TIME_THRESHOLD && !state.isFastTimer) {
+                    state.isFastTimer = true
+                }
+            }
+        },
+
+        RESET_IDLE_TIME: (state) => {
+            state.idleTime = 0
+            state.isFastTimer = false
+        },
+
+        CLEAR_TIMER_TIMEOUT: (state) => {
+            if (state.timerTimeout) {
+                clearTimeout(state.timerTimeout)
+                state.timerTimeout = null
+            }
+        },
+
+        CLEAR_SPECIAL_MOVE_TIMEOUT: (state) => {
+            if (state.specialMoveTimeout) {
+                clearTimeout(state.specialMoveTimeout)
+                state.specialMoveTimeout = null
+            }
+        },
+
+        CLEAR_IDLE_TIMEOUT: (state) => {
+            if (state.idleTimeout) {
+                clearTimeout(state.idleTimeout)
+                state.idleTimeout = null
+            }
+        },
+
+        UPDATE_FROZEN_TILES: (state) => {
+            const total = state.gridSize * state.gridSize
+            const newFrozenTiles = []
+
+            for (let i = 0; i < total; i++) {
+                const expectedValue = (i < total - 1) ? (i + 1) : 0
+                const currentValue = state.tiles[i]
+
+                if (currentValue === expectedValue && currentValue !== 0) {
+                    newFrozenTiles.push(i)
+                }
+            }
+
+            state.frozenTiles = newFrozenTiles
+        },
     },
 
     actions: {
-        formatTime: ({ state }, seconds) => {
-            const mins = Math.floor(seconds / 60)
-            const secs = seconds % 60
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-        },
-
-        loadRecords: ({ commit }) => {
-            const saved = localStorage.getItem('puzzleRecords')
-            if (saved) {
-                commit('SET_RECORDS', JSON.parse(saved))
-            }
-        },
-
-        saveRecord: ({ state, commit }) => {
-            const key = `${state.gridSize}x${state.gridSize}`
-            const currentRecord = state.records[key]
-
-            if (!currentRecord || state.timer < currentRecord) {
-                const newRecords = { ...state.records, [key]: state.timer }
-                commit('SET_RECORDS', newRecords)
-                localStorage.setItem('puzzleRecords', JSON.stringify(newRecords))
-            }
-        },
-
         initGame: ({ commit, state }) => {
             commit('SET_MOVES', 0)
             commit('SET_TIMER', 0)
             commit('SET_SPECIAL_MOVES', 0)
             commit('SET_BLOCKED_INDEX', null)
             commit('SET_GAME_ACTIVE', false)
+            commit('SET_LAST_MOVE_INDEX', null)
+            commit('SET_PENALTY_TIME', 0)
+            commit('SET_BONUS_TIME', 0)
+            commit('SET_IDLE_TIME', 0)
+            commit('SET_FAST_TIMER', false)
+            commit('SET_FROZEN_TILES', [])
+            commit('CLEAR_TIMER_TIMEOUT')
+            commit('CLEAR_SPECIAL_MOVE_TIMEOUT')
+            commit('CLEAR_IDLE_TIMEOUT')
 
             const total = state.gridSize * state.gridSize
 
@@ -234,11 +337,27 @@ export default {
 
             const emptyIndex = state.tiles.indexOf(0)
 
+            if (state.frozenTiles.includes(index) && state.tiles[index] !== 0) {
+                return false
+            }
+
+            if (state.frozenTiles.includes(emptyIndex) && state.tiles[emptyIndex] !== 0) {
+                return false
+            }
+
             if (state.specialMoves > 0 && state.tiles[index] !== 0) {
                 commit('SWAP_TILES', { idx1: index, idx2: emptyIndex })
                 commit('SET_SPECIAL_MOVES', state.specialMoves - 1)
                 commit('SET_MOVES', state.moves + 1)
                 commit('SET_BLOCKED_INDEX', null)
+                commit('RESET_IDLE_TIME')
+
+                if (index === state.secondLastMoveIndex && emptyIndex === state.lastMoveIndex) {
+                    commit('SET_PENALTY_TIME', state.penaltyTime + PENALTY_TIME)
+                }
+
+                commit('SET_LAST_MOVE_INDEX', index)
+                commit('UPDATE_FROZEN_TILES')
 
                 const row = Math.floor(emptyIndex / state.gridSize)
                 const col = emptyIndex % state.gridSize
@@ -312,6 +431,14 @@ export default {
                 commit('SWAP_TILES', { idx1: emptyIndex, idx2: index })
                 commit('SET_MOVES', state.moves + 1)
                 commit('SET_BLOCKED_INDEX', null)
+                commit('RESET_IDLE_TIME')
+
+                if (index === state.secondLastMoveIndex && emptyIndex === state.lastMoveIndex) {
+                    commit('SET_PENALTY_TIME', state.penaltyTime + PENALTY_TIME)
+                }
+
+                commit('SET_LAST_MOVE_INDEX', index)
+                commit('UPDATE_FROZEN_TILES')
 
                 const newRow = Math.floor(index / state.gridSize)
                 const newCol = index % state.gridSize
@@ -362,6 +489,70 @@ export default {
 
         changeGridSize: ({ commit }, newSize) => {
             commit('SET_GRID_SIZE', newSize)
+        },
+
+        handleSwipe: ({ commit, state }, direction) => {
+            const emptyIndex = state.tiles.indexOf(0)
+            const row = Math.floor(emptyIndex / state.gridSize)
+            const col = emptyIndex % state.gridSize
+            let targetIndex = null
+
+            if (direction === 'up' && row < state.gridSize - 1) {
+                targetIndex = emptyIndex + state.gridSize
+            } else if (direction === 'down' && row > 0) {
+                targetIndex = emptyIndex - state.gridSize
+            } else if (direction === 'left' && col < state.gridSize - 1) {
+                targetIndex = emptyIndex + 1
+            } else if (direction === 'right' && col > 0) {
+                targetIndex = emptyIndex - 1
+            }
+
+            if (targetIndex !== null) {
+                commit('SWAP_TILES', { idx1: emptyIndex, idx2: targetIndex })
+                commit('SET_MOVES', state.moves + 1)
+                commit('RESET_IDLE_TIME')
+                commit('UPDATE_FROZEN_TILES')
+            }
+        },
+
+        startTimers: ({ commit, state }) => {
+            commit('CLEAR_TIMER_TIMEOUT')
+            commit('CLEAR_SPECIAL_MOVE_TIMEOUT')
+            commit('CLEAR_IDLE_TIMEOUT')
+
+            const timerLoop = () => {
+                if (!state.isGameActive) {
+                    return
+                }
+                commit('INCREMENT_TIMER')
+                commit('SET_TIMER_TIMEOUT', setTimeout(timerLoop, TIMER_DELAY))
+            }
+
+            const specialMoveLoop = () => {
+                if (!state.isGameActive) {
+                    return
+                }
+                commit('INCREMENT_SPECIAL_MOVES')
+                commit('SET_SPECIAL_MOVE_TIMEOUT', setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY))
+            }
+
+            const idleLoop = () => {
+                if (!state.isGameActive) {
+                    return
+                }
+                commit('INCREMENT_IDLE_TIME')
+                commit('SET_IDLE_TIMEOUT', setTimeout(idleLoop, TIMER_DELAY))
+            }
+
+            timerLoop()
+            setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY)
+            idleLoop()
+        },
+
+        stopTimers: ({ commit }) => {
+            commit('CLEAR_TIMER_TIMEOUT')
+            commit('CLEAR_SPECIAL_MOVE_TIMEOUT')
+            commit('CLEAR_IDLE_TIMEOUT')
         },
     },
 }
