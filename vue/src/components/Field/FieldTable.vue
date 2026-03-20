@@ -69,7 +69,7 @@ export default {
 }
 
 .is-central{
-  background-color: red;
+  background-color: #800020;
 }
 .attached-piece {
   background-color: rgb(7, 36, 199);

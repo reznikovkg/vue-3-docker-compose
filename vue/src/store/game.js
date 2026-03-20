@@ -176,8 +176,6 @@ export default {
             ).then(
                 () => store.dispatch("cube/clearAttachedPieces", null, { root: true })
             ).then(
-                store.dispatch("field/clearBombs", null, { root: true })
-            ).then(
                 store.dispatch("field/clearField", null, { root: true })
             )
         },

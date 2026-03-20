@@ -120,6 +120,7 @@ export default {
       store.commit(MUTATIONS.CHANGE_FIELD_SIZE, newSize)
     },
     clearField: (store) => {
+      store.commit(MUTATIONS.CLEAR_BOMBS)
       store.commit(MUTATIONS.CLEAR_FIELD)
     },
     startGame: (store) => {
@@ -519,11 +520,37 @@ export default {
         const side = Math.floor(Math.random() * 4)
         const fieldSize = store.state.size
         let x, y, direction
+
+        const getPosition = (minPossible, maxPossible) => {
+            if (maxPossible - minPossible >= 2) {
+                const newMin = minPossible + 1
+                const newMax = maxPossible - 1
+                return Math.floor(Math.random() * (newMax - newMin + 1)) + newMin
+            }
+            return Math.floor(Math.random() * (maxPossible - minPossible + 1)) + minPossible
+        }
+
         switch (side) {
-            case 0: x = Math.floor(Math.random() * fieldSize); y = -1; direction = 0; break
-            case 1: x = fieldSize; y = Math.floor(Math.random() * fieldSize); direction = 1; break
-            case 2: x = Math.floor(Math.random() * fieldSize); y = fieldSize; direction = 2; break
-            case 3: x = -1; y = Math.floor(Math.random() * fieldSize); direction = 3; break
+            case 0:
+                x = getPosition(0, fieldSize - 1)
+                y = -1
+                direction = 0
+                break
+            case 1:
+                x = fieldSize
+                y = getPosition(0, fieldSize - 1)
+                direction = 1
+                break
+            case 2:
+                x = getPosition(0, fieldSize - 1)
+                y = fieldSize
+                direction = 2
+                break
+            case 3:
+                x = -1
+                y = getPosition(0, fieldSize - 1)
+                direction = 3
+                break
         }
         const bomb = { x, y, direction, color }
         store.commit(MUTATIONS.ADD_BOMB, bomb)
@@ -555,10 +582,7 @@ export default {
 
             const cell = store.state.field[y][x]
             if (cell === OBJECTS.CENTRAL_CUBE || cell === OBJECTS.ATTACHED_CUBE) {
-                if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
-                    store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
-                }
-                store.dispatch('handleBombCollision', { bomb: { ...bomb, x, y }, index: i })
+                store.dispatch('handleBombCollision', { bomb: { ...bomb, x: oldX, y: oldY }, index: i })
                 continue
             }
 
@@ -611,15 +635,6 @@ export default {
         } else if (color === OBJECTS.GREEN_BOMB) {
             store.dispatch('game/updateTimer', { isIncrease: true, decreaseValue: 0, increaseValue: 10 }, { root: true })
         }
-    },
-
-    clearBombs: (store) => {
-        store.state.bombs.forEach(bomb => {
-            if (bomb.x >= 0 && bomb.x < store.state.size && bomb.y >= 0 && bomb.y < store.state.size) {
-            store.commit(MUTATIONS.SET_NUMBER, { position: {x: bomb.x, y: bomb.y}, number: OBJECTS.NONE })
-            }
-        })
-        store.commit(MUTATIONS.CLEAR_BOMBS)
     }
   }
 }
