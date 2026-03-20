@@ -17,6 +17,10 @@
     <div>
       <button @click="resetGame" class="reset-btn">Сброс</button>
     </div>
+    <div>
+      Время: 
+      <Timer ref="timer" />
+    </div>
     <RouterLink :to="{ name: $routes.SETTING }">
       Настройки
     </RouterLink>
@@ -28,6 +32,7 @@
 
 <script setup>
 import Flask from '@/components/Flask.vue'
+import Timer from '@/components/Timer.vue'
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 
@@ -38,6 +43,7 @@ const LAYERS_PER_FLASK = computed(() => store.getters.getLayersPerFlask)
 const COLORS = ['red', 'blue', 'green', 'yellow', 'purple', 'orange']
 const selectedFlaskIndex = ref(null)
 const flasks = ref([])
+const timer = ref(null)
 const showWinMessage = ref(false)
 const winCount = computed(() => store.getters.getWinCount)
 const curPercent = ref(Math.floor(100 / LAYERS_PER_FLASK.value))
@@ -104,6 +110,9 @@ const pour = (fromIndex, toIndex) => {
   }
 
   if (checkWin()) {
+    timer.value.stop()
+    const time = timer.value.getTime()
+    console.log('Победа за ', time, 'секунд')
     showWinMessage.value = true
     setTimeout(() => {
       showWinMessage.value = false
@@ -197,6 +206,8 @@ const checkWin = () =>
 const newGame = () => {
   selectedFlaskIndex.value = null
   flasks.value = generateRandomFlasks()
+  timer.value.reset()
+  timer.value.start()
 }
 
 const resetGame = () => {
