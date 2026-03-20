@@ -415,27 +415,28 @@ export default {
             break
       }
 
-      if (foundRecipe) {
-        const newElement = elementsMap[foundRecipe.output]
-        
-        if (!newElement) {
-          commit(MUTATIONS.SET_MESSAGE, 'Ошибка: элемент не найден!')
-          return
-        }
-        
-        commit(MUTATIONS.ADD_DISCOVERED_ELEMENT, newElement)
-        
-        const itemsToRemove = countItemsToRemove(usedIndices, allElementIds)
-        commit(MUTATIONS.REMOVE_ITEMS_FROM_TABLE, itemsToRemove)
-        
-        commit(MUTATIONS.ADD_TO_TABLE, newElement)
-        
-        commit(MUTATIONS.SET_MESSAGE, `Открыт новый элемент: ${newElement.name}!`)
-
-        commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
-      } else {
+      if (!foundRecipe) {
         commit(MUTATIONS.SET_MESSAGE, 'Ничего не получилось... Попробуйте другую комбинацию!')
+        return
       }
+
+      const newElement = elementsMap[foundRecipe.output]
+      
+      if (!newElement) {
+        commit(MUTATIONS.SET_MESSAGE, 'Ошибка: элемент не найден!')
+        return
+      }
+      
+      commit(MUTATIONS.ADD_DISCOVERED_ELEMENT, newElement)
+      
+      const itemsToRemove = countItemsToRemove(usedIndices, allElementIds)
+      commit(MUTATIONS.REMOVE_ITEMS_FROM_TABLE, itemsToRemove)
+      
+      commit(MUTATIONS.ADD_TO_TABLE, newElement)
+      
+      commit(MUTATIONS.SET_MESSAGE, `Открыт новый элемент: ${newElement.name}!`)
+
+      commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
     },
     
     clearMessage({ commit }) {
@@ -650,95 +651,90 @@ export default {
           }
         }
         
-        if (foundRecipe) 
+        if (foundRecipe) {
             break
+        }
       }
       
-      if (foundRecipe) {
-        const newElement = elementsMap[foundRecipe.output]
-        
-        if (!newElement) {
-          commit(MUTATIONS.SET_MESSAGE, 'Ошибка: элемент не найден!')
-          return
-        }
+      if (!foundRecipe) {
+        commit(MUTATIONS.SET_MESSAGE, 'Ничего не получилось... Попробуйте другую комбинацию!')
+        return
+      }
 
-        const requiredIds = [...foundRecipe.inputs]
-        const requiredMap = new Map()
-        requiredIds.forEach(id => {
-          requiredMap.set(id, (requiredMap.get(id) || 0) + 1)
-        })
+      const newElement = elementsMap[foundRecipe.output]
       
-        let allRequiredFound = true
-        for (const [id, quantity] of requiredMap) {
-          const element = getters.getDiscoveredElement(id)
-          if (element && element.quantity < quantity) {
-            allRequiredFound = false
-            break;
-          }
-        }
+      if (!newElement) {
+        commit(MUTATIONS.SET_MESSAGE, 'Ошибка: элемент не найден!')
+        return
+      }
 
-        if (!allRequiredFound) {
+      const requiredIds = [...foundRecipe.inputs]
+      const requiredMap = new Map()
+      requiredIds.forEach(id => {
+        requiredMap.set(id, (requiredMap.get(id) || 0) + 1)
+      })
+    
+      for (const [id, quantity] of requiredMap) {
+        if (!getters.discoveredElements.some(e => e.id === id && e.quantity >= quantity)) {
           commit(MUTATIONS.SET_MESSAGE, 'Недостаточно ресурсов для крафта!')
           return
         }
-
-        for (const [id, quantity] of requiredMap) {
-          const element = getters.getDiscoveredElement(id)
-          if (element) {
-            commit(MUTATIONS.UPDATE_ELEMENT_QUANTITY, { id: element.id, quantity: -quantity})
-          }
-        }
-        commit(MUTATIONS.REMOVE_ITEMS_FROM_TABLE, Array.from(requiredMap.entries()).map(([id, quantity]) => ({
-          id,
-          quantity
-        })))
-
-        commit(MUTATIONS.ASSIGN_WORKER, 'crafting')
-        
-        const totalTime = getCraftingTime(newElement.level)
-        
-        const processId = Date.now()
-        const process = {
-          id: processId,
-          recipe: foundRecipe,
-          outputLevel: newElement.level,
-          output: newElement,
-          workers: 1,
-          progress: 0,
-          progressScore: 0,
-          lastProgressAdd: 0,
-          totalTime
-        }
-        
-        commit(MUTATIONS.START_CRAFTING, process)
-        commit(MUTATIONS.SET_MESSAGE, `Начат крафт ${newElement.name}. Время: ${totalTime}с (уровень ${newElement.level})`)
-        commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
-        commit(MUTATIONS.CLEAR_CRAFT_SLOTS)
-        
-        const interval = setInterval(() => {
-          const currentProcess = state.craftingProcesses.find(p => p.id === processId)
-          if (!currentProcess) {
-            clearInterval(interval)
-            return
-          }
-          
-          currentProcess.lastProgressAdd = 100 * currentProcess.workers
-          currentProcess.progressScore += currentProcess.lastProgressAdd
-          const progressTime = currentProcess.progressScore / 1000
-          const progress = Math.min(100, (progressTime / currentProcess.totalTime) * 100)
-          
-          commit(MUTATIONS.UPDATE_CRAFTING_PROGRESS, { id: processId, progress })
-          
-          if (progressTime >= currentProcess.totalTime) {
-            clearInterval(interval)
-            dispatch('completeCrafting', processId)
-          }
-        }, 100)
-        
-        process.interval = interval
-      } else {
-        commit(MUTATIONS.SET_MESSAGE, 'Ничего не получилось... Попробуйте другую комбинацию!')
       }
+
+      for (const [id, quantity] of requiredMap) {
+        const element = getters.getDiscoveredElement(id)
+        if (element) {
+          commit(MUTATIONS.UPDATE_ELEMENT_QUANTITY, { id: element.id, quantity: -quantity})
+        }
+      }
+      commit(MUTATIONS.REMOVE_ITEMS_FROM_TABLE, Array.from(requiredMap.entries()).map(([id, quantity]) => ({
+        id,
+        quantity
+      })))
+
+      commit(MUTATIONS.ASSIGN_WORKER, 'crafting')
+      
+      const totalTime = getCraftingTime(newElement.level)
+      
+      const processId = Date.now()
+      const process = {
+        id: processId,
+        recipe: foundRecipe,
+        outputLevel: newElement.level,
+        output: newElement,
+        workers: 1,
+        progress: 0,
+        progressScore: 0,
+        lastProgressAdd: 0,
+        totalTime
+      }
+      
+      commit(MUTATIONS.START_CRAFTING, process)
+      commit(MUTATIONS.SET_MESSAGE, `Начат крафт ${newElement.name}. Время: ${totalTime}с (уровень ${newElement.level})`)
+      commit(MUTATIONS.SET_SELECTED_ELEMENT, null)
+      commit(MUTATIONS.CLEAR_CRAFT_SLOTS)
+      
+      const interval = setInterval(() => {
+        const currentProcess = state.craftingProcesses.find(p => p.id === processId)
+        if (!currentProcess) {
+          clearInterval(interval)
+          return
+        }
+        
+        currentProcess.lastProgressAdd = 100 * currentProcess.workers
+        currentProcess.progressScore += currentProcess.lastProgressAdd
+        const progressTime = currentProcess.progressScore / 1000
+        const progress = Math.min(100, (progressTime / currentProcess.totalTime) * 100)
+        
+        commit(MUTATIONS.UPDATE_CRAFTING_PROGRESS, { id: processId, progress })
+        
+        if (progressTime >= currentProcess.totalTime) {
+          clearInterval(interval)
+          dispatch('completeCrafting', processId)
+        }
+      }, 100)
+      
+      process.interval = interval
     },
 
     completeCrafting({ commit, state }, processId) {
@@ -792,18 +788,11 @@ export default {
         })
       })
       
-      let allRequiredFound = true
       for (const [id, quantity] of requiredMap) {
-        const element = getters.getDiscoveredElement(id)
-        if (element && element.quantity < quantity) {
-          allRequiredFound = false
-          break;
+        if (!getters.discoveredElements.some(e => e.id === id && e.quantity >= quantity)) {
+          commit(MUTATIONS.SET_MESSAGE, 'Недостаточно ресурсов для крафта!')
+          return
         }
-      }
-
-      if (!allRequiredFound) {
-        commit(MUTATIONS.SET_MESSAGE, 'Недостаточно ресурсов для крафта!')
-        return
       }
 
       for (const [id, quantity] of requiredMap) {
