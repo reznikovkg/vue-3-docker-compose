@@ -1,17 +1,25 @@
 <template>
-  Index
-
-  <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
-    </RouterLink>
+  <div class="app">
+    <GameBoard />
+    <SidePanel />
   </div>
 </template>
 
-<script setup lang="ts">
+<script>
+import GameBoard from '@/components/ui/GameBoard.vue'
+import SidePanel from '@/components/ui/SidePanel.vue'
 
+export default {
+  name: 'IndexPage',
+  components: {
+    GameBoard,
+    SidePanel
+  }
+}
 </script>
 
-<style scoped>
-
+<style>
+.app {
+  display: flex;
+}
 </style>
