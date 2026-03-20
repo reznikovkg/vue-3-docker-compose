@@ -299,12 +299,15 @@ export default {
             const updatedPiece = { ...piece, x, y }
             store.commit(MUTATIONS.SET_CURRENT_PIECE, updatedPiece)
             const bombs = store.state.bombs
-            for (let i = 0; i < bombs.length; i++) {
-                const bomb = bombs[i]
-                store.dispatch('checkCrash', {x: bomb.x, y: bomb.y})
-            }
             store.dispatch('drawPieceOnField').then(
                 () => store.dispatch('checkFigureAttachment')
+            ).then(
+                () => {
+                    for (let i = 0; i < bombs.length; i++) {
+                        const bomb = bombs[i]
+                        store.dispatch('checkCrash', {index: i, x: bomb.x, y: bomb.y})
+                    }
+                }
             )
         }
     },
@@ -562,7 +565,7 @@ export default {
             if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
                 store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
             }
-            store.dispatch('checkCrash', {x, y}).then(
+            store.dispatch('checkCrash', {index: i, x, y}).then(
                 isCrash => {
                     if (!isCrash) {
                         store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
@@ -572,24 +575,23 @@ export default {
             )
         }
     },
-    checkCrash: (store, {x, y}) => {
+    checkCrash: (store, {index, x, y}) => {
         const piece = store.state.currentPiece
-        const { shape, xf, yf } = piece
 
         let isCrash = false
 
-        for (let r = 0; r < shape.length && !isCrash; r++) {
-            for (let c = 0; c < shape[0].length && !isCrash; c++) {
-                if (shape[r][c] === 1) {
-                    const nx = xf + c
-                    const ny = yf + r
+        for (let r = 0; r < piece.shape.length && !isCrash; r++) {
+            for (let c = 0; c < piece.shape[0].length && !isCrash; c++) {
+                if (piece.shape[r][c] === 1) {
+                    const nx = piece.x + c
+                    const ny = piece.y + r
                     isCrash ||= x == nx && y == ny
                 }
             }
         }
         if (isCrash) {
             store.dispatch('spawnPiece')
-            store.commit(MUTATIONS.REMOVE_BOMB, i)
+            store.commit(MUTATIONS.REMOVE_BOMB, index)
         }
         return isCrash
     },
