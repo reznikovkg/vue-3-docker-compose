@@ -1,6 +1,5 @@
 import { ALL_ORIENTATIONS } from './pieces'
 import { DECREASE_TIMER_VALUE_DEFAULT, INCREASE_TIMER_VALUE_DEFAULT } from './game'
-import store from '.'
 
 const MUTATIONS = {
     CHANGE_FIELD_SIZE: 'CHANGE_FIELD_SIZE',
