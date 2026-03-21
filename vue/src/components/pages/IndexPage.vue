@@ -24,6 +24,9 @@
     <RouterLink :to="{ name: $routes.SETTING }">
       Настройки
     </RouterLink>
+    <RouterLink :to="{ name: $routes.RECORD }">
+      Рекорды
+    </RouterLink>
     <div v-if="showWinMessage" class="win-message">
       Победа
     </div>
