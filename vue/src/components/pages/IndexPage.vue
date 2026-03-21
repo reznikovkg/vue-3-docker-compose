@@ -8,6 +8,7 @@
         :layers="flask.layers"
         :is-selected="selectedFlaskIndex === index"
         :flask-index="index"
+        :is-freezed="blockedFlaskIndex === index"
         @flask-click="handleFlaskClick"
       />
     </div>
@@ -51,7 +52,7 @@ const showWinMessage = ref(false)
 const winCount = computed(() => store.getters.getWinCount)
 const curPercent = ref(Math.floor(100 / LAYERS_PER_FLASK.value))
 const isHardMode = computed(() => store.getters.getHardMode)
-const blockedFlaskIndex = ref(0)
+const blockedFlaskIndex = ref(null)
 
 onMounted(() => {
   newGame()
@@ -59,7 +60,6 @@ onMounted(() => {
 
 const handleFlaskClick = (index) => {
   if (isHardMode.value && blockedFlaskIndex.value === index) {
-    alert('Колба заблокирована')
     return
   }
   if (selectedFlaskIndex.value === null) {
@@ -72,9 +72,6 @@ const handleFlaskClick = (index) => {
   }
   pour(selectedFlaskIndex.value, index)
   selectedFlaskIndex.value = null
-
-  if (isHardMode.value)
-    blockFlask()
 }
 
 const getAvailableSpace = (flask) =>
@@ -120,6 +117,9 @@ const pour = (fromIndex, toIndex) => {
     const toTopLayer = toFlask.layers[toFlask.layers.length - 1]
     toTopLayer.percent += pourAmount
   }
+
+  if (isHardMode.value)
+    blockFlask()
 
   if (checkWin()) {
     timer.value.stop()

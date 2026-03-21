@@ -5,7 +5,7 @@
   >
     <div
       class="flask"
-      :class="{ selected: isSelected }"
+      :class="{ selected: isSelected, freezed: isFreezed }"
     >
       <div
         v-for="layer in layers"
@@ -26,6 +26,10 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  isFreezed: {
+    type: Boolean,
+    default: false
+  },
   flaskIndex: {
     type: Number,
     required: true
@@ -43,6 +47,8 @@ const onFlaskClick = () => {
 $border-color: #f0f0f0;
 $selected-color: gold;
 $backcolor: #333;
+$freezed-bordercolor: #575757;
+$freezed-backcolor: #000000;
 
 .flask-container {
   display: inline-block;
@@ -72,5 +78,9 @@ $backcolor: #333;
   box-shadow: 0 0 10px $selected-color;
   transform: scale(1.02);
   transition: all 0.2s ease;
+}
+
+.flask.freezed {
+  filter: brightness(0.4);
 }
 </style>
