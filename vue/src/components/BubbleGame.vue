@@ -150,7 +150,7 @@ import {
   applyCombo,
   spawnBomb
 } from '@/game/gameModes'
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import Bubble from '@/components/ui/Bubble.vue'
 import bombAsset from '@/assets/game/bomb.png'
 import explosionAsset from '@/assets/game/expl.png'
@@ -221,16 +221,6 @@ export default {
       bombItems: [],
       bombExplosionItems: [],
       modeTickTimerId: null,
-      modeState: {
-        laser: {
-          activeLeft: 0,
-          cooldownLeft: 0
-        },
-        automat: {
-          activeLeft: 0,
-          cooldownLeft: 0
-        }
-      },
       laserX: 0,
       laserY: 0,
       laserClientX: 0,
@@ -239,12 +229,20 @@ export default {
   },
 
   computed: {
+    ...mapGetters([
+      'getModeState'
+    ]),
+
     bombImage() {
       return bombAsset
     },
 
     explosionImage() {
       return explosionAsset
+    },
+
+    modeState() {
+      return this.getModeState
     },
 
     scoreRounded() {
@@ -267,6 +265,10 @@ export default {
       'setList'
     ]),
 
+    ...mapActions([
+      'setModeState'
+    ]),
+
     activateAutomatMode() {
       this.activeMode = 'automat'
       startAutomatMode(this)
@@ -278,6 +280,29 @@ export default {
 
     getModeConfig(mode) {
       return GAME_MODE_RULES[mode] || null
+    },
+
+    getEmptyModeState() {
+      return {
+        laser: {
+          activeLeft: 0,
+          cooldownLeft: 0
+        },
+        automat: {
+          activeLeft: 0,
+          cooldownLeft: 0
+        }
+      }
+    },
+
+    getNextModeState(mode, payload) {
+      return {
+        ...this.modeState,
+        [mode]: {
+          ...this.modeState[mode],
+          ...payload
+        }
+      }
     },
 
     isModeCooldown(mode) {
@@ -314,8 +339,10 @@ export default {
         this.activeMode = 'normal'
       }
 
-      this.modeState[mode].activeLeft = 0
-      this.modeState[mode].cooldownLeft = config.cooldown
+      this.setModeState(this.getNextModeState(mode, {
+        activeLeft: 0,
+        cooldownLeft: config.cooldown
+      }))
     },
 
     tickModes() {
@@ -331,17 +358,23 @@ export default {
       }
 
       if (state.activeLeft > 0) {
-        state.activeLeft -= 1
+        const nextActiveLeft = state.activeLeft - 1
 
-        if (state.activeLeft <= 0) {
+        if (nextActiveLeft <= 0) {
           this.finishMode(mode)
+          return
         }
 
+        this.setModeState(this.getNextModeState(mode, {
+          activeLeft: nextActiveLeft
+        }))
         return
       }
 
       if (state.cooldownLeft > 0) {
-        state.cooldownLeft -= 1
+        this.setModeState(this.getNextModeState(mode, {
+          cooldownLeft: state.cooldownLeft - 1
+        }))
       }
     },
 
@@ -390,14 +423,18 @@ export default {
       }
 
       if (mode === 'automat') {
-        this.modeState.automat.activeLeft = this.getModeConfig('automat').active
-        this.modeState.automat.cooldownLeft = 0
+        this.setModeState(this.getNextModeState('automat', {
+          activeLeft: this.getModeConfig('automat').active,
+          cooldownLeft: 0
+        }))
         this.activateAutomatMode()
         return
       }
 
-      this.modeState.laser.activeLeft = this.getModeConfig('laser').active
-      this.modeState.laser.cooldownLeft = 0
+      this.setModeState(this.getNextModeState('laser', {
+        activeLeft: this.getModeConfig('laser').active,
+        cooldownLeft: 0
+      }))
       this.activeMode = mode
     },
 
@@ -456,10 +493,7 @@ export default {
       this.bombItems = []
       this.bombExplosionItems = []
       this.activeMode = 'normal'
-      this.modeState.laser.activeLeft = 0
-      this.modeState.laser.cooldownLeft = 0
-      this.modeState.automat.activeLeft = 0
-      this.modeState.automat.cooldownLeft = 0
+      this.setModeState(this.getEmptyModeState())
 
       this.$emit('update:score', this.score)
 
