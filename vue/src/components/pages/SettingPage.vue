@@ -13,6 +13,15 @@
       {{ LAYERS_PER_FLASK }}
       <button @click="addLayer" class="setting-btn">+</button>
     </div>
+    <div class="control-row">
+      Сложный режим
+      <button
+        @click="changeHardMode"
+        :class="['setting-btn', 'hard-mode-btn', { active: isHardMode }]"
+      >
+        {{ isHardMode ? 'Включен' : 'Выключен' }}
+      </button>
+    </div>
   </div>
   <RouterLink :to="{ name: $routes.INDEX }">Сохранить</RouterLink>
 </template>
@@ -25,6 +34,7 @@ const store = useStore()
 
 const FLASK_COUNT = computed(() => store.getters.getFlaskCount)
 const LAYERS_PER_FLASK = computed(() => store.getters.getLayersPerFlask)
+const isHardMode = computed(() => store.getters.getHardMode)
 
 const addFlask = () => {
   if (FLASK_COUNT.value < 16) {
@@ -49,10 +59,16 @@ const delLayer = () => {
     store.commit('DEC_LAYERS_PER_FLASK')
   }
 }
+
+const changeHardMode = () => {
+  store.commit('CHANGE_MODE')
+}
 </script>
 
 <style lang="scss" scoped>
 $btn-color: #36c9ff;
+$btn-color-disactive: #1c7190;
+$btn-color-active: #36ff62;
 $text-btn-color: #333;
 
 .controls {
@@ -77,5 +93,11 @@ $text-btn-color: #333;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+}
+.hard-mode-btn {
+  background: $btn-color-disactive;
+}
+.hard-mode-btn.active {
+  background: $btn-color-active;
 }
 </style>

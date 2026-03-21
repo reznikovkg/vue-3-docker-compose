@@ -9,7 +9,8 @@ const MUTATIONS = {
   DEC_LAYERS_PER_FLASK: 'DEC_LAYERS_PER_FLASK',
   NULL_WIN_COUNT: 'NULL_WIN_COUNT',
   INC_WIN_COUNT: 'INC_WIN_COUNT',
-  SET_RECORD: 'SET_RECORD'
+  SET_RECORD: 'SET_RECORD',
+  CHANGE_MODE: 'CHANGE_MODE'
 }
 
 export default createStore({
@@ -19,14 +20,16 @@ export default createStore({
       layersPerFlask: 4,
       winCount: 0,
       countRecords: 10,
-      records: []
+      records: [],
+      hardMode: false
     }
   },
   getters: {
     getFlaskCount: (state) => state.flaskCount,
     getLayersPerFlask: (state) => state.layersPerFlask,
     getWinCount: (state) => state.winCount,
-    getRecords: (state) => state.records
+    getRecords: (state) => state.records,
+    getHardMode: (state) => state.hardMode
   },
   mutations: {
     [MUTATIONS.SET_FLASK_COUNT]: (state, value) => {
@@ -58,6 +61,9 @@ export default createStore({
       state.records.sort((a, b) => a - b)
       if (state.records.length > state.countRecords)
         state.records.pop()
+    },
+    [MUTATIONS.CHANGE_MODE]: (state) => {
+      state.hardMode = !state.hardMode
     }
   },
   actions: {
@@ -87,6 +93,9 @@ export default createStore({
     },
     setRecord: (store, value) => {
       store.commit(MUTATIONS.SET_RECORD, value)
+    },
+    changeMode: (store) => {
+      store.commit(MUTATIONS.CHANGE_MODE)
     }
   }
 })
