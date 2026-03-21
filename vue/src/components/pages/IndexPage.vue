@@ -50,13 +50,18 @@ const timer = ref(null)
 const showWinMessage = ref(false)
 const winCount = computed(() => store.getters.getWinCount)
 const curPercent = ref(Math.floor(100 / LAYERS_PER_FLASK.value))
-const records = computed(() => store.getters.getRecords)
+const isHardMode = computed(() => store.getters.getHardMode)
+const blockedFlaskIndex = ref(0)
 
 onMounted(() => {
   newGame()
 })
 
 const handleFlaskClick = (index) => {
+  if (isHardMode.value && blockedFlaskIndex.value === index) {
+    alert('Колба заблокирована')
+    return
+  }
   if (selectedFlaskIndex.value === null) {
     selectedFlaskIndex.value = index
     return
@@ -67,6 +72,9 @@ const handleFlaskClick = (index) => {
   }
   pour(selectedFlaskIndex.value, index)
   selectedFlaskIndex.value = null
+
+  if (isHardMode.value)
+    blockFlask()
 }
 
 const getAvailableSpace = (flask) =>
@@ -200,6 +208,12 @@ const generateRandomFlasks = () => {
   return newFlasks
 }
 
+const blockFlask = () => {
+  do {
+    blockedFlaskIndex.value = Math.floor(Math.random() * FLASK_COUNT.value)
+  } while (getAvailableSpace(flasks.value[blockedFlaskIndex.value]) === 100)
+}
+
 const checkWin = () => 
   flasks.value.every(flask =>
     flask.layers.length === 0 ||
@@ -210,6 +224,8 @@ const checkWin = () =>
 const newGame = () => {
   selectedFlaskIndex.value = null
   flasks.value = generateRandomFlasks()
+  if (isHardMode.value)
+    blockFlask()
   timer.value.reset()
   timer.value.start()
 }
