@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import list from './list'
+import shapes from './shapes'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -15,7 +16,6 @@ export default createStore({
   getters: {
     getCount: (state) => state.count,
     getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
   },
   mutations: {
     [MUTATIONS.INCREMENT]: (state, value) => {
@@ -37,6 +37,7 @@ export default createStore({
     },
   },
   modules: {
-    list
+    list,
+    shapes
   }
 })
