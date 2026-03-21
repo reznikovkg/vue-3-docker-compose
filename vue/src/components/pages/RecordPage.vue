@@ -14,17 +14,12 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed } from 'vue'
+import { useStore } from 'vuex'
 
-let recs = ref([])
-const count = 10
+const store = useStore()
 
-onMounted(() => {
-  recs.value = init()
-  console.log('Инициализированы нулевые рекорды')
-})
-
-const init = () => Array(count).fill().map(() => 10)
+const recs = computed(() => store.getters.getRecords)
 
 const formatTime = (seconds) => {
   const mins = Math.floor(seconds / 60)

@@ -8,7 +8,8 @@ const MUTATIONS = {
   INC_LAYERS_PER_FLASK: 'INC_LAYERS_PER_FLASK',
   DEC_LAYERS_PER_FLASK: 'DEC_LAYERS_PER_FLASK',
   NULL_WIN_COUNT: 'NULL_WIN_COUNT',
-  INC_WIN_COUNT: 'INC_WIN_COUNT'
+  INC_WIN_COUNT: 'INC_WIN_COUNT',
+  SET_RECORD: 'SET_RECORD'
 }
 
 export default createStore({
@@ -16,13 +17,16 @@ export default createStore({
     return {
       flaskCount: 5,
       layersPerFlask: 4,
-      winCount: 0
+      winCount: 0,
+      countRecords: 10,
+      records: []
     }
   },
   getters: {
     getFlaskCount: (state) => state.flaskCount,
     getLayersPerFlask: (state) => state.layersPerFlask,
-    getWinCount: (state) => state.winCount
+    getWinCount: (state) => state.winCount,
+    getRecords: (state) => state.records
   },
   mutations: {
     [MUTATIONS.SET_FLASK_COUNT]: (state, value) => {
@@ -48,6 +52,12 @@ export default createStore({
     },
     [MUTATIONS.INC_WIN_COUNT]: (state) => {
       state.winCount += 1
+    },
+    [MUTATIONS.SET_RECORD]: (state, value) => {
+      state.records.push(value)
+      state.records.sort((a, b) => a - b)
+      if (state.records.length > state.countRecords)
+        state.records.pop()
     }
   },
   actions: {
@@ -74,6 +84,9 @@ export default createStore({
     },
     incWinCount: (store) => {
       store.commit(MUTATIONS.INC_WIN_COUNT)
+    },
+    setRecord: (store, value) => {
+      store.commit(MUTATIONS.SET_RECORD, value)
     }
   }
 })

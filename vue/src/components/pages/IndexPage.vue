@@ -50,6 +50,7 @@ const timer = ref(null)
 const showWinMessage = ref(false)
 const winCount = computed(() => store.getters.getWinCount)
 const curPercent = ref(Math.floor(100 / LAYERS_PER_FLASK.value))
+const records = computed(() => store.getters.getRecords)
 
 onMounted(() => {
   newGame()
@@ -115,7 +116,7 @@ const pour = (fromIndex, toIndex) => {
   if (checkWin()) {
     timer.value.stop()
     const time = timer.value.getTime()
-    console.log('Победа за ', time, 'секунд')
+    store.dispatch('setRecord', time)
     showWinMessage.value = true
     setTimeout(() => {
       showWinMessage.value = false
