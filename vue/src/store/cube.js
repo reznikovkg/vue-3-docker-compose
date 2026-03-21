@@ -230,7 +230,7 @@ export default {
             const field = store.rootGetters['field/getField']
             const cell = field[y][x] 
             if (cell > 10) {
-                const bombs = store.rootGetters['field/getBombs']
+                const bombs = store.rootGetters['bombs/getBombs']
 
                 bombs.forEach((bomb, i) => {
                     if (bomb.x == x && bomb.y == y)

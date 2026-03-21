@@ -27,6 +27,12 @@ export default {
   },
   getters: {
     getField: (state) => state.field,
+    getFieldCell: (state) => (x, y) => {
+        if (!state.field || y < 0 || y >= state.size || x < 0 || x >= state.size) {
+            return undefined
+        }
+        return state.field[y][x]
+    },
     getFieldSize: (state) => state.size,
     isGameActive: (state) => state.gameActive,
     getCurrentPiece: (state) => state.currentPiece,
@@ -89,7 +95,7 @@ export default {
       store.commit(MUTATIONS.CHANGE_FIELD_SIZE, newSize)
     },
     clearField: (store) => {
-      store.commit(MUTATIONS.CLEAR_BOMBS)
+            store.dispatch('bombs/clearBombs', null, { root: true })
       store.commit(MUTATIONS.CLEAR_FIELD)
     },
     startGame: (store) => {
@@ -274,7 +280,11 @@ export default {
             ).then(
                 () => {
                     bombs.forEach((bomb, i) => {
-                        store.dispatch('checkCrash', {index: i, x: bomb.x, y: bomb.y})
+                        store.dispatch(
+                            'bombs/checkCrash', 
+                            {index: i, x: bomb.x, y: bomb.y},
+                            {root: true}
+                        )
                     })
                     // for (let i = 0; i < bombs.length; i++) {
                     //     const bomb = bombs[i]

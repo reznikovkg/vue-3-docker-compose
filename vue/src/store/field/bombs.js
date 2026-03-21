@@ -35,6 +35,9 @@ export default {
         },
     },
     actions: {
+        clearBombs: (store) => {
+            store.commit(MUTATIONS.CLEAR_BOMBS)
+        },
         spawnBomb: (store) => {
             if (!store.rootGetters['field/isGameActive']) return
             if (store.state.bombs.length >= 3) return
@@ -48,7 +51,7 @@ export default {
             }
 
             const side = Math.floor(Math.random() * 4)
-            const fieldSize = store.state.size
+            const fieldSize = store.rootGetters['field/getFieldSize']
             let x, y, direction
 
             const getPosition = (minPossible, maxPossible) => {
@@ -86,8 +89,8 @@ export default {
             store.commit(MUTATIONS.ADD_BOMB, bomb)
         },
         moveBombs: (store) => {
-            if (!store.state.gameActive) return
-            const fieldSize = store.state.size
+            if (!store.rootGetters['field/isGameActive']) return
+            const fieldSize = store.rootGetters['field/getFieldSize']
             const bombs = store.state.bombs
 
             bombs.forEach((bomb, i) => {
@@ -103,7 +106,7 @@ export default {
 
                 if (x < 0 || x >= fieldSize || y < 0 || y >= fieldSize) {
                     if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
-                        store.dispacth(
+                        store.dispatch(
                             "field/setNumber", 
                             { position: {x: oldX, y: oldY}, number: OBJECTS.NONE },
                             {root: true}
@@ -114,7 +117,7 @@ export default {
                     return
                 }
 
-                const cell = store.state.field[y][x]
+                const cell = store.rootGetters['field/getFieldCell'](x, y)
                 
                 if (cell === OBJECTS.CENTRAL_CUBE || cell === OBJECTS.ATTACHED_CUBE) {
                     store.dispatch('handleBombCollision', { bomb: { ...bomb, x: oldX, y: oldY }, index: i })
@@ -122,7 +125,7 @@ export default {
                 }
 
                 if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
-                    store.dispacth(
+                    store.dispatch(
                             "field/setNumber", 
                             { position: {x: oldX, y: oldY}, number: OBJECTS.NONE },
                             {root: true}
@@ -133,7 +136,7 @@ export default {
                     isCrash => {
                         if (!isCrash) {
                             store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
-                            store.dispacth(
+                            store.dispatch(
                                 "field/setNumber", 
                                 { position: {x, y}, number: color },
                                 {root: true}
@@ -142,47 +145,10 @@ export default {
                     }
                 )
             })
-            // for (let i = 0; i < bombs.length; i++) {
-            //     const bomb = bombs[i]
-            //     let { x, y, direction, color } = bomb
-            //     const oldX = x, oldY = y
-
-            //     switch (direction) {
-            //         case 0: y++; break
-            //         case 1: x--; break
-            //         case 2: y--; break
-            //         case 3: x++; break
-            //     }
-
-            //     if (x < 0 || x >= fieldSize || y < 0 || y >= fieldSize) {
-            //         if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
-            //             store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
-            //         }
-            //         store.commit(MUTATIONS.REMOVE_BOMB, i)
-            //         continue
-            //     }
-
-            //     const cell = store.state.field[y][x]
-            //     if (cell === OBJECTS.CENTRAL_CUBE || cell === OBJECTS.ATTACHED_CUBE) {
-            //         store.dispatch('handleBombCollision', { bomb: { ...bomb, x: oldX, y: oldY }, index: i })
-            //         continue
-            //     }
-
-            //     if (oldX >= 0 && oldX < fieldSize && oldY >= 0 && oldY < fieldSize) {
-            //         store.commit(MUTATIONS.SET_NUMBER, { position: {x: oldX, y: oldY}, number: OBJECTS.NONE })
-            //     }
-            //     store.dispatch('checkCrash', {index: i, x, y}).then(
-            //         isCrash => {
-            //             if (!isCrash) {
-            //                 store.commit(MUTATIONS.SET_NUMBER, { position: {x, y}, number: color })
-            //                 store.commit(MUTATIONS.UPDATE_BOMB_POSITION, { index: i, x, y })
-            //             }
-            //         }
-            //     )
-            // }
         },
         checkCrash: (store, {index, x, y}) => {
-            const piece = store.state.currentPiece
+            const piece = store.rootGetters['field/getCurrentPiece']
+            if (!piece) return false
 
             let isCrash = false
 
@@ -203,9 +169,14 @@ export default {
         },
         handleBombCollision: (store, { bomb, index }) => {
             const color = bomb.color
+            const fieldSize = store.rootGetters['field/getFieldSize']
             store.commit(MUTATIONS.REMOVE_BOMB, index)
-            if (bomb.x >= 0 && bomb.x < store.state.size && bomb.y >= 0 && bomb.y < store.state.size) {
-                store.commit(MUTATIONS.SET_NUMBER, { position: {x: bomb.x, y: bomb.y}, number: OBJECTS.NONE })
+            if (bomb.x >= 0 && bomb.x < fieldSize && bomb.y >= 0 && bomb.y < fieldSize) {
+                store.dispatch(
+                    'field/setNumber', 
+                    { position: {x: bomb.x, y: bomb.y}, number: OBJECTS.NONE }, 
+                    { root: true }
+                )
             }
 
             if (color === OBJECTS.BLACK_BOMB) {
@@ -213,9 +184,17 @@ export default {
                 store.dispatch('game/addScore', -count, { root: true })
                 })
             } else if (color === OBJECTS.RED_BOMB) {
-                store.dispatch('game/updateTimer', { isIncrease: false, decreaseValue: 30, increaseValue: 0 }, { root: true })
+                store.dispatch(
+                    'game/updateTimer', 
+                    { isIncrease: false, decreaseValue: 30, increaseValue: 0 }, 
+                    { root: true }
+                )
             } else if (color === OBJECTS.GREEN_BOMB) {
-                store.dispatch('game/updateTimer', { isIncrease: true, decreaseValue: 0, increaseValue: 10 }, { root: true })
+                store.dispatch(
+                    'game/updateTimer', 
+                    { isIncrease: true, decreaseValue: 0, increaseValue: 10 }, 
+                    { root: true }
+                )
             }
         }
     }
