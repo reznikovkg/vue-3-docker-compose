@@ -80,10 +80,18 @@ export default {
             newPosition.y + piece.y <= 1 || newPosition.y + piece.y >= edge
         })
         store.state.attachedPieces.forEach(piece => {
-            store.dispatch('checkBomb', { x: newPosition.x - 1 + piece.x , y: newPosition.y - 1 + piece.y})
+            store.dispatch(
+                'bombs/checkBomb', 
+                { x: newPosition.x - 1 + piece.x , y: newPosition.y - 1 + piece.y},
+                { root: true }
+            )
         })
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
-        store.dispatch('checkBomb', { x: newPosition.x - 1 , y: newPosition.y - 1})
+        store.dispatch(
+            'bombs/checkBomb', 
+            { x: newPosition.x - 1 , y: newPosition.y - 1},
+            { root: true }
+        )
         .then(() => 
                 store.dispatch('field/changeCentralCubePosition', 
                     { oldPosition, newPosition }, 
@@ -223,22 +231,6 @@ export default {
         levels.forEach(level => dispatch('removeLevelPieces', level))
 
         return count
-    },
-    checkBomb: (store, {x, y}) => {
-        const fieldSize = store.rootGetters['field/getFieldSize']
-        if (x >= 0 && x < fieldSize && y >= 0 && y < fieldSize) {
-            const field = store.rootGetters['field/getField']
-            const cell = field[y][x] 
-            if (cell > 10) {
-                const bombs = store.rootGetters['bombs/getBombs']
-
-                bombs.forEach((bomb, i) => {
-                    if (bomb.x == x && bomb.y == y)
-                        store.dispatch('bombs/handleBombCollision', 
-                            { bomb: { ...bomb, x: x, y: y }, index: i }, { root: true })
-                })
-            }
-        }
     },
   }
 }

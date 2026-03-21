@@ -286,10 +286,6 @@ export default {
                             {root: true}
                         )
                     })
-                    // for (let i = 0; i < bombs.length; i++) {
-                    //     const bomb = bombs[i]
-                    //     store.dispatch('checkCrash', {index: i, x: bomb.x, y: bomb.y})
-                    // }
                 }
             )
         }
