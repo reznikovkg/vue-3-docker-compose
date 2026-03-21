@@ -37,7 +37,6 @@ export const MUTATIONS = {
   SET_SELECTED_TOWER: 'SET_SELECTED_TOWER',
   SET_GAME_OVER: 'SET_GAME_OVER',
   SET_VICTORY: 'SET_VICTORY',
-  UPDATE_SPAWN_TIMER: 'UPDATE_SPAWN_TIMER',
   RESET_SPAWN_TIMER: 'RESET_SPAWN_TIMER',
   SET_SHOTS: 'SET_SHOTS',
   SET_SPAWN_TIMER: 'SET_SPAWN_TIMER',
@@ -58,8 +57,30 @@ export const ACTIONS = {
 }
 
 export const GETTERS = {
-  GET_SELECTED_TOWER: 'getSelectedTower',
-  GET_UPGRADE_COST: 'getUpgradeCost',
-  GET_PATH_POINTS: 'getPathPoints',
-  GET_REVERSE_PATH_POINTS: 'getReversePathPoints'
+  GET_SELECTED_TOWER: 'selectedTower',
+  GET_UPGRADE_COST: 'upgradeCost',
+  GET_PATH_POINTS: 'pathPoints',
+  GET_REVERSE_PATH_POINTS: 'reversePathPoints',
+  GET_LEVELS: 'levels',
+  GET_CURRENT_LEVEL_ID: 'currentLevelId',
+  GET_CURRENT_PATH: 'currentPath',
+  GET_MAX_ENEMIES: 'maxEnemies',
+  GET_ENEMIES_SPAWNED: 'enemiesSpawned',
+  GET_TOWER_POSITIONS: 'towerPositions',
+  GET_TOWERS: 'towers',
+  GET_ENEMIES: 'enemies',
+  GET_ALLIES: 'allies',
+  GET_BARRICADES: 'barricades',
+  GET_ARTILLERY_STRIKES: 'artilleryStrikes',
+  GET_ALL_SHOTS: 'allShots',
+  GET_POINTS: 'points',
+  GET_TOTAL_KILLS: 'totalKills',
+  GET_SELECTED_TOWER_ID: 'selectedTowerId',
+  GET_GAME_OVER: 'gameOver',
+  GET_VICTORY: 'victory',
+  GET_PLACE_MODE: 'placeMode',
+  GET_SHOW_INSUFFICIENT_FUNDS: 'showInsufficientFunds',
+  GET_SPAWN_TIMER: 'spawnTimer',
+  GET_CURRENT_LEVEL: 'currentLevel',
+  GET_SHOOTER_ENEMIES: 'shooterEnemies'
 }

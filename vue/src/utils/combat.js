@@ -1,19 +1,32 @@
+const isReady = (now, lastTime, cooldown) => {
+  return now - (lastTime || 0) >= cooldown
+}
+
+const applyDamage = (target, damage) => {
+  target.health -= damage
+  return target.health <= 0
+}
+
 export const findClosestInRange = (source, targets, range) => {
-  const inRange = targets.filter(target => {
-    if (!target || target.health <= 0) 
-      return false
-    const distance = Math.hypot(source.x - target.x, source.y - target.y)
-    return distance <= range
-  })
-  
-  if (inRange.length === 0) 
-    return null
-  
-  return inRange.reduce((closest, current) => {
-    const distToCurrent = Math.hypot(source.x - current.x, source.y - current.y)
-    const distToClosest = closest ? Math.hypot(source.x - closest.x, source.y - closest.y) : Infinity
-    return distToCurrent < distToClosest ? current : closest
-  }, null)
+  return targets.reduce((closest, target) => {
+    if (!target || target.health <= 0) {
+      return closest
+    }
+
+    const dx = target.x - source.x
+    const dy = target.y - source.y
+    const distance = Math.hypot(dx, dy)
+
+    if (distance > range) {
+      return closest
+    }
+
+    if (!closest || distance < closest.distance) {
+      return { target, distance }
+    }
+
+    return closest
+  }, null)?.target || null
 }
 
 export const createShot = (source, target, type) => ({
@@ -25,140 +38,145 @@ export const createShot = (source, target, type) => ({
   type
 })
 
-export const processTowerAttacks = (towers, enemies, now) => {
-  const updatedTowers = []
+export const processTowerAttacks = (towers, enemies) => {
   const updatedEnemies = enemies.map(e => ({ ...e }))
   const newShots = []
   const killedEnemies = []
-  
-  towers.forEach(tower => {
-    let cooldown = tower.cooldown || 0
+
+  const updatedTowers = towers.map(tower => {
+    let cooldown = Math.max(0, (tower.cooldown || 0) - 100)
     let kills = tower.kills || 0
-    
-    cooldown = Math.max(0, cooldown - 100)
-    
-    if (cooldown <= 0) {
-      const target = updatedEnemies.find(e => 
-        e.health > 0 && Math.hypot(e.x - tower.x, e.y - tower.y) <= tower.radius
-      )
-      
-      if (target) {
-        target.health -= tower.damage
-        cooldown = 1000 / tower.attackSpeed
-        
-        newShots.push(createShot(tower, target, 'tower'))
-        
-        if (target.health <= 0) {
-          kills++
-          killedEnemies.push(target)
-        }
-      }
+
+    if (cooldown > 0) {
+      return { ...tower, cooldown, kills }
     }
-    
-    updatedTowers.push({
-      ...tower,
-      cooldown,
-      kills
-    })
+
+    const target = updatedEnemies.find(e =>
+      e.health > 0 && Math.hypot(e.x - tower.x, e.y - tower.y) <= tower.radius
+    )
+
+    if (!target) {
+      return { ...tower, cooldown, kills }
+    }
+
+    const killed = applyDamage(target, tower.damage)
+
+    cooldown = 1000 / tower.attackSpeed
+    newShots.push(createShot(tower, target, 'tower'))
+
+    if (killed) {
+      kills++
+      killedEnemies.push(target)
+    }
+
+    return { ...tower, cooldown, kills }
   })
-  
-  const finalEnemies = updatedEnemies.filter(e => e.health > 0)
-  
+
   return {
     towers: updatedTowers,
-    enemies: finalEnemies,
+    enemies: updatedEnemies.filter(e => e.health > 0),
     newShots,
     killedEnemies
   }
 }
 
 export const processShooterAttacks = (enemies, towers, allies, now) => {
-  const updatedEnemies = []
   const updatedTowers = [...towers]
   const updatedAllies = [...allies]
   const newShots = []
   const hitTowerIds = []
-  
-  enemies.forEach(enemy => {
+
+  const updatedEnemies = enemies.map(enemy => {
     if (enemy.type !== 'shooter') {
-      updatedEnemies.push(enemy)
-      return
+      return enemy
     }
-    
-    const shooter = { ...enemy }
-    shooter.shootCooldown = shooter.shootCooldown || 1000
-    shooter.lastShotTime = shooter.lastShotTime || 0
-    shooter.shootDamage = shooter.shootDamage || 15
-    shooter.shootRange = shooter.shootRange || 90
-    shooter.isShooting = false
-    
-    if (now - shooter.lastShotTime >= shooter.shootCooldown) {
-      const targets = [...updatedTowers, ...updatedAllies]
-      const target = findClosestInRange(shooter, targets, shooter.shootRange)
-      
-      if (target) {
-        target.health -= shooter.shootDamage
-        shooter.lastShotTime = now
-        shooter.isShooting = true
-        
-        newShots.push(createShot(shooter, target, 'shooter'))
-        
-        if (target.positionId) {
-          hitTowerIds.push(target.positionId)
-        }
-      }
+
+    const shooter = {
+      ...enemy,
+      shootCooldown: enemy.shootCooldown || 1000,
+      lastShotTime: enemy.lastShotTime || 0,
+      shootDamage: enemy.shootDamage || 15,
+      shootRange: enemy.shootRange || 90,
+      isShooting: false
     }
-    
-    updatedEnemies.push(shooter)
+
+    if (!isReady(now, shooter.lastShotTime, shooter.shootCooldown)) {
+      return shooter
+    }
+
+    const target = findClosestInRange(
+      shooter,
+      [...updatedTowers, ...updatedAllies],
+      shooter.shootRange
+    )
+
+    if (!target) {
+      return shooter
+    }
+
+    applyDamage(target, shooter.shootDamage)
+
+    shooter.lastShotTime = now
+    shooter.isShooting = true
+
+    newShots.push(createShot(shooter, target, 'shooter'))
+
+    if (target.positionId) {
+      hitTowerIds.push(target.positionId)
+    }
+
+    return shooter
   })
-  
-  const aliveTowers = updatedTowers.filter(t => t.health > 0)
-  const aliveAllies = updatedAllies.filter(a => a.health > 0)
-  
+
   return {
     enemies: updatedEnemies,
-    towers: aliveTowers,
-    allies: aliveAllies,
+    towers: updatedTowers.filter(t => t.health > 0),
+    allies: updatedAllies.filter(a => a.health > 0),
     newShots,
     hitTowerIds
   }
 }
 
 export const processAllyAttacks = (allies, enemies, now) => {
-  const updatedAllies = []
   const updatedEnemies = enemies.map(e => ({ ...e }))
   const newShots = []
   const killedEnemies = []
-  
-  allies.forEach(ally => {
-    let allyCopy = { ...ally }
-    
-    if (now - (allyCopy.lastAttackTime || 0) >= (allyCopy.attackCooldown || 800)) {
-      const target = findClosestInRange(allyCopy, updatedEnemies, allyCopy.attackRange || 80)
-      
-      if (target) {
-        target.health -= allyCopy.attackDamage || 20
-        allyCopy.lastAttackTime = now
-        allyCopy.isAttacking = true
-        
-        newShots.push(createShot(allyCopy, target, 'ally'))
-        
-        if (target.health <= 0) {
-          killedEnemies.push(target)
-        }
-      } else {
-        allyCopy.isAttacking = false
-      }
+
+  const updatedAllies = allies.map(ally => {
+    const allyCopy = { ...ally }
+
+    if (!isReady(now, allyCopy.lastAttackTime, allyCopy.attackCooldown || 800)) {
+      return allyCopy
     }
-    
-    updatedAllies.push(allyCopy)
+
+    const target = findClosestInRange(
+      allyCopy,
+      updatedEnemies,
+      allyCopy.attackRange || 80
+    )
+
+    if (!target) {
+      allyCopy.isAttacking = false
+      return allyCopy
+    }
+
+    const killed = applyDamage(target, allyCopy.attackDamage || 20)
+
+    allyCopy.lastAttackTime = now
+    allyCopy.isAttacking = true
+
+    newShots.push(createShot(allyCopy, target, 'ally'))
+
+    if (killed) {
+      killedEnemies.push(target)
+    }
+
+    return allyCopy
   })
-  
-  const finalEnemies = updatedEnemies.filter(e => e.health > 0)
-  
+
   return {
     allies: updatedAllies,
-    enemies: finalEnemies,
+    enemies: updatedEnemies.filter(e => e.health > 0),
     newShots,
     killedEnemies
   }

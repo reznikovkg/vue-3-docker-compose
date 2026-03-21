@@ -1,6 +1,6 @@
 import { COSTS, ATTACK, MUTATIONS, ACTIONS, GETTERS } from './constants'
 import { LEVELS_DATA } from '@/constants/levels'
-import { createEnemy } from '@/utils/entities'
+import { createEnemy, createTower } from '@/utils/entities'
 import { calculatePathPoints } from '@/utils/movement'
 import { hasEnoughPoints, buildTower, canPlaceBarricade } from '@/utils/placement'
 import { gameEngine } from '@/engine/gameEngine'
@@ -56,7 +56,33 @@ export default {
       if (!state.currentPath?.length) 
         return []
       return [...state.currentPath].reverse()
-    }
+    },
+    
+    [GETTERS.GET_SHOOTER_ENEMIES]: (state) => {
+      return state.enemies.filter(e => e.type === 'shooter')
+    },
+
+    [GETTERS.GET_LEVELS]: (state) => state.levels,
+    [GETTERS.GET_CURRENT_LEVEL_ID]: (state) => state.currentLevelId,
+    [GETTERS.GET_CURRENT_PATH]: (state) => state.currentPath,
+    [GETTERS.GET_MAX_ENEMIES]: (state) => state.maxEnemies,
+    [GETTERS.GET_ENEMIES_SPAWNED]: (state) => state.enemiesSpawned,
+    [GETTERS.GET_TOWER_POSITIONS]: (state) => state.towerPositions,
+    [GETTERS.GET_TOWERS]: (state) => state.towers,
+    [GETTERS.GET_ENEMIES]: (state) => state.enemies,
+    [GETTERS.GET_ALLIES]: (state) => state.allies,
+    [GETTERS.GET_BARRICADES]: (state) => state.barricades,
+    [GETTERS.GET_ARTILLERY_STRIKES]: (state) => state.artilleryStrikes,
+    [GETTERS.GET_ALL_SHOTS]: (state) => state.allShots,
+    [GETTERS.GET_POINTS]: (state) => state.points,
+    [GETTERS.GET_TOTAL_KILLS]: (state) => state.totalKills,
+    [GETTERS.GET_SELECTED_TOWER_ID]: (state) => state.selectedTowerId,
+    [GETTERS.GET_GAME_OVER]: (state) => state.gameOver,
+    [GETTERS.GET_VICTORY]: (state) => state.victory,
+    [GETTERS.GET_PLACE_MODE]: (state) => state.placeMode,
+    [GETTERS.GET_SHOW_INSUFFICIENT_FUNDS]: (state) => state.showInsufficientFunds,
+    [GETTERS.GET_SPAWN_TIMER]: (state) => state.spawnTimer,
+    [GETTERS.GET_CURRENT_LEVEL]: (state) => state.currentLevel
   },
   
   mutations: {
@@ -187,10 +213,6 @@ export default {
       state.victory = value
     },
     
-    [MUTATIONS.UPDATE_SPAWN_TIMER]: (state, deltaTime) => {
-      state.spawnTimer += deltaTime
-    },
-    
     [MUTATIONS.RESET_SPAWN_TIMER]: (state) => {
       state.spawnTimer = 0
     },
@@ -209,7 +231,7 @@ export default {
   },
   
   actions: {
-    [ACTIONS.INIT_GAME]: ({ commit, state }) => {
+    [ACTIONS.INIT_GAME]: ({ commit }) => {
       commit(MUTATIONS.SET_LEVELS, LEVELS_DATA)
       
       const level = LEVELS_DATA[0]
@@ -319,7 +341,8 @@ export default {
     },
     
     [ACTIONS.UPDATE_GAME]: ({ state, commit }, deltaTime) => {
-      if (state.gameOver || state.victory) return
+      if (state.gameOver || state.victory) 
+        return
 
       const result = gameEngine.update(state, deltaTime)
 
@@ -358,58 +381,82 @@ export default {
       })
     },
     
-    [ACTIONS.HANDLE_GAME_CLICK]: ({ state, commit, dispatch }, { event, rect }) => {
+    [ACTIONS.HANDLE_GAME_CLICK]: ({ state, commit }, { event, rect }) => {
       if (state.gameOver || state.victory) 
         return
       
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
-      
+
+      const insufficientFunds = () => {
+        commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
+        setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
+      }
+
       if (state.placeMode === 'tower') {
         const pos = state.towerPositions.find(
           p => Math.hypot(x - p.x, y - p.y) < 20
         )
+        if (!pos) 
+          return
 
-        if (pos) {
-          dispatch(ACTIONS.SELECT_TOWER_POSITION, pos.id)
+        const existing = state.towers.find(t => t.positionId === pos.id)
+
+        if (existing) {
+          commit(MUTATIONS.SET_SELECTED_TOWER, pos.id)
+          return
         }
-      } else if (state.placeMode === 'barricade') {
+
+        if (!hasEnoughPoints(state.points, COSTS.TOWER)) {
+          insufficientFunds()
+          return
+        }
+
+        commit(MUTATIONS.ADD_TOWER, createTower(pos))
+        commit(MUTATIONS.REMOVE_POINTS, COSTS.TOWER)
+        return
+      }
+
+      if (state.placeMode === 'barricade') {
         if (!hasEnoughPoints(state.points, COSTS.BARRICADE)) {
-          commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
-          setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
+          insufficientFunds()
           return
         }
-        
+
         const point = { x, y }
-        
-        if (canPlaceBarricade(point, state.currentPath, state.barricades, state.towers)) {
-          commit(MUTATIONS.ADD_BARRICADE, {
-            id: Date.now() + Math.random(),
-            x: point.x,
-            y: point.y,
-            health: 500,
-            maxHealth: 500
-          })
-          
-          commit(MUTATIONS.REMOVE_POINTS, COSTS.BARRICADE)
-        }
-      } else if (state.placeMode === 'artillery') {
-        if (!hasEnoughPoints(state.points, COSTS.ARTILLERY)) {
-          commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
-          setTimeout(() => commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, false), 2000)
+
+        if (!canPlaceBarricade(point, state.currentPath, state.barricades, state.towers)) {
           return
         }
-        
+
+        commit(MUTATIONS.ADD_BARRICADE, {
+          id: Date.now() + Math.random(),
+          x,
+          y,
+          health: 500,
+          maxHealth: 500
+        })
+
+        commit(MUTATIONS.REMOVE_POINTS, COSTS.BARRICADE)
+        return
+      }
+
+      if (state.placeMode === 'artillery') {
+        if (!hasEnoughPoints(state.points, COSTS.ARTILLERY)) {
+          insufficientFunds()
+          return
+        }
+
         commit(MUTATIONS.ADD_ARTILLERY_STRIKE, {
           id: Date.now() + Math.random(),
-          x: x,
-          y: y,
+          x,
+          y,
           maxDamage: 10,
           maxRadius: 70,
           duration: 800,
           elapsed: 0
         })
-        
+
         commit(MUTATIONS.REMOVE_POINTS, COSTS.ARTILLERY)
       }
     },

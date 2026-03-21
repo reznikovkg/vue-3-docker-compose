@@ -1,33 +1,43 @@
 export const processBarricades = (barricades, enemies, deltaTime) => {
   const updatedBarricades = []
-  const toRemove = []
-  
-  barricades.forEach((barricade, index) => {
-    let health = barricade.health
-    
-    const touching = enemies.filter(e => Math.hypot(e.x - barricade.x, e.y - barricade.y) < 30)
-    
-    if (touching.length) {
-      health -= touching.length * (deltaTime / 100) * 10
+
+  const updatedEnemies = enemies.map(enemy => {
+    const isBlocked = barricades.some(b => {
+      const dx = enemy.x - b.x
+      const dy = enemy.y - b.y
+      return Math.hypot(dx, dy) < 30
+    })
+
+    return {
+      ...enemy,
+      isBlockedByBarricade: isBlocked
     }
-    
-    if (health <= 0) {
-      toRemove.push(index)
-    } else {
+  })
+
+  barricades.forEach(barricade => {
+    let health = barricade.health
+
+    const touchingCount = enemies.reduce((count, e) => {
+      const dx = e.x - barricade.x
+      const dy = e.y - barricade.y
+
+      return Math.hypot(dx, dy) < 30 ? count + 1 : count
+    }, 0)
+
+    if (touchingCount > 0) {
+      health -= touchingCount * (deltaTime / 100) * 10
+    }
+
+    if (health > 0) {
       updatedBarricades.push({
         ...barricade,
         health
       })
     }
   })
-  
-  const updatedEnemies = enemies.map(enemy => ({
-    ...enemy,
-    isBlockedByBarricade: barricades.some(b => Math.hypot(enemy.x - b.x, enemy.y - b.y) < 30)
-  }))
-  
+
   return {
     barricades: updatedBarricades,
-    enemies: updatedEnemies,
+    enemies: updatedEnemies
   }
 }

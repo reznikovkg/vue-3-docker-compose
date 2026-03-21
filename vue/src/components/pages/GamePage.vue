@@ -193,7 +193,7 @@
         :selected-tower="selectedTower"
         :points="points"
         :tower-cost="TOWER_COST"
-        :upgrade-cost="getUpgradeCost"
+        :upgrade-cost="upgradeCost"
         class="game__info-panel"
         @upgrade-tower="() => upgradeTower()"
       />
@@ -209,7 +209,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import LevelButtons from '@/components/ui/LevelButtons.vue'
 import InfoPanel from '@/components/ui/InfoPanel.vue'
 import Path from '@/components/game/Path.vue'
@@ -238,16 +238,15 @@ export default {
   },
   data() {
     return {
-      TOWER_COST: COSTS.TOWER,
-      ALLY_COST: COSTS.ALLY,
-      BARRICADE_COST: COSTS.BARRICADE,
-      ARTILLERY_COST: COSTS.ARTILLERY,
       lastFrameTime: 0,
       animationFrameId: null
     }
   },
   computed: {
-    ...mapState('game', [
+    ...mapGetters('game', [
+      'selectedTower',
+      'upgradeCost',
+      'pathPoints',
       'levels',
       'currentLevelId',
       'maxEnemies',
@@ -264,16 +263,13 @@ export default {
       'gameOver',
       'victory',
       'placeMode',
-      'showInsufficientFunds'
+      'showInsufficientFunds',
+      'shooterEnemies'
     ]),
-    ...mapGetters('game', {
-      selectedTower: 'getSelectedTower',
-      getUpgradeCost: 'getUpgradeCost',
-      pathPoints: 'getPathPoints'
-    }),
-    shooterEnemies() {
-      return this.enemies.filter(e => e.type === 'shooter')
-    }
+    TOWER_COST: () => COSTS.TOWER,
+    ALLY_COST: () => COSTS.ALLY,
+    BARRICADE_COST: () => COSTS.BARRICADE,
+    ARTILLERY_COST: () => COSTS.ARTILLERY
   },
   mounted() {
     this.initGame()

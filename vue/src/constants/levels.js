@@ -125,17 +125,16 @@ export const LEVELS_DATA = [
       { id: 'pos1', x: 100, y: 250 },
       { id: 'pos2', x: 150, y: 150 },
       { id: 'pos3', x: 300, y: 150 },
-      { id: 'pos4', x: 330, y: 300 },
-      { id: 'pos5', x: 500, y: 380 },
-      { id: 'pos6', x: 600, y: 380 },
+      { id: 'pos4', x: 350, y: 300 },
+      { id: 'pos5', x: 500, y: 400 },
+      { id: 'pos6', x: 600, y: 400 },
       { id: 'pos7', x: 760, y: 300 }
     ],
     enemyTypes: [
       { type: 'light', chance: 0.4, ...ENEMY_TYPES.light },
-      { type: 'medium', chance: 0.1, ...ENEMY_TYPES.medium },
+      { type: 'medium', chance: 0.2, ...ENEMY_TYPES.medium },
       { type: 'heavy', chance: 0.2, ...ENEMY_TYPES.heavy },
       { type: 'shooter_light', chance: 0.1, ...ENEMY_TYPES.shooter_light },
-      { type: 'shooter_medium', chance: 0.1, ...ENEMY_TYPES.shooter_medium },
       { type: 'shooter_heavy', chance: 0.1, ...ENEMY_TYPES.shooter_heavy }
     ]
   }
