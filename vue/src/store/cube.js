@@ -1,4 +1,4 @@
-import { OBJECTS } from '@/store/field'
+import { OBJECTS } from '@/store/field/objects'
 
 const MUTATIONS = {
     SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION',
@@ -234,7 +234,7 @@ export default {
 
                 bombs.forEach((bomb, i) => {
                     if (bomb.x == x && bomb.y == y)
-                        store.dispatch('field/handleBombCollision', 
+                        store.dispatch('bombs/handleBombCollision', 
                             { bomb: { ...bomb, x: x, y: y }, index: i }, { root: true })
                 })
             }
