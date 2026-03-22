@@ -1,4 +1,4 @@
-import { OBJECTS } from '@/store/field/objects'
+import { OBJECTS } from './objects'
 
 const MUTATIONS = {
     SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION',
