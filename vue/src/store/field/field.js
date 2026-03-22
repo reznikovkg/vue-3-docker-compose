@@ -410,9 +410,9 @@ export default {
             () => store.dispatch('game/checkGameEnd', null, { root: true })
         )
         
-        const shape = store.state.currentPiece.shape
         if (store.state.currentPiece != null) {
             let isSpawn = false
+            const shape = store.state.currentPiece.shape
             for (let r = 0; r < shape.length && !isSpawn; r++) {
                 for (let c = 0; c < shape[0].length && !isSpawn; c++) {
                     if (shape[r][c] === 1) {
