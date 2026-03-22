@@ -244,10 +244,10 @@ export default {
 
             if (store.state.mode === MODES.BOMBS) {
                 const bombMove = setInterval(() => {
-                    store.dispatch('field/moveBombs', null, { root: true })
+                    store.dispatch('bombs/moveBombs', null, { root: true })
                 }, BASE_GAME_SPEED)
                 const bombSpawn = setInterval(() => {
-                    store.dispatch('field/spawnBomb', null, { root: true })
+                    store.dispatch('bombs/spawnBomb', null, { root: true })
                 }, 4000)
                 store.commit(MUTATIONS.SET_BOMB_MOVE_INTERVAL, bombMove)
                 store.commit(MUTATIONS.SET_BOMB_SPAWN_INTERVAL, bombSpawn)

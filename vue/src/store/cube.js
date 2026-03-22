@@ -1,4 +1,4 @@
-import { OBJECTS } from '@/store/field'
+import { OBJECTS } from './objects'
 
 const MUTATIONS = {
     SET_CENTRAL_CUBE_POSITION: 'SET_CENTRAL_CUBE_POSITION',
@@ -79,16 +79,28 @@ export default {
             attachedPiecesAbroad ||= newPosition.x + piece.x <= 1 || newPosition.x + piece.x >= edge ||
             newPosition.y + piece.y <= 1 || newPosition.y + piece.y >= edge
         })
-        store.dispatch('checkBomb', { x: newPosition.x - 1 , y: newPosition.y - 1})
         store.state.attachedPieces.forEach(piece => {
-            store.dispatch('checkBomb', { x: newPosition.x - 1 + piece.x , y: newPosition.y - 1 + piece.y})
+            store.dispatch(
+                'bombs/checkBomb', 
+                { x: newPosition.x - 1 + piece.x , y: newPosition.y - 1 + piece.y},
+                { root: true }
+            )
         })
         store.commit(MUTATIONS.SET_CENTRAL_CUBE_POSITION, newPosition)
-        store.dispatch('field/changeCentralCubePosition', 
-            { oldPosition, newPosition }, 
-            { root: true }).then(
+        store.dispatch(
+            'bombs/checkBomb', 
+            { x: newPosition.x - 1 , y: newPosition.y - 1},
+            { root: true }
+        )
+        .then(() => 
+                store.dispatch('field/changeCentralCubePosition', 
+                    { oldPosition, newPosition }, 
+                    { root: true })
+            )
+        .then(
                 () => store.dispatch('field/checkFigureAttachment', null, { root: true })
             )
+        
     },
     rotateIsland: (store, rotateDirection) => {
         let xs = store.state.attachedPieces.map(pieceCoord => pieceCoord.x).sort()
@@ -211,29 +223,14 @@ export default {
         const attached = state.attachedPieces
         const count = attached.length
         const levels = new Set()
+
         attached.forEach(piece => {
-        levels.add(Math.max(Math.abs(piece.x), Math.abs(piece.y)))
+            levels.add(Math.max(Math.abs(piece.x), Math.abs(piece.y)))
         })
-        for (const level of levels) {
-            dispatch('removeLevelPieces', level)
-        }
+
+        levels.forEach(level => dispatch('removeLevelPieces', level))
+
         return count
-    },
-    checkBomb: (store, {x, y}) => {
-        const fieldSize = store.rootGetters['field/getFieldSize']
-        if (x >= 0 && x < fieldSize && y >= 0 && y < fieldSize) {
-            const field = store.rootGetters['field/getField']
-            const cell = field[y][x] 
-            if (cell > 10) {
-                const bombs = store.rootGetters['field/getBombs']
-                for (let i = 0; i < bombs.length; i++) {
-                    const bomb = bombs[i]
-                    if (bomb.x == x && bomb.y == y)
-                        store.dispatch('field/handleBombCollision', 
-                            { bomb: { ...bomb, x: x, y: y }, index: i }, { root: true })
-                }
-            }
-        }
     },
   }
 }

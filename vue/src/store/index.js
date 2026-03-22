@@ -3,6 +3,7 @@ import list from './list'
 import field from './field'
 import game from './game'
 import cube from './cube'
+import bombs from './bombs'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -43,6 +44,7 @@ export default createStore({
     list,
     field,
     game,
-    cube
+    cube,
+    bombs
   }
 })
