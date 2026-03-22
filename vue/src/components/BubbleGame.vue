@@ -38,7 +38,6 @@
       <Bubble
         v-for="bubble in bubbles"
         :key="bubble.id"
-        :bubbleId="bubble.id"
         :type="bubble.color"
         :left="bubble.x"
         :top="bubble.y"
@@ -84,9 +83,9 @@
       </div>
 
       <div
-        v-if="modeState.laser.activeLeft > 0"
+        v-if="modeState.laser.activeLeft > 0 && laserPoint"
         class="c-game__laserCursor"
-        :style="{ left: laserX + 'px', top: laserY + 'px' }"
+        :style="{ left: laserPoint.x + 'px', top: laserPoint.y + 'px' }"
       ></div>
 
       <div class="c-game__modes" @click="(e) => e.stopPropagation()">
@@ -201,36 +200,36 @@ export default {
   data() {
     return {
       // старт ли?
-      isRunning: false,
-      score: 0,
       // пузыри на поле и некст пузырик
       bubbles: [],
-      nextId: 1,
       spawnTimerId: null,
       finishTimerId: null,
-      timeLeft: GAME_DEFAULTS.maxTime,
       rafId: null,
-      activeMode: 'normal',
       marks: [], // метки выстрелов автомата
       autoShotTimerId: null,  // интервал автовыстрелов
-      hitComboMultiplier: 1,
-      missComboMultiplier: 1,
       comboTextItems: [],
-      bombsCount: 0,
-      successfulHitsCount: 0,
       bombItems: [],
       bombExplosionItems: [],
       modeTickTimerId: null,
-      laserX: 0,
-      laserY: 0,
-      laserClientX: 0,
-      laserClientY: 0
+      laserPoint: null
     }
   },
 
   computed: {
     ...mapGetters([
+      'getIsRunning',
+      'getScore',
+      'getTimeLeft',
+      'getActiveMode',
+      'getBombsCount',
+      'getSuccessfulHitsCount',
+      'getHitComboMultiplier',
+      'getMissComboMultiplier',
       'getModeState'
+    ]),
+
+    ...mapGetters('list', [
+      'getList'
     ]),
 
     bombImage() {
@@ -241,8 +240,85 @@ export default {
       return explosionAsset
     },
 
-    modeState() {
-      return this.getModeState
+    isRunning: {
+      get() {
+        return this.getIsRunning
+      },
+      set(value) {
+        this.setIsRunning(value)
+      }
+    },
+
+    score: {
+      get() {
+        return this.getScore
+      },
+      set(value) {
+        this.setScore(value)
+      }
+    },
+
+    timeLeft: {
+      get() {
+        return this.getTimeLeft
+      },
+      set(value) {
+        this.setTimeLeft(value)
+      }
+    },
+
+    activeMode: {
+      get() {
+        return this.getActiveMode
+      },
+      set(value) {
+        this.setActiveMode(value)
+      }
+    },
+
+    bombsCount: {
+      get() {
+        return this.getBombsCount
+      },
+      set(value) {
+        this.setBombsCount(value)
+      }
+    },
+
+    successfulHitsCount: {
+      get() {
+        return this.getSuccessfulHitsCount
+      },
+      set(value) {
+        this.setSuccessfulHitsCount(value)
+      }
+    },
+
+    hitComboMultiplier: {
+      get() {
+        return this.getHitComboMultiplier
+      },
+      set(value) {
+        this.setHitComboMultiplier(value)
+      }
+    },
+
+    missComboMultiplier: {
+      get() {
+        return this.getMissComboMultiplier
+      },
+      set(value) {
+        this.setMissComboMultiplier(value)
+      }
+    },
+
+    modeState: {
+      get() {
+        return this.getModeState
+      },
+      set(value) {
+        this.setModeState(value)
+      }
     },
 
     scoreRounded() {
@@ -266,6 +342,14 @@ export default {
     ]),
 
     ...mapActions([
+      'setIsRunning',
+      'setScore',
+      'setTimeLeft',
+      'setActiveMode',
+      'setBombsCount',
+      'setSuccessfulHitsCount',
+      'setHitComboMultiplier',
+      'setMissComboMultiplier',
       'setModeState'
     ]),
 
@@ -460,19 +544,55 @@ export default {
       return spawnBomb(this, x, y)
     },
 
-    onFieldMouseMove(e) {
-      const rect = this.$refs.gameField ? this.$refs.gameField.getBoundingClientRect() : null
-
-      this.laserClientX = e.clientX
-      this.laserClientY = e.clientY
-
-      if (rect) {
-        this.laserX = e.clientX - rect.left
-        this.laserY = e.clientY - rect.top
+    getLocalPoint(e) {
+      if (!e || !this.$refs.gameField) {
+        return null
       }
 
+      const rect = this.$refs.gameField.getBoundingClientRect()
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      }
+    },
+
+    isBubbleHit(bubble, x, y) {
+      const centerX = bubble.x + bubble.r
+      const centerY = bubble.y + bubble.r
+      const dx = x - centerX
+      const dy = y - centerY
+
+      if (Math.abs(dx) > bubble.r || Math.abs(dy) > bubble.r) {
+        return false
+      }
+
+      return dx * dx + dy * dy <= bubble.r * bubble.r
+    },
+
+    getBubbleIdsAtPoint(x, y, sourceBubbles = this.bubbles) {
+      const ids = []
+
+      for (let i = 0; i < sourceBubbles.length; i += 1) {
+        const bubble = sourceBubbles[i]
+
+        if (this.isBubbleHit(bubble, x, y)) {
+          ids.push(bubble.id)
+        }
+      }
+
+      return ids
+    },
+
+    onFieldMouseMove(e) {
+      const point = this.getLocalPoint(e)
+      if (!point) {
+        return
+      }
+
+      this.laserPoint = point
+
       if (this.modeState.laser.activeLeft > 0) {
-        handleLaserMode(this, e)
+        handleLaserMode(this, point)
       }
     },
 
@@ -483,7 +603,6 @@ export default {
       this.isRunning = true
       this.score = 0
       this.bubbles = []
-      this.nextId = 1
       this.timeLeft = this.maxTime
       this.hitComboMultiplier = 1
       this.missComboMultiplier = 1
@@ -494,6 +613,7 @@ export default {
       this.bombExplosionItems = []
       this.activeMode = 'normal'
       this.setModeState(this.getEmptyModeState())
+      this.laserPoint = null
 
       this.$emit('update:score', this.score)
 
@@ -586,8 +706,9 @@ export default {
       const y = typeof params.y === 'number' ? params.y : 0
       const color = params.color || colors[Math.floor(Math.random() * colors.length)]
 
+      // Не выношу в Bubble иначе визуальный компонент начнет знать про физику и мех.игры
       const bubble = {
-        id: this.nextId,
+        id: Date.now() + Math.random(),
         color,
         x,
         y,
@@ -598,7 +719,6 @@ export default {
         vx: typeof params.vx === 'number' ? params.vx : Math.random() * 0.7 - 0.35 //при создании +-дрейф ... связь с nextX
       }
 
-      this.nextId += 1
       return bubble
     },
 
@@ -704,11 +824,8 @@ export default {
     },
     tick() { // скорость пока тут
       if (this.isRunning) {
-        if (this.modeState.laser.activeLeft > 0 && this.laserClientX && this.laserClientY) {
-          handleLaserMode(this, {
-            clientX: this.laserClientX,
-            clientY: this.laserClientY
-          })
+        if (this.modeState.laser.activeLeft > 0 && this.laserPoint) {
+          handleLaserMode(this, this.laserPoint)
         }
 
         const { fieldWidth, fieldHeight } = this.getFieldSize()
@@ -749,7 +866,7 @@ export default {
         // штраф
         if (dropDelta !== 0) {
           this.score += dropDelta
-          const list = this.$store.getters['list/getList']
+          const list = this.getList // он в list.js
           const newList = [...list, { t: dropDelta }]
           this.setList(newList)
           this.$emit('update:score', this.score)
@@ -759,30 +876,8 @@ export default {
       this.rafId = requestAnimationFrame(() => this.tick())
     },
 
-    handleFieldClick(e) {
-      const x = e.clientX
-      const y = e.clientY
-      const rect = this.$refs.gameField ? this.$refs.gameField.getBoundingClientRect() : null
-      const localX = rect ? x - rect.left : x
-      const localY = rect ? y - rect.top : y
-
-      if (this.activeMode === 'bomb' && this.bombsCount > 0) {
-        this.bombsCount -= 1
-        this.bombMode(localX, localY)
-        this.activeMode = 'normal'
-        return
-      }
-
-      const elements = document.elementsFromPoint(x, y)
-
-      const ids = []
-      // см.докс
-      elements.forEach((element) => {
-        const id = element.dataset ? element.dataset.id : null
-        if (id && !ids.includes(id)) {
-          ids.push(id)
-        }
-      })
+    handleFieldPoint(localX, localY) {
+      const ids = this.getBubbleIdsAtPoint(localX, localY)
 
       const deltas = []
       let nextScore = this.score
@@ -791,11 +886,11 @@ export default {
       let nextHitsCount = this.successfulHitsCount
 
       // для каждого найти пузырь считать клик, копим и делитим иначе выход
-      ids.forEach((id, index) => {
-        const numericId = Number(id)
-        const bubble = nextBubbles.find((item) => item.id === numericId)
+      for (let index = 0; index < ids.length; index += 1) {
+        const id = ids[index]
+        const bubble = nextBubbles.find((item) => item.id === id)
         if (!bubble) {
-          return
+          continue
         }
 
         if (bubble.color === this.targetColor) {
@@ -814,9 +909,9 @@ export default {
           nextBubbles = [...nextBubbles, ...childBubbles]
         }
 
-        nextBubbles = nextBubbles.filter((item) => item.id !== numericId)
+        nextBubbles = nextBubbles.filter((item) => item.id !== id)
         nextBubbles = this.PopImpulse(bubble, nextBubbles)
-      })
+      }
 
       if (!deltas.length) {
         return
@@ -831,11 +926,27 @@ export default {
         this.bombsCount += nextBombStep - prevBombStep
       }
 
-      const list = this.$store.getters['list/getList']
+      const list = this.getList
       const newList = [...list, ...deltas.map((d) => ({ t: d }))]
       this.setList(newList)
 
       this.$emit('update:score', this.score)
+    },
+
+    handleFieldClick(e) {
+      const point = this.getLocalPoint(e)
+      if (!point) {
+        return
+      }
+
+      if (this.activeMode === 'bomb' && this.bombsCount > 0) {
+        this.bombsCount -= 1
+        this.bombMode(point.x, point.y)
+        this.activeMode = 'normal'
+        return
+      }
+
+      this.handleFieldPoint(point.x, point.y)
     }
   },
 

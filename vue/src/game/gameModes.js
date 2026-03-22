@@ -1,27 +1,24 @@
 import { BUBBLE_RULES, COMBO_RULES, GAME_MODE_RULES } from '@/constants/gameConfig.js'
 
-export const handleLaserMode = (ctx, e) => {
-  if (!ctx || !e) {
+export const handleLaserMode = (ctx, point) => {
+  if (!ctx || !point) {
     return null
   }
 
-  const x = e.clientX
-  const y = e.clientY
-  const elements = document.elementsFromPoint(x, y)
-  const bubbleElement = elements.find((element) => {
-    return element.dataset && element.dataset.id
-  })
+  const x = point.x
+  const y = point.y
+  const ids = ctx.getBubbleIdsAtPoint(x, y)
 
-  if (!bubbleElement) {
+  if (!ids.length) {
     return null
   }
 
-  ctx.handleFieldClick(e)
+  ctx.handleFieldPoint(x, y)
 
   return {
     x,
     y,
-    id: bubbleElement.dataset.id
+    id: ids[0]
   }
 }
 
@@ -35,8 +32,6 @@ export const startAutomatMode = (ctx) => {
   }
 
   const field = ctx.$refs.gameField
-  //позишн поля на экране
-  const rect = field.getBoundingClientRect()
 
   ctx.autoShotTimerId = setInterval(() => {
     //реальные размеры
@@ -68,11 +63,7 @@ export const startAutomatMode = (ctx) => {
       ctx.marks = ctx.marks.filter((mark) => mark.id !== id)
     }, GAME_MODE_RULES.automat.markLife)
 
-    // для клика перевод
-    ctx.handleFieldClick({
-      clientX: rect.left + x,
-      clientY: rect.top + y
-    })
+    ctx.handleFieldPoint(x, y)
   }, GAME_MODE_RULES.automat.shotDelay)
 
   return ctx.autoShotTimerId
@@ -127,7 +118,7 @@ export const applyCombo = (ctx, bubble, x, y, index = 0) => {
     return delta
   }
 
-  const penalty = BUBBLE_RULES.miss[bubble.size] || ctx.scoreMiss
+  const penalty = BUBBLE_RULES.miss[bubble.size]
   const delta = getSafeValue(penalty * ctx.missComboMultiplier)
   ctx.missComboMultiplier = getSafeValue(Math.min(ctx.missComboMultiplier * COMBO_RULES.missStep, COMBO_RULES.missMax))
   addComboText('Штраф x' + ctx.missComboMultiplier.toFixed(1))

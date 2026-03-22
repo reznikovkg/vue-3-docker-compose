@@ -2,7 +2,6 @@
   <div
     class="c-bubble"
     :class="'c-bubble--' + type + ' c-bubble--' + sizeType"
-    :data-id="bubbleId"
     :style="{ left: left + 'px', top: top + 'px', width: size + 'px', height: size + 'px', backgroundColor: bubbleColor }"
   >
     <span class="c-bubble--blik"></span>
@@ -16,10 +15,6 @@ export default {
   name: 'Bubble',
 
   props: {
-    bubbleId: {
-      type: Number,
-      default: BUBBLE_DEFAULTS.bubbleId
-    },
     type: {
       type: String,
       default: BUBBLE_DEFAULTS.type
