@@ -11,7 +11,8 @@ export default {
     namespaced: true,
     state(){
         return {
-            bombs: []
+            bombs: [],
+            greenCounter: 0
         }
     },
     getters: {
@@ -42,13 +43,14 @@ export default {
             if (!store.rootGetters['field/isGameActive']) return
             if (store.state.bombs.length >= 3) return
 
-            const rand = Math.random()
             let color
-            if (rand <= 0.1) {
+            if (store.state.greenCounter == 4) {
                 color = OBJECTS.GREEN_BOMB
             } else {
-                color = rand < 0.55 ? OBJECTS.BLACK_BOMB : OBJECTS.RED_BOMB
+                const rand = Math.random()
+                color = rand < 0.5 ? OBJECTS.BLACK_BOMB : OBJECTS.RED_BOMB
             }
+            store.state.greenCounter = (store.state.greenCounter + 1) % 10
 
             const side = Math.floor(Math.random() * 4)
             const fieldSize = store.rootGetters['field/getFieldSize']
