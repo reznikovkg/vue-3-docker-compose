@@ -11,6 +11,11 @@ class SoundManager {
       save: new Audio(saveSound),
       cancel: new Audio(cancelSound)
     }
+
+    this.sounds.pop.volume = 0.5
+    this.sounds.click.volume = 0.7
+    this.sounds.save.volume = 0.6
+    this.sounds.cancel.volume = 0.3
   }
   
   play(soundName) {
