@@ -6,9 +6,9 @@
     @keydown.right="move(1, 0)">
     <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
     <div class="game-menu">
-      <button class="start-button" @click="handleStart" :disabled="isGameActive">Start</button>
+      <button class="game-menu__start-button" @click="handleStart" :disabled="isGameActive">Start</button>
       <input
-        class="field-size-input"
+        class="game-menu__field-size-input"
         v-model.number="fieldSize"
         type="number"
         min="7"
@@ -23,7 +23,7 @@
       <div>
         Режим: 
         <select
-        class="mode-selector"
+        class="game-menu__mode-selector"
         v-model="selectedMode"
         @change="() => setMode(selectedMode)"
         :disabled="isGameActive">
@@ -143,22 +143,25 @@ export default {
 }
 </script>
 
-<style scoped>
-.field-size-input {
-  font-size: 2.2vmin;
-}
+<style lang="scss" scoped>
 .game-menu {
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 2.2vmin;
   gap: 1vmin;
-}
-.start-button {
-  font-size: 2.2vmin;
-}
-.mode-selector {
-  font-size: 2.2vmin;
+
+  &__start-button{
+    font-size: 2.2vmin;
+  }
+
+  &__mode-selector{
+    font-size: 2.2vmin;
+  }
+
+  &__field-size-input {
+    font-size: 2.2vmin;
+  }
 }
 .game-field {
   background-color: white;
