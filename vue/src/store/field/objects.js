@@ -1,9 +1,0 @@
-export const OBJECTS = {
-  NONE: 0,
-  CENTRAL_CUBE: 1,
-  EXTERNAL_FIGURE: 2,
-  ATTACHED_CUBE: 3,
-  BLACK_BOMB: 11,
-  RED_BOMB: 12,
-  GREEN_BOMB: 13
-}

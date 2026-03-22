@@ -1,6 +1,6 @@
-import { ALL_ORIENTATIONS } from '../pieces'
-import { DECREASE_TIMER_VALUE_DEFAULT, INCREASE_TIMER_VALUE_DEFAULT } from '../game'
-import { OBJECTS } from './objects'
+import { ALL_ORIENTATIONS } from './pieces'
+import { DECREASE_TIMER_VALUE_DEFAULT, INCREASE_TIMER_VALUE_DEFAULT } from './game'
+import { OBJECTS } from './field/objects'
 
 const MUTATIONS = {
     CHANGE_FIELD_SIZE: 'CHANGE_FIELD_SIZE',

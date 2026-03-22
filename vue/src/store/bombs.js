@@ -1,4 +1,4 @@
-import { OBJECTS } from "./objects"
+import { OBJECTS } from "./field/objects"
 
 const MUTATIONS = {
     ADD_BOMB: 'ADD_BOMB',

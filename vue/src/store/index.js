@@ -1,9 +1,9 @@
 import { createStore } from 'vuex'
 import list from './list'
-import field from './field/field'
+import field from './field'
 import game from './game'
 import cube from './cube'
-import bombs from './field/bombs'
+import bombs from './bombs'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
