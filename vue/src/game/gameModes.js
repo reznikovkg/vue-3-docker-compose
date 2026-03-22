@@ -2,7 +2,7 @@ import { BUBBLE_RULES, COMBO_RULES, GAME_MODE_RULES } from '@/constants/gameConf
 
 export const handleLaserMode = (ctx, point) => {
   if (!ctx || !point) {
-    return null
+    return
   }
 
   const x = point.x
@@ -10,21 +10,15 @@ export const handleLaserMode = (ctx, point) => {
   const ids = ctx.getBubbleIdsAtPoint(x, y)
 
   if (!ids.length) {
-    return null
+    return
   }
 
   ctx.handleFieldPoint(x, y)
-
-  return {
-    x,
-    y,
-    id: ids[0]
-  }
 }
 
 export const startAutomatMode = (ctx) => {
   if (!ctx || !ctx.$refs || !ctx.$refs.gameField) {
-    return null
+    return
   }
 
   if (ctx.autoShotTimerId) {
@@ -65,13 +59,11 @@ export const startAutomatMode = (ctx) => {
 
     ctx.handleFieldPoint(x, y)
   }, GAME_MODE_RULES.automat.shotDelay)
-
-  return ctx.autoShotTimerId
 }
 
 export const stopAutomatMode = (ctx) => {
   if (!ctx) {
-    return null
+    return
   }
 
   if (ctx.autoShotTimerId) {
@@ -80,8 +72,6 @@ export const stopAutomatMode = (ctx) => {
   }
 
   ctx.activeMode = 'normal'
-
-  return null
 }
 
 export const applyCombo = (ctx, bubble, x, y, index = 0) => {
@@ -127,7 +117,7 @@ export const applyCombo = (ctx, bubble, x, y, index = 0) => {
 
 export const spawnBomb = (ctx, x, y) => {
   if (!ctx) {
-    return null
+    return
   }
 
   //точка бомбы по полю
@@ -202,6 +192,4 @@ export const spawnBomb = (ctx, x, y) => {
       ctx.bombExplosionItems = ctx.bombExplosionItems.filter((item) => item.id !== explosionId)
     }, GAME_MODE_RULES.bomb.explosionLife)
   }, GAME_MODE_RULES.bomb.explodeDelay)
-
-  return bomb
 }
