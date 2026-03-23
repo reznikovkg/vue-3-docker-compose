@@ -20,11 +20,11 @@
       </div>
       <div class = "preferences__params__group">
         <label>Целевой цвет:</label>
-        <div class = "preferences__params__color-palette">
+        <div class = "preferences__params__color--palette">
           <div
               v-for = "color in colorVariants"
               :key = "color.value"
-              class = "preferences__params__color-palette__swatch"
+              class = "preferences__params__color--palette__swatch"
               :class = "{ active: color.value === userSettings.selectedColor }"
               @click = "() => pickColor(color.value)"
           >
@@ -273,7 +273,7 @@ $borderSoft: #f0d9cf;
       }
     }
 
-    &__color-palette {
+    &__color--palette {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;

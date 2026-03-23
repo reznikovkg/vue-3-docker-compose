@@ -335,11 +335,11 @@ $timerWarning: #f3b3a1;
     color: $textLight;
     text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
     transition: all 0.3s ease;
+  }
 
-    &--urgent {
-      color: $timerWarning;
-      text-shadow: 0 0 5px $timerWarning;
-    }
+  &__timer--urgent {
+    color: $timerWarning;
+    text-shadow: 0 0 5px $timerWarning;
   }
 
   &__hint {

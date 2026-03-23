@@ -164,15 +164,15 @@ $overlayBg: rgba(250, 240, 235, 0.85);
 
     &__btn {
       @include action-btn;
+    }
 
-      &--quiet {
-        background: $bgElement;
-        color: $textLight;
+    &__btn--quiet {
+      background: $bgElement;
+      color: $textLight;
 
-        &:hover {
-          background: $bgElementHover;
-          box-shadow: 0 6px 15px rgba($accentPastel, 0.3);
-        }
+      &:hover {
+        background: $bgElementHover;
+        box-shadow: 0 6px 15px rgba($accentPastel, 0.3);
       }
     }
   }
