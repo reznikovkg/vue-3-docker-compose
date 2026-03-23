@@ -529,7 +529,6 @@ export default {
   inset: 0;
   background-size: cover;
   background-position: center;
-
   &__buttons {
     position: absolute;
     top: 20px;
@@ -539,7 +538,6 @@ export default {
     z-index: 10;
     flex-wrap: wrap;
   }
-
   &__button {
     font-size: 20px;
     padding: 10px 20px;
@@ -549,17 +547,14 @@ export default {
     cursor: pointer;
     font-weight: bold;
     border: none;
-    
     &:hover {
       background: rgba(0,0,0,0.7);
     }
-
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
   }
-
   &__float {
     position: absolute;
     width: 60px;
@@ -569,7 +564,6 @@ export default {
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
     z-index: 10;
   }
-
   &__groundbait {
     position: absolute;
     width: 100px;
@@ -580,7 +574,6 @@ export default {
     transform: translate(-50%, -50%);
     pointer-events: none;
     z-index: 5;
-    
     &-info {
       position: absolute;
       bottom: -28px;
@@ -594,7 +587,6 @@ export default {
       white-space: nowrap;
     }
   }
-
   &__net {
     position: fixed;
     bottom: 0;
@@ -609,7 +601,6 @@ export default {
     border: 2px solid black;
     border-bottom: none;
   }
-
   &__panel {
     position: absolute;
     bottom: 30px;
@@ -621,7 +612,6 @@ export default {
     align-items: center;
     padding: 0 20px;
   }
-
   &__bar {
     width: 250px;
     height: 24px;
@@ -630,13 +620,11 @@ export default {
     overflow: hidden;
     backdrop-filter: blur(4px);
   }
-
   &__fill {
     height: 100%;
     background: linear-gradient(90deg, #4ecdc4, #45b7b1);
     transition: width 0.1s;
   }
-
   &__pull {
     padding: 12px 24px;
     font-size: 20px;
@@ -647,17 +635,14 @@ export default {
     color: white;
     font-weight: bold;
     transition: 0.2s;
-
     &:hover {
       background: #ff5252;
       transform: scale(1.05);
     }
-
     &:active {
       transform: scale(0.95);
     }
   }
-
   &__message {
     position: absolute;
     bottom: 100px;

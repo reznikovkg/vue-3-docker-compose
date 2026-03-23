@@ -5,10 +5,8 @@
       src="/images/7a25f234b30ff45a2defdf8c169dcfe3.jpg"
       alt="фон"
     >
-
     <div class="index__content">
       <div class="index__title">Русская рыбалка</div>
-
       <button
         class="index__button"
         @click="() => go()"
@@ -37,7 +35,6 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-
   &__bg {
     position: absolute;
     inset: 0;
@@ -45,7 +42,6 @@ export default {
     height: 100%;
     object-fit: cover;
   }
-
   &__content {
     position: relative;
     z-index: 2;
@@ -54,13 +50,11 @@ export default {
     gap: 30px;
     align-items: center;
   }
-
   &__title {
     font-size: 42px;
     color: white;
     font-weight: bold;
   }
-
   &__button {
     padding: 12px 30px;
     font-size: 20px;

@@ -30,14 +30,12 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 8px;
-
   &__image {
     width: 100%;
     height: 160px;
     object-fit: cover;
     border-radius: 12px;
   }
-
   &__name {
     text-align: center;
     font-size: 18px;

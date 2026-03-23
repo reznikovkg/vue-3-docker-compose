@@ -204,7 +204,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 30px;
-
   &__back {
     position: absolute;
     top: 20px;
@@ -217,24 +216,20 @@ export default {
     cursor: pointer;
     font-weight: bold;
     border: none;
-
     &:hover {
       background: rgba(0,0,0,0.7);
     }
   }
-
   &__title {
     text-align: center;
     font-size: 28px;
     font-weight: bold;
   }
-
   &__money {
     text-align: center;
     font-size: 24px;
     font-weight: bold;
   }
-
   &__section {
     border: 1px solid #ccc;
     border-radius: 12px;
@@ -242,7 +237,6 @@ export default {
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
-
     &-title {
       font-size: 20px;
       margin: 0 0 16px 0;
@@ -250,42 +244,35 @@ export default {
       border-bottom: 1px solid #ccc;
     }
   }
-
   &__empty {
     text-align: center;
     padding: 20px;
     color: #999;
   }
-
   &__item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid #eee;
-
     &:last-child {
       border-bottom: none;
     }
-
     &-price {
       color: #666;
       font-size: 14px;
     }
-
     &-count {
       color: #4ecdc4;
       font-size: 12px;
       margin-left: 5px;
       font-weight: bold;
     }
-
     &-actions {
       display: flex;
       gap: 8px;
     }
   }
-
   &__button {
     padding: 4px 8px;
     border: 1px solid #999;
@@ -293,16 +280,13 @@ export default {
     background: white;
     cursor: pointer;
     font-size: 14px;
-
     &:hover:not(:disabled) {
       background: #f0f0f0;
     }
-
     &:disabled {
       opacity: 0.5;
       cursor: default;
     }
-
     &--full {
       width: 100%;
       margin-top: 12px;

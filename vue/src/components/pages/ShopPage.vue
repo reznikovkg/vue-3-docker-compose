@@ -79,24 +79,20 @@ export default {
     cursor: pointer;
     font-weight: bold;
     border: none;
-
     &:hover {
       background: rgba(0,0,0,0.7);
     }
   }
-
   &__title {
     text-align: center;
     font-size: 28px;
     font-weight: bold;
   }
-
   &__money {
     text-align: center;
     font-size: 24px;
     font-weight: bold;
   }
-
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -104,7 +100,6 @@ export default {
     justify-items: center;
     width: 100%;
   }
-
   &__card {
     width: 100%;
     max-width: 400px;
@@ -122,7 +117,6 @@ export default {
       color: #666;
     }
   }
-
   &__button {
     padding: 10px;
     border: 1px solid #999;
@@ -130,11 +124,9 @@ export default {
     background: white;
     cursor: pointer;
     font-size: 16px;
-
     &:hover:not(:disabled) {
       background: #f0f0f0;
     }
-
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;

@@ -46,7 +46,6 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 30px;
-
   &__back {
     position: absolute;
     top: 20px;
@@ -59,18 +58,15 @@ export default {
     cursor: pointer;
     font-weight: bold;
     border: none;
-
     &:hover {
       background: rgba(0,0,0,0.7);
     }
   }
-
   &__title {
     text-align: center;
     font-size: 28px;
     font-weight: bold;
   }
-
   &__grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
