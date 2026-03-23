@@ -2,7 +2,8 @@ export const items = [
   {
     id: 1,
     name: 'Базовая удочка',
-    type: 'rod', price: 0
+    type: 'rod', 
+    price: 0
   },
   {
     id: 2,
@@ -27,5 +28,33 @@ export const items = [
     name: 'Червь',
     type: 'bait',
     price: 3
+  },
+  {
+    id: 6,
+    name: 'Пшенка',
+    type: 'groundbait',
+    price: 10,
+    uses: 3
+  },
+  {
+    id: 7,
+    name: 'Мастырка',
+    type: 'groundbait',
+    price: 15,
+    uses: 3
+  },
+  {
+    id: 8,
+    name: 'Подсачек',
+    type: 'net',
+    price: 50,
+    maxWeight: 500
+  },
+  {
+    id: 9,
+    name: 'Профессиональный сачок',
+    type: 'net',
+    price: 150,
+    maxWeight: 2000
   }
 ]

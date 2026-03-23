@@ -1,6 +1,6 @@
 <template>
-  <button class="inventory__back" @click.stop="() => back()">На главную</button>
   <div class="inventory">
+    <button class="inventory__back" @click.stop="() => back()">Назад</button>
     <h1 class="inventory__title">Инвентарь</h1>
     <div class="inventory__money">
       Деньги: {{ money }} монет
@@ -15,12 +15,13 @@
           <span :style="{ fontWeight: rod.id === activeRod ? 'bold' : 'normal' }">
             {{ rod.name }}
           </span>
-          <span class="inventory__item-price"> ({{ rod.price }})</span>
+          <span class="inventory__item-price"> ({{ rod.price }} монет)</span>
+          <span class="inventory__item-count"> x{{ rod.quantity }}</span>
         </div>
         <div class="inventory__item-actions">
           <button 
             class="inventory__button"
-            @click="() => selectRod(rod.id)"
+            @click="() => setActiveRod(rod.id)"
             :disabled="rod.id === activeRod"
           >
             {{ rod.id === activeRod ? 'Выбрано' : 'Выбрать' }}
@@ -45,12 +46,13 @@
           <span :style="{ fontWeight: bait.id === activeBait ? 'bold' : 'normal' }">
             {{ bait.name }}
           </span>
-          <span class="inventory__item-price"> ({{ bait.price }})</span>
+          <span class="inventory__item-price"> ({{ bait.price }} монет)</span>
+          <span class="inventory__item-count"> x{{ bait.quantity }}</span>
         </div>
         <div class="inventory__item-actions">
           <button 
             class="inventory__button"
-            @click="() => selectBait(bait.id)"
+            @click="() => setActiveBait(bait.id)"
             :disabled="bait.id === activeBait"
           >
             {{ bait.id === activeBait ? 'Выбрано' : 'Выбрать' }}
@@ -65,14 +67,76 @@
       </div>
     </div>
     <div class="inventory__section">
+      <h2 class="inventory__section-title">Сачки</h2>
+      <div v-if="!nets.length" class="inventory__empty">
+        Нет сачков
+      </div>
+      <div v-else v-for="net in nets" :key="net.id" class="inventory__item">
+        <div>
+          <span :style="{ fontWeight: net.id === activeNet ? 'bold' : 'normal' }">
+            {{ net.name }} (до {{ net.maxWeight }}г)
+          </span>
+          <span class="inventory__item-price"> ({{ net.price }} монет)</span>
+          <span class="inventory__item-count"> x{{ net.quantity }}</span>
+        </div>
+        <div class="inventory__item-actions">
+          <button 
+            class="inventory__button"
+            @click="() => setActiveNet(net.id)"
+            :disabled="net.id === activeNet"
+          >
+            {{ net.id === activeNet ? 'Выбрано' : 'Выбрать' }}
+          </button>
+          <button 
+            class="inventory__button"
+            @click="() => sellItem(net.id)"
+            :disabled="net.id === activeNet"
+          >
+            Продать
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="inventory__section">
+      <h2 class="inventory__section-title">Прикормки</h2>
+      <div v-if="!groundbaits.length" class="inventory__empty">
+        Нет прикормок
+      </div>
+      <div v-else v-for="groundbait in groundbaits" :key="groundbait.id" class="inventory__item">
+        <div>
+          <span :style="{ fontWeight: groundbait.id === activeGroundbait ? 'bold' : 'normal' }">
+            {{ groundbait.name }}
+          </span>
+          <span class="inventory__item-price"> ({{ groundbait.price }} монет)</span>
+          <span class="inventory__item-count"> x{{ groundbait.usesLeft }}</span>
+        </div>
+        <div class="inventory__item-actions">
+          <button 
+            class="inventory__button"
+            @click="() => setActiveGroundbait(groundbait.id)"
+            :disabled="groundbait.id === activeGroundbait"
+          >
+            {{ groundbait.id === activeGroundbait ? 'Выбрано' : 'Выбрать' }}
+          </button>
+          <button 
+            class="inventory__button"
+            @click="() => sellItem(groundbait.id)"
+            :disabled="groundbait.id === activeGroundbait"
+          >
+            Продать
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="inventory__section">
       <h2 class="inventory__section-title">Рыба</h2>
-      <div v-if="!fishList.length" class="inventory__empty">
+      <div v-if="!fish.length" class="inventory__empty">
         Нет рыбы
       </div>
-      <div v-else v-for="(fishItem, i) in fishList" :key="i" class="inventory__item">
+      <div v-else v-for="(fishItem, i) in fish" :key="i" class="inventory__item">
         <div>
           {{ fishItem.name }} {{ fishItem.size }}г - 
-          {{ Math.round(fishItem.price * (fishItem.size / 1000) )}}
+          {{ Math.round(fishItem.price * (fishItem.size / 1000)) }}
         </div>
         <button 
           class="inventory__button"
@@ -82,7 +146,7 @@
         </button>
       </div>
       <button 
-        v-if="fishList.length" 
+        v-if="fish.length" 
         class="inventory__button inventory__button--full"
         @click="() => sellAllFish()"
       >
@@ -104,37 +168,30 @@ export default {
       'activeRod', 
       'activeBait', 
       'fish', 
-      'money'
+      'money',
+      'nets',
+      'activeNet',
+      'groundbaits',
+      'activeGroundbait'
     ]),
-    fishList() {
-      return this.fish
-    },
     totalFishPrice() {
-      return this.fishList.reduce((sum, fish) => {
-        return sum + Math.round(fish.price * (fish.size / 1000))
+      return this.fish.reduce((sum, fishItem) => {
+        return sum + Math.round(fishItem.price * (fishItem.size / 1000))
       }, 0)
     }
   },
-
   methods: {
     ...mapActions('inventory', [
       'setActiveRod',
       'setActiveBait',
       'sellItem',
       'sellFish',
-      'sellAllFish'
+      'sellAllFish',
+      'setActiveNet',
+      'setActiveGroundbait'
     ]),
-
-    selectRod(id) {
-      this.setActiveRod(id)
-    },
-
-    selectBait(id) {
-      this.setActiveBait(id)
-    },
-
     back() { 
-      this.$router.push({ name: this.$routes.INDEX }) 
+      this.$router.go(-1)
     }
   }
 }
@@ -185,13 +242,13 @@ export default {
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
-  }
 
-  &__section-title {
-    font-size: 20px;
-    margin: 0 0 16px 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #ccc;
+    &-title {
+      font-size: 20px;
+      margin: 0 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #ccc;
+    }
   }
 
   &__empty {
@@ -210,16 +267,23 @@ export default {
     &:last-child {
       border-bottom: none;
     }
-  }
 
-  &__item-price {
-    color: #666;
-    font-size: 14px;
-  }
+    &-price {
+      color: #666;
+      font-size: 14px;
+    }
 
-  &__item-actions {
-    display: flex;
-    gap: 8px;
+    &-count {
+      color: #4ecdc4;
+      font-size: 12px;
+      margin-left: 5px;
+      font-weight: bold;
+    }
+
+    &-actions {
+      display: flex;
+      gap: 8px;
+    }
   }
 
   &__button {
