@@ -9,7 +9,7 @@ class SoundManager {
       pop: new Audio(popSound),
       click: new Audio(clickSound),
       save: new Audio(saveSound),
-      cancel: new Audio(cancelSound)
+      cancel: new Audio(cancelSound),
     }
 
     this.sounds.pop.volume = 0.5

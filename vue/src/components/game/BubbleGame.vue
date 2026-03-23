@@ -190,7 +190,7 @@ export default {
   methods: {
     handleCanvasMouseDown(event) {
       if (this.paused || this.gameOver) return
-
+    
       const rect = this.$refs.canvas.getBoundingClientRect()
       const scaleX = this.canvasWidth / rect.width
       const scaleY = this.canvasHeight / rect.height
@@ -219,6 +219,8 @@ export default {
       const allNewBubbles = []
       
       clickedBubbles.forEach(bubble => {
+        if (bubble.isPopped) return
+
         bubble.isPopped = true
 
         const isCorrect = bubble.color === this.targetColor
@@ -538,6 +540,7 @@ export default {
     handleBubbleSplit(bubble) {
       let childBubblesToAdd = []
       const now = performance.now()
+      const maxSpeed = 4
 
       if (bubble.sizeName === 'large') {
         childBubblesToAdd = this.createChildBubbles(bubble, 3, 'medium', 20)
@@ -558,7 +561,8 @@ export default {
           const multiplier = this.pushDistanceMap[bubble.sizeName]?.[childBubble.sizeName] || 1.0
           const totalDistance = bubble.radius * multiplier
           const decayTime = 2000
-          const initialSpeed = totalDistance / decayTime * 60
+          let initialSpeed = totalDistance / decayTime * 60
+          initialSpeed = Math.min(initialSpeed, maxSpeed)
 
           this.pushedBubbles.set(childBubble.id, {
             id: childBubble.id,
@@ -579,13 +583,14 @@ export default {
       const searchRadius = bubble.radius * radiusMultiplier
       const foundBubbles = []
       const now = performance.now()
-      const minTimeBetweenPushes = 50 
+      const minTimeBetweenPushes = 100
+      const maxSpeed = 4
 
       this.bubbles.forEach(otherBubble => {
         if (!otherBubble.active || otherBubble.id === bubble.id || otherBubble.isPopped) return
 
-        const distance = this.euclideanDistance(bubble.x, bubble.y, otherBubble.x, otherBubble.y) - otherBubble.radius
-        if (distance <= searchRadius) {
+        const distance = this.euclideanDistance(bubble.x, bubble.y, otherBubble.x, otherBubble.y)
+        if (distance - otherBubble.radius <= searchRadius) {
           foundBubbles.push(otherBubble)
 
           const dx = otherBubble.x - bubble.x
@@ -602,12 +607,12 @@ export default {
           if (existingPush && timeSinceLastPush > minTimeBetweenPushes) {
             otherBubble.speedX = existingPush.originalSpeedX
             otherBubble.speedY = existingPush.originalSpeedY
-
             this.pushedBubbles.delete(otherBubble.id)
           }
 
           if (!this.pushedBubbles.has(otherBubble.id)) {
-            const initialSpeed = totalDistance / decayTime * 60
+            let initialSpeed = totalDistance / decayTime * 60
+            initialSpeed = Math.min(initialSpeed, maxSpeed)
 
             this.pushedBubbles.set(otherBubble.id, {
               id: otherBubble.id,
