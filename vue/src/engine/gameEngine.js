@@ -7,8 +7,9 @@ import { processEnemyMovement, processAlliesMovement } from '@/utils/movement'
 export const gameEngine = {
   update(state, deltaTime) {
     const level = state.currentLevel
-    if (!level) 
+    if (!level) {
       return {}
+    }
 
     const now = Date.now()
 

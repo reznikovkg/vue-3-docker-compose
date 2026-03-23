@@ -2,7 +2,7 @@ import { COSTS, ATTACK, MUTATIONS, ACTIONS, GETTERS } from './constants'
 import { LEVELS_DATA } from '@/constants/levels'
 import { createEnemy, createTower } from '@/utils/entities'
 import { calculatePathPoints } from '@/utils/movement'
-import { hasEnoughPoints, buildTower, canPlaceBarricade } from '@/utils/placement'
+import { hasEnoughPoints, buildTower, canPlaceBarricade, canPlaceArtillery } from '@/utils/placement'
 import { gameEngine } from '@/engine/gameEngine'
 
 export default {
@@ -34,16 +34,18 @@ export default {
   
   getters: {
     [GETTERS.GET_SELECTED_TOWER]: (state) => {
-      if (!state.selectedTowerId) 
+      if (!state.selectedTowerId) {
         return null
+      }
       return state.towers.find(t => t.positionId === state.selectedTowerId) || null
     },
     
     [GETTERS.GET_UPGRADE_COST]: (state, getters) => {
       const tower = getters[GETTERS.GET_SELECTED_TOWER]
       
-      if (!tower || tower.level >= 5) 
+      if (!tower || tower.level >= 5) {
         return 0
+      }
       
       return [150, 250, 400, 600][tower.level - 1] || 0
     },
@@ -53,8 +55,9 @@ export default {
     },
     
     [GETTERS.GET_REVERSE_PATH_POINTS]: (state) => {
-      if (!state.currentPath?.length) 
+      if (!state.currentPath?.length) {
         return []
+      }
       return [...state.currentPath].reverse()
     },
     
@@ -161,14 +164,16 @@ export default {
     
     [MUTATIONS.REMOVE_TOWER]: (state, positionId) => {
       const index = state.towers.findIndex(t => t.positionId === positionId)
-      if (index !== -1) 
+      if (index !== -1) {
         state.towers.splice(index, 1)
+      }
     },
     
     [MUTATIONS.SET_TOWER_HIT]: (state, { positionId, isHit }) => {
       const tower = state.towers.find(t => t.positionId === positionId)
-      if (tower) 
+      if (tower) {
         tower.isHit = isHit
+      }
     },
     
     [MUTATIONS.ADD_BARRICADE]: (state, barricade) => {
@@ -193,8 +198,9 @@ export default {
     
     [MUTATIONS.REMOVE_SHOT]: (state, shotId) => {
       const index = state.allShots.findIndex(s => s.id === shotId)
-      if (index !== -1) 
+      if (index !== -1) {
         state.allShots.splice(index, 1)
+      }
     },
     
     [MUTATIONS.INCREMENT_KILLS]: (state, amount = 1) => {
@@ -242,8 +248,9 @@ export default {
     [ACTIONS.LOAD_LEVEL]: ({ commit, state }, levelId) => {
       const targetLevelId = levelId || state.currentLevelId
       const level = state.levels.find(l => l.id === targetLevelId)
-      if (!level) 
+      if (!level) {
         return
+      }
       
       commit(MUTATIONS.RESET_GAME_STATE)
       commit(MUTATIONS.SET_LEVEL, level)
@@ -251,8 +258,9 @@ export default {
     },
     
     [ACTIONS.SPAWN_ALLY]: ({ commit, state, getters }) => {
-      if (state.gameOver || state.victory) 
+      if (state.gameOver || state.victory) {
         return
+      }
       
       if (!hasEnoughPoints(state.points, COSTS.ALLY)) {
         commit(MUTATIONS.SET_INSUFFICIENT_FUNDS, true)
@@ -261,8 +269,9 @@ export default {
       }
       
       const path = getters[GETTERS.GET_REVERSE_PATH_POINTS]
-      if (!path.length) 
+      if (!path.length) {
         return
+      }
       
       commit(MUTATIONS.ADD_ALLY, {
         id: Date.now() + Math.random(),
@@ -287,8 +296,9 @@ export default {
     
     [ACTIONS.UPGRADE_TOWER]: ({ commit, state, getters }) => {
       const tower = getters[GETTERS.GET_SELECTED_TOWER]
-      if (!tower || tower.level >= 5 || state.gameOver || state.victory) 
+      if (!tower || tower.level >= 5 || state.gameOver || state.victory) {
         return
+      }
       
       const cost = getters[GETTERS.GET_UPGRADE_COST]
       if (!hasEnoughPoints(state.points, cost)) {
@@ -320,8 +330,9 @@ export default {
     
     [ACTIONS.SELECT_TOWER_POSITION]: ({ commit, state }, positionId) => {
       const pos = state.towerPositions.find(p => p.id === positionId)
-      if (!pos) 
+      if (!pos) {
         return
+      }
       
       const result = buildTower(state.towers, pos)
       
@@ -341,8 +352,9 @@ export default {
     },
     
     [ACTIONS.UPDATE_GAME]: ({ state, commit }, deltaTime) => {
-      if (state.gameOver || state.victory) 
+      if (state.gameOver || state.victory) {
         return
+      }
 
       const result = gameEngine.update(state, deltaTime)
 
@@ -373,17 +385,20 @@ export default {
         commit(MUTATIONS.UPDATE_ENEMIES, [])
       }
 
-      result.hitTowerIds?.forEach(id => {
-        commit(MUTATIONS.SET_TOWER_HIT, { positionId: id, isHit: true })
-        setTimeout(() => {
-          commit(MUTATIONS.SET_TOWER_HIT, { positionId: id, isHit: false })
-        }, 200)
-      })
+      if (result.hitTowerIds) {
+        result.hitTowerIds.forEach(id => {
+          commit(MUTATIONS.SET_TOWER_HIT, { positionId: id, isHit: true })
+          setTimeout(() => {
+            commit(MUTATIONS.SET_TOWER_HIT, { positionId: id, isHit: false })
+          }, 200)
+        })
+      }
     },
     
     [ACTIONS.HANDLE_GAME_CLICK]: ({ state, commit }, { event, rect }) => {
-      if (state.gameOver || state.victory) 
+      if (state.gameOver || state.victory) {
         return
+      }
       
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
@@ -397,8 +412,9 @@ export default {
         const pos = state.towerPositions.find(
           p => Math.hypot(x - p.x, y - p.y) < 20
         )
-        if (!pos) 
+        if (!pos) {
           return
+        }
 
         const existing = state.towers.find(t => t.positionId === pos.id)
 
@@ -442,6 +458,12 @@ export default {
       }
 
       if (state.placeMode === 'artillery') {
+        const point = { x, y }
+        
+        if (!canPlaceArtillery(point, state.currentPath)) {
+          return
+        }
+        
         if (!hasEnoughPoints(state.points, COSTS.ARTILLERY)) {
           insufficientFunds()
           return

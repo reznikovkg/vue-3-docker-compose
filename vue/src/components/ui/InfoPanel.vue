@@ -21,7 +21,6 @@
           Убийств: {{ selectedTower.kills || 0 }}
         </div>
       </div>
-
       <button
         v-if="selectedTower.level < 5"
         class="info-panel__upgrade-button"
@@ -31,12 +30,10 @@
         Улучшить до {{ selectedTower.level + 1 }} уровня
         <span class="info-panel__cost">({{ upgradeCost }})</span>
       </button>
-
       <div v-else class="info-panel__no-upgrade">
         Максимальный уровень
       </div>
     </div>
-
     <div v-else class="info-panel__no-selection">
       <p class="info-panel__no-selection-title">Выберите:</p>
       <ul class="info-panel__no-selection-list">

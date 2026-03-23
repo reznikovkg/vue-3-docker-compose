@@ -19,7 +19,6 @@
         </button>
       </div>
     </div>
-
     <div
       v-if="victory"
       class="game__overlay"
@@ -46,7 +45,6 @@
         </button>
       </div>
     </div>
-
     <div class="game__header">
       <LevelButtons
         :levels="levels"
@@ -54,44 +52,18 @@
         class="game__level-buttons"
         @select="(id) => loadLevel(id)"
       />
-
-      <div class="game__economy">
-        <div class="game__points">
-          Очки: {{ points }}
-        </div>
-        <div class="game__kills">
-          Убито: {{ totalKills }} / {{ maxEnemies }}
-        </div>
-        <div class="game__build-controls">
-          <button
-            class="game__build-button"
-            :class="{
-              'game__build-button--active': placeMode === 'barricade'
-            }"
-            @click="() => setPlaceMode('barricade')"
-          >
-            Заграждение ({{ BARRICADE_COST }})
-          </button>
-          <button
-            class="game__build-button"
-            :class="{
-              'game__build-button--active': placeMode === 'artillery'
-            }"
-            @click="() => setPlaceMode('artillery')"
-          >
-            Артиллерия ({{ ARTILLERY_COST }})
-          </button>
-          <button
-            class="game__spawn-ally"
-            :disabled="points < ALLY_COST"
-            @click="() => spawnAlly()"
-          >
-            Союзник ({{ ALLY_COST }})
-          </button>
-        </div>
-      </div>
+      <EconomyPanel
+        :points="points"
+        :total-kills="totalKills"
+        :max-enemies="maxEnemies"
+        :place-mode="placeMode"
+        :BARRICADE_COST="BARRICADE_COST"
+        :ARTILLERY_COST="ARTILLERY_COST"
+        :ALLY_COST="ALLY_COST"
+        @set-place-mode="(mode) => setPlaceMode(mode)"
+        @spawn-ally="() => spawnAlly()"
+      />
     </div>
-
     <div class="game__layout">
       <div
         ref="gameArea"
@@ -102,7 +74,6 @@
           class="game__path"
           :path-points="pathPoints"
         />
-
         <Tower
           v-for="position in towerPositions"
           :key="position.id"
@@ -118,7 +89,6 @@
           class="game__tower"
           @click="() => selectTowerPosition(position.id)"
         />
-
         <Barricade
           v-for="barricade in barricades"
           :key="barricade.id"
@@ -128,7 +98,6 @@
           :max-health="barricade.maxHealth"
           class="game__barricade"
         />
-
         <ArtilleryStrike
           v-for="strike in artilleryStrikes"
           :key="strike.id"
@@ -139,7 +108,6 @@
           :duration="strike.duration"
           class="game__artillery"
         />
-
         <Shot
           v-for="shot in allShots"
           :key="shot.id"
@@ -150,7 +118,6 @@
           :variant="shot.type"
           class="game__shot"
         />
-
         <Enemy
           v-for="enemy in enemies"
           :key="enemy.id"
@@ -161,7 +128,6 @@
           :color="enemy.color"
           class="game__enemy"
         />
-
         <ShooterEnemy
           v-for="enemy in shooterEnemies"
           :key="enemy.id"
@@ -174,7 +140,6 @@
           :is-shooting="enemy.isShooting"
           class="game__shooter-enemy"
         />
-
         <Ally
           v-for="ally in allies"
           :key="ally.id"
@@ -188,7 +153,6 @@
           class="game__ally"
         />
       </div>
-
       <InfoPanel
         :selected-tower="selectedTower"
         :points="points"
@@ -198,7 +162,6 @@
         @upgrade-tower="() => upgradeTower()"
       />
     </div>
-
     <div
       v-if="showInsufficientFunds"
       class="game__notification game__notification--error"
@@ -212,6 +175,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import LevelButtons from '@/components/ui/LevelButtons.vue'
 import InfoPanel from '@/components/ui/InfoPanel.vue'
+import EconomyPanel from '@/components/ui/EconomyPanel.vue'
 import Path from '@/components/game/Path.vue'
 import Tower from '@/components/game/Tower.vue'
 import Enemy from '@/components/game/Enemy.vue'
@@ -227,6 +191,7 @@ export default {
   components: {
     LevelButtons,
     InfoPanel,
+    EconomyPanel,
     Path,
     Tower,
     Enemy,
@@ -338,24 +303,6 @@ export default {
     margin-bottom: 20px;
   }
 
-  &__economy {
-    display: flex;
-    gap: 20px;
-    background: #f5f5f5;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-  }
-
-  &__points {
-    color: #f57c00;
-  }
-
-  &__kills {
-    color: #4caf50;
-  }
-
   &__area {
     position: relative;
     width: 800px;
@@ -458,55 +405,6 @@ export default {
 
     &:hover {
       background: #1976d2;
-    }
-  }
-
-  &__build-controls {
-    display: flex;
-    gap: 10px;
-    margin-left: 20px;
-  }
-
-  &__build-button {
-    padding: 8px 16px;
-    background: #ddd;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #ccc;
-    }
-
-    &--active {
-      background: #4caf50;
-      color: white;
-
-      &:hover {
-        background: #45a049;
-      }
-    }
-  }
-
-  &__spawn-ally {
-    padding: 8px 16px;
-    background: #4a90e2;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s;
-
-    &:hover:not(:disabled) {
-      background: #357abd;
-    }
-
-    &:disabled {
-      background: #ccc;
-      cursor: not-allowed;
     }
   }
 

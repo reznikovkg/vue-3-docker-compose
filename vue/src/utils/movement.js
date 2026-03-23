@@ -14,8 +14,9 @@ const findClosestPathPointIndex = (entity, path) => {
 }
 
 export const moveEntity = (entity, deltaTime) => {
-  if (!entity?.path?.length) 
+  if (!entity?.path?.length) {
     return entity
+  }
   
   const speed = entity.speed || 0.05
   const moveDistance = speed * deltaTime
@@ -30,8 +31,9 @@ export const moveEntity = (entity, deltaTime) => {
     currentTarget = entity.path[currentTargetIndex]
   }
   
-  if (!currentTarget) 
+  if (!currentTarget) {
     return entity
+  }
   
   const dx = currentTarget.x - x
   const dy = currentTarget.y - y
@@ -81,8 +83,9 @@ export const processAlliesMovement = (allies, enemies, deltaTime) => {
       Math.hypot(ally.x - e.x, ally.y - e.y) <= (ally.attackRange || 80)
     )
     
-    if (hasTarget) 
+    if (hasTarget) {
       return ally
+    }
     
     return moveEntity(ally, deltaTime)
   })
@@ -94,8 +97,9 @@ const normalize = (x, y) => {
 }
 
 export const calculatePathPoints = (path) => {
-  if (!path.length) 
+  if (!path.length) {
     return ''
+  }
   
   const width = 25
   const points = []
@@ -108,12 +112,13 @@ export const calculatePathPoints = (path) => {
     const nextDir = next ? normalize(next.x - p.x, next.y - p.y) : { x: 0, y: 0 }
     
     let dir
-    if (!prev) 
+    if (!prev) {
       dir = nextDir
-    else if (!next) 
+    } else if (!next) {
       dir = prevDir
-    else 
+    } else {
       dir = normalize(prevDir.x + nextDir.x, prevDir.y + nextDir.y)
+    }
     
     const perp = { x: -dir.y, y: dir.x }
     

@@ -21,7 +21,6 @@
       <span v-if="hasTower">{{ level }}</span>
       <span v-else class="tower__plus">+</span>
     </div>
-
     <div
       v-if="hasTower"
       class="tower__health-bar-container"
@@ -33,7 +32,6 @@
         }"
       ></div>
     </div>
-
     <div
       v-if="hasTower"
       class="tower__range"
@@ -55,7 +53,6 @@ export default {
     x: Number,
     y: Number,
     radius: Number,
-
     level: {
       type: Number,
       default: 1
