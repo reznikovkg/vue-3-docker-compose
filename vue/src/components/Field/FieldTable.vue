@@ -3,12 +3,12 @@
     <div class="field-table__field-row" v-for="(row, rowIdx) in grid" :key="rowIdx">
         <div class="field-table__field-cell"
           :class="{
-              'field-table__field-cell__central': isCentral(rowIdx + 1, colIdx + 1),
-              'field-table__field-cell__external-piece': cell === 2,
-              'field-table__field-cell__attached-piece': cell === 3,
-              'field-table__field-cell__black-bomb': cell === 11,
-              'field-table__field-cell__red-bomb': cell === 12,
-              'field-table__field-cell__green-bomb': cell === 13
+              'field-table__field-cell--central': isCentral(rowIdx + 1, colIdx + 1),
+              'field-table__field-cell--external-piece': cell === 2,
+              'field-table__field-cell--attached-piece': cell === 3,
+              'field-table__field-cell--black-bomb': cell === 11,
+              'field-table__field-cell--red-bomb': cell === 12,
+              'field-table__field-cell--green-bomb': cell === 13
           }"
           :style="{ '--grid-size': getFieldSize }"
           v-for="(cell, colIdx) in row" :key="colIdx">
@@ -59,22 +59,22 @@ export default {
     height: calc(80vmin / var(--grid-size));
     background-color: white;
 
-    &__external-piece {
+    &--external-piece {
       background-color: #ff9800;
     }
-    &__central{
+    &--central{
       background-color: #800020;
     }
-    &__attached-piece {
+    &--attached-piece {
       background-color: rgb(7, 36, 199);
     }
-    &__black-bomb {
+    &--black-bomb {
       background-color: black;
     }
-    &__red-bomb {
+    &--red-bomb {
       background-color: red;
     }
-    &__green-bomb {
+    &--green-bomb {
       background-color: green;
     }
   }
