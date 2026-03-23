@@ -22,7 +22,7 @@
         </div>
         <button
           class="shop__button"
-          @click="() => buy(item)"
+          @click="() => buyItem(item)"
           :disabled="money < item.price"
         >
           Купить
@@ -50,9 +50,6 @@ export default {
     ...mapActions('inventory', [
       'buyItem'
     ]),
-    buy(item) {
-      this.buyItem(item)
-    },
     back() {
       this.$router.go(-1)
     }
