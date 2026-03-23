@@ -1,12 +1,12 @@
 <template>
   <div
-    @keydown.up="move(0, -1)"
-    @keydown.down="move(0, 1)"
-    @keydown.left="move(-1, 0)"
-    @keydown.right="move(1, 0)">
+    @keydown.up="() => move(0, -1)"
+    @keydown.down="() => move(0, 1)"
+    @keydown.left="() => move(-1, 0)"
+    @keydown.right="() => move(1, 0)">
     <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
     <div class="game-menu">
-      <button class="game-menu__start-button" @click="handleStart" :disabled="isGameActive">Start</button>
+      <button class="game-menu__start-button" @click="() => handleStart()" :disabled="isGameActive">Start</button>
       <input
         class="game-menu__field-size-input"
         v-model.number="fieldSize"
@@ -15,7 +15,7 @@
         max="21"
         step="2"
         :disabled="isGameActive"
-        @input="updateFieldSize"
+        @input="() => updateFieldSize()"
       >
       <div>Размер: {{ getFieldSize }}</div>
       <div>Таймер: {{ timerValue }}</div>
