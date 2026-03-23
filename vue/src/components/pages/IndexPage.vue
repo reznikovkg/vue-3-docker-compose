@@ -2,8 +2,8 @@
   Index
 
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
+    <RouterLink :to="{ name: $routes.GAME }">
+      To Game 
     </RouterLink>
   </div>
 </template>
