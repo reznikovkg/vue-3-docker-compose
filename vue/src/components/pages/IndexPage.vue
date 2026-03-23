@@ -3,8 +3,8 @@
 
   <div>
     <RouterLink :to="{ name: $routes.GAME }">
-        To Game 
-      </RouterLink>
+      To Game 
+    </RouterLink>
   </div>
 </template>
 

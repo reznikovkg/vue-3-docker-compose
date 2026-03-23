@@ -1,12 +1,8 @@
+import { ENEMY_TYPES } from '@/constants/levels'
+
 const getRandomEnemyType = (level) => {
   if (!level?.enemyTypes?.length) {
-    return {
-      type: 'medium',
-      health: 100,
-      reward: 50,
-      speed: 0.08,
-      color: '#FF9800'
-    }
+    return { ...ENEMY_TYPES.medium }
   }
   
   const rand = Math.random()
@@ -17,16 +13,7 @@ const getRandomEnemyType = (level) => {
     return rand < cumulative
   }) || level.enemyTypes[0]
   
-  return {
-    type: selectedType.type,
-    health: selectedType.health,
-    reward: selectedType.reward,
-    speed: selectedType.speed,
-    color: selectedType.color,
-    shootDamage: selectedType.shootDamage,
-    shootRange: selectedType.shootRange,
-    shootCooldown: selectedType.shootCooldown
-  }
+  return { ...ENEMY_TYPES[selectedType.type] }
 }
 
 export const createEnemy = (level) => {
@@ -49,9 +36,9 @@ export const createEnemy = (level) => {
   }
   
   if (config.type === 'shooter') {
-    enemy.shootDamage = config.shootDamage || 15
-    enemy.shootRange = config.shootRange || 90
-    enemy.shootCooldown = config.shootCooldown || 1000
+    enemy.shootDamage = config.shootDamage
+    enemy.shootRange = config.shootRange
+    enemy.shootCooldown = config.shootCooldown
     enemy.lastShotTime = 0
     enemy.isShooting = false
   }
