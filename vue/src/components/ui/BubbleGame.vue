@@ -160,18 +160,18 @@ export default {
       }
     },
     checkHit(x, y) {
-      if (this.bombMode) return 
-      if (!this.$el || this.$el.clientWidth === 0) return
-      if (this.bubbles.length === 0) return
-      const hitBubbles = this.bubbles.filter(b => {
+      if (this.bombMode || !this.$el) return
+      const width = this.$el.clientWidth
+      if (!width) return
+      for (const b of this.bubbles) {
         const dx = b.x - x
         const dy = b.y - y
-        const radiusPercent =
-          (this.sizePx(b.size) / this.$el.clientWidth) * 100 / 2
-        return Math.hypot(dx, dy) <= radiusPercent
-      })
-      if (hitBubbles.length === 0) return
-      hitBubbles.forEach(b => this.processHit(b))
+        const radius =
+          (this.sizePx(b.size) / width) * 50
+        if (dx * dx + dy * dy <= radius * radius) {
+          this.processHit(b)
+        }
+      }
     },
     processHit(bubble, countOverride = null, isBomb = false) {
       this.pushNearby(bubble)
