@@ -7,7 +7,6 @@
         </div>
       </div>
     </transition>
-
     <div class="table">
       <div class="table__items">
         <div
@@ -17,34 +16,41 @@
         >
           <button
             class="table__remove"
-            @click.stop="() => removeAll(id)"
+            @click.stop="() => removeElementCompletely(id)"
           >
             ✕
           </button>
-
           <span class="table__icon">{{elements[id].icon}}</span>
           <span class="table__name">{{elements[id].name}}</span>
           <span class="table__count">x{{ count }}</span>
-
           <div class="table__controls">
-            <button @click="() => decrease(id)">−</button>
-            <button @click="() => add(id)">+</button>
+            <button @click="() => decreaseFromTable(id)">−</button>
+            <button @click="() => addToTable(id)">+</button>
           </div>
         </div>
       </div>
-
       <div class="table__buttons">
         <button 
           class="craft-toggle" 
           :class="{ active: craftVisible }"
-          @click="() => toggleCraft()"
+          @click="() => craftVisible = !craftVisible"
         >
           <span class="craft-toggle__icon">⚗️</span>
           <span class="craft-toggle__text">{{ craftVisible ? 'Скрыть' : 'Крафт' }}</span>
         </button>
-        
-        <button class="reset" @click="() => clear()">Сброс</button>
-        <button class="mix" @click="() => mix()" :disabled="!!tableCrafting || Object.keys(table).length === 0">{{ tableCrafting ? 'Крафтится...' : 'Смешать' }}</button>
+        <button 
+          class="reset" 
+          @click="() => clearTable()"
+        >
+          Сброс
+        </button>
+        <button 
+          class="mix" 
+          @click="() => mix()" 
+          :disabled="!!tableCrafting || Object.keys(table).length === 0"
+        >
+          {{ tableCrafting ? 'Крафтится...' : 'Смешать' }}
+        </button>
       </div>
     </div>
   </div>
@@ -57,17 +63,14 @@ import SlotCraft from './SlotCraft.vue'
 
 export default {
   name: 'CraftTable',
-
   components: {
     SlotCraft
   },
-
   data() {
     return {
       craftVisible: false
     }
   },
-
   computed: {
     ...mapGetters([
       'tableElements', 
@@ -79,7 +82,6 @@ export default {
       return ELEMENTS
     }
   },
-  
   methods: {
     ...mapActions([
       'addToTable',
@@ -87,35 +89,14 @@ export default {
       'removeElementCompletely',
       'clearTable',
       'mix'
-    ]),
-
-    add(id){
-      this.addToTable(id)
-    },
-
-    decrease(id){
-      this.decreaseFromTable(id)
-    },
-
-    removeAll(id){
-      this.removeElementCompletely(id)
-    },
-
-    clear(){
-      this.clearTable()
-    },
-
-    toggleCraft(){
-      this.craftVisible=!this.craftVisible
-    }
-
+    ])
   }
 }
 </script>
 
 <style scoped lang="scss">
 .table-wrapper {
-  flex: 3;
+  flex: 6;
   display: flex;
   gap: 10px;
   padding: 10px;
@@ -306,81 +287,99 @@ export default {
 }
 
 .craft-toggle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
 
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
-    }
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.4);
+  }
 
-    &.active {
-      background: linear-gradient(135deg, #8e44ad, #7d3c98);
-      box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
-    }
+  &.active {
+    background: linear-gradient(135deg, #8e44ad, #7d3c98);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  &__icon {
+    font-size: 24px;
+  }
+
+  &__text {
+    font-size: 14px;
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: row;
+    padding: 8px;
 
     &__icon {
-      font-size: 24px;
+      font-size: 20px;
     }
 
     &__text {
-      font-size: 14px;
-    }
-
-    @media (max-width: 600px) {
-      flex-direction: row;
-      padding: 8px;
-
-      &__icon {
-        font-size: 20px;
-      }
-
-      &__text {
-        font-size: 12px;
-      }
+      font-size: 12px;
     }
   }
+}
   
 .craft-container {
   width: 300px;
   background: white;
   border-radius: 16px;
-  padding: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
   align-self: flex-start;
-  margin-top: 0;
   z-index: 100;
   position: relative;
-  overflow: visible;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
-
-  &_wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
+  max-height: calc(100% - 20px);
+  overflow: hidden;
+  
+  &__wrapper {
+    padding: 15px;
+    overflow-y: auto; 
+    flex: 1;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+      
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
   }
 
   @media (max-width: 600px) {
     width: 100%;
     margin: 0 0 10px 0;
     align-self: stretch;
-    padding: 10px;
+    max-height: 300px;
+    
+    &__wrapper {
+      padding: 10px;
+    }
   }
 }
 

@@ -17,20 +17,16 @@ export default {
   props:{ 
     id:Number 
   },
-  
   computed:{
     element(){
       return ELEMENTS[this.id]
     }
   },
-
   methods:{
     dragStart(event){
-
       event.dataTransfer.effectAllowed = "copy";
       event.dataTransfer.setData("text/plain",this.id);
     },
-
     select() {
       this.$emit('select', this.id)
     }

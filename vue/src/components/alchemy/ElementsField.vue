@@ -14,9 +14,7 @@ import { mapGetters,mapActions } from 'vuex'
 import ElementCard from './ElementCard.vue'
 
 export default{
-
-  components:{ElementCard},
-
+  components:{ ElementCard },
   computed: {
     ...mapGetters([
       'discoveredElements', 
@@ -26,10 +24,8 @@ export default{
       return this.discoveredElements
     }
   },
-
   methods:{
     ...mapActions(['addToTable']),
-
     add(id){
       if (this.inventory[id] && this.inventory[id] > 0) {
         this.addToTable(id)

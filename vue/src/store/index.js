@@ -129,7 +129,7 @@ export const store = createStore({
             [id]: newCount
           }
         }
-        
+
         state.table = {
           ...state.table,
           [id]:(state.table[id]||0)+1
@@ -152,7 +152,7 @@ export const store = createStore({
           [id]: newCount
         }
       }
-      
+
       state.inventory = {
         ...state.inventory,
         [id]: (state.inventory[id] || 0) + 1
@@ -163,7 +163,7 @@ export const store = createStore({
       const count = state.table[id] || 0
       const {[id]:removed, ...rest} = state.table
       state.table = rest
-      
+
       if (count > 0) {
         for (let i = 0; i < count; i++) {
           if (state.inventory[id] !== undefined) {
@@ -215,8 +215,8 @@ export const store = createStore({
 
     [MUTATIONS.START_MINING]: (state, { elementId, workers }) => {
       const element = ELEMENTS[elementId]
-      const totalTime = element.baseTime 
-      
+      const totalTime = element.baseTime
+
       state.miningJobs = {
         ...state.miningJobs,
         [elementId]: {
@@ -238,13 +238,13 @@ export const store = createStore({
         ...state.inventory,
         [elementId]: (state.inventory[elementId] || 0) + 1
       }
-      
+
       const {[elementId]: removed, ...rest} = state.miningJobs
       state.miningJobs = rest
-      
+
       const workersCount = state.workers.assigned[elementId] || 0
       state.workers.free += workersCount
-      
+
       const {[elementId]: assignedRemoved, ...assignedRest} = state.workers.assigned
       state.workers.assigned = assignedRest
     },
@@ -256,11 +256,11 @@ export const store = createStore({
           ...state.workers.assigned,
           [elementId]: (state.workers.assigned[elementId] || 0) + 1
         }
-        
+
         if (state.workers.assigned[elementId] === 1) {
           const element = ELEMENTS[elementId]
           const totalTime = element.baseTime
-          
+
           state.miningJobs = {
             ...state.miningJobs,
             [elementId]: {
@@ -282,11 +282,11 @@ export const store = createStore({
           ...state.workers.assigned,
           [elementId]: state.workers.assigned[elementId] - 1
         }
-        
+
         if (state.workers.assigned[elementId] === 0) {
           const {[elementId]: removed, ...rest} = state.workers.assigned
           state.workers.assigned = rest
-          
+
           if (state.miningJobs[elementId]) {
             const {[elementId]: removed, ...rest} = state.miningJobs
             state.miningJobs = rest
@@ -312,10 +312,10 @@ export const store = createStore({
           }
         }
       })
-      
+
       const element = ELEMENTS[resultId]
-      const craftTime = element.baseTime 
-      
+      const craftTime = element.baseTime
+
       const craftItem = {
         resultId,
         progress: 0,
@@ -324,9 +324,9 @@ export const store = createStore({
         workers: 1,
         slotIndex: slotIndex
       }
-      
+
       state.craftingQueue.push(craftItem)
-      
+
       if (slotIndex !== undefined) {
         state.workers.assignedToSlots = {
           ...state.workers.assignedToSlots,
@@ -344,29 +344,29 @@ export const store = createStore({
 
     [MUTATIONS.COMPLETE_CRAFTING]: (state, index) => {
       const craft = state.craftingQueue[index]
-      
+
       state.inventory = {
         ...state.inventory,
         [craft.resultId]: (state.inventory[craft.resultId] || 0) + 1
       }
-      
+
       if (!state.discovered.includes(craft.resultId)) {
         state.discovered = [...state.discovered, craft.resultId]
       }
-      
+
       if (craft.slotIndex !== undefined && state.workers.assignedToSlots[craft.slotIndex]) {
         state.workers.free += state.workers.assignedToSlots[craft.slotIndex]
         const {[craft.slotIndex]: removed, ...rest} = state.workers.assignedToSlots
         state.workers.assignedToSlots = rest
       }
-      
+
       state.craftingQueue.splice(index, 1)
     },
 
     [MUTATIONS.START_TABLE_CRAFTING]: (state, { resultId, ingredients }) => {
       const element = ELEMENTS[resultId]
       const craftTime = element.baseTime
-      
+
       state.tableCrafting = {
         resultId,
         progress: 0,
@@ -387,21 +387,21 @@ export const store = createStore({
     [MUTATIONS.COMPLETE_TABLE_CRAFTING]: (state) => {
       if (state.tableCrafting) {
         const resultId = state.tableCrafting.resultId
-        
+
         state.table = {}
-        
+
         state.inventory = {
           ...state.inventory,
           [resultId]: (state.inventory[resultId] || 0) + 1
         }
-        
+
         if (!state.discovered.includes(resultId)) {
           state.discovered = [...state.discovered, resultId]
         }
-        
+
         state.workers.free += state.tableCrafting.workers
         state.workers.assignedToTable = 0
-        
+
         state.tableCrafting = null
       }
     },
@@ -424,7 +424,7 @@ export const store = createStore({
 
     [MUTATIONS.ASSIGN_WORKER_TO_SLOT]: (state, slotIndex) => {
       const craftIndex = state.craftingQueue.findIndex(c => c.slotIndex === slotIndex)
-      
+
       if (state.workers.free > 0 && craftIndex !== -1) {
         state.workers.free -= 1
         state.workers.assignedToSlots = {
@@ -437,7 +437,7 @@ export const store = createStore({
 
     [MUTATIONS.UNASSIGN_WORKER_FROM_SLOT]: (state, slotIndex) => {
       const craftIndex = state.craftingQueue.findIndex(c => c.slotIndex === slotIndex)
-      
+
       if (craftIndex !== -1 && state.workers.assignedToSlots[slotIndex] > 0) {
         state.workers.free += 1
         state.workers.assignedToSlots = {
@@ -445,7 +445,7 @@ export const store = createStore({
           [slotIndex]: state.workers.assignedToSlots[slotIndex] - 1
         }
         state.craftingQueue[craftIndex].workers -= 1
-        
+
         if (state.workers.assignedToSlots[slotIndex] === 0) {
           const {[slotIndex]: removed, ...rest} = state.workers.assignedToSlots
           state.workers.assignedToSlots = rest
@@ -474,15 +474,15 @@ export const store = createStore({
     [ACTIONS.SET_SLOT]: ({ commit, dispatch, state }, payload) => {
       const { index, el } = payload
       const oldSlotValue = state.slots[index]
-      
+
       if (el !== null && state.slots[index] !== null) {
         return
       }
-      
+
       if (el !== null && (!state.inventory[el] || state.inventory[el] === 0)) {
         return
       }
-      
+
       if (el === null && oldSlotValue !== null) {
         commit(MUTATIONS.ADD_TO_INVENTORY, oldSlotValue)
         commit(MUTATIONS.SET_SLOT, payload)
@@ -491,7 +491,7 @@ export const store = createStore({
         commit(MUTATIONS.REMOVE_FROM_INVENTORY, el)
         commit(MUTATIONS.SET_SLOT, payload)
       }
-      
+
       dispatch(ACTIONS.CHECK_SLOT_RECIPES)
     },
 
@@ -505,14 +505,14 @@ export const store = createStore({
 
       if (foundRecipe) {
         commit(MUTATIONS.ADD_DISCOVERED, foundRecipe.result)
-        
+
         const filledSlots = Object.keys(foundRecipe.pattern).map(Number)
         filledSlots.forEach(index => {
           commit(MUTATIONS.SET_SLOT, { index, el: null })
         })
-        
+
         const firstSlotIndex = filledSlots[0] || 0
-        dispatch(ACTIONS.START_CRAFTING, { 
+        dispatch(ACTIONS.START_CRAFTING, {
           resultId: foundRecipe.result,
           ingredients: foundRecipe.pattern,
           slotIndex: firstSlotIndex
@@ -538,7 +538,7 @@ export const store = createStore({
           return false
         }
 
-        return recipeKeys.every(key => 
+        return recipeKeys.every(key =>
           table[key] === recipe.ingredients[key]
         )
       })
@@ -556,8 +556,8 @@ export const store = createStore({
             }
           }
         })
-        
-        commit(MUTATIONS.START_TABLE_CRAFTING, { 
+
+        commit(MUTATIONS.START_TABLE_CRAFTING, {
           resultId: foundRecipe.result,
           ingredients: foundRecipe.ingredients
         })
@@ -600,35 +600,42 @@ export const store = createStore({
   plugins: [(store) => {
     setInterval(() => {
       Object.entries(store.state.miningJobs).forEach(([elementId, job]) => {
+        if (job.workers === 0) {
+          return
+        }
         const progressIncrement = (100 / job.totalTime) * job.workers
         const newProgress = Math.min(job.progress + progressIncrement, 100)
-        
+
         store.commit(MUTATIONS.UPDATE_MINING, { elementId, progress: newProgress })
-        
+
         if (newProgress >= 100) {
           store.commit(MUTATIONS.COMPLETE_MINING, Number(elementId))
         }
       })
-      
+
       store.state.craftingQueue.forEach((craft, index) => {
-        const workers = craft.workers || 1
-        const progressIncrement = (100 / craft.totalTime) * workers
+        if (craft.workers === 0) {
+          return
+        }
+        const progressIncrement = (100 / craft.totalTime) * craft.workers
         const newProgress = Math.min(craft.progress + progressIncrement, 100)
-        
+
         store.commit(MUTATIONS.UPDATE_CRAFTING, { index, progress: newProgress })
-        
+
         if (newProgress >= 100) {
           store.commit(MUTATIONS.COMPLETE_CRAFTING, index)
         }
       })
 
       if (store.state.tableCrafting) {
-        const workers = store.state.tableCrafting.workers || 1
-        const progressIncrement = (100 / store.state.tableCrafting.totalTime) * workers
+        if (store.state.tableCrafting.workers === 0) {
+          return
+        }
+        const progressIncrement = (100 / store.state.tableCrafting.totalTime) * store.state.tableCrafting.workers
         const newProgress = Math.min(store.state.tableCrafting.progress + progressIncrement, 100)
-        
+
         store.commit(MUTATIONS.UPDATE_TABLE_CRAFTING, newProgress)
-        
+
         if (newProgress >= 100) {
           store.commit(MUTATIONS.COMPLETE_TABLE_CRAFTING)
         }

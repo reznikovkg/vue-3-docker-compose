@@ -25,7 +25,6 @@ import { ELEMENTS } from '../../config/elements'
 export default{
    computed: {
     ...mapGetters(['slots']),
-
     elements(){
         return ELEMENTS
     }
@@ -33,14 +32,12 @@ export default{
   
   methods: {
     ...mapActions(['setSlot']),
-
     drop(index, event) {
       const id = Number(event.dataTransfer.getData("text/plain"))
       if (id) {
         this.setSlot({ index: index, el: id })
       }
     },
-
     remove(index) {
       this.setSlot({ index: index, el: null })
     }
