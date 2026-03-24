@@ -8,6 +8,24 @@
         </RouterLink>
       </div>
 
+      <div class="menu__mode">
+        <span class="menu__mode__label">Режим игры:</span>
+        <div class="menu__mode__options">
+          <div 
+            v-for="mode in modes" 
+            :key="mode.value"
+            class="menu__mode__option"
+            :class="{ 'menu__mode__option--active': gameMode === mode.value }"
+            @click="() => selectMode(mode.value)"
+          >
+            <span class="menu__mode__option__name">{{ mode.name }}</span>
+            <div class="menu__mode__option__tooltip">
+              {{ mode.description }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="menu__grid__item">
         <RouterLink :to="{ name: $routes.OPTION }" class="menu__grid__item--options" @click="() => playClickSound()">
           Настройки
@@ -24,12 +42,48 @@
 
 <script lang="ts">
 import soundManager from './../../utils/soundManager'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'MainMenuPage',
+  computed: {
+    ...mapGetters(['getGameMode']),
+    gameMode: {
+      get(): string {
+        return this.getGameMode
+      },
+      set(value: string) {
+        this.setGameMode(value)
+      }
+    },
+    modes() {
+      return [
+        {
+          value: 'click',
+          name: 'Клик',
+          description: 'Нажми на пузырь — он лопнет. Классическая механика.'
+        },
+        {
+          value: 'auto',
+          name: 'Автомат',
+          description: 'Автоматическая стрельба каждые 0.5 сек. Метки показывают область попадания.'
+        },
+        {
+          value: 'laser',
+          name: 'Лазер',
+          description: 'Проведи курсором — пузыри лопаются по всей траектории движения.'
+        }
+      ]
+    }    
+  },
   methods: {
+    ...mapActions(['setGameMode']),
     playClickSound() {
       soundManager.play('click')
+    },
+    selectMode(mode: string) {
+      this.gameMode = mode
+      this.playClickSound()
     }
   }
 }
@@ -87,6 +141,102 @@ $accentGreen: #00d389;
     margin-bottom: 30px;
     font-size: 2.5rem;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  &__mode {
+    background: $bgElement;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+
+    &__label {
+      display: block;
+      color: $textLight;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    &__options {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    &__option {
+      position: relative;
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      background: $bgDark;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: $textMuted;
+
+      &:hover {
+        background: $bgElementHover;
+        transform: translateY(-2px);
+        
+        .menu__mode__option__tooltip {
+          opacity: 1;
+          visibility: visible;
+          transform: translateX(-50%) translateY(0);
+        }
+      }
+
+      &--active {
+        background: $accentGreen;
+        color: white;
+
+        &:hover {
+          background: darken($accentGreen, 10%);
+        }
+      }
+
+      &__name {
+        display: block;
+      }
+
+      &__tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        background: $bgDark;
+        color: $textLight;
+        font-size: 0.8rem;
+        font-weight: normal;
+        padding: 8px 12px;
+        border-radius: 6px;
+        white-space: nowrap;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        margin-bottom: 10px;
+        
+        &::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border-width: 5px;
+          border-style: solid;
+          border-color: $bgDark transparent transparent transparent;
+        }
+      }
+    }
   }
 
   &__grid {
