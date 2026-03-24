@@ -83,7 +83,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .minigame {
   position: absolute;
   left: 10px;
@@ -94,36 +94,34 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  user-select: none;
-}
 
-.minigame__bar-container {
-  position: relative;
-  width: 20px;
-  height: 100%;
-  background: linear-gradient(to bottom, #4aa1f3 0%, #0f1c3d 100%);
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
-}
+  &__bar-container {
+    position: relative;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(to bottom, #4aa1f3 0%, #0f1c3d 100%);
+    border-radius: 5px;
+    overflow: hidden;
+  }
 
-.minigame__catch-zone {
-  position: absolute;
-  top: 40%;
-  height: 20%;
-  width: 100%;
-  background: rgba(0, 255, 0, 0.5);
-  border-radius: 5px;
-}
+  &__catch-zone {
+    position: absolute;
+    top: 40%;
+    height: 20%;
+    width: 100%;
+    background: rgba(0, 255, 0, 0.5);
+    border-radius: 5px;
+  }
 
-.minigame__indicator {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  height: 5%;
-  background: #ff3b3b;
-  border-radius: 3px;
-  box-shadow: 0 0 5px #ff6666;
-  transition: top 0.01s linear;
+  &__indicator {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 5%;
+    background: #ff3b3b;
+    border-radius: 3px;
+    box-shadow: 0 0 5px #ff6666;
+    transition: top 0.01s linear;
+  }
 }
 </style>

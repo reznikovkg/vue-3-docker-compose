@@ -8,11 +8,7 @@
 
         <Zone v-for="zone in zones" :key="`${zone.x},${zone.y}`" :zone="zone" :boat="boat" />
 
-        <FishingMinigame 
-            v-if="fishingActive" 
-            @catch="handleCatch" 
-            :type="currentType" 
-        />
+        <FishingMinigame v-if="fishingActive" @catch="() => handleCatch()" :type="currentType" />
         <Inventory />
     </div>
 </template>
@@ -29,6 +25,7 @@ const KEY_RIGHT = 'ArrowRight'
 const KEY_UP = 'ArrowUp'
 const KEY_DOWN = 'ArrowDown'
 const KEY_SPACE = ' '
+const TICK_INTERVAL = 1000 / 60
 
 export default {
     name: 'Game',
@@ -45,7 +42,7 @@ export default {
 
     computed: {
         boat() {
-            return this.$store.getters.getBoat
+            return this.$store.state.boat
         },
         chunk() {
             return getChunkCoords(this.boat.x, this.boat.y)
@@ -53,9 +50,6 @@ export default {
         chunkKey() {
             const { cx, cy } = getChunkCoords(this.boat.x, this.boat.y)
             return `${cx},${cy}`
-        },
-        tickInterval() {
-            return this.$store.getters.getTickInterval
         },
         chunks() {
             return this.$store.state.chunks
@@ -71,6 +65,7 @@ export default {
     methods: {
         handleCatch(success) {
             this.fishingActive = false
+            console.log(`handled catch ${success}` )
         },
 
         keyDown(event) {
@@ -104,9 +99,7 @@ export default {
     mounted() {
         window.addEventListener('keydown', this.keyDown)
         window.addEventListener('keyup', this.keyUp)
-
-        this.timer = setInterval(() => this.gameLoop(), this.tickInterval)
-
+        this.timer = setInterval(() => this.gameLoop(), TICK_INTERVAL)
         const { cx, cy } = this.chunk
         this.$store.dispatch('updateChunks', { cx, cy })
     },
@@ -119,7 +112,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang = "scss">
 .game {
     position: relative;
     width: 1000px;
@@ -127,9 +120,9 @@ export default {
     border: 2px solid black;
     overflow: hidden;
     background: rgba(0, 0, 150, 1);
-}
 
-.game__hud {
+
+&__hud {
     position: absolute;
     bottom: 10px;
     left: 10px;
@@ -137,5 +130,6 @@ export default {
     background: rgba(0, 0, 0, 0.5);
     padding: 4px 8px;
     border-radius: 4px;
+}
 }
 </style>

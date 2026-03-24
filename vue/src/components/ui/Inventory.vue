@@ -2,12 +2,7 @@
   <div class="inventory">
     <div class="inventory__title">Inventory</div>
     <div class="inventory__grid">
-      <div 
-        v-for="(fish, index) in caughtFish" 
-        :key="index" 
-        class="inventory__item"
-        :title="fish.name"
-      >
+      <div v-for="(fish, index) in caughtFish" :key="index" class="inventory__item" :title="fish.name">
         <img :src="fish.icon" :alt="fish.name" class="inventory__item-icon" />
       </div>
     </div>
@@ -21,15 +16,15 @@ export default {
     return {
     }
   },
-  computed:{
-    caughtFish(){
-        return this.$store.state.ownedFish
+  computed: {
+    caughtFish() {
+      return this.$store.state.ownedFish
     }
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .inventory {
   position: absolute;
   top: 50%;
@@ -41,34 +36,34 @@ export default {
   border-radius: 8px;
   color: white;
   user-select: none;
-}
 
-.inventory__title {
-  text-align: center;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
+  &__title {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
 
-.inventory__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-gap: 6px;
-}
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 6px;
+  }
 
-.inventory__item {
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
+  &__item {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 
-.inventory__item-icon {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+    &-icon {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  }
 }
 </style>

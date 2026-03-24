@@ -28,22 +28,20 @@ export default {
   }
 }
 </script>
-
-<style scoped>
+<style scoped lang="scss">
 .zone {
   position: absolute;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   opacity: 0.3;
   pointer-events: none;
-}
 
+  &--medium {
+    background: yellow;
+  }
 
-.zone--medium {
-  background: yellow;
-}
-
-.zone--high {
-  background: red;
+  &--high {
+    background: red;
+  }
 }
 </style>

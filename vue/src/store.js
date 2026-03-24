@@ -21,7 +21,6 @@ function loadFromLS() {
   return data
     ? JSON.parse(data)
     : {
-        tickInterval: 1000 / 60,
         boat: { x: 0, y: 0 },
         chunks: {},
         ownedFish: []
@@ -32,15 +31,7 @@ export default createStore({
   state: loadFromLS(),
 
   getters: {
-    getTickInterval(state) {
-      return state.tickInterval
-    },
-    getBoat(state) {
-      return state.boat
-    },
-    getOwnedFish(state) {
-      return state.ownedFish
-    }
+  
   },
 
   mutations: {
