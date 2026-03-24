@@ -1,0 +1,304 @@
+<script>
+import { mapGetters, mapActions } from 'vuex'
+import { FLASK_COLORS } from '@/constants/colors'
+
+export default {
+  name: "Flask",
+  props: {
+    index: {
+      type: Number,
+      required: true
+    }
+  },
+  emits: ['click', 'flaskUpdated'],
+  data() {
+    return {
+      layers: []
+    }
+  },
+  computed: {
+    ...mapGetters({
+      maxQtyLayers: 'getMaxQtyLayers',
+      qtyColors: 'getQtyColors',
+      qtyFlasks: 'getQtyFlasks',
+      activeFlask: 'getActiveFlask',
+      targetFlask: 'getTargetFlask',
+      clicks: 'getClicks',
+      layersActiveFlask: 'getLayersActive',
+      limitsForRandom: 'getLimitsForRandom',
+      readyFlasks: 'getIsReadyFlasks'
+    }),
+    flaskStyle() {
+      let currentLayers;
+      if (this.activeFlask === this.index) {
+        currentLayers = this.layersActiveFlask
+      } else {
+        currentLayers = this.layers
+      }
+      let emptySpace
+      if (currentLayers.length === 0) {
+        emptySpace = this.maxQtyLayers
+      } else {
+        emptySpace = currentLayers.at(-1).fill_level_end
+      }
+      const rows = []
+      if (emptySpace > 0) {
+        rows.push(`${emptySpace}fr`)
+      }
+      rows.push(...currentLayers.slice().reverse().map(layer => `${layer.width}fr`))
+
+      return {
+        gridTemplateRows: rows.join(' ')
+      }
+    },
+    pickedFlaskStyle() {
+      console.log('counting...')
+      if (this.activeFlask === this.index && this.clicks === 1) {
+        return {
+          borderWidth: '5px',
+          borderColor: '#5b9cc3',
+          boxShadow: '0 10px 30px 0 #9ad2ef, inset 0 0px 30px 0 #66b3dc',
+          transform: 'scale(1.1)'
+        }
+      } else if (this.activeFlask === this.index && this.clicks === 0) {
+        return {
+          borderWidth: '4px',
+        }
+      }
+      return {}
+    },
+    emptySpace() {
+      let currentLayers
+      if (this.activeFlask === this.index) {
+        currentLayers = this.layersActiveFlask
+      } else {
+        currentLayers = this.layers
+      }
+      if (currentLayers.length === 0) {
+        return this.maxQtyLayers
+      } else {
+        return currentLayers.at(-1).fill_level_end
+      }
+    },
+    displayLayers() {
+      let currentLayers
+      if (this.activeFlask === this.index) {
+        currentLayers = this.layersActiveFlask
+      } else {
+        currentLayers = this.layers
+      }
+      return currentLayers.slice().reverse()
+    }
+  },
+  created() {
+    if (this.index !== this.qtyFlasks) {
+      this.initLayers()
+    }
+  },
+  methods: {
+    ...mapActions([
+      'updateActiveFlask',
+      'resetFlasks',
+      'updateLimitsRandom',
+      'updateReadyFlasks',
+      'updateIsGameWon'
+    ]),
+    initLayers() {
+      let curResidualFillLevel = this.maxQtyLayers
+      console.log(curResidualFillLevel)
+      let localLimits = [...this.limitsForRandom]
+      let localReadyFlasks = this.readyFlasks.map(l => [...l])
+      while (curResidualFillLevel !== 0) {
+        let lenCurLayer = Math.ceil(Math.random() * this.maxQtyLayers / 2)
+        if (lenCurLayer <= curResidualFillLevel) {
+          let curColor = Math.ceil(Math.random() * this.qtyColors)
+          console.log("limit: ", curColor, this.maxQtyLayers)
+          let isEdgeCase = 0
+          let prevColor
+          if (this.layers.length > 0) {
+            prevColor = this.layers.at(-1).color
+          } else {
+            prevColor = -1
+          }
+          let colorsAvailable = 0
+          for (let i = 0; i < localLimits.length; i++) {
+            if (localLimits[i] + 1 <= this.maxQtyLayers && (i + 1) !== prevColor) {
+              colorsAvailable += 1
+            }
+          }
+          if (colorsAvailable > 0) {
+            while (curColor === prevColor || this.maxQtyLayers < localLimits[curColor - 1] + lenCurLayer) {
+              curColor = Math.floor(Math.random() * this.qtyColors) + 1
+              lenCurLayer = Math.max(1, lenCurLayer - 1)
+            }
+          } else {
+            isEdgeCase = 1
+          }
+          if (isEdgeCase === 0) {
+            localLimits[curColor - 1] += lenCurLayer
+            this.layers.push({
+              color: curColor,
+              fill_level_start: curResidualFillLevel,
+              fill_level_end: curResidualFillLevel - lenCurLayer,
+              width: lenCurLayer
+            })
+            localReadyFlasks[this.index - 1].push(lenCurLayer)
+            curResidualFillLevel -= lenCurLayer
+          } else {
+            console.log("counter2 edge: ")
+            if (this.layers.length > 0) {
+              const lastLayer = this.layers.at(-1)
+              localLimits[lastLayer.color - 1] += curResidualFillLevel
+              lastLayer.fill_level_end = 0
+              lastLayer.width += curResidualFillLevel
+              localReadyFlasks[this.index - 1].push(curResidualFillLevel)
+            }
+            curResidualFillLevel = 0
+          }
+        }
+      }
+
+      this.updateLimitsRandom({limitsForRandom: localLimits})
+      this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
+      console.log(this.layers)
+    },
+    getColorCode(color) {
+      return FLASK_COLORS[color - 1]
+    },
+    wrapperClick() {
+      this.$emit('click')
+      console.log(this.clicks)
+      if (this.clicks === 1) {
+        this.updateActiveFlask({layersActive: this.layers})
+      }
+      if (this.clicks === 0) {
+        const activeIndex = this.activeFlask
+        if (this.index === activeIndex) {
+          this.resetFlasks()
+          return
+        }
+        this.perelivator(activeIndex)
+        this.resetFlasks()
+        this.checkWin(activeIndex)
+      }
+    },
+    perelivator(activeIndex) {
+      let tempLayersActiveFlask = this.layersActiveFlask.map(l => ({...l}))
+
+      if (this.layers.length > 0) {
+        if (this.layers.at(-1).fill_level_end !== 0) {
+          let residual = this.layers.at(-1).fill_level_end
+          if (residual >= tempLayersActiveFlask.at(-1).width) {
+            if (this.layers.at(-1).color !== tempLayersActiveFlask.at(-1).color) {
+              this.layers.push({
+                'color': tempLayersActiveFlask.at(-1).color,
+                'fill_level_start': this.layers.at(-1).fill_level_end,
+                'fill_level_end': this.layers.at(-1).fill_level_end - tempLayersActiveFlask.at(-1).width,
+                'width': tempLayersActiveFlask.at(-1).width
+              })
+              tempLayersActiveFlask.pop()
+            } else {
+              this.layers.at(-1).fill_level_end = this.layers.at(-1).fill_level_end - tempLayersActiveFlask.at(-1).width
+              this.layers.at(-1).width = this.layers.at(-1).width + tempLayersActiveFlask.at(-1).width
+              tempLayersActiveFlask.pop()
+            }
+          } else {
+            if (this.layers.at(-1).color !== tempLayersActiveFlask.at(-1).color) {
+              this.layers.push({
+                'color': tempLayersActiveFlask.at(-1).color,
+                'fill_level_start': this.layers.at(-1).fill_level_end,
+                'fill_level_end': 0,
+                'width': residual
+              })
+              tempLayersActiveFlask.at(-1).fill_level_end = tempLayersActiveFlask.at(-1).fill_level_end + residual
+              tempLayersActiveFlask.at(-1).width = tempLayersActiveFlask.at(-1).width - residual
+            } else {
+              this.layers.at(-1).fill_level_end = this.layers.at(-1).fill_level_end - residual
+              this.layers.at(-1).width = this.layers.at(-1).width + residual
+              tempLayersActiveFlask.at(-1).fill_level_end = tempLayersActiveFlask.at(-1).fill_level_end + residual
+              tempLayersActiveFlask.at(-1).width = tempLayersActiveFlask.at(-1).width - residual
+            }
+          }
+        }
+      } else {
+        this.layers.push({
+          'color': tempLayersActiveFlask.at(-1).color,
+          'fill_level_start': this.maxQtyLayers,
+          'fill_level_end': this.maxQtyLayers - tempLayersActiveFlask.at(-1).width,
+          'width': tempLayersActiveFlask.at(-1).width
+        })
+        tempLayersActiveFlask.pop()
+      }
+      this.updateActiveFlask({layersActive: tempLayersActiveFlask})
+      this.$emit('flaskUpdated', { activeIndex: activeIndex })
+
+      console.log("target: ", this.layers, "active: ", tempLayersActiveFlask)
+    },
+    checkWin(activeIndex) {
+      console.log("checkWin")
+      let localReadyFlasks = this.readyFlasks.map(l => [...l])
+      let tempLayersActiveFlask = this.layersActiveFlask.map(l => ({...l}))
+      localReadyFlasks[this.index - 1] = []
+      localReadyFlasks[activeIndex - 1] = []
+      for (let i = 0; i < this.layers.length; i++) {
+        localReadyFlasks[this.index - 1].push(this.layers[i].width)
+      }
+      for (let i = 0; i < tempLayersActiveFlask.length; i++) {
+        localReadyFlasks[activeIndex - 1].push(tempLayersActiveFlask[i].width)
+      }
+
+      let counter = 0
+      for (let i = 0; i < localReadyFlasks.length; i++) {
+        console.log("checkWin1: ", localReadyFlasks[i][0], this.maxQtyLayers)
+        if (localReadyFlasks[i][0] === this.maxQtyLayers) {
+          counter += 1
+        }
+      }
+      console.log("checkWin2: ", counter)
+      if (counter === this.qtyColors) {
+        console.log("game end")
+        setTimeout(() => {
+          this.updateIsGameWon({isGameWon: 1})
+        }, 1000)
+      }
+      this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
+    }
+  },
+}
+</script>
+
+<template>
+  <div class="body_flask" :style="[flaskStyle, pickedFlaskStyle]" @click="() => wrapperClick()">
+    <div v-if="emptySpace > 0" class="flask__layer"> </div>
+
+    <div
+        v-for="(layer, index) in displayLayers"
+        :key="index"
+        class="flask__layer"
+        :style="{backgroundColor: this.getColorCode(layer.color).value}">
+    </div>
+  </div>
+</template>
+
+<style scoped lang="scss">
+  .body_flask {
+    display: grid;
+    background-color: rgba(224, 251, 251, 0.5);
+    backdrop-filter: blur(2px);
+    border-width: 4px;
+    border-style: solid;
+    border-color: #6bc1ed;
+    border-radius: 0 0 50px 50px;
+    overflow: hidden;
+    box-shadow: 0 10px 18px 0 #9ad2ef,
+                inset 0 0px 18px 0 #66b3dc;
+    position: relative;
+    z-index: 1;
+
+    &__layer {
+      overflow: hidden;
+      backdrop-filter: blur(3px);
+    }
+  }
+
+</style>
