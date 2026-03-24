@@ -65,7 +65,7 @@ export default {
     methods: {
         handleCatch(success) {
             this.fishingActive = false
-            console.log(`handled catch ${success}` )
+            console.log(`handled catch ${success}`)
         },
 
         keyDown(event) {
@@ -112,7 +112,7 @@ export default {
 }
 </script>
 
-<style scoped lang = "scss">
+<style scoped lang="scss">
 .game {
     position: relative;
     width: 1000px;
@@ -122,14 +122,14 @@ export default {
     background: rgba(0, 0, 150, 1);
 
 
-&__hud {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    color: white;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 4px 8px;
-    border-radius: 4px;
-}
+    &__hud {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
 }
 </style>
