@@ -1,42 +1,61 @@
 import { createStore } from 'vuex'
-import list from './list'
+import listModule from './list'
 
-const MUTATIONS = {
-  INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+const MUTATION_TYPES = {
+    SET_CONFIG: 'SET_CONFIG',
+    UPDATE_CONFIG_FIELD: 'UPDATE_CONFIG_FIELD',
+    RESET_CONFIG: 'RESET_CONFIG'
+}
+
+const DEFAULT_CONFIG = {
+    totalColors: 3,
+    targetColor: 'red',
+    spawnRate: 1,
+    pointsForCorrect: 1,
+    pointsForWrong: -5
 }
 
 export default createStore({
-  state () {
-    return {
-      count: 0
+    state() {
+        return {
+            appConfig: { ...DEFAULT_CONFIG }
+        }
+    },
+    getters: {
+        appConfig: (state) => state.appConfig,
+        colorsCount: (state) => state.appConfig.totalColors,
+        targetColor: (state) => state.appConfig.targetColor,
+        spawnRate: (state) => state.appConfig.spawnRate,
+        pointsCorrect: (state) => state.appConfig.pointsForCorrect,
+        pointsWrong: (state) => state.appConfig.pointsForWrong,
+        spawnInterval: (state) => (1 / state.appConfig.spawnRate).toFixed(2),
+        isTarget: (state) => (color) => color === state.appConfig.targetColor
+    },
+    mutations: {
+        [MUTATION_TYPES.SET_CONFIG]: (state, newConfig) => {
+            state.appConfig = { ...newConfig }
+        },
+        [MUTATION_TYPES.UPDATE_CONFIG_FIELD]: (state, { key, value }) => {
+            if (key in state.appConfig) {
+                state.appConfig[key] = value
+            }
+        },
+        [MUTATION_TYPES.RESET_CONFIG]: (state) => {
+            state.appConfig = { ...DEFAULT_CONFIG }
+        }
+    },
+    actions: {
+        saveConfig: ({ commit }, config) => {
+            commit(MUTATION_TYPES.SET_CONFIG, config)
+        },
+        updateConfigField: ({ commit }, payload) => {
+            commit(MUTATION_TYPES.UPDATE_CONFIG_FIELD, payload)
+        },
+        resetConfig: ({ commit }) => {
+            commit(MUTATION_TYPES.RESET_CONFIG)
+        }
+    },
+    modules: {
+        list: listModule
     }
-  },
-  getters: {
-    getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
-  },
-  mutations: {
-    [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
-    },
-    [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
-    },
-  },
-  actions: {
-    runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
-    },
-    setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
-    },
-  },
-  modules: {
-    list
-  }
 })
