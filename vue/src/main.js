@@ -15,4 +15,3 @@ createApp(App)
   .use(routes)
   .use(store)
   .mount('#project')
-  

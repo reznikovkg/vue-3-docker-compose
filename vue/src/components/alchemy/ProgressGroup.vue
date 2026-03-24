@@ -23,7 +23,9 @@ export default {
   },
   methods: {
     getRemainingTime(job) {
-      if (!job) return 0
+      if (!job) {
+        return 0
+      }
       const remaining = (100 - job.progress) / 100 * job.totalTime / (job.workers || 1)
       return Math.ceil(remaining)
     },

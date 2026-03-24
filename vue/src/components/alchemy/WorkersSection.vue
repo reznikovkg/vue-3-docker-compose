@@ -40,7 +40,9 @@ export default {
   computed: {
     ...mapGetters(['workers', 'craftingQueue', 'tableCrafting']),
     workersAssigned() {
-      if (!this.workers.assigned) return []
+      if (!this.workers.assigned) {
+        return []
+      }
       return Object.entries(this.workers.assigned).map(([id, count]) => ({
         id: Number(id),
         count,
@@ -49,7 +51,9 @@ export default {
       }))
     },
     craftingItems() {
-      if (!this.craftingQueue) return []
+      if (!this.craftingQueue) {
+        return []
+      }
       return this.craftingQueue.map(craft => ({
         id: craft.slotIndex,
         count: craft.workers || 0,
@@ -58,7 +62,9 @@ export default {
       }))
     },
     tableCraftingItem() {
-      if (!this.tableCrafting) return null
+      if (!this.tableCrafting) {
+        return null
+      }
       return [{
         id: 'table',
         count: this.tableCrafting.workers,

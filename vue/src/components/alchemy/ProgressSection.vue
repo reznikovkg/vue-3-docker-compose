@@ -29,7 +29,9 @@ export default {
   computed: {
     ...mapGetters(['miningJobs', 'craftingQueue', 'tableCrafting']),
     miningJobsItems() {
-      if (!this.miningJobs) return []
+      if (!this.miningJobs) {
+        return []
+      }
       return Object.entries(this.miningJobs).map(([id, job]) => ({
         id: Number(id),
         ...job,
@@ -38,7 +40,9 @@ export default {
       }))
     },
     craftingItems() {
-      if (!this.craftingQueue) return []
+      if (!this.craftingQueue) {
+        return []
+      }
       return this.craftingQueue.map(craft => ({
         id: craft.slotIndex,
         ...craft,
@@ -47,7 +51,9 @@ export default {
       }))
     },
     tableCraftingItem() {
-      if (!this.tableCrafting) return null
+      if (!this.tableCrafting) {
+        return null
+      }
       return [{
         id: 'table',
         ...this.tableCrafting,
