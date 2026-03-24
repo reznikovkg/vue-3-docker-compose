@@ -19,7 +19,7 @@ import Inventory from './Inventory.vue'
 import Boat from './Boat.vue'
 import Zone from './Zone.vue'
 import { getChunkCoords, getZoneType } from '../../fishZones.js'
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 
 const KEY_LEFT = 'ArrowLeft'
 const KEY_RIGHT = 'ArrowRight'
@@ -43,7 +43,7 @@ export default {
 
     computed: {
         ...mapState(['boat', 'chunks']),
-
+        
         chunk() {
             return getChunkCoords(this.boat.x, this.boat.y)
         },
@@ -56,13 +56,14 @@ export default {
         zones() {
             return Object.values(this.chunks).flatMap(chunk => chunk.zones)
         },
-        
+
         currentType() {
             return getZoneType(this.boat.x, this.boat.y, this.zones)
         }
     },
 
     methods: {
+        ...mapActions(['moveBoat','updateChunks']),
         handleCatch(success) {
             this.fishingActive = false
             console.log(`handled catch ${success}`)
@@ -83,13 +84,12 @@ export default {
         },
 
         gameLoop() {
-            if (this.fishingActive)
-                return
+            if (this.fishingActive) return
 
-            if (this.keysPressed[KEY_UP]) this.$store.dispatch('moveBoat', 'up')
-            if (this.keysPressed[KEY_DOWN]) this.$store.dispatch('moveBoat', 'down')
-            if (this.keysPressed[KEY_LEFT]) this.$store.dispatch('moveBoat', 'left')
-            if (this.keysPressed[KEY_RIGHT]) this.$store.dispatch('moveBoat', 'right')
+            if (this.keysPressed[KEY_UP]) this.moveBoat('up')
+            if (this.keysPressed[KEY_DOWN]) this.moveBoat('down')
+            if (this.keysPressed[KEY_LEFT]) this.moveBoat('left')
+            if (this.keysPressed[KEY_RIGHT]) this.moveBoat('right')
         },
 
         lerp(a, b, t) {
@@ -102,7 +102,7 @@ export default {
         window.addEventListener('keyup', this.keyUp)
         this.timer = setInterval(() => this.gameLoop(), TICK_INTERVAL)
         const { cx, cy } = this.chunk
-        this.$store.dispatch('updateChunks', { cx, cy })
+        this.updateChunks( { cx, cy })
     },
 
     beforeUnmount() {

@@ -9,6 +9,7 @@
 
 <script>
 import { getRandomFish } from '@/fish'
+import { mapActions } from 'vuex'
 const SPEED = 0.5
 const INDICATOR_STEP_MS = 10
 const CATCH_ZONE = [40, 60]
@@ -47,6 +48,8 @@ export default {
     window.addEventListener('keydown', this.onSpace)
   },
   methods: {
+    ...mapActions(['addFish']),
+
     moveIndicator() {
       if (!this.readyToCatch)
         return
@@ -71,7 +74,7 @@ export default {
       const success = this.indicatorPos >= min && this.indicatorPos <= max
       if (success) {
         const caughtFish = getRandomFish()
-        this.$store.dispatch('addFish', caughtFish)
+        this.addFish(caughtFish)
       }
       this.$emit('catch', success)
     }

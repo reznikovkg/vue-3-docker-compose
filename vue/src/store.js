@@ -10,7 +10,7 @@ const MOVE_BOAT_BY = 'MOVE_BOAT_BY'
 const SET_BOAT_POSITION = 'SET_BOAT_POSITION'
 const ADD_FISH = 'ADD_FISH'
 
-const BOAT_SPEED = 1
+const BOAT_SPEED = 5
 
 function saveToLS(state) {
   localStorage.setItem(LS_KEY, JSON.stringify(state))
@@ -21,17 +21,17 @@ function loadFromLS() {
   return data
     ? JSON.parse(data)
     : {
-        boat: { x: 0, y: 0 },
-        chunks: {},
-        ownedFish: []
-      }
+      boat: { x: 0, y: 0 },
+      chunks: {},
+      ownedFish: []
+    }
 }
 
 export default createStore({
   state: loadFromLS(),
 
   getters: {
-  
+
   },
 
   mutations: {
