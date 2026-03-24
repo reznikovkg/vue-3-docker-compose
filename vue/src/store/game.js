@@ -72,10 +72,13 @@ export default {
         }
     },
     actions: {
-        initGame(store, pairs = 6) {
+        initGame(store, { pairs = 6, layers = 1 }) {
             store.commit(MUTATIONS.RESET_GAME)
             const numbers = [...Array(pairs).keys()].map(i => i + 1)
-            const cardValues = [...numbers, ...numbers]
+            const cardValues = []
+            for (let i = 0; i < layers; i++) {
+                cardValues.push(...numbers, ...numbers)
+            }
             cardValues.sort(() => Math.random() - 0.5)
 
             const cards = cardValues.map((value, index) => ({
@@ -83,6 +86,8 @@ export default {
                 value: value,
                 flipped: false,
                 matched: false,
+                layer: Math.floor(index / (pairs * 2)) + 1,
+                position: index % (pairs * 2)
             }))
             store.commit(MUTATIONS.SET_CARDS, cards)
         },
@@ -91,7 +96,9 @@ export default {
                 return
             }
             const card = store.getters.getCards.find(c => c.id === cardId)
-            if (card && !card.flipped && !card.matched) {
+            const cardsOnTop = store.getters.getCards.filter(c => c.position === card.position && c.layer > card.layer && !c.matched)
+
+            if (card && !card.flipped && !card.matched && cardsOnTop.length === 0) {
                 store.commit(MUTATIONS.FLIP_CARD, cardId)
             }
         },

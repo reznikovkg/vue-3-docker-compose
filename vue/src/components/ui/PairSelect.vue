@@ -1,13 +1,13 @@
 <template>
   <div class="pair-select-wrapper">
     <select class="pair-select" :value="modelValue" @change="(event) => onChange(event)">
-      <slot />
+      <option v-for="(value, key) in values" :value="key">{{ value }}</option>
     </select>
   </div>
 </template>
 
 <script setup>
-defineProps(["modelValue", "onChange"])
+defineProps(["modelValue", "values", "onChange"])
 </script>
 
 <style lang="scss" scoped>
