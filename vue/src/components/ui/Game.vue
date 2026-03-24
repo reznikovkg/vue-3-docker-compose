@@ -19,6 +19,7 @@ import Inventory from './Inventory.vue'
 import Boat from './Boat.vue'
 import Zone from './Zone.vue'
 import { getChunkCoords, getZoneType } from '../../fishZones.js'
+import { mapState } from 'vuex'
 
 const KEY_LEFT = 'ArrowLeft'
 const KEY_RIGHT = 'ArrowRight'
@@ -41,22 +42,21 @@ export default {
     },
 
     computed: {
-        boat() {
-            return this.$store.state.boat
-        },
+        ...mapState(['boat', 'chunks']),
+
         chunk() {
             return getChunkCoords(this.boat.x, this.boat.y)
         },
+
         chunkKey() {
             const { cx, cy } = getChunkCoords(this.boat.x, this.boat.y)
             return `${cx},${cy}`
         },
-        chunks() {
-            return this.$store.state.chunks
-        },
+
         zones() {
             return Object.values(this.chunks).flatMap(chunk => chunk.zones)
         },
+        
         currentType() {
             return getZoneType(this.boat.x, this.boat.y, this.zones)
         }
@@ -83,7 +83,8 @@ export default {
         },
 
         gameLoop() {
-            if (this.fishingActive) return
+            if (this.fishingActive)
+                return
 
             if (this.keysPressed[KEY_UP]) this.$store.dispatch('moveBoat', 'up')
             if (this.keysPressed[KEY_DOWN]) this.$store.dispatch('moveBoat', 'down')

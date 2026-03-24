@@ -2,7 +2,7 @@
   <div class="inventory">
     <div class="inventory__title">Inventory</div>
     <div class="inventory__grid">
-      <div v-for="(fish, index) in caughtFish" :key="index" class="inventory__item" :title="fish.name">
+      <div v-for="(fish, index) in ownedFish" :key="index" class="inventory__item" :title="fish.name">
         <img :src="fish.icon" :alt="fish.name" class="inventory__item-icon" />
       </div>
     </div>
@@ -10,6 +10,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 export default {
   name: 'Inventory',
   data() {
@@ -17,9 +18,7 @@ export default {
     }
   },
   computed: {
-    caughtFish() {
-      return this.$store.state.ownedFish
-    }
+    ...mapState(['ownedFish'])
   }
 }
 </script>

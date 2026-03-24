@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import { getRandomFish } from '@/fish' 
+import { getRandomFish } from '@/fish'
 const SPEED = 0.5
 const INDICATOR_STEP_MS = 10
 const CATCH_ZONE = [40, 60]
@@ -48,7 +48,8 @@ export default {
   },
   methods: {
     moveIndicator() {
-      if (!this.readyToCatch) return
+      if (!this.readyToCatch)
+        return
 
       this.indicatorPos += SPEED * this.direction
       if (this.indicatorPos >= 100) {
@@ -65,13 +66,12 @@ export default {
     },
     tryCatch() {
       if (!this.readyToCatch || this.caught) return
-
       this.caught = true
       const [min, max] = CATCH_ZONE
       const success = this.indicatorPos >= min && this.indicatorPos <= max
-      if(success){
+      if (success) {
         const caughtFish = getRandomFish()
-        this.$store.dispatch('addFish',caughtFish )
+        this.$store.dispatch('addFish', caughtFish)
       }
       this.$emit('catch', success)
     }

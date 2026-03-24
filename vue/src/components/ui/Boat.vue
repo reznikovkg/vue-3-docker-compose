@@ -1,5 +1,5 @@
 <template>
-  <div class="boat" :class="{ 'flipped': direction === 'right' }">
+  <div class="boat" :class="{ 'boat--flipped': direction === 'right' }">
     <img :src="boatImage" alt="Тут должна была быть лодка" />
   </div>
 </template>
@@ -14,22 +14,16 @@ export default {
       boatImage: boatImg
     }
   },
-  props:{
-    direction:{
-      type:String,
-      default:'right'
+  props: {
+    direction: {
+      type: String,
+      default: 'right'
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-.boat img {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
 .boat {
   width: 128px;
   height: auto;
@@ -37,9 +31,15 @@ export default {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-}
 
-.boat.flipped {
-  transform: translate(-50%, -50%) scaleX(-1);
+  &--flipped {
+    transform: translate(-50%, -50%) scaleX(-1);
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
 }
 </style>
