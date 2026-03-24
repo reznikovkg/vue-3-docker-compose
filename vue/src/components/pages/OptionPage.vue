@@ -113,7 +113,7 @@ import purpleBubble from './../../assets/bubbles/bubble_purple.png'
 import redBubble from './../../assets/bubbles/bubble_red.png'
 import whiteBubble from './../../assets/bubbles/bubble_white.png'
 import yellowBubble from './../../assets/bubbles/bubble_yellow.png'
-import soundManager from './../..//utils/soundManager'
+import soundManager from './../../utils/soundManager'
 
 export default {
   name: 'OptionPage',
