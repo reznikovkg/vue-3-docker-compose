@@ -52,6 +52,8 @@ import redBubble from './../../assets/bubbles/bubble_red.png'
 import whiteBubble from './../../assets/bubbles/bubble_white.png'
 import yellowBubble from './../../assets/bubbles/bubble_yellow.png'
 import soundManager from './../../utils/soundManager'
+import CursorManager from '../../utils/cursor/CursorManager'
+import { mapGetters } from 'vuex'
 
 
 export default {
@@ -91,9 +93,16 @@ export default {
       pressedBubbleIds: new Set(),
 
       pushedBubbles: new Map(),
+
+      cursorManager: null,
+
+      isReady: false,
+      imagesLoaded: false,
+      cursorManagerReady: false
     }
   },
   computed: {
+    ...mapGetters(['getGameMode']),
     formattedTime() {
       const minutes = Math.floor(this.timeLeft / 60)
       const seconds = this.timeLeft % 60
@@ -164,30 +173,54 @@ export default {
       }
       
       return colors
+    },
+    allReady() {
+      const ready = this.imagesLoaded && this.cursorManagerReady
+      return ready
+    }
+  },
+  watch: {
+    allReady: {
+      handler(ready) {
+        if (ready && !this.isReady) {
+          this.isReady = true
+          this.startgame()
+        }
+      },
+      immediate: true
+    },
+    getGameMode: {
+      handler(newMode) {
+        if (this.cursorManager && !this.paused && !this.gameOver) {
+          this.cursorManager.setMode(newMode)
+        }
+      }
     }
   },
   mounted() {
+    console.log('BubbleGame смонтирован')
     this.resizeCanvas()
     window.addEventListener('resize', this.resizeCanvas)
     this.canvasContext = this.$refs.canvas.getContext('2d')
     this.loadImages()
-    this.startTimer()
-    window.addEventListener('keydown', this.handleKeyDown)
-  },
-  beforeDestroy() {
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame)
-      this.animationFrame = null
-    }
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval)
-      this.timerInterval = null
-    }
+    this.initCursorManager()
 
-    window.removeEventListener('resize', this.resizeCanvas)
-    window.removeEventListener('keydown', this.handleKeyDown)
+    window.addEventListener('keydown', this.handleKeyDown)
+
+    if (this.allReady && !this.isReady) {
+      this.isReady = true
+      this.startgame()
+    }
   },
   methods: {
+    initCursorManager() {
+      console.log('Инициализация курсора...')
+      this.cursorManager = new CursorManager(this.$refs.canvas)
+      this.cursorManager.setMode(this.getGameMode)
+      this.cursorManager.show()
+      this.cursorManagerReady = true
+      console.log('Курсор инициализирован')
+    },
     handleCanvasMouseDown(event) {
       if (this.paused || this.gameOver) return
     
@@ -237,7 +270,7 @@ export default {
         
         if (isCorrect) {
           hadCorrect = true
-          this.multiplier = Math.min(3, this.multiplier + 0.1)
+          this.multiplier = Math.min(5, this.multiplier + 0.2)
         }
 
         const childBubbles = this.handleBubbleSplit(bubble)
@@ -278,7 +311,7 @@ export default {
         img.onload = () => {
           loadedCount++
           if (loadedCount === totalImages) {
-            this.startgame()
+            this.imagesLoaded = true
           }
         }
         img.onerror = (err) => {
@@ -289,11 +322,19 @@ export default {
       })
     },
     startgame() {
+      if (!this.isReady) return
       this.onStart()
+      this.startTimer()
       this.lastSpawnTime = performance.now()
       this.animationFrame = requestAnimationFrame(this.gameLoop)
     },
     gameLoop(timestamp) {
+      if (!this.isReady) {
+        this.renderLoading()
+        this.animationFrame = requestAnimationFrame(this.gameLoop)
+        return
+      }
+
       if (this.gameOver) {
         this.render()
         this.animationFrame = requestAnimationFrame(this.gameLoop)
@@ -405,6 +446,16 @@ export default {
         ctx.restore()
       })
     },
+    renderLoading() {
+      if (!this.canvasContext) return
+      
+      const ctx = this.canvasContext
+      ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      ctx.fillStyle = 'white'
+      ctx.font = '20px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('Загрузка...', this.canvasWidth / 2, this.canvasHeight / 2)
+    },
     spawnBubble() {
       const spawnAreaWidth = this.canvasWidth * 0.6
       const spawnAreaStart = (this.canvasWidth - spawnAreaWidth) / 2
@@ -423,7 +474,11 @@ export default {
       this.bubbles.push(newBubble)
     },
     handleKeyDown(e) {
-      if (e.key === 'Escape') this.togglePause()
+      if (!this.$refs.canvas) return
+
+      if (e.key === 'Escape') {
+        this.togglePause()
+      }
     },
     startTimer() {
       this.timerInterval = setInterval(() => {
@@ -445,15 +500,20 @@ export default {
         this.timerInterval = null
       }
 
+      this.updateCursorByState()
       this.$emit('finish', { score: this.score, timeElapsed: this.gameDuration })
     },
     togglePause() {
       if (this.gameOver) return
       this.paused = !this.paused
+      console.log('Пауза:', this.paused)
+      this.updateCursorByState()
     },
     resumegame() {
+      console.log('Продолжение игры')
       this.playClickSound()
       this.paused = false
+      this.updateCursorByState()
     },
     restartgame() {
       this.playClickSound()
@@ -475,13 +535,16 @@ export default {
         clearInterval(this.timerInterval)
         this.timerInterval = null
       }
-    
+
+      this.updateCursorByState()
       this.lastSpawnTime = performance.now()
       this.startTimer()
       this.animationFrame = requestAnimationFrame(this.gameLoop)
     },
     resizeCanvas() {
       const canvas = this.$refs.canvas
+      if (!canvas) return
+
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
       this.canvasWidth = canvas.width
@@ -634,6 +697,52 @@ export default {
       const dx = x2 - x1
       const dy = y2 - y1
       return Math.sqrt(dx * dx + dy * dy)
+    },
+    updateCursorByState() {
+      if (!this.cursorManager) return
+
+      console.log('Обновление курсора, paused:', this.paused, 'gameOver:', this.gameOver)
+
+      if (this.cursorManager.autoAnimationFrame) {
+        cancelAnimationFrame(this.cursorManager.autoAnimationFrame)
+        this.cursorManager.autoAnimationFrame = null
+      }
+      if (this.cursorManager.laserAnimationFrame) {
+        cancelAnimationFrame(this.cursorManager.laserAnimationFrame)
+        this.cursorManager.laserAnimationFrame = null
+      }
+      
+      if (this.paused || this.gameOver) {
+        console.log('Сброс курсора')
+        this.cursorManager.resetToDefault()
+      } else {
+        console.log('Показ курсора, режим:', this.getGameMode)
+        this.cursorManager.show()
+        this.cursorManager.setMode(this.getGameMode)
+      }
+    },
+    cleanupGame() {
+      console.log('Компонент уничтожается')
+      console.log('Очистка игры')
+      if (this.animationFrame) {
+        cancelAnimationFrame(this.animationFrame)
+        this.animationFrame = null
+      }
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval)
+        this.timerInterval = null
+      }
+      if (this.cursorManager) {
+        this.cursorManager.destroy()
+        this.cursorManager = null
+      }
+      window.removeEventListener('resize', this.resizeCanvas)
+      window.removeEventListener('keydown', this.handleKeyDown)
+
+      this.isReady = false
+      this.imagesLoaded = false
+      this.cursorManagerReady = false
+      console.log('Игра очищена')
     },
     playPopSound() {
       soundManager.play('pop')
