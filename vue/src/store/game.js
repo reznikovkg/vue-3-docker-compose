@@ -72,9 +72,9 @@ export default {
         }
     },
     actions: {
-        initGame(store, { pairs = 6, layers = 1 }) {
+        initGame(store, { difficulty = 6, layers = 1 }) {
             store.commit(MUTATIONS.RESET_GAME)
-            const numbers = [...Array(pairs).keys()].map(i => i + 1)
+            const numbers = [...Array(difficulty).keys()].map(i => i + 1)
             const cardValues = []
             for (let i = 0; i < layers; i++) {
                 cardValues.push(...numbers, ...numbers)
@@ -86,8 +86,8 @@ export default {
                 value: value,
                 flipped: false,
                 matched: false,
-                layer: Math.floor(index / (pairs * 2)) + 1,
-                position: index % (pairs * 2)
+                layer: Math.floor(index / (difficulty * 2)) + 1,
+                position: index % (difficulty * 2)
             }))
             store.commit(MUTATIONS.SET_CARDS, cards)
         },
