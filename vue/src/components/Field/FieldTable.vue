@@ -1,18 +1,18 @@
 <template>
   <div class="field-table">
     <div class="field-table__field-row" v-for="(row, rowIdx) in grid" :key="rowIdx">
-        <div class="field-table__field-cell"
-          :class="{
-              'field-table__field-cell--central': isCentral(rowIdx + 1, colIdx + 1),
-              'field-table__field-cell--external-piece': cell === 2,
-              'field-table__field-cell--attached-piece': cell === 3,
-              'field-table__field-cell--black-bomb': cell === 11,
-              'field-table__field-cell--red-bomb': cell === 12,
-              'field-table__field-cell--green-bomb': cell === 13
-          }"
-          :style="{ '--grid-size': getFieldSize }"
-          v-for="(cell, colIdx) in row" :key="colIdx">
-        </div>
+      <div class="field-table__field-cell"
+        :class="{
+          'field-table__field-cell--central': isCentral(rowIdx + 1, colIdx + 1),
+          'field-table__field-cell--external-piece': cell === 2,
+          'field-table__field-cell--attached-piece': cell === 3,
+          'field-table__field-cell--black-bomb': cell === 11,
+          'field-table__field-cell--red-bomb': cell === 12,
+          'field-table__field-cell--green-bomb': cell === 13
+        }"
+        :style="{ '--grid-size': getFieldSize }"
+        v-for="(cell, colIdx) in row" :key="colIdx">
+      </div>
     </div>
   </div>
 </template>

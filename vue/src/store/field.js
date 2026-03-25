@@ -429,59 +429,59 @@ export default {
         }
     },
     checkLevel: (store, level) => {
-      if (level < 0) return
-      let { x, y } = store.rootGetters['cube/getCentralCubePosition']
-      x--
-      y--
-      const fieldSize = store.state.size
-      if (y - level >= 0)
-        for (let up = -level; up <= level; up++)
-            if (x + up >= 0 && x + up < fieldSize)
-                store.dispatch('checkCell', { x: x + up, y: y - level })
-        
-      if (y + level < fieldSize)
-        for (let down = -level; down <= level; down++)
-            if (x + down >= 0 && x + down < fieldSize)
-                store.dispatch('checkCell', { x: x + down, y: y + level })
+        if (level < 0) return
+        let { x, y } = store.rootGetters['cube/getCentralCubePosition']
+        x--
+        y--
+        const fieldSize = store.state.size
+        if (y - level >= 0)
+            for (let up = -level; up <= level; up++)
+                if (x + up >= 0 && x + up < fieldSize)
+                    store.dispatch('checkCell', { x: x + up, y: y - level })
+            
+        if (y + level < fieldSize)
+            for (let down = -level; down <= level; down++)
+                if (x + down >= 0 && x + down < fieldSize)
+                    store.dispatch('checkCell', { x: x + down, y: y + level })
 
-      if (x + level < fieldSize)
-        for (let right = -level; right <= level; right++)
-            if (y + right >= 0 && y + right < fieldSize)
-                store.dispatch('checkCell', { x: x + level, y: y + right })
-        
-      if (x - level >= 0)
-        for (let left = -level; left <= level; left++)
-            if (y + left >= 0 && y + left < fieldSize)
-                store.dispatch('checkCell', { x: x - level, y: y + left })
+        if (x + level < fieldSize)
+            for (let right = -level; right <= level; right++)
+                if (y + right >= 0 && y + right < fieldSize)
+                    store.dispatch('checkCell', { x: x + level, y: y + right })
+            
+        if (x - level >= 0)
+            for (let left = -level; left <= level; left++)
+                if (y + left >= 0 && y + left < fieldSize)
+                    store.dispatch('checkCell', { x: x - level, y: y + left })
     },
     checkCell: (store, {x, y}) => {
-      let cur_cell = store.state.field[y][x]
-      if (cur_cell == OBJECTS.CENTRAL_CUBE || cur_cell == OBJECTS.ATTACHED_CUBE) {
-        const queue = []
-        store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
-        while (queue.length > 0) {
-          const { x, y } = queue.shift()
-          store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
+        let cur_cell = store.state.field[y][x]
+        if (cur_cell == OBJECTS.CENTRAL_CUBE || cur_cell == OBJECTS.ATTACHED_CUBE) {
+            const queue = []
+            store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
+            while (queue.length > 0) {
+                const { x, y } = queue.shift()
+                store.dispatch('checkNeighboringCells', {queue: queue, x: x, y: y})
+            }
         }
-      }
     },
     checkNeighboringCells: (store, {queue, x, y}) => {
         const fieldSize = store.state.size
         if (y > 0 && store.state.field[y - 1][x] == OBJECTS.EXTERNAL_FIGURE)
-          store.dispatch('attachNeighboringCell', {queue: queue, x: x, y: y - 1})
+            store.dispatch('attachNeighboringCell', {queue: queue, x: x, y: y - 1})
         if (y < fieldSize - 1 && store.state.field[y + 1][x] == OBJECTS.EXTERNAL_FIGURE)
-          store.dispatch('attachNeighboringCell', {queue: queue, x: x, y: y + 1})
+            store.dispatch('attachNeighboringCell', {queue: queue, x: x, y: y + 1})
         if (x > 0 && store.state.field[y][x - 1] == OBJECTS.EXTERNAL_FIGURE)
-          store.dispatch('attachNeighboringCell', {queue: queue, x: x - 1, y: y})
+            store.dispatch('attachNeighboringCell', {queue: queue, x: x - 1, y: y})
         if (x < fieldSize - 1 && store.state.field[y][x + 1] == OBJECTS.EXTERNAL_FIGURE)
-          store.dispatch('attachNeighboringCell', {queue: queue, x: x + 1, y: y})
+            store.dispatch('attachNeighboringCell', {queue: queue, x: x + 1, y: y})
     },
     attachNeighboringCell: (store, {queue, x, y}) => {
-          let centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
-          centralCubePosition = { x: centralCubePosition.x - 1, y: centralCubePosition.y - 1}
-          store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y}, number: OBJECTS.ATTACHED_CUBE})
-          queue.push({x: x, y: y})
-          store.dispatch('cube/addPiece', {x: x - centralCubePosition.x, y: y - centralCubePosition.y}, { root: true })
+        let centralCubePosition = store.rootGetters['cube/getCentralCubePosition']
+        centralCubePosition = { x: centralCubePosition.x - 1, y: centralCubePosition.y - 1}
+        store.commit(MUTATIONS.SET_NUMBER, {position: {x: x, y: y}, number: OBJECTS.ATTACHED_CUBE})
+        queue.push({x: x, y: y})
+        store.dispatch('cube/addPiece', {x: x - centralCubePosition.x, y: y - centralCubePosition.y}, { root: true })
     },
   }
 }
