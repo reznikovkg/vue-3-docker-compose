@@ -5,7 +5,6 @@
       :key="bubble.id"
       class="game-area__bubble"
       :style="bubbleStyle(bubble)"
-      @click.stop="() => onBubbleClick(bubble)"
     />
     <div
       v-for="shot in shots"
@@ -162,16 +161,24 @@ export default {
     checkHit(x, y) {
       if (this.bombMode || !this.$el) return
       const width = this.$el.clientWidth
-      if (!width) return
-      for (const b of this.bubbles) {
-        const dx = b.x - x
-        const dy = b.y - y
-        const radius =
-          (this.sizePx(b.size) / width) * 50
-        if (dx * dx + dy * dy <= radius * radius) {
-          this.processHit(b)
+      const height = this.$el.clientHeight
+      if (!width || !height) return
+      const pxX = (x / 100) * width
+      const pxY = (y / 100) * height
+      const targets = this.bubbles.filter(b => {
+        const bPxX = (b.x / 100) * width
+        const bPxY = (b.y / 100) * height
+        const dx = bPxX - pxX
+        const dy = bPxY - pxY
+        const radius = this.sizePx(b.size) / 2
+        return (dx * dx + dy * dy <= radius * radius)
+      })
+      targets.forEach(target => {
+        const exists = this.bubbles.find(b => b.id === target.id)
+        if (exists) {
+          this.processHit(exists)
         }
-      }
+      })
     },
     processHit(bubble, countOverride = null, isBomb = false) {
       this.pushNearby(bubble)
@@ -326,6 +333,8 @@ export default {
   &__bubble {
     position: absolute;
     border-radius: 50%;
+    pointer-events: none;
+    user-select: none;
     opacity: 0.9;
     box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
     transition: transform 0.1s;

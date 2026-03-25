@@ -13,7 +13,7 @@
     <BubbleGame
       :colors-count="5"
       :target-color="2"
-      :intensity="1.5"
+      :intensity="5"
       :score-hit="1"
       :score-miss="-5"
       :bubble-size="80"
@@ -65,7 +65,6 @@ export default {
   background-color: #979ccc;
   min-height: 100vh;
 }
-
 .controls {
   position: fixed;
   top: 20px;
@@ -79,8 +78,8 @@ export default {
   border-radius: 30px;
   backdrop-filter: blur(5px);
   &__score {
-  font-weight: bold;
-  font-size: 18px;
+    font-weight: bold;
+    font-size: 18px;
   }
   &__button {
     background-color: #f07db6;
