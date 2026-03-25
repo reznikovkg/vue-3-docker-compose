@@ -1,3 +1,4 @@
+import { getInitialGrid, MAZE_CONFIG } from './mazeConfig'
 export const MUTATIONS = {
   SET_PLAYER_INDEX: 'SET_PLAYER_INDEX',
   SET_DIRECTION: 'SET_DIRECTION',
@@ -9,25 +10,14 @@ export const MUTATIONS = {
   COLLECT_TREE: 'COLLECT_TREE',
   SET_TIMER_INTERVAL: 'SET_TIMER_INTERVAL',
   SET_CLOUD_INDEX: 'SET_CLOUD_INDEX',
-  SET_CLOUD_DIRECTION: 'SET_CLOUD_DIRECTION',
+  SET_CLOUD: 'SET_CLOUD',
   SET_GAME_OVER: 'SET_GAME_OVER',
   REMOVE_SPARK: 'REMOVE_SPARK',
   SET_SPARKS: 'SET_SPARKS',
   SET_LAST_SHOT_TIME: 'SET_LAST_SHOT_TIME'
 }
-// 0 - empty, 1 - tree, 2 - wall
-const getInitialGrid = () => [
-  { t: 0 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
-  { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
-  { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 },
-  { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 },
-  { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 2 }, { t: 1 },
-  { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 1 }, { t: 2 }, { t: 1 },
-  { t: 2 }, { t: 1 }, { t: 2 }, { t: 1 }, { t: 2 }, { t: 2 }, { t: 2 }, { t: 1 }, { t: 1 }, { t: 1 }
-]
+export const SPARK_COOLDOWN_MS = 100
+
 export default {
   namespaced: true,
   state: {
@@ -38,11 +28,11 @@ export default {
     gameStatus: 'paused',
     currentTime: 0,
     treeCount: 0,
-    rows: 10,
-    cols: 10,
+    rows: MAZE_CONFIG.rows,
+    cols: MAZE_CONFIG.cols,
     timerInterval: null,
     cloudIndex: null,
-    cloudDirection: null,
+    cloud: null,
     gameOver: false,
     sparks: [],
     lastShotTime: 0
@@ -60,7 +50,8 @@ export default {
     getCols: (state) => state.cols,
     isGameActive: (state) => state.gameStatus === 'active',
     getCloudIndex: (state) => state.cloudIndex,
-    getCloudDirection: (state) => state.cloudDirection,
+    getCloud: (state) => state.cloud,
+    getCloudDirection: (state) => state.cloud ? state.cloud.direction : null,
     isGameOver: (state) => state.gameOver,
     getSparks: (state) => state.sparks,
     getLastShotTime: (state) => state.lastShotTime
@@ -104,6 +95,8 @@ export default {
       state.gameStatus = 'paused'
       state.currentTime = 0
       state.treeCount = 0
+      state.cloud = null        
+      state.cloudIndex = null
     },
     [MUTATIONS.COLLECT_TREE](state, index) {
       if (state.grid[index].t === 1) {
@@ -122,10 +115,8 @@ export default {
         state.cloudIndex = index
       }
     },
-    [MUTATIONS.SET_CLOUD_DIRECTION](state, direction) {
-      if (direction === null || ['up', 'down', 'left', 'right'].includes(direction)) {
-        state.cloudDirection = direction
-      }
+    [MUTATIONS.SET_CLOUD](state, cloud) {
+      state.cloud = cloud
     },
     [MUTATIONS.SET_GAME_OVER](state, value) {
       state.gameOver = value
@@ -210,7 +201,6 @@ export default {
         }
         commit(MUTATIONS.RESET_GAME)
         commit(MUTATIONS.SET_CLOUD_INDEX, null)
-        commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
         commit(MUTATIONS.SET_GAME_OVER, false)
         commit(MUTATIONS.SET_SPARKS, [])
         commit(MUTATIONS.SET_LAST_SHOT_TIME, 0)
@@ -220,12 +210,6 @@ export default {
     setCloudIndex({ commit }, index) {
       return new Promise((resolve) => {
         commit(MUTATIONS.SET_CLOUD_INDEX, index)
-        resolve()
-      })
-    },
-    setCloudDirection({ commit }, direction) {
-      return new Promise((resolve) => {
-        commit(MUTATIONS.SET_CLOUD_DIRECTION, direction)
         resolve()
       })
     },
@@ -245,9 +229,8 @@ export default {
       return new Promise((resolve) => {
         try {
           if (!state.grid || !Array.isArray(state.grid)) {
-            console.warn('Grid is not available for cloud initialization')
             commit(MUTATIONS.SET_CLOUD_INDEX, null)
-            commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
+            commit(MUTATIONS.SET_CLOUD, null)
             resolve()
             return
           }
@@ -264,34 +247,43 @@ export default {
           if (treeIndices.length > 0) {
             const randomIndex = treeIndices[Math.floor(Math.random() * treeIndices.length)]
             if (randomIndex >= 0 && randomIndex < state.rows * state.cols) {
+              const cloudObject = {
+                id: Date.now() + Math.random(),
+                index: randomIndex,
+                type: 'cloud',
+                show: true,
+                direction: ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)],
+                defaultEmoji: '☁️',
+                keyValue: randomIndex
+              }
+              commit(MUTATIONS.SET_CLOUD, cloudObject)
               commit(MUTATIONS.SET_CLOUD_INDEX, randomIndex)
-              commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
             } else {
-              console.warn('Invalid cloud index generated')
               commit(MUTATIONS.SET_CLOUD_INDEX, null)
+              commit(MUTATIONS.SET_CLOUD, null)
             }
           } else {
             commit(MUTATIONS.SET_CLOUD_INDEX, null)
+            commit(MUTATIONS.SET_CLOUD, null)
           }
           resolve()
         } catch (error) {
-          console.error('Error in initCloud:', error)
           commit(MUTATIONS.SET_CLOUD_INDEX, null)
-          commit(MUTATIONS.SET_CLOUD_DIRECTION, null)
+          commit(MUTATIONS.SET_CLOUD, null)
         }
       })
     },
     moveCloud({ commit, getters, state }) {
       return new Promise((resolve) => {
-        if (state.cloudIndex === null || state.gameStatus !== 'active' || state.gameOver) {
+        if (state.cloud === null || state.gameStatus !== 'active' || state.gameOver) {
           resolve()
           return
         }
-        const currentIndex = state.cloudIndex
-        const currentDirection = state.cloudDirection
+        const currentIndex = state.cloud.index
         const rows = state.rows
         const cols = state.cols
         const grid = state.grid
+        const currentDirection = state.cloud.direction
         const getAvailableDirections = () => {
           const row = Math.floor(currentIndex / cols)
           const col = currentIndex % cols
@@ -331,7 +323,7 @@ export default {
           resolve()
           return
         }
-        const newDirection = availableDirections[Math.floor(Math.random() * availableDirections.length)]        
+        const newDirection = availableDirections[Math.floor(Math.random() * availableDirections.length)]    
         const row = Math.floor(currentIndex / cols)
         const col = currentIndex % cols
         let newRow = row
@@ -343,8 +335,15 @@ export default {
           case 'right': newCol++; break
         }
         const newIndex = newRow * cols + newCol
-        commit(MUTATIONS.SET_CLOUD_DIRECTION, newDirection)
+        const updatedCloud = {
+          ...state.cloud,
+          index: newIndex,
+          direction: newDirection,
+          keyValue: newIndex
+        }
+        commit(MUTATIONS.SET_CLOUD, updatedCloud)
         commit(MUTATIONS.SET_CLOUD_INDEX, newIndex)
+        
         if (newIndex === state.playerIndex) {
           commit(MUTATIONS.SET_GAME_OVER, true)
           if (state.timerInterval) {
@@ -353,6 +352,7 @@ export default {
           }
           commit(MUTATIONS.SET_GAME_STATUS, 'lose')
           commit(MUTATIONS.SET_CLOUD_INDEX, null)
+          commit(MUTATIONS.SET_CLOUD, null)
         }
         resolve()
       })
@@ -362,7 +362,7 @@ export default {
         const now = Date.now()
         const timeSinceLastShot = now - state.lastShotTime
         
-        if (timeSinceLastShot < 3000) {
+        if (timeSinceLastShot < SPARK_COOLDOWN_MS) {
           resolve()
           return
         }
@@ -370,7 +370,11 @@ export default {
         const spark = {
           id: sparkId,
           index: index,
-          direction: direction
+          direction: direction,
+          type: 'spark',
+          show: true,
+          defaultEmoji: '💥',
+          keyValue: `${sparkId}-${index}`
         }
         const currentSparks = [...state.sparks, spark]
         commit(MUTATIONS.SET_SPARKS, currentSparks)
@@ -420,6 +424,7 @@ export default {
           if (newIndex === cloudIndex) {
             sparksToRemove.push(spark.id)
             cloudIndex = null
+            commit(MUTATIONS.SET_CLOUD, null)
             commit(MUTATIONS.SET_CLOUD_INDEX, null)
             continue
           }

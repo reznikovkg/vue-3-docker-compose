@@ -13,40 +13,32 @@
               'c-game__cell--wall'
             ]"
           >
-            <transition :name="`c-game__move--${direction}`">
-              <div
-                v-if="index === getPlayerIndex"
-                class="c-game__player"
-                :key="getPlayerIndex"
-              >
-                <slot name="player">🔥</slot>
+            <transition name="c-game__fade">
+              <div v-if="index === getPlayerIndex" class="c-game__player">
+                <Element type="player" />
               </div>
             </transition>
             <MovingElement
-              v-if="index === getCloudIndex && getGameStatus === 'active'"
-              type="cloud"
-              :show="index === getCloudIndex"
-              :direction="getCloudDirection"
-              :key-value="getCloudIndex"
-              default-emoji="☁️"
+              v-if="getCloud && index === getCloud.index && getGameStatus === 'active'"
+              :element-data="getCloud"
               class="c-game__cloud"
             />
             <template v-for="spark in getSparks" :key="spark.id">
               <MovingElement
                 v-if="index === spark.index"
-                type="spark"
-                :show="true"
-                :direction="spark.direction"
-                :key-value="`${spark.id}-${spark.index}`"
-                default-emoji="💥"
+                :element-data="spark"
               />
             </template>
-            <span v-if="cell.t === 1" class="c-game__emoji">
-              <slot name="tree">🌲</slot>
-            </span>
-            <span v-else-if="cell.t === 2" class="c-game__emoji">
-              <slot name="wall">⛰️</slot>
-            </span>
+            <Element
+              v-if="cell.t === 1"
+              type="tree"
+              class="c-game__emoji"
+            />
+            <Element
+              v-else-if="cell.t === 2"
+              type="wall"
+              class="c-game__emoji"
+            />
           </div>
         </div>
       </transition>
@@ -65,18 +57,21 @@
 </template>
 
 <script>
+import Element from '../Element.vue'
 import { mapGetters, mapActions } from 'vuex'
 import StopWatch from '../StopWatch.vue'
 import MovingElement from '../MovingElement.vue'
 
 const MOVEMENT_INTERVAL = 300
 const CELL_SIZE = 60
+const SPARK_COOLDOWN_MS = 100
 
 export default {
   name: 'IndexPage',
   components: {
     StopWatch,
-    MovingElement
+    MovingElement,
+    Element
   },
   props: {},
   emits: ['game-win', 'game-lose', 'game-error'],
@@ -101,6 +96,7 @@ export default {
       'getTreeCount',
       'getTotalTrees',
       'getCurrentTime',
+      'getCloud', 
       'getCloudIndex',
       'getCloudDirection',
       'isGameOver',
@@ -121,7 +117,7 @@ export default {
     },
     cellSize() {
       return CELL_SIZE
-    }
+    },
   },
   mounted() {
     this.initGame()
@@ -160,10 +156,6 @@ export default {
           this.startCloudMovement()
           this.startSparkMovement()
           this.initCloud()
-        })
-        .catch((error) => {
-          console.error('Game initialization error:', error)
-          this.$emit('game-error', error)
         })
     },
     startMovement() {
@@ -251,10 +243,6 @@ export default {
             this.initCloud()
             this.victoryData = null
           })
-          .catch((error) => {
-            console.error('Game restart error:', error)
-            this.$emit('game-error', error)
-          })
       }
     },
     handleGameOver() {
@@ -275,16 +263,12 @@ export default {
           this.startSparkMovement()
           this.initCloud()
         })
-        .catch((error) => {
-          console.error('Game restart after lose error:', error)
-          this.$emit('game-error', error)
-        })
     },
     handleShoot() {
       if (!this.isGameActive) return
       const currentTime = Date.now()
       const lastShotTime = this.getLastShotTime
-      if (currentTime - lastShotTime < 3000) {
+      if (currentTime - lastShotTime < SPARK_COOLDOWN_MS) {
         return
       }
       const currentDirection = this.pendingDirection || this.getDirection
@@ -433,84 +417,11 @@ export default {
   }
   &__fade-enter-active,
   &__fade-leave-active {
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
   }
   &__fade-enter-from,
   &__fade-leave-to {
     opacity: 0;
-  }
-  &__move {
-    &-enter-active {
-      transition: all 0.2s ease-out;
-    }
-    &-leave-active {
-      transition: all 0.2s ease-in;
-      position: absolute;
-    }
-    
-    &__move--up,
-    &__move--down,
-    &__move--left,
-    &__move--right {
-      &-enter-from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
-      }
-      &-enter-to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
-      &-leave-to {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
-      }
-    }
-    
-    &__move--up {
-      &-enter-from {
-        transform: translate(-50%, 100%) scale(0.8);
-      }
-      &-leave-to {
-        transform: translate(-50%, -200%) scale(0.8);
-      }
-    }
-    
-    &__move--down {
-      &-enter-from {
-        transform: translate(-50%, -200%) scale(0.8);
-      }
-      &-leave-to {
-        transform: translate(-50%, 100%) scale(0.8);
-      }
-    }
-    
-    &__move--left {
-      &-enter-from {
-        transform: translate(100%, -50%) scale(0.8);
-      }
-      &-leave-to {
-        transform: translate(-200%, -50%) scale(0.8);
-      }
-    }
-    
-    &__move--right {
-      &-enter-from {
-        transform: translate(-200%, -50%) scale(0.8);
-      }
-      &-leave-to {
-        transform: translate(100%, -50%) scale(0.8);
-      }
-    }
-  }
-  
-  &__emoji {
-    font-size: 40px;
-    line-height: 1;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
   }
 }
 </style>

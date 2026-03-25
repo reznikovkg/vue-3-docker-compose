@@ -1,41 +1,31 @@
 <template>
-  <div :class="`c-moving-element c-moving-element--${type}`">
-    <transition :name="`move--${direction}`">
-      <div
-        v-if="show"
-        class="c-moving-element__content"
-        :key="keyValue"
-      >
-        <slot>{{ defaultEmoji }}</slot>
+  <div :class="`c-moving-element c-moving-element--${elementData.type}`">
+    <transition name="c-moving-element__fade">
+      <div class="c-moving-element__content">
+        <Element
+          :type="elementData.type"
+          :emoji="elementData.customEmoji"
+        />
       </div>
     </transition>
   </div>
 </template>
 
 <script>
+import Element from './Element.vue'
 export default {
-  name: 'MovingElement',
+    name: 'MovingElement',
+    components: {
+      Element
+  },
   props: {
-    show: {
-      type: Boolean,
-      default: true
-    },
-    type: {
-      type: String,
+    elementData: {
+      type: Object,
       required: true,
-      validator: (value) => ['cloud', 'spark'].includes(value)
-    },
-    direction: {
-      type: String,
-      default: null
-    },
-    keyValue: {
-      type: [Number, String],
-      default: null
-    },
-    defaultEmoji: {
-      type: String,
-      default: '☁️'
+      validator: (value) => {
+        return value && 
+               ['cloud', 'spark'].includes(value.type)
+      }
     }
   }
 }
@@ -63,5 +53,13 @@ export default {
     transform: translate(-50%, -50%);
     pointer-events: none;
   }
+}
+.c-moving-element__fade-enter-active,
+.c-moving-element__fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.c-moving-element__fade-enter-from,
+.c-moving-element__fade-leave-to {
+  opacity: 0;
 }
 </style>
