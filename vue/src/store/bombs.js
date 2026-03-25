@@ -201,20 +201,18 @@ export default {
         },
         checkBomb: (store, {x, y}) => {
             const fieldSize = store.rootGetters['field/getFieldSize']
-            if (x >= 0 && x < fieldSize && y >= 0 && y < fieldSize) {
-                const cell = store.rootGetters['field/getFieldCell'](x, y)
-                if (cell > 10) {
-                    const bombs = store.state.bombs
+            if (x < 0 || x >= fieldSize || y < 0 || y >= fieldSize) return
+            const cell = store.rootGetters['field/getFieldCell'](x, y)
+            if (cell <= 10) return
 
-                    bombs.forEach((bomb, i) => {
-                        if (bomb.x == x && bomb.y == y)
-                            store.dispatch(
-                                'handleBombCollision', 
-                                { bomb: { ...bomb, x: x, y: y }, index: i }
-                            )
-                    })
-                }
-            }
+            const bombs = store.state.bombs
+            const bombIndex = bombs.findIndex(bomb => bomb.x == x && bomb.y == y)
+
+            if (bombIndex != -1)
+                store.dispatch('handleBombCollision', { 
+                    bomb: { ...bombs[bombIndex], x, y }, 
+                    index: bombIndex 
+                })
         },
     },
 }
