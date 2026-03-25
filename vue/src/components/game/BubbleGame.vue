@@ -15,7 +15,8 @@
     <canvas
         ref="canvas"
         class="bubble-game__canvas"
-        @mousedown="(e) => handleCanvasMouseDown(e)"
+        @mousedown="(e) => handleMouseDown(e)"
+        @mousemove="(e) => handleMouseMove(e)"
     ></canvas>
 
     <div v-if="paused" class="bubble-game__pause">
@@ -52,7 +53,8 @@ import redBubble from './../../assets/bubbles/bubble_red.png'
 import whiteBubble from './../../assets/bubbles/bubble_white.png'
 import yellowBubble from './../../assets/bubbles/bubble_yellow.png'
 import soundManager from './../../utils/soundManager'
-import CursorManager from '../../utils/cursor/CursorManager'
+import CursorManager from './../../utils/cursor/CursorManager'
+import GameModeManager from './../../utils/game/GameModeManager'
 import { mapGetters } from 'vuex'
 
 
@@ -95,13 +97,17 @@ export default {
       pushedBubbles: new Map(),
 
       cursorManager: null,
+      modeManager: null,
 
       isReady: false,
       imagesLoaded: false,
       cursorManagerReady: false,
+      modeManagerReady: false,
 
       lastFrameTime: 0,
       accumulator: 0,
+
+      clickHandlerEnabled: true
     }
   },
   computed: {
@@ -197,22 +203,30 @@ export default {
     this.canvasContext = this.$refs.canvas.getContext('2d')
     this.loadImages()
     this.initCursorManager()
+    this.initModeManager()
 
     window.addEventListener('keydown', this.handleKeyDown)
   },
   methods: {
-    initCursorManager() {
-      console.log('Инициализация курсора...')
-      this.cursorManager = new CursorManager(this.$refs.canvas)
-      this.cursorManager.setMode(this.getGameMode)
-      this.cursorManager.show()
-      this.cursorManagerReady = true
-      this.tryStartGame()
-      console.log('Курсор инициализирован')
+    enableClickHandler(enabled) {
+      this.clickHandlerEnabled = enabled
     },
-    handleCanvasMouseDown(event) {
+    handleMouseDown(event) {
+      if (!this.clickHandlerEnabled) return
       if (this.paused || this.gameOver) return
-    
+      
+      if (this.getGameMode === 'click') {
+        this.handleClickMode(event)
+      }
+    },
+    handleMouseMove(event) {
+      if (this.paused || this.gameOver) return
+      
+      if (this.modeManager) {
+        this.modeManager.updateMousePosition(event.clientX, event.clientY)
+      }
+    },
+    handleClickMode(event) {
       const rect = this.$refs.canvas.getBoundingClientRect()
       const scaleX = this.canvasWidth / rect.width
       const scaleY = this.canvasHeight / rect.height
@@ -230,6 +244,30 @@ export default {
       
       if (clickedBubbles.length === 0) return
       
+      this.processPoppedBubbles(clickedBubbles)
+    },
+    popBubbleAtPosition(clientX, clientY) {
+      if (this.paused || this.gameOver) return
+      
+      const rect = this.$refs.canvas.getBoundingClientRect()
+      const scaleX = this.canvasWidth / rect.width
+      const scaleY = this.canvasHeight / rect.height
+      
+      const clickX = (clientX - rect.left) * scaleX
+      const clickY = (clientY - rect.top) * scaleY
+      
+      const clickedBubbles = this.bubbles.filter(bubble => {
+        if (!bubble.active) return false
+        const distance = this.euclideanDistance(clickX, clickY, bubble.x, bubble.y)
+        const clickRadius = bubble.radius + 10
+        return distance <= clickRadius
+      })
+      
+      if (clickedBubbles.length === 0) return
+      
+      this.processPoppedBubbles(clickedBubbles)
+    },
+    processPoppedBubbles(clickedBubbles) {
       const unprocessedBubbles = clickedBubbles.filter(bubble => !bubble.isPopped)
       if (unprocessedBubbles.length === 0) return
 
@@ -291,6 +329,23 @@ export default {
       })
       
       this.pressedBubbleIds.clear()
+    },
+    initModeManager() {
+      console.log('Инициализация менеджера режимов...')
+      this.modeManager = new GameModeManager(this)
+      this.modeManager.setMode(this.getGameMode)
+      this.modeManagerReady = true
+      this.tryStartGame()
+      console.log('Менеджер режимов инициализирован')
+    },
+    initCursorManager() {
+      console.log('Инициализация курсора...')
+      this.cursorManager = new CursorManager(this.$refs.canvas)
+      this.cursorManager.setMode(this.getGameMode)
+      this.cursorManager.show()
+      this.cursorManagerReady = true
+      this.tryStartGame()
+      console.log('Курсор инициализирован')
     },
     loadImages() {   
       let loadedCount = 0
@@ -498,7 +553,7 @@ export default {
       }
     },
     tryStartGame() {
-      if (this.imagesLoaded && this.cursorManagerReady && !this.isReady) {
+      if (this.imagesLoaded && this.cursorManagerReady && this.modeManagerReady && !this.isReady) {
         this.isReady = true
         this.startgame()
       }
@@ -763,12 +818,17 @@ export default {
         this.cursorManager.destroy()
         this.cursorManager = null
       }
+      if (this.modeManager) {
+        this.modeManager.destroy()
+        this.modeManager = null
+      }
       window.removeEventListener('resize', this.resizeCanvas)
       window.removeEventListener('keydown', this.handleKeyDown)
 
       this.isReady = false
       this.imagesLoaded = false
       this.cursorManagerReady = false
+      this.modeManagerReady = false
       console.log('Игра очищена')
     },
     playPopSound() {
