@@ -13,7 +13,10 @@
         {{ craftMode ? 'Выйти из крафта' : 'Режим крафта' }}
       </button>
       
-      <div v-if="elementForCraft" class="workspace__craft-selected">
+      <div 
+        v-if="elementForCraft" 
+        class="workspace__craft-item workspace__craft-item--selected"
+      >
         Выбран: {{ elementForCraft.icon }} {{ elementForCraft.name }}
       </div>
     </div>
@@ -124,12 +127,14 @@ const startCrafting = () => {
     font-size: 14px;
   }
 
-  &__craft-selected {
-    font-size: 13px;
-    color: #fbbf24;
-    background: #1e293b;
-    padding: 4px 8px;
-    border: 1px solid #4a5568;
+  &__craft-item {
+    &--selected {
+      font-size: 13px;
+      color: #fbbf24;
+      background: #1e293b;
+      padding: 4px 8px;
+      border: 1px solid #4a5568;
+    }
   }
 
   &__items {
