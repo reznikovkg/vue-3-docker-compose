@@ -630,10 +630,28 @@ export default {
       const canvas = this.$refs.canvas
       if (!canvas) return
 
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      this.canvasWidth = canvas.width
-      this.canvasHeight = canvas.height
+      const newWidth = document.documentElement.clientWidth
+      const newHeight = document.documentElement.clientHeight
+      
+      if (this.canvasWidth === newWidth && this.canvasHeight === newHeight) return
+
+      const oldWidth = this.canvasWidth
+      const oldHeight = this.canvasHeight
+      
+      const scaleX = oldWidth > 0 ? newWidth / oldWidth : 1
+      const scaleY = oldHeight > 0 ? newHeight / oldHeight : 1
+      
+      if (oldWidth > 0 && oldHeight > 0 && this.bubbles.length > 0) {
+        this.bubbles.forEach(bubble => {
+          bubble.x *= scaleX
+          bubble.y *= scaleY
+        })
+      }
+      
+      canvas.width = newWidth
+      canvas.height = newHeight
+      this.canvasWidth = newWidth
+      this.canvasHeight = newHeight
     },
     createBubble({color, x, y, sizeName}) {
       const config = this.bubbleConfig.find(c => c.name === sizeName)
