@@ -40,12 +40,6 @@ class GameModeManager {
 
   startAutoMode() {
     this.game.enableClickHandler(false)
-    
-    this.autoInterval = setInterval(() => {
-      if (!this.game.paused && !this.game.gameOver && this.lastMousePos) {
-        this.game.popBubbleAtPosition(this.lastMousePos.x, this.lastMousePos.y)
-      }
-    }, 500)
   }
 
   stopAutoMode() {

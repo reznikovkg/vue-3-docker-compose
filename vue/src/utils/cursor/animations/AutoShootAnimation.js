@@ -5,9 +5,10 @@ class AutoShootAnimation {
     this.animationFrame = null
     this.lastTime = 0
     this.currentMode = null
+    this.shootTimeout = null
   }
 
-  start(mode, getCursorPosition) {
+  start(mode, getCursorPosition, onShoot = null) {
     this.stop()
     this.currentMode = mode
     this.lastTime = performance.now()
@@ -19,16 +20,24 @@ class AutoShootAnimation {
         this.lastTime = currentTime
         
         this.cursorUI.setTransform('scale(1.3)')
+        
+        setTimeout(() => {
+          if (this.currentMode === mode) {
+            const pos = getCursorPosition()
+            if (pos) {
+              if (onShoot) {
+                onShoot(pos.x, pos.y)
+              }
+              this.shotMarkerManager.create(pos.x, pos.y)
+            }
+          }
+        }, 50)
+        
         setTimeout(() => {
           if (this.currentMode === mode) {
             this.cursorUI.setTransform('')
           }
-        }, 100)
-
-        const pos = getCursorPosition()
-        if (pos) {
-          this.shotMarkerManager.create(pos.x, pos.y)
-        }
+        }, 50)
       }
       
       this.animationFrame = requestAnimationFrame(animate)
@@ -41,6 +50,10 @@ class AutoShootAnimation {
     if (this.animationFrame) {
       cancelAnimationFrame(this.animationFrame)
       this.animationFrame = null
+    }
+    if (this.shootTimeout) {
+      clearTimeout(this.shootTimeout)
+      this.shootTimeout = null
     }
     this.cursorUI.setTransform('')
   }

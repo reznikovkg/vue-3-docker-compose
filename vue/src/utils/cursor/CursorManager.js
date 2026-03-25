@@ -32,6 +32,35 @@ class CursorManager {
     
     this.initMouseTracking()
     this.setMode('click')
+    this.onShootCallback = null
+  }
+
+  setOnShootCallback(callback) {
+    this.onShootCallback = callback
+  }
+
+  startModeAnimation() {
+    Object.values(this.animations).forEach(anim => anim.stop())
+    
+    switch (this.currentMode) {
+      case 'click':
+        this.animations.click.start(this.canvas)
+        break
+      case 'auto':
+        this.animations.auto.start(
+          this.currentMode,
+          () => this.getCursorPosition(),
+          (x, y) => {
+            if (this.onShootCallback) {
+              this.onShootCallback(x, y)
+            }
+          }
+        )
+        break
+      case 'laser':
+        this.animations.laser.start(this.currentMode)
+        break
+    }
   }
 
   initMouseTracking() {
@@ -53,22 +82,6 @@ class CursorManager {
     const image = this.cursorImages[mode]
     this.cursorUI.setImage(image.path, image.width, image.height)
     this.startModeAnimation()
-  }
-
-  startModeAnimation() {
-    Object.values(this.animations).forEach(anim => anim.stop())
-    
-    switch (this.currentMode) {
-      case 'click':
-        this.animations.click.start(this.canvas)
-        break
-      case 'auto':
-        this.animations.auto.start(this.currentMode, () => this.getCursorPosition())
-        break
-      case 'laser':
-        this.animations.laser.start(this.currentMode)
-        break
-    }
   }
 
   resetToDefault() {

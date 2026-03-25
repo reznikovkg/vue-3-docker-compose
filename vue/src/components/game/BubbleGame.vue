@@ -341,6 +341,13 @@ export default {
     initCursorManager() {
       console.log('Инициализация курсора...')
       this.cursorManager = new CursorManager(this.$refs.canvas)
+
+      this.cursorManager.setOnShootCallback((x, y) => {
+        if (this.getGameMode === 'auto' && !this.paused && !this.gameOver) {
+          this.popBubbleAtPosition(x, y)
+        }
+      })
+
       this.cursorManager.setMode(this.getGameMode)
       this.cursorManager.show()
       this.cursorManagerReady = true
