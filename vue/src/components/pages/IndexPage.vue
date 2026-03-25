@@ -1,9 +1,9 @@
 <template>
   <div
-    @keydown.up="() => move(0, -1)"
-    @keydown.down="() => move(0, 1)"
-    @keydown.left="() => move(-1, 0)"
-    @keydown.right="() => move(1, 0)">
+    @keydown="(event) => {
+      const direction = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[event.key];
+      if (direction) move(...direction);
+    }">
     <FieldTable class="game-field" ref="gridRef" tabindex="0" :isSpeedUp="isSpeedPressed"/>
     <div class="game-menu">
       <button class="game-menu__start-button" @click="() => handleStart()" :disabled="isGameActive">Start</button>

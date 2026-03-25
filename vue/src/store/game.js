@@ -195,8 +195,8 @@ export default {
 
             store.commit(MUTATIONS.SET_SPEED_UP, false)
             store.commit(MUTATIONS.SET_MOVE_INTERVAL, null)
-
-            store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(() => {
+            store.commit(MUTATIONS.SET_MOVE_INTERVAL, setInterval(
+                () => {
                     store.dispatch("field/movePiece", null, { root: true })
                 }, store.state.currentSpeed))
         },
