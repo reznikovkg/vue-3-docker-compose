@@ -21,7 +21,8 @@ export default {
         qtyColors: this.qtyColors,
         maxQtyLayers: this.maxQtyLayers,
       });
-      console.log("start game");
+      console.log("start game")
+      this.$router.push('/game')
     },
     changeQtyFlasks(e) {
       this.qtyFlasks = Number(e.target.value)
@@ -41,7 +42,6 @@ export default {
   }
 }
 </script>
-
 <template>
   <div class="settings">
     <p class="settings__p settings__head_p">Переливатор</p>
@@ -67,7 +67,6 @@ export default {
     <button type="button" class="settings__btn" @click="() => handleStartGame()">Начать игру!</button>
   </div>
 </template>
-
 <style scoped lang="scss">
   @use "sass:math";
 
@@ -112,13 +111,13 @@ export default {
   @function RK4($layers, $t, $x, $y, $t_end) {
     $points: ();
     $h: ($t_end - $t) / $layers;
-    $scale: 10;
-    $scale-y: 20;
+    $scale-x: 100;
+    $scale-y: 8;
     $cur-t: $t;
     $cur-x: $x;
     $cur-y: $y;
 
-    $initial-point: radial-gradient(circle at calc(10% + $cur-t * $scale * 1px) calc(50% - $cur-y * $scale * $scale-y * 1px),
+    $initial-point: radial-gradient(circle at calc(10% + $cur-t * $scale-x * 1px) calc(50% - $cur-y * $scale-y * 1px),
         rgb(1, 120, 147) 2px, transparent 2px);
     $points: append($points, $initial-point, comma);
 
@@ -128,11 +127,16 @@ export default {
       $cur-x: nth($cur-coords, 1);
       $cur-y: nth($cur-coords, 2);
       $cur-t: $cur-t + $h;
-      $pos-x: calc(10% + $cur-t * $scale * 1px);
-      $pos-y: calc(50% - $cur-y * $scale * $scale-y * 1px);
-
+      //$pos-x: calc(10% + $cur-t * $scale * 1px);
+      //$pos-y: calc(50% - $cur-y * $scale * $scale-y * 1px);
+      $pos-x: calc(50% + $cur-y * $scale-x * 1px);
+      $pos-y: calc(17% + $cur-t * $scale-y * 1px);
       $point: radial-gradient(circle at $pos-x $pos-y, rgba(1, 120, 147, 1) $size, transparent $size);
       $points: append($points, $point, comma);
+      //$pos-x: calc(90% - $cur-t * $scale * 1px);
+      //$pos-y: calc(50% - $cur-y * $scale * $scale-y * 1px);
+      //$point: radial-gradient(circle at $pos-x $pos-y, rgba(1, 120, 147, 1) $size, transparent $size);
+      //$points: append($points, $point, comma);
     }
 
     @return $points;

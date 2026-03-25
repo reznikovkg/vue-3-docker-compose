@@ -255,18 +255,17 @@ export default {
         }
       }
       console.log("checkWin2: ", counter)
+      this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
       if (counter === this.qtyColors) {
         console.log("game end")
         setTimeout(() => {
-          this.updateIsGameWon({isGameWon: 1})
+          this.$router.push("/end")
         }, 1000)
       }
-      this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
     }
   },
 }
 </script>
-
 <template>
   <div class="body_flask" :style="[flaskStyle, pickedFlaskStyle]" @click="() => wrapperClick()">
     <div v-if="emptySpace > 0" class="flask__layer"> </div>
@@ -279,7 +278,6 @@ export default {
     </div>
   </div>
 </template>
-
 <style scoped lang="scss">
   .body_flask {
     display: grid;

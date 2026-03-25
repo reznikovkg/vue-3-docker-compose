@@ -74,7 +74,6 @@ export default {
   }
 }
 </script>
-
 <template>
   <div class="game" :style="gameStyle">
     <Flask
@@ -86,7 +85,6 @@ export default {
     </Flask>
   </div>
 </template>
-
 <style scoped lang="scss">
   @use "sass:math";
 
@@ -189,7 +187,7 @@ export default {
       background-size: 100% 100%;
       pointer-events: none;
       //mix-blend-mode: overlay;
-      background-image: RK4(500, 0, 10, 10, 100);
+      background-image: RK4(1000, 0, 10, 10, 200);
       z-index: 0;
       border-radius: 40px;
     }
