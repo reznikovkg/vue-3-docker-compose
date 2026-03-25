@@ -224,7 +224,10 @@ export default {
       
       if (clickedBubbles.length === 0) return
       
-      clickedBubbles.forEach(bubble => {
+      const unprocessedBubbles = clickedBubbles.filter(bubble => !bubble.isPopped)
+      if (unprocessedBubbles.length === 0) return
+
+      unprocessedBubbles.forEach(bubble => {
         this.pressedBubbleIds.add(bubble.id)
       })
       
@@ -233,10 +236,8 @@ export default {
       let totalPoints = 0
       let hadCorrect = false
       const allNewBubbles = []
-      
-      clickedBubbles.forEach(bubble => {
-        if (bubble.isPopped) return
 
+      unprocessedBubbles.forEach(bubble => {
         bubble.isPopped = true
 
         const isCorrect = bubble.color === this.targetColor
@@ -260,30 +261,30 @@ export default {
         allNewBubbles.push(...childBubbles)
 
         this.pushBubblesAway(bubble, 2)
-      })
+        
+        bubble.active = false
+      })      
       
-      if (!hadCorrect && clickedBubbles.length > 0) {
+      if (!hadCorrect && unprocessedBubbles.length > 0) {
         this.multiplier = 1
       }
       
       this.score += totalPoints
-      this.$emit('score', { points: totalPoints, count: clickedBubbles.length })
+      this.$emit('score', { points: totalPoints, count: unprocessedBubbles.length })
 
-      setTimeout(() => {
-        clickedBubbles.forEach(bubble => {
-          const actualBubble = this.bubbles.find(b => b.id === bubble.id)
-          if (actualBubble) {
-            actualBubble.active = false
-          }
-        })
-
-        if (allNewBubbles.length > 0) {
-          this.bubbles.push(...allNewBubbles)
+      if (allNewBubbles.length > 0) {
+        this.bubbles.push(...allNewBubbles)
+      }
+      
+      this.bubbles = this.bubbles.filter(b => {
+        if (!b.active) {
+          this.pushedBubbles.delete(b.id)
+          return false
         }
-
-        this.pressedBubbleIds.clear()
-        this.bubbles = this.bubbles.filter(b => b.active)
-      }, 100)
+        return true
+      })
+      
+      this.pressedBubbleIds.clear()
     },
     loadImages() {   
       let loadedCount = 0
@@ -399,10 +400,15 @@ export default {
           count: escapedBubbles.length,
           reason: 'escaped'
         })
-        
       }
 
-      this.bubbles = this.bubbles.filter(b => b.active)
+      this.bubbles = this.bubbles.filter(b => {
+        if (!b.active) {
+          this.pushedBubbles.delete(b.id)
+          return false
+        }
+        return true
+      })      
     },
     render() {
       if (!this.canvasContext) return
@@ -471,25 +477,28 @@ export default {
       }
     },
     startTimer() {
+      if (this.timerInterval) return
       this.timerInterval = setInterval(() => {
-        if (!this.paused && !this.gameOver && this.timeLeft > 0) {
+        if (!this.gameOver && this.timeLeft > 0) {
           this.timeLeft--
         } else if (this.timeLeft <= 0 && !this.gameOver) {
           this.endgame()
         }
       }, 1000)
     },
-   endgame() {
+    stopTimer() {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval)
+        this.timerInterval = null
+      }
+    },
+    endgame() {
       this.gameOver = true
       this.paused = false
       this.bubbles = []
       this.pressedBubbleIds.clear()
 
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
-        this.timerInterval = null
-      }
-
+      this.stopTimer()
       this.updateCursorByState()
       this.$emit('finish', { score: this.score, timeElapsed: this.gameDuration })
     },
@@ -497,12 +506,20 @@ export default {
       if (this.gameOver) return
       this.paused = !this.paused
       console.log('Пауза:', this.paused)
+
+      if (this.paused) {
+        this.stopTimer()
+      } else {
+        this.startTimer()
+      }      
+
       this.updateCursorByState()
     },
     resumegame() {
       console.log('Продолжение игры')
       this.playClickSound()
       this.paused = false
+      this.startTimer()
       this.updateCursorByState()
     },
     restartgame() {
@@ -520,12 +537,8 @@ export default {
         cancelAnimationFrame(this.animationFrame)
         this.animationFrame = null
       }
-    
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
-        this.timerInterval = null
-      }
 
+      this.stopTimer()
       this.updateCursorByState()
       this.lastSpawnTime = performance.now()
       this.startTimer()
@@ -640,7 +653,7 @@ export default {
       const maxSpeed = 4
 
       this.bubbles.forEach(otherBubble => {
-        if (!otherBubble.active || otherBubble.id === bubble.id || otherBubble.isPopped) return
+        if (!otherBubble.active || otherBubble.id === bubble.id) return
 
         const distance = this.euclideanDistance(bubble.x, bubble.y, otherBubble.x, otherBubble.y)
         if (distance - otherBubble.radius <= searchRadius) {
@@ -718,10 +731,7 @@ export default {
         cancelAnimationFrame(this.animationFrame)
         this.animationFrame = null
       }
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
-        this.timerInterval = null
-      }
+      this.stopTimer()
       if (this.cursorManager) {
         this.cursorManager.destroy()
         this.cursorManager = null
