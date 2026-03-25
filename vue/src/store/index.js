@@ -1,5 +1,4 @@
 import { createStore } from 'vuex'
-import list from './list'
 
 const MUTATIONS = {
   SET_SETTINGS: 'SET_SETTINGS',
@@ -138,8 +137,5 @@ export default createStore({
       commit(MUTATIONS.RESET_SETTINGS)
       commit(MUTATIONS.SET_GAME_MODE, DEFAULT_GAME_MODE)
     }
-  },
-  modules: {
-    list,
   }
 })
