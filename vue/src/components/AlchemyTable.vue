@@ -128,12 +128,13 @@ const startCrafting = () => {
   }
 
   &__craft-item {
+    font-size: 13px;
+    padding: 4px 8px;
+    border: 1px solid #4a5568;
+    
     &--selected {
-      font-size: 13px;
       color: #fbbf24;
       background: #1e293b;
-      padding: 4px 8px;
-      border: 1px solid #4a5568;
     }
   }
 
