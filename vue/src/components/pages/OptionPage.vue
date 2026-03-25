@@ -6,75 +6,146 @@
       </RouterLink>
     </div>
 
-    <h2>Настройки игры</h2>
-        
-    <div class="options__grid">
-      <div class="options__grid__item">
-        <label>Количество цветов:</label>
-        <input 
-            type="number" 
-            min="1" 
-            max="8" 
-            step="1"  
-            v-model.number="localSettings.totalColors" 
-        />
-        <span class="hint">от 1 до 8</span>
-      </div>
+    <div class="options__tabs">
+      <button 
+        class="options__tabs__tab" 
+        :class="{ 'options__tabs__tab--active': activeTab === 'game' }"
+        @click="() => switchTab('game')"
+      >
+        Игровые настройки
+      </button>
+      <button 
+        class="options__tabs__tab" 
+        :class="{ 'options__tabs__tab--active': activeTab === 'video' }"
+        @click="() => switchTab('video')"
+      >
+        Видео
+      </button>
+    </div>
 
-      <div class="options__grid__item">
-        <label>Целевой цвет:</label>
-        <div class="options__grid__item__color">
-          <div class="options__grid__item__color__current" @click="() => changeColorDropdown()">
-            <img :src="getColorImage(localSettings.targetColor)" class="options__grid__item__color__current__preview" />
-            <span>{{ getColorName(localSettings.targetColor) }}</span>
-            <span class="options__grid__item__color__current__arrow">{{ showColorDropdown ? '▲' : '▼' }}</span>
-          </div>
-            
-          <div class="options__grid__item__color__dropdown" v-if="showColorDropdown">
-            <div 
-                v-for="color in colorOptions" 
-                class="options__grid__item__color__dropdown__option" 
-                :key="color.value" 
-                :class="{ active: color.value === localSettings.targetColor }" 
-                @click="() => selectColor(color.value)"
-            >
-              <img :src="color.image" class="options__grid__item__color__dropdown__option__preview" />
-              <span>{{ color.name }}</span>
+    <div v-if="activeTab === 'game'">
+      <h2>Настройки игры</h2>
+          
+      <div class="options__grid">
+        <div class="options__grid__item">
+          <label>Количество цветов:</label>
+          <input 
+              type="number" 
+              min="1" 
+              max="8" 
+              step="1"  
+              v-model.number="localSettings.totalColors" 
+          />
+          <span class="hint">от 1 до 8</span>
+        </div>
+
+        <div class="options__grid__item">
+          <label>Целевой цвет:</label>
+          <div class="options__grid__item__color">
+            <div class="options__grid__item__color__current" @click="() => changeColorDropdown()">
+              <img :src="getColorImage(localSettings.targetColor)" class="options__grid__item__color__current__preview" />
+              <span>{{ getColorName(localSettings.targetColor) }}</span>
+              <span class="options__grid__item__color__current__arrow">{{ showColorDropdown ? '▲' : '▼' }}</span>
+            </div>
+              
+            <div class="options__grid__item__color__dropdown" v-if="showColorDropdown">
+              <div 
+                  v-for="color in colorOptions" 
+                  class="options__grid__item__color__dropdown__option" 
+                  :key="color.value" 
+                  :class="{ active: color.value === localSettings.targetColor }" 
+                  @click="() => selectColor(color.value)"
+              >
+                <img :src="color.image" class="options__grid__item__color__dropdown__option__preview" />
+                <span>{{ color.name }}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="options__grid__item">
-        <label>Интенсивность (шт/сек):</label>
-        <input 
-            type="number" 
-            min="0.1" 
-            max="1000" 
-            step="0.1" 
-            v-model.number="localSettings.spawnRate" 
-        />
-        <span class="hint">{{ getLocalSpawnInterval }} сек на пузырь</span>
-      </div>
+        <div class="options__grid__item">
+          <label>Интенсивность (шт/сек):</label>
+          <input 
+              type="number" 
+              min="0.1" 
+              max="1000" 
+              step="0.1" 
+              v-model.number="localSettings.spawnRate" 
+          />
+          <span class="hint">{{ getLocalSpawnInterval }} сек на пузырь</span>
+        </div>
 
-      <div class="options__grid__item">
-        <label>Очки за попадание:</label>
-        <input 
-            type="number" 
-            min="1" 
-            max="10" 
-            v-model.number="localSettings.pointsForCorrect" 
-        />
-      </div>
+        <div class="options__grid__item">
+          <label>Очки за попадание:</label>
+          <input 
+              type="number" 
+              min="1" 
+              max="10" 
+              v-model.number="localSettings.pointsForCorrect" 
+          />
+        </div>
 
-      <div class="options__grid__item">
-        <label>Очки за ошибку:</label>
-        <input 
-            type="number" 
-            min="-20" 
-            max="0" 
-            v-model.number="localSettings.pointsForWrong" 
-        />
+        <div class="options__grid__item">
+          <label>Очки за ошибку:</label>
+          <input 
+              type="number" 
+              min="-20" 
+              max="0" 
+              v-model.number="localSettings.pointsForWrong" 
+          />
+        </div>
+
+        <div class="options__grid__item">
+          <label>Режим курсора:</label>
+          <div class="options__grid__item__select">
+            <div class="options__grid__item__select__current" @click="() => toggleCursorModeDropdown()">
+              <span>{{ getCursorModeText(localGameMode) }}</span>
+              <span class="options__grid__item__select__current__arrow">{{ showCursorModeDropdown ? '▲' : '▼' }}</span>
+            </div>
+              
+            <div class="options__grid__item__select__dropdown" v-if="showCursorModeDropdown">
+              <div 
+                  v-for="mode in cursorModeOptions" 
+                  class="options__grid__item__select__dropdown__option" 
+                  :key="mode.value" 
+                  :class="{ active: mode.value === localGameMode }" 
+                  @click="() => selectCursorMode(mode.value)"
+              >
+                <span>{{ mode.label }}</span>
+              </div>
+            </div>
+          </div>
+          <span class="hint">Режим взаимодействия с пузырями</span>
+        </div>
+      </div>
+    </div>
+    
+    <div v-if="activeTab === 'video'">
+      <h2>Настройки видео</h2>
+          
+      <div class="options__grid">
+        <div class="options__grid__item">
+          <label>Частота кадров (FPS):</label>
+          <div class="options__grid__item__select">
+            <div class="options__grid__item__select__current" @click="() => toggleFPSDropdown()">
+              <span>{{ getFPSText(localSettings.fps) }}</span>
+              <span class="options__grid__item__select__current__arrow">{{ showFPSDropdown ? '▲' : '▼' }}</span>
+            </div>
+              
+            <div class="options__grid__item__select__dropdown" v-if="showFPSDropdown">
+              <div 
+                  v-for="fps in fpsOptions" 
+                  class="options__grid__item__select__dropdown__option" 
+                  :key="fps.value" 
+                  :class="{ active: fps.value === localSettings.fps }" 
+                  @click="() => selectFPS(fps.value)"
+              >
+                <span>{{ fps.label }}</span>
+              </div>
+            </div>
+          </div>
+          <span class="hint">Выберите целевую частоту кадров. Влияет на плавность анимации и нагрузку на процессор.</span>
+        </div>
       </div>
     </div>
 
@@ -97,6 +168,8 @@
         <li>Скорость: {{ getSpawnRate }} шт/сек ({{ getSpawnInterval }} сек)</li>
         <li>Попадание: +{{ getPointsForCorrect }}</li>
         <li>Ошибка: {{ getPointsForWrong }}</li>
+        <li>FPS: {{ getFPS }}</li>
+        <li>Режим курсора: {{ getGameModeName }}</li>
       </ul>
     </div>
   </div>
@@ -124,9 +197,14 @@ export default {
         targetColor: 'red',
         spawnRate: 1,
         pointsForCorrect: 1,
-        pointsForWrong: -5
+        pointsForWrong: -5,
+        fps: 60
       },
-      showColorDropdown: false
+      localGameMode: 'click',
+      showColorDropdown: false,
+      showFPSDropdown: false,
+      showCursorModeDropdown: false,
+      activeTab: 'game'
     }
   },
   computed: {
@@ -137,7 +215,10 @@ export default {
       'getSpawnRate',
       'getPointsForCorrect',
       'getPointsForWrong',
-      'getSpawnInterval'
+      'getSpawnInterval',
+      'getGameMode',
+      'getFPS',
+      'getGameModeName'
     ]),
     colorOptions() {
       return [
@@ -156,7 +237,30 @@ export default {
     },
     hasChanges(): boolean {
       const saved = this.getSettings
-      return this.localSettings.totalColors !== saved.totalColors || this.localSettings.targetColor !== saved.targetColor || this.localSettings.spawnRate !== saved.spawnRate || this.localSettings.pointsForCorrect !== saved.pointsForCorrect || this.localSettings.pointsForWrong !== saved.pointsForWrong
+      return  this.localSettings.totalColors      !== saved.totalColors       || 
+              this.localSettings.targetColor      !== saved.targetColor       || 
+              this.localSettings.spawnRate        !== saved.spawnRate         || 
+              this.localSettings.pointsForCorrect !== saved.pointsForCorrect  || 
+              this.localSettings.pointsForWrong   !== saved.pointsForWrong    || 
+              this.localSettings.fps              !== saved.fps               ||
+              this.localGameMode                  !== this.getGameMode 
+    },
+    fpsOptions() {
+      return [
+        { value: 30, label: '30 FPS (экономный)' },
+        { value: 60, label: '60 FPS (рекомендуемый)' },
+        { value: 120, label: '120 FPS (ультра)' },
+        { value: 144, label: '144 FPS (для мощных ПК)' },
+        { value: 240, label: '240 FPS (экспериментальный)' }
+      ]
+    },
+    
+    cursorModeOptions() {
+      return [
+        { value: 'click', label: 'Клик' },
+        { value: 'auto', label: 'Авто' },
+        { value: 'laser', label: 'Лазер' }
+      ]
     }
   },
   mounted() {
@@ -165,7 +269,9 @@ export default {
   methods: {
     ...mapActions([
       'setSettings',
-      'resetSettings'
+      'resetSettings',
+      'setGameMode',
+      'resetAll'
     ]),
     getColorImage(colorValue: string): string {
       const color = this.colorOptions.find(c => c.value === colorValue)
@@ -174,6 +280,7 @@ export default {
     loadSettingsFromStore() {
       const saved = this.getSettings
       this.localSettings = { ...saved}
+      this.localGameMode = this.getGameMode
     },
     getColorName(colorValue: string): string {
       const color = this.colorOptions.find(c => c.value === colorValue)
@@ -195,15 +302,50 @@ export default {
       }
       this.playSaveSound()
       this.setSettings({ ...this.localSettings })
+      this.setGameMode(this.localGameMode)
     },
     resetToDefault() {
       this.playCancelSound()
-      this.resetSettings()
+      this.resetAll()
       this.loadSettingsFromStore()
     },
     changeColorDropdown() {
       this.playClickSound()
       this.showColorDropdown  = !this.showColorDropdown
+    },
+    switchTab(tab: string) {
+      if (this.activeTab !== tab) {
+        this.playClickSound()
+        this.activeTab = tab
+      }
+    },
+    getFPSText(fps: number): string {
+      const option = this.fpsOptions.find(o => o.value === fps)
+      return option ? option.label : `${fps} FPS`
+    },
+    getCursorModeText(mode: string): string {
+      const option = this.cursorModeOptions.find(o => o.value === mode)
+      return option ? option.label : mode
+    },
+    toggleFPSDropdown() {
+      this.playClickSound()
+      this.showFPSDropdown = !this.showFPSDropdown
+      this.showCursorModeDropdown = false
+    },
+    toggleCursorModeDropdown() {
+      this.playClickSound()
+      this.showCursorModeDropdown = !this.showCursorModeDropdown
+      this.showFPSDropdown = false
+    },
+    selectFPS(fps: number) {
+      this.playClickSound()
+      this.localSettings.fps = fps
+      this.showFPSDropdown = false
+    },
+    selectCursorMode(mode: string) {
+      this.playClickSound()
+      this.localGameMode = mode
+      this.showCursorModeDropdown = false
     },
     playSaveSound() {
       soundManager.play('save')
@@ -268,6 +410,40 @@ $accentGreen: #00d389;
     margin-bottom: 30px;
   }
 
+  &__tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid $bgElement;
+    padding-bottom: 10px;
+
+    &__tab {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: $textMuted;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 6px;
+
+      &:hover {
+        color: $textLight;
+        background: rgba($accentGreen, 0.1);
+      }
+    }
+
+    &__tab--active {
+      color: $accentGreen;
+      border-bottom: 2px solid $accentGreen;
+      
+      &:hover {
+        background: transparent;
+      }
+    }
+  }
+
   &__nav {
     margin-bottom: 20px;
     padding-bottom: 10px;
@@ -321,6 +497,76 @@ $accentGreen: #00d389;
         font-size: 12px;
         color: $textMuted;
         font-style: italic;
+      }
+
+      &__select {
+        position: relative;
+
+        &__current {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          padding: 10px 12px;
+          background: $bgElement;
+          border: 2px solid $bgElement;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            border-color: $bgInputHover;
+          }
+
+          span {
+            color: $textLight;
+          }
+
+          &__arrow {
+            color: $textMuted;
+            font-size: 12px;
+          }
+        }
+
+        &__dropdown {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          margin-top: 5px;
+          background: $bgElement;
+          border: 2px solid $bgInputHover;
+          border-radius: 6px;
+          z-index: 10;
+          max-height: 300px;
+          overflow-y: auto;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+          &__option {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background: $bgInputHover;
+            }
+
+            &.active {
+              background: $accentGreen;
+            
+              span {
+                color: white;
+                font-weight: 600;
+              }
+            }
+
+            span {
+              color: $textLight;
+            }
+          }
+        }
       }
 
       &__color {

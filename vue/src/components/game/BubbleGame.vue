@@ -98,11 +98,14 @@ export default {
 
       isReady: false,
       imagesLoaded: false,
-      cursorManagerReady: false
+      cursorManagerReady: false,
+
+      lastFrameTime: 0,
+      accumulator: 0,
     }
   },
   computed: {
-    ...mapGetters(['getGameMode']),
+    ...mapGetters(['getGameMode', 'getFPS']),
     formattedTime() {
       const minutes = Math.floor(this.timeLeft / 60)
       const seconds = this.timeLeft % 60
@@ -174,6 +177,9 @@ export default {
       
       return colors
     },
+    targetFPS() {
+      return this.getFPS || 60
+    }
   },
   watch: {
     getGameMode: {
@@ -326,14 +332,33 @@ export default {
         return
       }
 
-      if (!this.paused) {
-        this.updatePhysics(timestamp)
+      const fixedDeltaTime = 1 / this.targetFPS
+      const now = performance.now()
+      
+      if (!this.lastFrameTime) {
+        this.lastFrameTime = now
+        this.animationFrame = requestAnimationFrame(this.gameLoop)
+        return
       }
-
+      
+      let frameTime = (now - this.lastFrameTime) / 1000
+      this.lastFrameTime = now
+      
+      if (frameTime > 0.1) {
+        frameTime = 0.1
+      }
+      
+      this.accumulator += frameTime
+      
+      while (this.accumulator >= fixedDeltaTime && !this.paused) {
+        this.updatePhysics(timestamp, fixedDeltaTime)
+        this.accumulator -= fixedDeltaTime
+      }
+      
       this.render()
       this.animationFrame = requestAnimationFrame(this.gameLoop)
     },
-    updatePhysics(timestamp) {
+    updatePhysics(timestamp, deltaTime) {
       const spawnInterval = 1000 / this.spawnRate
       if (timestamp - this.lastSpawnTime > spawnInterval) {
         this.spawnBubble()
@@ -346,27 +371,29 @@ export default {
         const prevX = bubble.x
         const prevY = bubble.y
 
-        bubble.x += bubble.speedX
-        bubble.y += bubble.speedY
-        bubble.wobble += bubble.wobbleSpeed
-        bubble.x += Math.sin(bubble.wobble) * 0.5
+        bubble.x += bubble.speedX * deltaTime * 144
+        bubble.y += bubble.speedY * deltaTime * 144
+        bubble.wobble += bubble.wobbleSpeed * deltaTime * 144
+        bubble.x += Math.sin(bubble.wobble) * 0.5 * deltaTime * 144
 
         if (this.pushedBubbles.has(bubble.id)) {
           const pushData = this.pushedBubbles.get(bubble.id)
-
           const stepDistance = this.euclideanDistance(bubble.x, bubble.y, prevX, prevY)
           pushData.remainingDistance -= stepDistance
           
           if (pushData.remainingDistance <= 0) {
             const targetSpeedX = pushData.originalSpeedX
             const targetSpeedY = pushData.originalSpeedY
+            const decayRate  = 0.95
 
-            bubble.speedX = bubble.speedX * 0.95 + targetSpeedX * 0.05
-            bubble.speedY = bubble.speedY * 0.95 + targetSpeedY * 0.05
+            const normalizedDecay = Math.pow(decayRate, 144 / this.targetFPS)
+
+            bubble.speedX = bubble.speedX * normalizedDecay + targetSpeedX * (1 - normalizedDecay)
+            bubble.speedY = bubble.speedY * normalizedDecay + targetSpeedY * (1 - normalizedDecay)
 
             const speedDiff = Math.abs(bubble.speedX - targetSpeedX) + Math.abs(bubble.speedY - targetSpeedY)
 
-            if (speedDiff < 0.2) {
+            if (speedDiff < 0.4) {
               bubble.speedX = targetSpeedX
               bubble.speedY = targetSpeedY
               this.pushedBubbles.delete(bubble.id)
@@ -627,7 +654,7 @@ export default {
           const multiplier = this.pushDistanceMap[bubble.sizeName]?.[childBubble.sizeName] || 1.0
           const totalDistance = bubble.radius * multiplier
           const decayTime = 2000
-          let initialSpeed = totalDistance / decayTime * 60
+          let initialSpeed = totalDistance / decayTime * 144
           initialSpeed = Math.min(initialSpeed, maxSpeed)
 
           this.pushedBubbles.set(childBubble.id, {
@@ -677,7 +704,7 @@ export default {
           }
 
           if (!this.pushedBubbles.has(otherBubble.id)) {
-            let initialSpeed = totalDistance / decayTime * 60
+            let initialSpeed = totalDistance / decayTime * 144
             initialSpeed = Math.min(initialSpeed, maxSpeed)
 
             this.pushedBubbles.set(otherBubble.id, {
