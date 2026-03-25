@@ -174,21 +174,8 @@ export default {
       
       return colors
     },
-    allReady() {
-      const ready = this.imagesLoaded && this.cursorManagerReady
-      return ready
-    }
   },
   watch: {
-    allReady: {
-      handler(ready) {
-        if (ready && !this.isReady) {
-          this.isReady = true
-          this.startgame()
-        }
-      },
-      immediate: true
-    },
     getGameMode: {
       handler(newMode) {
         if (this.cursorManager && !this.paused && !this.gameOver) {
@@ -206,11 +193,6 @@ export default {
     this.initCursorManager()
 
     window.addEventListener('keydown', this.handleKeyDown)
-
-    if (this.allReady && !this.isReady) {
-      this.isReady = true
-      this.startgame()
-    }
   },
   methods: {
     initCursorManager() {
@@ -219,6 +201,7 @@ export default {
       this.cursorManager.setMode(this.getGameMode)
       this.cursorManager.show()
       this.cursorManagerReady = true
+      this.tryStartGame()
       console.log('Курсор инициализирован')
     },
     handleCanvasMouseDown(event) {
@@ -312,6 +295,7 @@ export default {
           loadedCount++
           if (loadedCount === totalImages) {
             this.imagesLoaded = true
+            this.tryStartGame()
           }
         }
         img.onerror = (err) => {
@@ -478,6 +462,12 @@ export default {
 
       if (e.key === 'Escape') {
         this.togglePause()
+      }
+    },
+    tryStartGame() {
+      if (this.imagesLoaded && this.cursorManagerReady && !this.isReady) {
+        this.isReady = true
+        this.startgame()
       }
     },
     startTimer() {
