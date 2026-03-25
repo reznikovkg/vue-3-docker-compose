@@ -34,7 +34,9 @@ const store = createStore({
       return state.cells.indexOf(state.size * state.size)
     },
     [GETTERS.IS_SOLVED]: (state) => {
-      if (!state.cells.length) return false
+      if (!state.cells.length) {
+        return false
+      }
       return state.cells.every((cell, index) => {
         if (index === state.cells.length - 1) {
           return cell === state.size * state.size
@@ -87,7 +89,9 @@ const store = createStore({
       commit(MUTATIONS.SET_PENALTY_SECONDS, 0)
     },
     [ACTIONS.MOVE_CELL]: ({ commit, state, getters, dispatch }, index) => {
-      if (getters[GETTERS.IS_SOLVED]) return
+      if (getters[GETTERS.IS_SOLVED]) {
+        return
+      }
       const empty = getters[GETTERS.EMPTY_INDEX]
       const newCells = [...state.cells]
       newCells[empty] = newCells[index]
@@ -100,17 +104,19 @@ const store = createStore({
     },
     [ACTIONS.CHANGE_SIZE]: ({ commit, dispatch }, size) => {
       let newSize = size
-      if (newSize < 3) newSize = 3
-      if (newSize > 10) newSize = 10
+      if (newSize < 3) {
+        newSize = 3
+      }
+      if (newSize > 10) {
+        newSize = 10
+      }
       commit(MUTATIONS.SET_SIZE, newSize)
       dispatch(ACTIONS.NEW_GAME)
     },
     [ACTIONS.LOAD_RECORDS]: ({ commit }) => {
       const saved = localStorage.getItem('puzzleRecords')
       if (saved) {
-        try {
-          commit(MUTATIONS.SET_RECORDS, JSON.parse(saved))
-        } catch {}
+        commit(MUTATIONS.SET_RECORDS, JSON.parse(saved))
       }
     },
     [ACTIONS.TICK_TIMER]: ({ commit, getters }) => {

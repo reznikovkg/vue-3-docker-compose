@@ -45,7 +45,7 @@
       :current-mode="currentMode"
       :blocked-cell="blockedCell"
       :is-frozen="isFrozen"
-      @cell-click="handleClick"
+      @cell-click="(index) => handleClick(index)"
     />
     <div class="puzzle__controls">
       <button class="puzzle__button" @click="() => newGame()">Новая игра</button>
@@ -104,9 +104,13 @@ export default {
       'formattedTime'
     ]),
     isNewRecord() {
-      if (!this.isSolved) return false
+      if (!this.isSolved) {
+        return false
+      }
       const sameSize = this.records.filter(r => r.size === this.size)
-      if (sameSize.length < 5) return true
+      if (sameSize.length < 5) {
+        return true
+      }
       const totalSeconds = this.seconds + this.penaltySeconds
       return totalSeconds < Math.max(...sameSize.map(r => r.time))
     }
@@ -135,24 +139,33 @@ export default {
       this.lastMoveTime = Date.now()
     },
     handleClick(index) {
-      if (this.isSolved) return
-      if (this.bonusActive && index !== this.emptyIndex) {
-        this.moveCell(index)
-        this.bonusActive = false
-        this.afterMove(index)
+      if (this.isSolved) {
         return
       }
-      if (!this.canMove(index)) return
-      if (this.currentMode === 'block' && this.blockedCell === index) return
-      if (this.currentMode === 'freeze' && this.isFrozen(index)) return
+      const oldEmptyIndex = this.emptyIndex
+      if (this.bonusActive && index !== oldEmptyIndex) {
+        this.moveCell(index)
+        this.bonusActive = false
+        this.afterMove(index, oldEmptyIndex)
+        return
+      }
+      if (!this.canMove(index)) {
+        return
+      }
+      if (this.currentMode === 'block' && this.blockedCell === index) {
+        return
+      }
+      if (this.currentMode === 'freeze' && this.isFrozen(index)) {
+        return
+      }
       this.moveCell(index)
-      this.afterMove(index)
+      this.afterMove(index, oldEmptyIndex)
     },
-    afterMove(index) {
+    afterMove(index, oldEmptyIndex) {
       this.lastMoveTime = Date.now()
       this.timerSpeed = 1
       this.restartTimer()
-      this.lastMoves.push({ from: index, to: this.emptyIndex })
+      this.lastMoves.push({ from: index, to: oldEmptyIndex })
       if (this.lastMoves.length > 2) {
         this.lastMoves.shift()
       }
@@ -225,9 +238,15 @@ export default {
     }, 60000)
   },
   beforeUnmount() {
-    if (this.timerInterval) clearInterval(this.timerInterval)
-    if (this.boostInterval) clearInterval(this.boostInterval)
-    if (this.bonusInterval) clearInterval(this.bonusInterval)
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval)
+    }
+    if (this.boostInterval) {
+      clearInterval(this.boostInterval)
+    }
+    if (this.bonusInterval) {
+      clearInterval(this.bonusInterval)
+    }
   }
 }
 </script>

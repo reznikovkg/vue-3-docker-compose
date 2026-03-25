@@ -1,12 +1,10 @@
 <template>
-  <div class="puzzle__cell-wrapper">
-    <div 
-      class="puzzle__cell" 
-      :class="cellClasses"
+  <div 
+    class="puzzle__cell" 
+    :class="cellClasses"
       @click="() => $emit('click', index)"
-    >
-      <span v-if="value !== size * size">{{ value }}</span>
-    </div>
+  >
+    <span v-if="value !== size * size">{{ value }}</span>
   </div>
 </template>
 <script>
@@ -31,10 +29,6 @@ export default {
 }
 </script>
 <style scoped lang="scss">
-.puzzle__cell-wrapper {
-  width: 100%;
-  height: 100%;
-}
 .puzzle__cell {
   width: 100%;
   height: 100%;

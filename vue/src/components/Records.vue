@@ -1,7 +1,7 @@
 <template>
   <div class="puzzle__records">
-    <div class="puzzle__records-title">Рекорды</div>
-    <div v-for="(rec, idx) in records" :key="idx" class="puzzle__record-item">
+    <div class="puzzle__records__title">Рекорды</div>
+    <div v-for="(rec, idx) in records" :key="idx" class="puzzle__records__item">
       {{ rec.size }}x{{ rec.size }} - {{ formatTime(rec.time) }} - {{ rec.moves }} ходов
     </div>
   </div>
@@ -21,13 +21,13 @@ export default {
   padding: 20px;
   background: #f5f5f5;
   border-radius: 12px;
-  &-title {
+  &__title {
     font-size: 20px;
     font-weight: bold;
     margin-bottom: 15px;
     color: #333;
   }
-  &-item {
+  &__item {
     padding: 8px;
     background: white;
     border-radius: 6px;
