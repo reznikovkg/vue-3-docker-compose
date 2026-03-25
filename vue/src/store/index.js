@@ -106,22 +106,13 @@ export default createStore({
       const isAdjacent = Math.abs(row1 - row2) + Math.abs(col1 - col2) === 1
 
       if (isAdjacent) {
-        ;[board[index], board[zeroIndex]] = [board[zeroIndex], board[index]]
+        [board[index], board[zeroIndex]] = [board[zeroIndex], board[index]]
         commit(MUTATIONS.SET_GAME_BOARD, board)
 
         const total = width * height
-        let isWin = true
-
-        for (let i = 0; i < total - 1; i++) {
-          if (board[i] !== i + 1) {
-            isWin = false
-            break
-          }
-        }
-
-        if (board[total - 1] !== 0) {
-          isWin = false
-        }
+        const isWin = board.every((value, idx) =>
+            idx === total - 1 ? value === 0 : value === idx + 1
+        )
 
         if (isWin) {
           return dispatch('showWinModal')

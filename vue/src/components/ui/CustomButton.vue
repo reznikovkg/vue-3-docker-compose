@@ -1,5 +1,5 @@
 <template>
-  <button class="cButton" :class="'cButton--' + type">
+  <button class="custom-button">
     <slot>Кнопка</slot>
   </button>
 </template>
@@ -19,7 +19,7 @@ export default {
 <style scoped lang="scss">
 @import "@/styles/styles";
 
-.cButton {
+.custom-button {
   background: $purplePrimary;
   border-radius: 60px;
   padding: 18px 40px;

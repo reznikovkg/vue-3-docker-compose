@@ -1,30 +1,37 @@
 <template>
-  <div class="head">
-    <h2 class="header">Пятнашки</h2>
-    <div class="buttons">
-      <CustomButton
-          class="headButton"
-          @click="() => openSettingsModal()">Начать заново
-      </CustomButton>
-      <CustomButton
-          class="headButton"
-          @click="() => goToMenu()">Меню
-      </CustomButton>
+  <div class="game-page">
+    <div class="game-page__header">
+      <h2 class="game-page__title">Пятнашки</h2>
+      <div class="game-page__buttons">
+        <CustomButton
+            class="game-page__button"
+            @click="() => openSettingsModal()"
+        >
+          Начать заново
+        </CustomButton>
+        <CustomButton
+            class="game-page__button"
+            @click="() => goToMenu()"
+        >
+          Меню
+        </CustomButton>
+      </div>
     </div>
+
+    <div class="game-page__line"/>
+
+    <div class="game-page__board-wrapper">
+      <GameBoard/>
+    </div>
+
+    <SettingsModal
+        v-show="isSettingsModalVisible"
+        @close="() => closeSettingsModal()"
+        @play="(sizeData) => restartGame(sizeData)"
+    />
+
+    <WinModal v-show="showWinModal"/>
   </div>
-  <div class="line"/>
-
-  <div class="gameWrapper">
-    <GameBoard/>
-  </div>
-
-  <SettingsModal
-      v-show="isSettingsModalVisible"
-      @close="closeSettingsModal"
-      @play="restartGame"
-  />
-
-  <WinModal v-show="showWinModal"/>
 </template>
 
 <script>
@@ -57,11 +64,11 @@ export default {
     this.initializeGame()
   },
   methods: {
-    ...mapActions({
-      initGame: 'initGame',
-      resetGame: 'resetGame',
-      updateGameSize: 'updateGameSize'
-    }),
+    ...mapActions([
+      'initGame',
+      'resetGame',
+      'updateGameSize'
+    ]),
     initializeGame() {
       this.initGame()
     },
@@ -73,10 +80,8 @@ export default {
     },
     restartGame(sizeData) {
       this.updateGameSize(sizeData)
-          .then(() => {
-            this.initGame()
-            this.closeSettingsModal()
-          })
+      this.initGame()
+      this.closeSettingsModal()
     },
     goToMenu() {
       this.$router.push({name: ROUTES.INDEX})
@@ -88,63 +93,65 @@ export default {
 <style scoped lang="scss">
 @import "@/styles/styles";
 
-.head {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 20px;
-  align-items: center;
-  width: 100%;
+.game-page {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    align-items: center;
+    width: 100%;
 
-  @media (max-width: 480px) {
-    margin-bottom: 10px;
-  }
-}
-
-.header {
-  color: $purpleDark;
-  font-size: 70px;
-  font-weight: 700;
-
-  @media (max-width: 480px) {
-    font-size: 20px;
-  }
-}
-
-.buttons {
-  display: flex;
-  gap: 20px;
-  margin-left: 500px;
-
-  @media (max-width: 480px) {
-    margin-left: 15px;
-  }
-}
-
-.headButton {
-  padding: 8px 16px;
-  font-size: 24px;
-  margin: 0;
-
-  :deep(.c-button) {
     @media (max-width: 480px) {
-      font-size: 15px;
+      margin-bottom: 10px;
     }
   }
-}
 
-.line {
-  @include gradientLine;
-  height: 3px;
-  width: 80%;
-  max-width: 1000px;
-  margin: 0 auto;
-}
+  &__title {
+    color: $purpleDark;
+    font-size: 70px;
+    font-weight: 700;
 
-.gameWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  margin-top: 50px;
+    @media (max-width: 480px) {
+      font-size: 20px;
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    gap: 20px;
+    margin-left: 500px;
+
+    @media (max-width: 480px) {
+      margin-left: 15px;
+    }
+  }
+
+  &__button {
+    padding: 8px 16px;
+    font-size: 24px;
+    margin: 0;
+
+    :deep(.c-button) {
+      @media (max-width: 480px) {
+        font-size: 15px;
+      }
+    }
+  }
+
+  &__line {
+    @include gradientLine;
+    height: 3px;
+    width: 80%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  &__board-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 50px;
+  }
 }
 </style>

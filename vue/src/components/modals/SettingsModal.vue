@@ -1,49 +1,45 @@
 <template>
-  <div class="modalOverlay" @click="() => closeModal()">
-    <div class="container" @click.stop>
-      <div class="title">
+  <div class="settings-modal" @click="() => closeModal()">
+    <div class="settings-modal__container" @click.stop>
+      <div class="settings-modal__title">
         Настройка
       </div>
-      <div class="line"/>
-      <div class="textContainer">
-        <div class="text">Введите размер игрового поля:</div>
 
-        <div class="inputWrapper">
-          <label
-              for="width"
-              class="inputLabel"
-          >
+      <div class="settings-modal__line"/>
+
+      <div class="settings-modal__content">
+        <div class="settings-modal__text">
+          Введите размер игрового поля:
+        </div>
+
+        <div class="settings-modal__input-group">
+          <label class="settings-modal__label">
             Ширина:
           </label>
           <input
-              id="width"
               v-model.number="widthValue"
               type="number"
-              class="inputField"
+              class="settings-modal__input"
               placeholder="4"
           >
         </div>
 
-        <div class="inputWrapper">
-          <label
-              for="height"
-              class="inputLabel"
-          >
+        <div class="settings-modal__input-group">
+          <label class="settings-modal__label">
             Высота:
           </label>
           <input
-              id="height"
               v-model.number="heightValue"
               type="number"
-              class="inputField"
+              class="settings-modal__input"
               placeholder="4"
           >
         </div>
       </div>
 
-      <div class="buttonWrapper">
+      <div class="settings-modal__footer">
         <CustomButton
-            class="playButton"
+            class="settings-modal__button"
             @click="() => playGame()"
         >
           Играть
@@ -94,7 +90,7 @@ export default {
 <style scoped lang="scss">
 @import "@/styles/styles";
 
-.modalOverlay {
+.settings-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -104,89 +100,91 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-}
 
-.container {
-  width: 400px;
-  height: 500px;
-  color: $purpleText;
-  border: 4px solid $purpleBorder;
-  border-radius: 60px;
-  display: flex;
-  flex-direction: column;
-  background: $purpleBg;
-}
-
-.title {
-  text-align: center;
-  font-size: 40px;
-  font-weight: 600;
-  color: $purpleDark;
-  margin: 10px;
-}
-
-.line {
-  @include gradientLine;
-  height: 3px;
-  width: 80%;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.textContainer {
-  width: 100%;
-  max-width: 950px;
-  margin: 0 auto;
-  padding: 0 30px;
-}
-
-.text {
-  font-size: 25px;
-  color: $purpleDarker;
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
-
-.inputWrapper {
-  margin-bottom: 20px;
-}
-
-.inputLabel {
-  display: block;
-  font-size: 20px;
-  color: $purpleDarker;
-  margin-bottom: 5px;
-}
-
-.inputField {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 18px;
-  border: 2px solid $purpleBorder;
-  border-radius: 8px;
-  background: white;
-  color: $purpleText;
-
-  &:focus {
-    outline: none;
-    border-color: $purpleMedium;
+  &__container {
+    width: 400px;
+    height: 500px;
+    color: $purpleText;
+    border: 4px solid $purpleBorder;
+    border-radius: 60px;
+    display: flex;
+    flex-direction: column;
+    background: $purpleBg;
   }
 
-  &::-webkit-inner-spin-button,
-  &::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  &__title {
+    text-align: center;
+    font-size: 40px;
+    font-weight: 600;
+    color: $purpleDark;
+    margin: 10px;
   }
-}
 
-.buttonWrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 40px;
-}
+  &__line {
+    @include gradientLine;
+    height: 3px;
+    width: 80%;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
 
-.playButton {
-  padding: 8px 24px;
-  font-size: 30px;
+  &__content {
+    width: 100%;
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 0 30px;
+    flex: 1;
+  }
+
+  &__text {
+    font-size: 25px;
+    color: $purpleDarker;
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+
+  &__input-group {
+    margin-bottom: 20px;
+  }
+
+  &__label {
+    display: block;
+    font-size: 20px;
+    color: $purpleDarker;
+    margin-bottom: 5px;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 18px;
+    border: 2px solid $purpleBorder;
+    border-radius: 8px;
+    background: white;
+    color: $purpleText;
+
+    &:focus {
+      outline: none;
+      border-color: $purpleMedium;
+    }
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+
+  &__button {
+    padding: 8px 24px;
+    font-size: 30px;
+
+  }
 }
 </style>
