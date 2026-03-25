@@ -1,3 +1,16 @@
+<template>
+  <div class="body_flask" :style="[flaskStyle, pickedFlaskStyle]" @click="() => wrapperClick()">
+    <div v-if="emptySpace > 0" class="flask__layer"> </div>
+
+    <div
+        v-for="(layer, index) in displayLayers"
+        :key="index"
+        class="flask__layer"
+        :style="{backgroundColor: this.getColorCode(layer.color).value}">
+    </div>
+  </div>
+</template>
+
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { FLASK_COLORS } from '@/constants/colors'
@@ -266,18 +279,7 @@ export default {
   },
 }
 </script>
-<template>
-  <div class="body_flask" :style="[flaskStyle, pickedFlaskStyle]" @click="() => wrapperClick()">
-    <div v-if="emptySpace > 0" class="flask__layer"> </div>
 
-    <div
-        v-for="(layer, index) in displayLayers"
-        :key="index"
-        class="flask__layer"
-        :style="{backgroundColor: this.getColorCode(layer.color).value}">
-    </div>
-  </div>
-</template>
 <style scoped lang="scss">
   .body_flask {
     display: grid;

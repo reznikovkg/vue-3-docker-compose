@@ -1,3 +1,29 @@
+<template>
+  <div class="settings">
+    <p class="settings__p settings__head_p">Переливатор</p>
+
+    <div class="settings__parameter">
+      <p class="settings__p">Количество колб: </p>
+      <p class="settings__show_qty">{{ qtyFlasks }}</p>
+    </div>
+    <input type="range" min="3" max="20" step="1" :value="qtyFlasks" class="settings__input_qty" @input="(e) => changeQtyFlasks(e)">
+
+    <div class="settings__parameter">
+      <p class="settings__p">Количество цветов: </p>
+      <p class="settings__show_qty">{{ qtyColors }}</p>
+    </div>
+    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="qtyColors" class="settings__input_qty" @input="(e) => changeQtyColors(e)">
+
+    <div class="settings__parameter">
+      <p class="settings__p">Лимит слоев: </p>
+      <p class="settings__show_qty">{{ maxQtyLayers }}</p>
+    </div>
+    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="maxQtyLayers" class="settings__input_qty" @input="(e) => changeQtyLayers(e)">
+
+    <button type="button" class="settings__btn" @click="() => handleStartGame()">Начать игру!</button>
+  </div>
+</template>
+
 <script>
 import { mapGetters, mapActions } from 'vuex'
 
@@ -42,31 +68,7 @@ export default {
   }
 }
 </script>
-<template>
-  <div class="settings">
-    <p class="settings__p settings__head_p">Переливатор</p>
 
-    <div class="settings__parameter">
-      <p class="settings__p">Количество колб: </p>
-      <p class="settings__show_qty">{{ qtyFlasks }}</p>
-    </div>
-    <input type="range" min="3" max="20" step="1" :value="qtyFlasks" class="settings__input_qty" @input="(e) => changeQtyFlasks(e)">
-
-    <div class="settings__parameter">
-      <p class="settings__p">Количество цветов: </p>
-      <p class="settings__show_qty">{{ qtyColors }}</p>
-    </div>
-    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="qtyColors" class="settings__input_qty" @input="(e) => changeQtyColors(e)">
-
-    <div class="settings__parameter">
-      <p class="settings__p">Лимит слоев: </p>
-      <p class="settings__show_qty">{{ maxQtyLayers }}</p>
-    </div>
-    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="maxQtyLayers" class="settings__input_qty" @input="(e) => changeQtyLayers(e)">
-
-    <button type="button" class="settings__btn" @click="() => handleStartGame()">Начать игру!</button>
-  </div>
-</template>
 <style scoped lang="scss">
   @use "sass:math";
 

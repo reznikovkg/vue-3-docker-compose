@@ -1,6 +1,7 @@
 <template>
   <Settings></Settings>
 </template>
+
 <script>
 import Settings from "@/components/ui/Settings.vue";
 
@@ -9,5 +10,6 @@ export default {
   components: {Settings},
 }
 </script>
+
 <style scoped lang="scss">
 </style>

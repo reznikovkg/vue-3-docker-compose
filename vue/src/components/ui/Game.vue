@@ -1,3 +1,15 @@
+<template>
+  <div class="game" :style="gameStyle">
+    <Flask
+        v-for="i in qtyFlasks"
+        :ref="flask => flaskRefs[i] = flask"
+        :style="flaskStyle" :index="i"
+        @click="() => handleClick(i)"
+        @flaskUpdated="(activeIndex) => handleFlaskUpdate(activeIndex)">
+    </Flask>
+  </div>
+</template>
+
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import Flask from "@/components/ui/Flask.vue";
@@ -74,17 +86,7 @@ export default {
   }
 }
 </script>
-<template>
-  <div class="game" :style="gameStyle">
-    <Flask
-        v-for="i in qtyFlasks"
-        :ref="flask => flaskRefs[i] = flask"
-        :style="flaskStyle" :index="i"
-        @click="() => handleClick(i)"
-        @flaskUpdated="(activeIndex) => handleFlaskUpdate(activeIndex)">
-    </Flask>
-  </div>
-</template>
+
 <style scoped lang="scss">
   @use "sass:math";
 

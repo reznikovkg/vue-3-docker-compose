@@ -1,14 +1,16 @@
-<script>
-export default {
-  name: "EndGame",
-}
-</script>
 <template>
   <div class="end">
     <p class="end__p end__head">Победа</p>
     <RouterLink to="/" class="end__again">Заново</RouterLink>
   </div>
 </template>
+
+<script>
+export default {
+  name: "EndGame",
+}
+</script>
+
 <style scoped lang="scss">
 .end {
   background-color: #fffaee;
