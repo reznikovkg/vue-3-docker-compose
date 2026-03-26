@@ -123,57 +123,66 @@ export default {
       let localReadyFlasks = this.readyFlasks.map(l => [...l])
       while (curResidualFillLevel !== 0) {
         let lenCurLayer = Math.ceil(Math.random() * this.maxQtyLayers / 2)
-        if (lenCurLayer <= curResidualFillLevel) {
-          let curColor = Math.ceil(Math.random() * this.qtyColors)
-          console.log("limit: ", curColor, this.maxQtyLayers)
-          let isEdgeCase = 0
-          let prevColor
-          if (this.layers.length > 0) {
-            prevColor = this.layers.at(-1).color
-          } else {
-            prevColor = -1
-          }
-          let colorsAvailable = 0
-          for (let i = 0; i < localLimits.length; i++) {
-            if (localLimits[i] + 1 <= this.maxQtyLayers && (i + 1) !== prevColor) {
-              colorsAvailable += 1
-            }
-          }
-          if (colorsAvailable > 0) {
-            while (curColor === prevColor || this.maxQtyLayers < localLimits[curColor - 1] + lenCurLayer) {
-              curColor = Math.floor(Math.random() * this.qtyColors) + 1
-              lenCurLayer = Math.max(1, lenCurLayer - 1)
-            }
-          } else {
-            isEdgeCase = 1
-          }
-          if (isEdgeCase === 0) {
-            localLimits[curColor - 1] += lenCurLayer
-            this.layers.push({
-              color: curColor,
-              fill_level_start: curResidualFillLevel,
-              fill_level_end: curResidualFillLevel - lenCurLayer,
-              width: lenCurLayer
-            })
-            localReadyFlasks[this.index - 1].push(lenCurLayer)
-            curResidualFillLevel -= lenCurLayer
-          } else {
-            console.log("counter2 edge: ")
-            if (this.layers.length > 0) {
-              const lastLayer = this.layers.at(-1)
-              localLimits[lastLayer.color - 1] += curResidualFillLevel
-              lastLayer.fill_level_end = 0
-              lastLayer.width += curResidualFillLevel
-              localReadyFlasks[this.index - 1].push(curResidualFillLevel)
-            }
-            curResidualFillLevel = 0
-          }
+        if (lenCurLayer > curResidualFillLevel) {
+          continue
         }
+        let curColor = Math.ceil(Math.random() * this.qtyColors)
+        console.log("limit: ", curColor, this.maxQtyLayers)
+        let adjustedParams = this.adjustColorAndLenLayerOnInit(localLimits, curColor, lenCurLayer)
+        lenCurLayer = adjustedParams.lenCurLayer
+        curColor = adjustedParams.curColor
+        let isEdgeCase = adjustedParams.isEdgeCase
+        let updatedStateLayers = this.updateLayerOnInit(localLimits, localReadyFlasks, isEdgeCase, lenCurLayer, curColor, curResidualFillLevel)
+        localLimits = updatedStateLayers.localLimits
+        localReadyFlasks = updatedStateLayers.localReadyFlasks
+        curResidualFillLevel = updatedStateLayers.curResidualFillLevel
       }
-
       this.updateLimitsRandom({limitsForRandom: localLimits})
       this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
       console.log(this.layers)
+    },
+    adjustColorAndLenLayerOnInit(localLimits, curColor, lenCurLayer) {
+      let isEdgeCase = 0
+      let prevColor
+      if (this.layers.length > 0) {
+        prevColor = this.layers.at(-1).color
+      } else {
+        prevColor = -1
+      }
+      let colorsAvailable = 0
+      for (let i = 0; i < localLimits.length; i++) {
+        if (localLimits[i] + 1 <= this.maxQtyLayers && (i + 1) !== prevColor) {
+          colorsAvailable += 1
+        }
+      }
+      if (colorsAvailable > 0) {
+        while (curColor === prevColor || this.maxQtyLayers < localLimits[curColor - 1] + lenCurLayer) {
+          curColor = Math.floor(Math.random() * this.qtyColors) + 1
+          lenCurLayer = Math.max(1, lenCurLayer - 1)
+        }
+      } else {
+        isEdgeCase = 1
+      }
+      return {curColor: curColor, lenCurLayer: lenCurLayer, isEdgeCase: isEdgeCase}
+    },
+    updateLayerOnInit(localLimits, localReadyFlasks, isEdgeCase, lenCurLayer, curColor, curResidualFillLevel) {
+      if (isEdgeCase === 0) {
+        localLimits[curColor - 1] += lenCurLayer
+        this.pushLayer(this.layers, curColor, curResidualFillLevel, curResidualFillLevel - lenCurLayer, lenCurLayer)
+        localReadyFlasks[this.index - 1].push(lenCurLayer)
+        curResidualFillLevel -= lenCurLayer
+      } else {
+        console.log("counter2 edge: ")
+        if (this.layers.length > 0) {
+          const lastLayer = this.layers.at(-1)
+          localLimits[lastLayer.color - 1] += curResidualFillLevel
+          lastLayer.fill_level_end = 0
+          lastLayer.width += curResidualFillLevel
+          localReadyFlasks[this.index - 1][localReadyFlasks[this.index - 1].length - 1] += curResidualFillLevel
+        }
+        curResidualFillLevel = 0
+      }
+      return {localLimits: localLimits, localReadyFlasks: localReadyFlasks, curResidualFillLevel: curResidualFillLevel}
     },
     getColorCode(color) {
       return FLASK_COLORS[color - 1]
@@ -192,63 +201,73 @@ export default {
         }
         this.perelivator(activeIndex)
         this.resetFlasks()
-        this.checkWin(activeIndex)
+        let localReadyFlasks = this.updateCurrentChangesLocalReadyFlasks(activeIndex)
+        let counter = this.countReadyFlasks(localReadyFlasks)
+        this.checkWin(counter)
       }
+    },
+    pushLayer(layers, color, fillLevelStart, fillLevelEnd, width) {
+      layers.push({
+        'color': color,
+        'fill_level_start': fillLevelStart,
+        'fill_level_end': fillLevelEnd,
+        'width': width
+      })
+    },
+    updateLayer(layers, fillLevelEnd, width) {
+      layers.at(-1).fill_level_end += fillLevelEnd
+      layers.at(-1).width += width
+    },
+    pourIntoEmpty(tempLayersActiveFlask) {
+      let activeWidth = tempLayersActiveFlask.at(-1).width
+      let activeColor = tempLayersActiveFlask.at(-1).color
+      this.pushLayer(this.layers, activeColor, this.maxQtyLayers, this.maxQtyLayers - activeWidth, activeWidth)
+      tempLayersActiveFlask.pop()
+      return tempLayersActiveFlask
+    },
+    pourFullLayer(tempLayersActiveFlask, activeColor, targetColor, residual, activeWidth) {
+      if (targetColor !== activeColor) {
+        this.pushLayer(this.layers, activeColor, residual, residual - activeWidth, activeWidth)
+        tempLayersActiveFlask.pop()
+      } else {
+        this.updateLayer(this.layers, -activeWidth, activeWidth)
+        tempLayersActiveFlask.pop()
+      }
+      return tempLayersActiveFlask
+    },
+    pourPartOfLayer(tempLayersActiveFlask, activeColor, targetColor, residual) {
+      if (targetColor !== activeColor) {
+        this.pushLayer(this.layers, activeColor, residual, 0, residual)
+        this.updateLayer(tempLayersActiveFlask, residual, -residual)
+      } else {
+        this.updateLayer(this.layers, -residual, residual)
+        this.updateLayer(tempLayersActiveFlask, residual, -residual)
+      }
+      return tempLayersActiveFlask
     },
     perelivator(activeIndex) {
       let tempLayersActiveFlask = this.layersActiveFlask.map(l => ({...l}))
-
       if (this.layers.length > 0) {
-        if (this.layers.at(-1).fill_level_end !== 0) {
-          let residual = this.layers.at(-1).fill_level_end
-          if (residual >= tempLayersActiveFlask.at(-1).width) {
-            if (this.layers.at(-1).color !== tempLayersActiveFlask.at(-1).color) {
-              this.layers.push({
-                'color': tempLayersActiveFlask.at(-1).color,
-                'fill_level_start': this.layers.at(-1).fill_level_end,
-                'fill_level_end': this.layers.at(-1).fill_level_end - tempLayersActiveFlask.at(-1).width,
-                'width': tempLayersActiveFlask.at(-1).width
-              })
-              tempLayersActiveFlask.pop()
-            } else {
-              this.layers.at(-1).fill_level_end = this.layers.at(-1).fill_level_end - tempLayersActiveFlask.at(-1).width
-              this.layers.at(-1).width = this.layers.at(-1).width + tempLayersActiveFlask.at(-1).width
-              tempLayersActiveFlask.pop()
-            }
+        let targetColor = this.layers.at(-1).color
+        let residual = this.layers.at(-1).fill_level_end
+        if (residual !== 0) {
+          let activeWidth = tempLayersActiveFlask.at(-1).width
+          let activeColor = tempLayersActiveFlask.at(-1).color
+          if (residual >= activeWidth) {
+            tempLayersActiveFlask = this.pourFullLayer(tempLayersActiveFlask, activeColor, targetColor, residual, activeWidth)
           } else {
-            if (this.layers.at(-1).color !== tempLayersActiveFlask.at(-1).color) {
-              this.layers.push({
-                'color': tempLayersActiveFlask.at(-1).color,
-                'fill_level_start': this.layers.at(-1).fill_level_end,
-                'fill_level_end': 0,
-                'width': residual
-              })
-              tempLayersActiveFlask.at(-1).fill_level_end = tempLayersActiveFlask.at(-1).fill_level_end + residual
-              tempLayersActiveFlask.at(-1).width = tempLayersActiveFlask.at(-1).width - residual
-            } else {
-              this.layers.at(-1).fill_level_end = this.layers.at(-1).fill_level_end - residual
-              this.layers.at(-1).width = this.layers.at(-1).width + residual
-              tempLayersActiveFlask.at(-1).fill_level_end = tempLayersActiveFlask.at(-1).fill_level_end + residual
-              tempLayersActiveFlask.at(-1).width = tempLayersActiveFlask.at(-1).width - residual
-            }
+            tempLayersActiveFlask = this.pourPartOfLayer(tempLayersActiveFlask, activeColor, targetColor, residual)
           }
         }
       } else {
-        this.layers.push({
-          'color': tempLayersActiveFlask.at(-1).color,
-          'fill_level_start': this.maxQtyLayers,
-          'fill_level_end': this.maxQtyLayers - tempLayersActiveFlask.at(-1).width,
-          'width': tempLayersActiveFlask.at(-1).width
-        })
-        tempLayersActiveFlask.pop()
+        tempLayersActiveFlask = this.pourIntoEmpty(tempLayersActiveFlask)
       }
       this.updateActiveFlask({layersActive: tempLayersActiveFlask})
       this.$emit('flaskUpdated', { activeIndex: activeIndex })
-
       console.log("target: ", this.layers, "active: ", tempLayersActiveFlask)
     },
-    checkWin(activeIndex) {
-      console.log("checkWin")
+    updateCurrentChangesLocalReadyFlasks(activeIndex) {
+      console.log("updateCurrentChangesLocalReadyFlasks")
       let localReadyFlasks = this.readyFlasks.map(l => [...l])
       let tempLayersActiveFlask = this.layersActiveFlask.map(l => ({...l}))
       localReadyFlasks[this.index - 1] = []
@@ -259,16 +278,21 @@ export default {
       for (let i = 0; i < tempLayersActiveFlask.length; i++) {
         localReadyFlasks[activeIndex - 1].push(tempLayersActiveFlask[i].width)
       }
-
+      this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
+      return localReadyFlasks
+    },
+    countReadyFlasks(localReadyFlasks) {
       let counter = 0
       for (let i = 0; i < localReadyFlasks.length; i++) {
-        console.log("checkWin1: ", localReadyFlasks[i][0], this.maxQtyLayers)
+        console.log("countReadyFlasks: ", localReadyFlasks[i][0], this.maxQtyLayers)
         if (localReadyFlasks[i][0] === this.maxQtyLayers) {
           counter += 1
         }
       }
-      console.log("checkWin2: ", counter)
-      this.updateReadyFlasks({isReadyFlasks: localReadyFlasks})
+      return counter
+    },
+    checkWin(counter) {
+      console.log("checkWin: ", counter)
       if (counter === this.qtyColors) {
         console.log("game end")
         setTimeout(() => {

@@ -70,79 +70,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  @use "sass:math";
-
-  @function f1_y($t, $x, $y) {
-    @return $y;
-  }
-
-  @function f2_y($t, $x, $y) {
-    $k: 1.0;
-    $m: 1.0;
-    @return -($k/$m) * $x - 0.2 * $y;
-  }
-  //@function RK_iter($x, $y, $h) {
-  //  $k1: f($x, $y);
-  //  $k2: f($x + $h / 2, $y + $h * $k1 / 2);
-  //  $k3: f($x + $h / 2, $y + $h * $k2 / 2);
-  //  $k4: f($x + $h, $y + $h * $k3);
-  //
-  //  $new-y: $y + $h * ($k1 + 2*$k2 + 2*$k3 + $k4) / 6;
-  //  @return $new-y;
-  //}
-
-  @function solve_y_system_RK_1_iter($t, $x_i, $y_i, $h, $f1_y, $f2_y) {
-    $k1_x: $h * call($f1_y, $t, $x_i, $y_i);
-    $k1_y: $h * call($f2_y, $t, $x_i, $y_i);
-
-    $k2_x: $h * call($f1_y, $t + $h / 2, $x_i + 1 / 2 * $k1_x, $y_i + 1 / 2 * $k1_y);
-    $k2_y: $h * call($f2_y, $t + $h / 2, $x_i + 1 / 2 * $k1_x, $y_i + 1 / 2 * $k1_y);
-
-    $k3_x: $h * call($f1_y, $t + $h / 2, $x_i + 1 / 2 * $k2_x, $y_i + 1 / 2 * $k2_y);
-    $k3_y: $h * call($f2_y, $t + $h / 2, $x_i + 1 / 2 * $k2_x, $y_i + 1 / 2 * $k2_y);
-
-    $k4_x: $h * call($f1_y, $t + $h, $x_i + $k3_x, $y_i + $k3_y);
-    $k4_y: $h * call($f2_y, $t + $h, $x_i + $k3_x, $y_i + $k3_y);
-
-    $x_i_1: $x_i + 1 / 6 * ($k1_x + 2 * $k2_x + 2 * $k3_x + $k4_x);
-    $y_i_1: $y_i + 1 / 6 * ($k1_y + 2 * $k2_y + 2 * $k3_y + $k4_y);
-
-    @return ($x_i_1, $y_i_1);
-  }
-
-  @function RK4($layers, $t, $x, $y, $t_end) {
-    $points: ();
-    $h: ($t_end - $t) / $layers;
-    $scale-x: 100;
-    $scale-y: 8;
-    $cur-t: $t;
-    $cur-x: $x;
-    $cur-y: $y;
-
-    $initial-point: radial-gradient(circle at calc(10% + $cur-t * $scale-x * 1px) calc(50% - $cur-y * $scale-y * 1px),
-        rgb(1, 120, 147) 2px, transparent 2px);
-    $points: append($points, $initial-point, comma);
-
-    @for $i from 1 through $layers {
-      $size: 2px;
-      $cur-coords: solve_y_system_RK_1_iter($cur-t, $cur-x, $cur-y, $h, f1_y, f2_y);
-      $cur-x: nth($cur-coords, 1);
-      $cur-y: nth($cur-coords, 2);
-      $cur-t: $cur-t + $h;
-      //$pos-x: calc(10% + $cur-t * $scale * 1px);
-      //$pos-y: calc(50% - $cur-y * $scale * $scale-y * 1px);
-      $pos-x: calc(50% + $cur-y * $scale-x * 1px);
-      $pos-y: calc(17% + $cur-t * $scale-y * 1px);
-      $point: radial-gradient(circle at $pos-x $pos-y, rgba(1, 120, 147, 1) $size, transparent $size);
-      $points: append($points, $point, comma);
-      //$pos-x: calc(90% - $cur-t * $scale * 1px);
-      //$pos-y: calc(50% - $cur-y * $scale * $scale-y * 1px);
-      //$point: radial-gradient(circle at $pos-x $pos-y, rgba(1, 120, 147, 1) $size, transparent $size);
-      //$points: append($points, $point, comma);
-    }
-
-    @return $points;
-  }
+  @use '@/assets/rk4.scss' as *;
 
   .settings {
     background-color: #fffaee;
@@ -163,7 +91,7 @@ export default {
       background-size: 100% 100%;
       pointer-events: none;
       //mix-blend-mode: overlay;
-      background-image: RK4(500, 0, 0, 1, 50);
+      background-image: RK4(500, 0, 0, 1, 50, 100, 8, "settings");
       z-index: 0;
       border-radius: 40px;
     }
@@ -224,26 +152,27 @@ export default {
       position: relative;
       z-index: 1;
       //transition: all 0.2s ease;
-    }
 
-    &__btn:hover {
-      color: #194d6c;
-      font-size: 35px;
-      padding: 2vh;
-      font-weight: bold;
-      background-color: #abdaf4;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      width: 70%;
-      margin-left: 15%;
-      margin-top: 3vh;
-      margin-bottom: 10px;
-      box-shadow: 0 8px 16px 0 #194d6c;
-      border-width: 2px;
-      border-style: solid;
-      position: relative;
-      z-index: 1;
+
+      &:hover {
+        color: #194d6c;
+        font-size: 35px;
+        padding: 2vh;
+        font-weight: bold;
+        background-color: #abdaf4;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        width: 70%;
+        margin-left: 15%;
+        margin-top: 3vh;
+        margin-bottom: 10px;
+        box-shadow: 0 8px 16px 0 #194d6c;
+        border-width: 2px;
+        border-style: solid;
+        position: relative;
+        z-index: 1;
+      }
     }
 
     &__input_qty {
@@ -259,49 +188,51 @@ export default {
       appearance: none;
       position: relative;
       z-index: 1;
-    }
 
-    &__input_qty::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      background: #3b82f6;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 8px 18px 0 #194d6c;
-      transition: 0.1s;
-      position: relative;
-      z-index: 1;
-      //border-style: solid;
-    }
 
-    &__input_qty::-webkit-slider-thumb:hover {
-      transform: scale(1.3);
-      background: #286185;
-      box-shadow: 0 8px 18px 0 #194d6c;
-      position: relative;
-      z-index: 1;
-    }
+      &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #3b82f6;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 8px 18px 0 #194d6c;
+        transition: 0.1s;
+        position: relative;
+        z-index: 1;
+        //border-style: solid;
 
-    &__input_qty::-webkit-slider-thumb:active {
-      transform: scale(1.3);
-      background: #286185;
-      box-shadow: 0 8px 18px 0 #194d6c;
-      position: relative;
-      z-index: 1;
-    }
 
-    &__input_qty::-webkit-slider-runnable-track {
-      //height: 6px;
-      width: 70%;
-      background: linear-gradient(to right, #abdaf4, #82aaef);
-      border-radius: 10px;
-      border-color: #194d6c;
-      border-width: 1px;
-      border-style: solid;
-      box-shadow: 0 3px 6px 0 #194d6c;
-      position: relative;
-      z-index: 1;
+        &:hover {
+          transform: scale(1.3);
+          background: #286185;
+          box-shadow: 0 8px 18px 0 #194d6c;
+          position: relative;
+          z-index: 1;
+        }
+
+        &:active {
+          transform: scale(1.3);
+          background: #286185;
+          box-shadow: 0 8px 18px 0 #194d6c;
+          position: relative;
+          z-index: 1;
+        }
+      }
+
+      &::-webkit-slider-runnable-track {
+        //height: 6px;
+        width: 70%;
+        background: linear-gradient(to right, #abdaf4, #82aaef);
+        border-radius: 10px;
+        border-color: #194d6c;
+        border-width: 1px;
+        border-style: solid;
+        box-shadow: 0 3px 6px 0 #194d6c;
+        position: relative;
+        z-index: 1;
+      }
     }
   }
 

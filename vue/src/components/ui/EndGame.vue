@@ -59,26 +59,26 @@ export default {
     border-width: 2px;
     border-style: solid;
     //transition: all 0.2s ease;
-  }
 
-  &__again:hover {
-    color: #194d6c;
-    font-size: 35px;
-    padding: 2vh;
-    font-weight: bold;
-    background-color: #abdaf4;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    //width: 70%;
-    margin-left: 15%;
-    margin-right: 15%;
-    margin-top: 5vh;
-    margin-bottom: 7px;
-    box-shadow: 0 8px 16px 0 #194d6c;
-    border-width: 2px;
-    border-style: solid;
 
+    &:hover {
+      color: #194d6c;
+      font-size: 35px;
+      padding: 2vh;
+      font-weight: bold;
+      background-color: #abdaf4;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      //width: 70%;
+      margin-left: 15%;
+      margin-right: 15%;
+      margin-top: 5vh;
+      margin-bottom: 7px;
+      box-shadow: 0 8px 16px 0 #194d6c;
+      border-width: 2px;
+      border-style: solid;
+    }
   }
 }
 </style>
