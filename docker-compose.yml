@@ -4,7 +4,7 @@ services:
     vue:
         build: ./vue
         ports:
-            - "9999:5173"
+            - "5173:5173"
         volumes:
             - ./vue/src:/vue/src
             - ./vue/package.json:/vue/package.json
