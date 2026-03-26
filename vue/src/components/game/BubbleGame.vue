@@ -187,15 +187,6 @@ export default {
       return this.getFPS || 60
     }
   },
-  watch: {
-    getGameMode: {
-      handler(newMode) {
-        if (this.cursorManager && !this.paused && !this.gameOver) {
-          this.cursorManager.setMode(newMode)
-        }
-      }
-    }
-  },
   mounted() {
     console.log('BubbleGame смонтирован')
     this.resizeCanvas()
