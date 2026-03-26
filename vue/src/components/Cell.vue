@@ -2,7 +2,7 @@
   <div 
     class="puzzle__cell" 
     :class="cellClasses"
-      @click="() => $emit('click', index)"
+    @click="() => handleClick()"
   >
     <span v-if="value !== size * size">{{ value }}</span>
   </div>
@@ -24,6 +24,11 @@ export default {
         'puzzle__cell--blocked': this.isBlocked,
         'puzzle__cell--frozen': this.isFrozen
       }
+    }
+  },
+  methods: {
+    handleClick() {
+      this.$emit('click', this.index)
     }
   }
 }

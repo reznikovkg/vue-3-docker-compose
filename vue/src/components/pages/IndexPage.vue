@@ -163,8 +163,6 @@ export default {
     },
     afterMove(index, oldEmptyIndex) {
       this.lastMoveTime = Date.now()
-      this.timerSpeed = 1
-      this.restartTimer()
       this.lastMoves.push({ from: index, to: oldEmptyIndex })
       if (this.lastMoves.length > 2) {
         this.lastMoves.shift()

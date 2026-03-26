@@ -11,7 +11,7 @@
       :size="size"
       :is-blocked="currentMode === 'block' && blockedCell === i"
       :is-frozen="isFrozen(i)"
-      @click="(index) => $emit('cell-click', index)"
+      @click="(index) => handleCellClick(index)"
     />
   </div>
 </template>
@@ -28,6 +28,11 @@ export default {
     currentMode: String,
     blockedCell: Number,
     isFrozen: Function
+  },
+  methods: {
+    handleCellClick(index) {
+      this.$emit('cell-click', index)
+    }
   }
 }
 </script>
