@@ -4,6 +4,126 @@ const IDLE_TIME_THRESHOLD = 5
 const PENALTY_TIME = 10
 const FAST_TIMER_MULTIPLIER = 2
 
+const getNeighbors = (gridSize, index) => {
+    const row = Math.floor(index / gridSize)
+    const col = index % gridSize
+    const neighbors = []
+
+    if (row > 0) {
+        neighbors.push(index - gridSize)
+    }
+
+    if (row < gridSize - 1) {
+        neighbors.push(index + gridSize)
+    }
+
+    if (col > 0) {
+        neighbors.push(index - 1)
+    }
+
+    if (col < gridSize - 1) {
+        neighbors.push(index + 1)
+    }
+
+    return neighbors
+}
+
+const checkWin = (tiles, gridSize) => {
+    const total = gridSize * gridSize
+
+    for (let i = 0; i < total; i++) {
+        const expectedValue = (i < total - 1) ? (i + 1) : 0
+
+        if (tiles[i] !== expectedValue) {
+            return false
+        }
+    }
+
+    return true
+}
+
+const checkPenalty = (lastMoveIndex, secondLastMoveIndex, currentIndex, emptyIndex) => {
+    return currentIndex === secondLastMoveIndex && emptyIndex === lastMoveIndex
+}
+
+const isTileFrozen = (frozenTiles, index, value) => {
+    return frozenTiles.includes(index) && value !== 0
+}
+
+const swapTilesAndCommit = (commit, tiles, idx1, idx2) => {
+    commit('SWAP_TILES', { idx1, idx2 })
+}
+
+const updateBlockedIndex = (commit, state, emptyIndex) => {
+    const neighbors = getNeighbors(state.gridSize, emptyIndex)
+
+    if (neighbors.length > 0) {
+        const randomIndex = Math.floor(Math.random() * neighbors.length)
+        commit('SET_BLOCKED_INDEX', neighbors[randomIndex])
+    } else {
+        commit('SET_BLOCKED_INDEX', null)
+    }
+}
+
+const processMove = (commit, state, clickedIndex, emptyIndex) => {
+    commit('RESET_IDLE_TIME')
+
+    if (checkPenalty(state.lastMoveIndex, state.secondLastMoveIndex, clickedIndex, emptyIndex)) {
+        commit('SET_PENALTY_TIME', state.penaltyTime + PENALTY_TIME)
+    }
+
+    commit('SET_LAST_MOVE_INDEX', clickedIndex)
+    commit('UPDATE_FROZEN_TILES')
+
+    const newEmptyIndex = state.tiles.indexOf(0)
+    updateBlockedIndex(commit, state, newEmptyIndex)
+
+    if (checkWin(state.tiles, state.gridSize)) {
+        commit('SET_GAME_ACTIVE', false)
+    }
+}
+
+const executeSpecialMove = (commit, state, index, emptyIndex) => {
+    swapTilesAndCommit(commit, state.tiles, index, emptyIndex)
+    commit('SET_SPECIAL_MOVES', state.specialMoves - 1)
+    commit('SET_MOVES', state.moves + 1)
+    commit('SET_BLOCKED_INDEX', null)
+
+    processMove(commit, state, index, emptyIndex)
+
+    return true
+}
+
+const executeNormalMove = (commit, state, index, emptyIndex) => {
+    const neighbors = getNeighbors(state.gridSize, emptyIndex)
+
+    if (!neighbors.includes(index)) {
+        return false
+    }
+
+    swapTilesAndCommit(commit, state.tiles, emptyIndex, index)
+    commit('SET_MOVES', state.moves + 1)
+    commit('SET_BLOCKED_INDEX', null)
+
+    processMove(commit, state, index, emptyIndex)
+
+    return true
+}
+
+const shuffleOnce = (state, previousIndex) => {
+    const emptyIndex = state.tiles.indexOf(0)
+    const neighbors = getNeighbors(state.gridSize, emptyIndex)
+    const validNeighbors = neighbors.filter((n) => n !== previousIndex)
+
+    if (validNeighbors.length === 0) {
+        return previousIndex
+    }
+
+    const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)]
+
+    return { emptyIndex, randomNeighbor }
+}
+
 export default {
     namespaced: true,
 
@@ -269,64 +389,18 @@ export default {
             const shuffleMoves = state.gridSize * state.gridSize * 10
 
             for (let i = 0; i < shuffleMoves; i++) {
-                const emptyIndex = state.tiles.indexOf(0)
-                const row = Math.floor(emptyIndex / state.gridSize)
-                const col = emptyIndex % state.gridSize
-                const neighbors = []
+                const result = shuffleOnce(state, previousIndex)
 
-                if (row > 0) {
-                    neighbors.push(emptyIndex - state.gridSize)
+                if (result.emptyIndex !== undefined) {
+                    commit('SWAP_TILES', { idx1: result.emptyIndex, idx2: result.randomNeighbor })
+                    previousIndex = result.emptyIndex
                 }
-
-                if (row < state.gridSize - 1) {
-                    neighbors.push(emptyIndex + state.gridSize)
-                }
-
-                if (col > 0) {
-                    neighbors.push(emptyIndex - 1)
-                }
-
-                if (col < state.gridSize - 1) {
-                    neighbors.push(emptyIndex + 1)
-                }
-
-                const validNeighbors = neighbors.filter((n) => {
-                    return n !== previousIndex
-                })
-                const randomNeighbor = validNeighbors[Math.floor(Math.random() * validNeighbors.length)]
-
-                commit('SWAP_TILES', { idx1: emptyIndex, idx2: randomNeighbor })
-                previousIndex = emptyIndex
             }
 
             const emptyIndex = state.tiles.indexOf(0)
-            const row = Math.floor(emptyIndex / state.gridSize)
-            const col = emptyIndex % state.gridSize
-            const neighbors = []
+            updateBlockedIndex(commit, state, emptyIndex)
 
-            if (row > 0) {
-                neighbors.push(emptyIndex - state.gridSize)
-            }
-
-            if (row < state.gridSize - 1) {
-                neighbors.push(emptyIndex + state.gridSize)
-            }
-
-            if (col > 0) {
-                neighbors.push(emptyIndex - 1)
-            }
-
-            if (col < state.gridSize - 1) {
-                neighbors.push(emptyIndex + 1)
-            }
-
-            if (neighbors.length > 0) {
-                const randomIndex = Math.floor(Math.random() * neighbors.length)
-                commit('SET_BLOCKED_INDEX', neighbors[randomIndex])
-            } else {
-                commit('SET_BLOCKED_INDEX', null)
-            }
-
+            commit('UPDATE_FROZEN_TILES')
             commit('SET_GAME_ACTIVE', true)
         },
 
@@ -337,154 +411,23 @@ export default {
 
             const emptyIndex = state.tiles.indexOf(0)
 
-            if (state.frozenTiles.includes(index) && state.tiles[index] !== 0) {
+            if (isTileFrozen(state.frozenTiles, index, state.tiles[index])) {
                 return false
             }
 
-            if (state.frozenTiles.includes(emptyIndex) && state.tiles[emptyIndex] !== 0) {
+            if (isTileFrozen(state.frozenTiles, emptyIndex, state.tiles[emptyIndex])) {
                 return false
-            }
-
-            if (state.specialMoves > 0 && state.tiles[index] !== 0) {
-                commit('SWAP_TILES', { idx1: index, idx2: emptyIndex })
-                commit('SET_SPECIAL_MOVES', state.specialMoves - 1)
-                commit('SET_MOVES', state.moves + 1)
-                commit('SET_BLOCKED_INDEX', null)
-                commit('RESET_IDLE_TIME')
-
-                if (index === state.secondLastMoveIndex && emptyIndex === state.lastMoveIndex) {
-                    commit('SET_PENALTY_TIME', state.penaltyTime + PENALTY_TIME)
-                }
-
-                commit('SET_LAST_MOVE_INDEX', index)
-                commit('UPDATE_FROZEN_TILES')
-
-                const row = Math.floor(emptyIndex / state.gridSize)
-                const col = emptyIndex % state.gridSize
-                const neighbors = []
-
-                if (row > 0) {
-                    neighbors.push(emptyIndex - state.gridSize)
-                }
-
-                if (row < state.gridSize - 1) {
-                    neighbors.push(emptyIndex + state.gridSize)
-                }
-
-                if (col > 0) {
-                    neighbors.push(emptyIndex - 1)
-                }
-
-                if (col < state.gridSize - 1) {
-                    neighbors.push(emptyIndex + 1)
-                }
-
-                if (neighbors.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * neighbors.length)
-                    commit('SET_BLOCKED_INDEX', neighbors[randomIndex])
-                }
-
-                const total = state.gridSize * state.gridSize
-                let isWin = true
-
-                for (let i = 0; i < total; i++) {
-                    const expectedValue = (i < total - 1) ? (i + 1) : 0
-
-                    if (state.tiles[i] !== expectedValue) {
-                        isWin = false
-                        break
-                    }
-                }
-
-                if (isWin) {
-                    commit('SET_GAME_ACTIVE', false)
-                }
-
-                return true
             }
 
             if (index === state.blockedIndex) {
                 return false
             }
 
-            const row = Math.floor(emptyIndex / state.gridSize)
-            const col = emptyIndex % state.gridSize
-            const neighbors = []
-
-            if (row > 0) {
-                neighbors.push(emptyIndex - state.gridSize)
+            if (state.specialMoves > 0 && state.tiles[index] !== 0) {
+                return executeSpecialMove(commit, state, index, emptyIndex)
             }
 
-            if (row < state.gridSize - 1) {
-                neighbors.push(emptyIndex + state.gridSize)
-            }
-
-            if (col > 0) {
-                neighbors.push(emptyIndex - 1)
-            }
-
-            if (col < state.gridSize - 1) {
-                neighbors.push(emptyIndex + 1)
-            }
-
-            if (neighbors.includes(index)) {
-                commit('SWAP_TILES', { idx1: emptyIndex, idx2: index })
-                commit('SET_MOVES', state.moves + 1)
-                commit('SET_BLOCKED_INDEX', null)
-                commit('RESET_IDLE_TIME')
-
-                if (index === state.secondLastMoveIndex && emptyIndex === state.lastMoveIndex) {
-                    commit('SET_PENALTY_TIME', state.penaltyTime + PENALTY_TIME)
-                }
-
-                commit('SET_LAST_MOVE_INDEX', index)
-                commit('UPDATE_FROZEN_TILES')
-
-                const newRow = Math.floor(index / state.gridSize)
-                const newCol = index % state.gridSize
-                const newNeighbors = []
-
-                if (newRow > 0) {
-                    newNeighbors.push(index - state.gridSize)
-                }
-
-                if (newRow < state.gridSize - 1) {
-                    newNeighbors.push(index + state.gridSize)
-                }
-
-                if (newCol > 0) {
-                    newNeighbors.push(index - 1)
-                }
-
-                if (newCol < state.gridSize - 1) {
-                    newNeighbors.push(index + 1)
-                }
-
-                if (newNeighbors.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * newNeighbors.length)
-                    commit('SET_BLOCKED_INDEX', newNeighbors[randomIndex])
-                }
-
-                const total = state.gridSize * state.gridSize
-                let isWin = true
-
-                for (let i = 0; i < total; i++) {
-                    const expectedValue = (i < total - 1) ? (i + 1) : 0
-
-                    if (state.tiles[i] !== expectedValue) {
-                        isWin = false
-                        break
-                    }
-                }
-
-                if (isWin) {
-                    commit('SET_GAME_ACTIVE', false)
-                }
-
-                return true
-            }
-
-            return false
+            return executeNormalMove(commit, state, index, emptyIndex)
         },
 
         changeGridSize: ({ commit }, newSize) => {
@@ -525,7 +468,8 @@ export default {
                     return
                 }
                 commit('INCREMENT_TIMER')
-                commit('SET_TIMER_TIMEOUT', setTimeout(timerLoop, TIMER_DELAY))
+                const timeout = setTimeout(timerLoop, TIMER_DELAY)
+                commit('SET_TIMER_TIMEOUT', timeout)
             }
 
             const specialMoveLoop = () => {
@@ -533,7 +477,8 @@ export default {
                     return
                 }
                 commit('INCREMENT_SPECIAL_MOVES')
-                commit('SET_SPECIAL_MOVE_TIMEOUT', setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY))
+                const timeout = setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY)
+                commit('SET_SPECIAL_MOVE_TIMEOUT', timeout)
             }
 
             const idleLoop = () => {
@@ -541,11 +486,15 @@ export default {
                     return
                 }
                 commit('INCREMENT_IDLE_TIME')
-                commit('SET_IDLE_TIMEOUT', setTimeout(idleLoop, TIMER_DELAY))
+                const timeout = setTimeout(idleLoop, TIMER_DELAY)
+                commit('SET_IDLE_TIMEOUT', timeout)
             }
 
             timerLoop()
-            setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY)
+
+            const specialTimeout = setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY)
+            commit('SET_SPECIAL_MOVE_TIMEOUT', specialTimeout)
+
             idleLoop()
         },
 
