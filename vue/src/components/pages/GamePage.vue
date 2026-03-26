@@ -105,6 +105,8 @@ export default {
     align-items: center;
     padding: 20px;
     min-height: 100vh;
+    width: 100%;
+    max-width: 100%;
     background: linear-gradient(135deg, #667EEA 0%, #764BA2 100%);
 
     &__title {
@@ -126,7 +128,7 @@ export default {
 
     &__flasks {
         display: flex;
-        gap: 20px;
+        gap: 15px;
         flex-wrap: wrap;
         justify-content: center;
         margin-bottom: 30px;

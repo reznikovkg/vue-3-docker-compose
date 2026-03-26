@@ -8,13 +8,13 @@ export const ROUTES = {
 
 const routes = [
   {
-    name: ROUTES.GAME,
-    path: '/Game',
+    path: ROUTES.GAME,
+    name: 'Game',
     component: GamePage
   }
 ]
 
 export const router = createRouter({
-  history: createWebHistory('/'),
+  history: createWebHistory(),
   routes,
 })

@@ -84,7 +84,7 @@ export default {
     }
 
     &__liquid {
-        width: 60px;
+        width: 50px;
         height: 200px;
         border: 3px solid #2C3E50;
         border-radius: 0 0 10px 10px;
