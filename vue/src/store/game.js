@@ -37,14 +37,29 @@ export default {
         [MUTATIONS.MOVE_LIQUID]: (state, { fromFlask, toFlask }) => {
             const fromLayers = state.flasks[fromFlask]
             const toLayers = state.flasks[toFlask]
-            const liquidToMove = fromLayers[fromLayers.length - 1]
-            const spaceInToFlask = state.maxLayers - toLayers.length
-            const amountToMove = Math.min(1, spaceInToFlask)
-
-            for (let i = 0; i < amountToMove; i++) {
-                    toLayers.push(liquidToMove)
-                }
-            fromLayers.splice(fromLayers.length - amountToMove, amountToMove)
+            const topColor = fromLayers[fromLayers.length - 1]
+    
+        // Считаем, сколько верхних слоёв одного цвета
+        let sameColorCount = 0
+        for (let i = fromLayers.length - 1; i >= 0; i--) {
+        if (fromLayers[i] === topColor) {
+            sameColorCount++
+        } else {
+            break
+        }
+        }
+    
+        // Сколько места в целевой колбе
+        const spaceInToFlask = state.maxLayers - toLayers.length
+    
+        // Сколько реально перельём
+        const amountToMove = Math.min(sameColorCount, spaceInToFlask)
+    
+        // Переливаем
+        for (let i = 0; i < amountToMove; i++) {
+        toLayers.push(topColor)
+        }
+        fromLayers.splice(fromLayers.length - amountToMove, amountToMove)
         },
         [MUTATIONS.SET_GAME_WON]: (state, won) => {
             state.gameWon = won
