@@ -1,7 +1,7 @@
 <template>
   <div class="card"
        :class="{ 'card--selected': card.flipped, 'card--matched': card.matched, 'card--blocked': isBlocked }"
-       @click="emit('onClick')">
+       @click="() => handleClick()">
     <span v-if="card.flipped || card.matched">{{ card.value }}</span>
   </div>
 </template>
@@ -11,6 +11,10 @@ import { computed } from 'vue'
 
 const props = defineProps(["card", "isBlocked"])
 const emit = defineEmits(['onClick'])
+
+function handleClick() {
+  emit('onClick', props.card.id)
+}
 
 const layerColors = ['#c0392b', '#f1c40f', '#2ecc71', '#3498db', '#8e44ad']
 const layerColor = computed(() => {

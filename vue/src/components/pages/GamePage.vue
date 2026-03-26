@@ -13,8 +13,8 @@
             v-for="card in getCardsByPosition(i - 1)"
             :key="card.id"
             :card="card"
-            @onClick="handleCardClick(card.id)"
             :is-blocked="isCardBlocked(card)"
+            @onClick="() => handleCardClick(card.id)"
           />
         </div>
       </div>

@@ -1,5 +1,5 @@
 <template>
-  <button class="custom-button" @click="(event) => onClick(event)">
+  <button class="custom-button" @click="() => onClick()">
     {{ label }}
   </button>
 </template>
