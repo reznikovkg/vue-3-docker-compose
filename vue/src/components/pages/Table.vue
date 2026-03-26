@@ -42,7 +42,7 @@ export default {
 .table-block {
   flex: 2;
   display: flex;
-  border-top: 1px solid #770059;
+  border-top: 3px solid #770059;
 
   &__list {
     flex: 3;
@@ -94,7 +94,7 @@ export default {
     gap: 10px;
     padding: 10px;
     margin-left: 40px;
-    border-left: 1px solid #770059;
+    border-left: 3px solid #770059;
     padding-left: 30px;
   }
 

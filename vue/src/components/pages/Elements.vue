@@ -36,26 +36,28 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .elements {
-  flex: 8;
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
   padding: 12px;
   align-content: start;
+  overflow-y: auto;
 
   &__item {
     aspect-ratio: 1;
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 4px rgb(181, 67, 185);
+    box-shadow: 0 1px 3px rgb(181, 67, 185);
     cursor: pointer;
     user-select: none;
+    padding: 6px;
 
     &:hover {
       transform: scale(1.05);
@@ -76,7 +78,7 @@ export default {
   }
 
   &__name {
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: 14px;
     color: #000;
   }
