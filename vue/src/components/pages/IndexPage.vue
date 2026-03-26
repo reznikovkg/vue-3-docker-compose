@@ -28,7 +28,7 @@
 
       <div class="game__field">
         <Flask
-          v-for="(flask, index) in flasks"
+          v-for="(flask, index) in getFlasks"
           :key="index"
           :layers="flask"
           :maxLayers="MAX_LAYERS"
@@ -94,14 +94,6 @@ export default {
       'getFlasks',
       'getDragIndex'
     ]),
-
-    flasks () {
-      return this.getFlasks
-    },
-
-    dragIndex () {
-      return this.getDragIndex
-    },
 
     formattedTime () {
       return this.formatTime(this.time)
@@ -211,7 +203,7 @@ export default {
       }
 
       if (this.selectedIndex === null) {
-        if (!this.flasks[index].length) return
+        if (!this.getFlasks[index].length) return
         this.selectedIndex = index
         return
       }
@@ -230,7 +222,7 @@ export default {
     },
 
     pour (fromIndex, toIndex) {
-      const flasks = this.flasks.map(flask => [...flask])
+      const flasks = this.getFlasks.map(flask => [...flask])
       const from = flasks[fromIndex]
       const to = flasks[toIndex]
 
@@ -334,7 +326,7 @@ export default {
     setBlockedFlask () {
       const available = []
 
-      this.flasks.forEach((flask, index) => {
+      this.getFlasks.forEach((flask, index) => {
         if (flask.length) {
           available.push(index)
         }
@@ -354,7 +346,7 @@ export default {
     },
 
     handleDrop (index, place) {
-      if (this.dragIndex === null) return
+      if (this.getDragIndex === null) return
 
       let targetIndex = index
 
@@ -362,12 +354,12 @@ export default {
         targetIndex++
       }
 
-      if (this.dragIndex === targetIndex) {
+      if (this.getDragIndex === targetIndex) {
         this.setDragIndex(null)
         return
       }
 
-      if (this.dragIndex + 1 === targetIndex) {
+      if (this.getDragIndex + 1 === targetIndex) {
         this.setDragIndex(null)
         return
       }
@@ -375,18 +367,18 @@ export default {
       let blockedFlask = null
 
       if (this.blockedFlaskIndex !== null) {
-        blockedFlask = this.flasks[this.blockedFlaskIndex]
+        blockedFlask = this.getFlasks[this.blockedFlaskIndex]
       }
 
       this.moveFlask({
-        fromIndex: this.dragIndex,
+        fromIndex: this.getDragIndex,
         toIndex: targetIndex
       })
 
       this.selectedIndex = null
 
       if (blockedFlask) {
-        this.blockedFlaskIndex = this.flasks.findIndex(flask => flask === blockedFlask)
+        this.blockedFlaskIndex = this.getFlasks.findIndex(flask => flask === blockedFlask)
       }
 
       this.setDragIndex(null)
