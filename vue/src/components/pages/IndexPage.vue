@@ -1,11 +1,17 @@
 <template>
   <div class="game" @mousemove="onMouseMove">
-    <div class="hud">
+    
+    <div class="game__hud">
       <div>Время: {{ formattedTime }}</div>
       <div>Убито: {{ enemiesKilled }}</div>
     </div>
 
-    <div class="world">
+    <div
+      class="game__world"
+      :style="{
+        transform: `translate(${centerX - player.x}px, ${centerY - player.y}px)`
+      }"
+    >
       <PlayerEntity :x="player.x" :y="player.y" />
 
       <BulletEntity
@@ -23,12 +29,13 @@
       />
     </div>
 
-    <div v-if="!gameActive" class="game-over">
+    <div v-if="!gameActive" class="game__game-over">
       <h2>Вы погибли.</h2>
       <p>Время в живых: {{ formattedTime }}</p>
       <p>Убито врагов: {{ enemiesKilled }}</p>
       <button @click="restartGame">Играть снова</button>
     </div>
+
   </div>
 </template>
 
@@ -48,7 +55,7 @@ export default {
 
   data() {
     return {
-      player: { x: 200, y: 200, speed: 4 },
+      player: { x: 500, y: 500, speed: 4 },
       mouse: { x: 0, y: 0 },
 
       enemies: [],
@@ -68,7 +75,10 @@ export default {
       lastSpawnTime: 0,
       spawnCooldown: 1000,
 
-      animationFrame: null
+      animationFrame: null,
+
+      centerX: window.innerWidth / 2,
+      centerY: window.innerHeight / 2
     }
   },
 
@@ -85,6 +95,7 @@ export default {
   mounted() {
     window.addEventListener("keydown", this.onKeyDown)
     window.addEventListener("keyup", this.onKeyUp)
+    window.addEventListener("resize", this.onResize)
 
     this.loop()
   },
@@ -92,15 +103,20 @@ export default {
   beforeUnmount() {
     window.removeEventListener("keydown", this.onKeyDown)
     window.removeEventListener("keyup", this.onKeyUp)
+    window.removeEventListener("resize", this.onResize)
 
     cancelAnimationFrame(this.animationFrame)
   },
 
   methods: {
 
+    onResize() {
+      this.centerX = window.innerWidth / 2
+      this.centerY = window.innerHeight / 2
+    },
+
     onMouseMove(e) {
       const rect = e.currentTarget.getBoundingClientRect()
-
       this.mouse.x = e.clientX - rect.left
       this.mouse.y = e.clientY - rect.top
     },
@@ -147,9 +163,6 @@ export default {
       if (this.keys["ArrowDown"] || this.keys["s"]) this.player.y += this.player.speed
       if (this.keys["ArrowLeft"] || this.keys["a"]) this.player.x -= this.player.speed
       if (this.keys["ArrowRight"] || this.keys["d"]) this.player.x += this.player.speed
-
-      this.player.x = Math.max(20, Math.min(window.innerWidth - 20, this.player.x))
-      this.player.y = Math.max(20, Math.min(window.innerHeight - 20, this.player.y))
     },
 
     spawnEnemies(time) {
@@ -157,14 +170,14 @@ export default {
         const side = Math.floor(Math.random() * 4)
 
         let x, y
+        const offset = 300
 
-        if (side === 0) { x = Math.random() * window.innerWidth; y = -20 }
-        if (side === 1) { x = window.innerWidth + 20; y = Math.random() * window.innerHeight }
-        if (side === 2) { x = Math.random() * window.innerWidth; y = window.innerHeight + 20 }
-        if (side === 3) { x = -20; y = Math.random() * window.innerHeight }
+        if (side === 0) { x = this.player.x + (Math.random() - 0.5) * 1000; y = this.player.y - offset }
+        if (side === 1) { x = this.player.x + offset; y = this.player.y + (Math.random() - 0.5) * 1000 }
+        if (side === 2) { x = this.player.x + (Math.random() - 0.5) * 1000; y = this.player.y + offset }
+        if (side === 3) { x = this.player.x - offset; y = this.player.y + (Math.random() - 0.5) * 1000 }
 
         this.enemies.push({ x, y })
-
         this.lastSpawnTime = time
       }
     },
@@ -175,9 +188,7 @@ export default {
         const dy = this.player.y - enemy.y
         const len = Math.sqrt(dx * dx + dy * dy)
 
-        if (len === 0) {
-          return { ...enemy }
-        }
+        if (len === 0) return enemy
 
         return {
           x: enemy.x + (dx / len) * 1.5,
@@ -188,8 +199,8 @@ export default {
 
     shoot(time) {
       if (time - this.lastShotTime > this.shotCooldown) {
-        const dx = this.mouse.x - this.player.x
-        const dy = this.mouse.y - this.player.y
+        const dx = this.mouse.x - this.centerX
+        const dy = this.mouse.y - this.centerY
         const len = Math.sqrt(dx * dx + dy * dy)
 
         if (len === 0) return
@@ -224,30 +235,33 @@ export default {
         }
       })
 
-      const enemies = [...this.enemies]
-      const bullets = [...this.bullets]
+      const bulletsToRemove = new Set()
 
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        for (let j = bullets.length - 1; j >= 0; j--) {
-          if (
-            Math.abs(enemies[i].x - bullets[j].x) < 10 &&
-            Math.abs(enemies[i].y - bullets[j].y) < 10
-          ) {
-            enemies.splice(i, 1)
-            bullets.splice(j, 1)
-            this.enemiesKilled++
-            break
-          }
+      this.enemies = this.enemies.filter(enemy => {
+        const hitIndex = this.bullets.findIndex((bullet, index) => {
+          if (bulletsToRemove.has(index)) return false
+
+          return (
+            Math.abs(enemy.x - bullet.x) < 10 &&
+            Math.abs(enemy.y - bullet.y) < 10
+          )
+        })
+
+        if (hitIndex !== -1) {
+          bulletsToRemove.add(hitIndex)
+          this.enemiesKilled++
+          return false
         }
-      }
 
-      this.enemies = enemies
-      this.bullets = bullets
+        return true
+      })
+
+      this.bullets = this.bullets.filter((_, index) => !bulletsToRemove.has(index))
     },
 
     restartGame() {
-      this.player.x = 200
-      this.player.y = 200
+      this.player.x = 500
+      this.player.y = 500
 
       this.enemies = []
       this.bullets = []
@@ -266,15 +280,17 @@ export default {
 .game {
   position: fixed;
   inset: 0;
+  overflow: hidden;
   background: #2c3e50;
 
-  .world {
-    position: relative;
+  &__world {
+    position: absolute;
     width: 100%;
     height: 100%;
+    will-change: transform;
   }
 
-  .hud {
+  &__hud {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -282,7 +298,7 @@ export default {
     z-index: 10;
   }
 
-  &-over {
+  &__game-over {
     position: absolute;
     top: 50%;
     left: 50%;
