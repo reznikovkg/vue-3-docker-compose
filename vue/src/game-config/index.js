@@ -13,5 +13,5 @@ export const GAME_CONFIG = defineConfig({
   gearDefinitions: GEAR_DEFINITIONS,
   groundbaitDefinitions: GROUNDBAIT_DEFINITIONS,
   landingNetDefinitions: LANDING_NET_DEFINITIONS,
-  tuning: TUNING,
+  tuning: TUNING
 })

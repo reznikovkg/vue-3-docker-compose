@@ -6,7 +6,7 @@
       class="location-selector__item"
       :class="{
         'location-selector__item--active': location.id === selectedLocationId,
-        'location-selector__item--boosted': location.id === boostedLocationId,
+        'location-selector__item--boosted': location.id === boostedLocationId
       }"
       :disabled="disabled"
       @click="() => emitSelect(location.id)"
@@ -36,36 +36,36 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 export default {
   name: 'LocationSelector',
   components: {
-    BaseButton,
+    BaseButton
   },
   props: {
     locations: {
       type: Array,
-      default: () => [],
+      default: () => []
     },
     selectedLocationId: {
       type: String,
-      default: null,
+      default: null
     },
     disabled: {
       type: Boolean,
-      default: false,
+      default: false
     },
     boostedLocationId: {
       type: String,
-      default: null,
+      default: null
     },
     boostedCastsRemaining: {
       type: Number,
-      default: 0,
-    },
+      default: 0
+    }
   },
   emits: ['select'],
   methods: {
     emitSelect(locationId) {
       this.$emit('select', locationId)
-    },
-  },
+    }
+  }
 }
 </script>
 

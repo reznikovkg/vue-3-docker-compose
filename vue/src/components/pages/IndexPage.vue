@@ -12,7 +12,7 @@ export default {
   name: 'IndexPage',
   created() {
     document.title = PAGE_TITLE
-  },
+  }
 }
 </script>
 

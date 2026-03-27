@@ -60,30 +60,30 @@ import BobberView from '@/components/fishing/BobberView.vue'
 export default {
   name: 'FishingScene',
   components: {
-    BobberView,
+    BobberView
   },
   props: {
     bobber: {
       type: Object,
-      default: null,
+      default: null
     },
     location: {
       type: Object,
-      default: null,
+      default: null
     },
     groundbaitArea: {
       type: Object,
-      default: null,
+      default: null
     },
     showLandingNetBadge: {
       type: Boolean,
-      default: false,
-    },
+      default: false
+    }
   },
   emits: ['cast'],
   data() {
     return {
-      backgroundImageFailed: false,
+      backgroundImageFailed: false
     }
   },
   computed: {
@@ -101,7 +101,7 @@ export default {
         'linear-gradient(180deg, #9bc6ea 0%, #6ba0c7 48%, #3f6e6d 49%, #44685d 100%)'
 
       return {
-        backgroundImage: baseGradient,
+        backgroundImage: baseGradient
       }
     },
     showWaterOverlay() {
@@ -114,7 +114,7 @@ export default {
         Number.isFinite(area.center?.x) &&
         Number.isFinite(area.center?.y) &&
         Number.isFinite(area.radiusPct) &&
-        area.radiusPct > 0,
+        area.radiusPct > 0
       )
     },
     groundbaitAreaStyle() {
@@ -127,7 +127,7 @@ export default {
         left: `${this.groundbaitArea.center.x}%`,
         top: `${this.groundbaitArea.center.y}%`,
         width: `${diameter}%`,
-        height: `${diameter}%`,
+        height: `${diameter}%`
       }
     },
     groundbaitAreaLabel() {
@@ -140,7 +140,7 @@ export default {
     },
     showBobber() {
       return Boolean(
-        this.bobber?.isVisible && this.hasRenderableBackgroundImage,
+        this.bobber?.isVisible && this.hasRenderableBackgroundImage
       )
     },
     bobberPosition() {
@@ -155,7 +155,7 @@ export default {
 
       const progress = Math.min(
         Math.max(Number(this.bobber?.progress || 0), 0),
-        1,
+        1
       )
       return {
         x:
@@ -165,7 +165,7 @@ export default {
         y:
           this.bobber.anchorPosition.y +
           (this.bobber.targetPosition.y - this.bobber.anchorPosition.y) *
-            progress,
+            progress
       }
     },
     landingNetBadgeStyle() {
@@ -175,7 +175,7 @@ export default {
 
       return {
         left: `${this.bobberPosition.x}%`,
-        top: `${this.bobberPosition.y}%`,
+        top: `${this.bobberPosition.y}%`
       }
     },
     locationName() {
@@ -194,7 +194,7 @@ export default {
       }
 
       return 'Background file could not be loaded. Showing fallback scene.'
-    },
+    }
   },
   methods: {
     clamp(value, min, max) {
@@ -218,20 +218,20 @@ export default {
       const x = this.clamp(
         ((event.clientX - bounds.left) / bounds.width) * 100,
         0,
-        100,
+        100
       )
       const y = this.clamp(
         ((event.clientY - bounds.top) / bounds.height) * 100,
         0,
-        100,
+        100
       )
 
       this.$emit('cast', {
         x: Number(x.toFixed(2)),
-        y: Number(y.toFixed(2)),
+        y: Number(y.toFixed(2))
       })
-    },
-  },
+    }
+  }
 }
 </script>
 

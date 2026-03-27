@@ -54,3 +54,4 @@ eslint.config.mjs
 .prettierrc
 .prettierignore
 .lintstagedrc.json
+.nvmrc

@@ -4,11 +4,11 @@
     :class="{
       'bobber-view--energized': isEnergized,
       'bobber-view--waiting': mode === 'waiting',
-      'bobber-view--hooked': mode === 'hooked',
+      'bobber-view--hooked': mode === 'hooked'
     }"
     :style="{
       left: `${currentPosition.x}%`,
-      top: `${currentPosition.y}%`,
+      top: `${currentPosition.y}%`
     }"
   ></div>
 </template>
@@ -18,7 +18,7 @@ import { defineConfig } from '@/utils/defineConfig'
 
 const DEFAULT_POSITION = defineConfig({
   x: 40,
-  y: 56,
+  y: 56
 })
 
 export default {
@@ -27,27 +27,27 @@ export default {
     anchorPosition: {
       type: Object,
       default: () => ({
-        ...DEFAULT_POSITION,
-      }),
+        ...DEFAULT_POSITION
+      })
     },
     mode: {
       type: String,
-      default: 'waiting',
+      default: 'waiting'
     },
     isEnergized: {
       type: Boolean,
-      default: false,
+      default: false
     },
     progress: {
       type: Number,
-      default: 0,
+      default: 0
     },
     targetPosition: {
       type: Object,
       default: () => ({
-        ...DEFAULT_POSITION,
-      }),
-    },
+        ...DEFAULT_POSITION
+      })
+    }
   },
   computed: {
     currentPosition() {
@@ -63,10 +63,10 @@ export default {
           (this.targetPosition.x - this.anchorPosition.x) * safeProgress,
         y:
           this.anchorPosition.y +
-          (this.targetPosition.y - this.anchorPosition.y) * safeProgress,
+          (this.targetPosition.y - this.anchorPosition.y) * safeProgress
       }
-    },
-  },
+    }
+  }
 }
 </script>
 

@@ -94,7 +94,7 @@ const computeDifficulty = (encounter, location = null, gearContext = null) => {
 const buildWeightedTable = (
   table,
   gearContext = null,
-  fishWeightMultipliers = null,
+  fishWeightMultipliers = null
 ) => {
   if (!Array.isArray(table) || !table.length) {
     return []
@@ -108,7 +108,7 @@ const buildWeightedTable = (
     const baitAffinity = getGearAffinityMultiplier(gearContext?.bait, fishId)
     const fishWeightMultiplier = getFishWeightMultiplier(
       fishWeightMultipliers,
-      fishId,
+      fishId
     )
     const adjustedWeight = Math.max(
       0,
@@ -116,18 +116,18 @@ const buildWeightedTable = (
         rodAffinity *
         lineAffinity *
         baitAffinity *
-        fishWeightMultiplier,
+        fishWeightMultiplier
     )
 
     return {
       ...entry,
-      weight: adjustedWeight,
+      weight: adjustedWeight
     }
   })
 
   const totalWeight = weightedTable.reduce(
     (sum, item) => sum + Number(item.weight || 0),
-    0,
+    0
   )
   if (totalWeight <= 0) {
     return []
@@ -135,7 +135,7 @@ const buildWeightedTable = (
 
   return weightedTable.map((item) => ({
     ...item,
-    weight: item.weight / totalWeight,
+    weight: item.weight / totalWeight
   }))
 }
 
@@ -145,7 +145,7 @@ const rollEncounter = (
   fishDefinitions,
   gearContext = null,
   fishWeightMultipliers = null,
-  rng = Math.random,
+  rng = Math.random
 ) => {
   if (!location) {
     return null
@@ -171,10 +171,10 @@ const rollEncounter = (
       baseDifficulty: fish.baseDifficulty,
       tier: fish.tier,
       quality,
-      size,
+      size
     },
     location,
-    gearContext,
+    gearContext
   )
 
   return {
@@ -187,8 +187,8 @@ const rollEncounter = (
     gear: {
       rodId: gearContext?.rod?.id || null,
       lineId: gearContext?.line?.id || null,
-      baitId: gearContext?.bait?.id || null,
-    },
+      baitId: gearContext?.bait?.id || null
+    }
   }
 }
 

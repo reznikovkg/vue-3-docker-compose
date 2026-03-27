@@ -3,16 +3,16 @@ const MUTATIONS = {
   HIDE_RESULT_PANEL: 'HIDE_RESULT_PANEL',
   PUSH_NOTIFICATION: 'PUSH_NOTIFICATION',
   REMOVE_NOTIFICATION: 'REMOVE_NOTIFICATION',
-  CLEAR_NOTIFICATIONS: 'CLEAR_NOTIFICATIONS',
+  CLEAR_NOTIFICATIONS: 'CLEAR_NOTIFICATIONS'
 }
 
 const buildInitialState = () => ({
   resultPanel: {
     isOpen: false,
     isSuccess: null,
-    message: '',
+    message: ''
   },
-  notifications: [],
+  notifications: []
 })
 
 let notificationCounter = 0
@@ -24,28 +24,28 @@ export default {
   },
   getters: {
     getResultPanel: (state) => state.resultPanel,
-    getNotifications: (state) => state.notifications,
+    getNotifications: (state) => state.notifications
   },
   mutations: {
     [MUTATIONS.SHOW_RESULT_PANEL]: (state, payload) => {
       state.resultPanel = {
         isOpen: true,
         isSuccess: payload.isSuccess,
-        message: payload.message,
+        message: payload.message
       }
     },
     [MUTATIONS.HIDE_RESULT_PANEL]: (state) => {
       state.resultPanel = {
         isOpen: false,
         isSuccess: null,
-        message: '',
+        message: ''
       }
     },
     [MUTATIONS.PUSH_NOTIFICATION]: (state, payload) => {
       state.notifications.push({
         id: payload.id,
         type: payload.type || 'info',
-        message: payload.message,
+        message: payload.message
       })
     },
     [MUTATIONS.REMOVE_NOTIFICATION]: (state, id) => {
@@ -53,7 +53,7 @@ export default {
     },
     [MUTATIONS.CLEAR_NOTIFICATIONS]: (state) => {
       state.notifications = []
-    },
+    }
   },
   actions: {
     showResultPanel({ commit }, payload) {
@@ -66,7 +66,7 @@ export default {
       notificationCounter += 1
       commit(MUTATIONS.PUSH_NOTIFICATION, {
         ...payload,
-        id: `notification-${notificationCounter}`,
+        id: `notification-${notificationCounter}`
       })
     },
     removeNotification({ commit }, id) {
@@ -74,6 +74,6 @@ export default {
     },
     clearNotifications({ commit }) {
       commit(MUTATIONS.CLEAR_NOTIFICATIONS)
-    },
-  },
+    }
+  }
 }

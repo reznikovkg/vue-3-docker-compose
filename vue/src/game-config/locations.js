@@ -7,10 +7,10 @@ export const LOCATIONS = defineConfig([
     bgImage: '/images/locations/pine-lake.webp',
     bobberAnchor: {
       x: 61,
-      y: 63,
+      y: 63
     },
     fishTableId: 'freshwater-basic',
-    difficultyMultiplier: 1,
+    difficultyMultiplier: 1
   },
   {
     id: 'stone-river',
@@ -18,10 +18,10 @@ export const LOCATIONS = defineConfig([
     bgImage: '/images/locations/stone-river.webp',
     bobberAnchor: {
       x: 56,
-      y: 66,
+      y: 66
     },
     fishTableId: 'river-mixed',
-    difficultyMultiplier: 0.8,
+    difficultyMultiplier: 0.8
   },
   {
     id: 'foggy-marsh',
@@ -29,9 +29,9 @@ export const LOCATIONS = defineConfig([
     bgImage: '/images/locations/foggy-marsh.webp',
     bobberAnchor: {
       x: 52,
-      y: 68,
+      y: 68
     },
     fishTableId: 'marsh-predators',
-    difficultyMultiplier: 0.8,
-  },
+    difficultyMultiplier: 0.8
+  }
 ])

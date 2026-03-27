@@ -15,7 +15,7 @@ const buildDefaultSaveState = () => ({
   stats: {
     attempts: 0,
     catches: 0,
-    fails: 0,
+    fails: 0
   },
   catchLog: [],
   inventoryFish: [],
@@ -25,7 +25,7 @@ const buildDefaultSaveState = () => ({
   inventoryGroundbait: {},
   inventoryLandingNets: {},
   boostedLocationId: null,
-  boostedCastsRemaining: 0,
+  boostedCastsRemaining: 0
 })
 
 const toSafeNumber = (value) => {
@@ -74,7 +74,7 @@ const normalizeFishInventoryEntry = (payload) => {
     size: toSafeFloat(payload.size),
     quality: toSafeFloat(payload.quality),
     sellPrice: toSafeNumber(payload.sellPrice),
-    caughtAt: toSafeNumber(payload.caughtAt),
+    caughtAt: toSafeNumber(payload.caughtAt)
   }
 }
 
@@ -95,7 +95,7 @@ const normalizeInventoryMap = (payload) => {
 
     return {
       ...result,
-      [id]: count,
+      [id]: count
     }
   }, {})
 }
@@ -143,7 +143,7 @@ const normalizeSaveStateV4 = (payload) => {
     stats: {
       attempts: toSafeNumber(payload.stats?.attempts),
       catches: toSafeNumber(payload.stats?.catches),
-      fails: toSafeNumber(payload.stats?.fails),
+      fails: toSafeNumber(payload.stats?.fails)
     },
     catchLog,
     inventoryFish,
@@ -156,7 +156,7 @@ const normalizeSaveStateV4 = (payload) => {
       typeof payload.boostedLocationId === 'string'
         ? payload.boostedLocationId
         : null,
-    boostedCastsRemaining: toSafeNumber(payload.boostedCastsRemaining),
+    boostedCastsRemaining: toSafeNumber(payload.boostedCastsRemaining)
   }
 }
 
@@ -166,7 +166,7 @@ const normalizeSaveStateV3 = (payload) => {
     ...v4State,
     inventoryGroundbait: {},
     inventoryLandingNets: {},
-    currentLandingNetId: null,
+    currentLandingNetId: null
   }
 }
 
@@ -175,7 +175,7 @@ const normalizeSaveStateV4AsV5 = (payload) => {
   return {
     ...v5State,
     inventoryLandingNets: {},
-    currentLandingNetId: null,
+    currentLandingNetId: null
   }
 }
 

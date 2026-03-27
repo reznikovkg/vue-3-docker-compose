@@ -11,9 +11,9 @@ const RODS = defineConfig([
     affinityByFishId: {
       roach: 0.95,
       perch: 1.15,
-      pike: 1.05,
+      pike: 1.05
     },
-    difficultyMultiplier: 1,
+    difficultyMultiplier: 1
   },
   {
     id: 'fly',
@@ -25,9 +25,9 @@ const RODS = defineConfig([
     affinityByFishId: {
       roach: 1.35,
       perch: 1,
-      pike: 0.75,
+      pike: 0.75
     },
-    difficultyMultiplier: 0.96,
+    difficultyMultiplier: 0.96
   },
   {
     id: 'baitcast',
@@ -39,10 +39,10 @@ const RODS = defineConfig([
     affinityByFishId: {
       roach: 0.78,
       perch: 1,
-      pike: 1.38,
+      pike: 1.38
     },
-    difficultyMultiplier: 0.92,
-  },
+    difficultyMultiplier: 0.92
+  }
 ])
 
 const LINES = defineConfig([
@@ -56,9 +56,9 @@ const LINES = defineConfig([
     affinityByFishId: {
       roach: 1.18,
       perch: 1,
-      pike: 0.9,
+      pike: 0.9
     },
-    difficultyMultiplier: 1,
+    difficultyMultiplier: 1
   },
   {
     id: 'fluorocarbon',
@@ -70,9 +70,9 @@ const LINES = defineConfig([
     affinityByFishId: {
       roach: 0.94,
       perch: 1.22,
-      pike: 1.02,
+      pike: 1.02
     },
-    difficultyMultiplier: 0.97,
+    difficultyMultiplier: 0.97
   },
   {
     id: 'braided',
@@ -84,10 +84,10 @@ const LINES = defineConfig([
     affinityByFishId: {
       roach: 0.82,
       perch: 1.05,
-      pike: 1.3,
+      pike: 1.3
     },
-    difficultyMultiplier: 0.93,
-  },
+    difficultyMultiplier: 0.93
+  }
 ])
 
 const BAIT = defineConfig([
@@ -101,9 +101,9 @@ const BAIT = defineConfig([
     affinityByFishId: {
       roach: 1.4,
       perch: 1.02,
-      pike: 0.62,
+      pike: 0.62
     },
-    difficultyMultiplier: 1.02,
+    difficultyMultiplier: 1.02
   },
   {
     id: 'spinner-lure',
@@ -115,9 +115,9 @@ const BAIT = defineConfig([
     affinityByFishId: {
       roach: 0.8,
       perch: 1.32,
-      pike: 1.12,
+      pike: 1.12
     },
-    difficultyMultiplier: 0.98,
+    difficultyMultiplier: 0.98
   },
   {
     id: 'minnow',
@@ -129,14 +129,14 @@ const BAIT = defineConfig([
     affinityByFishId: {
       roach: 0.7,
       perch: 1.02,
-      pike: 1.45,
+      pike: 1.45
     },
-    difficultyMultiplier: 0.94,
-  },
+    difficultyMultiplier: 0.94
+  }
 ])
 
 export const GEAR_DEFINITIONS = defineConfig({
   rods: RODS,
   lines: LINES,
-  bait: BAIT,
+  bait: BAIT
 })

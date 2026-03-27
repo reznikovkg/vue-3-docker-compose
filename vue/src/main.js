@@ -9,7 +9,7 @@ const routes = {
   install(app) {
     console.log(ROUTES)
     app.config.globalProperties.$routes = ROUTES
-  },
+  }
 }
 
 const mountApp = () =>

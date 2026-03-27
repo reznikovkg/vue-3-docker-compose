@@ -5,8 +5,8 @@
     :class="[
       `collapsible-sidebar--${direction}`,
       {
-        'collapsible-sidebar--collapsed': isCollapsed,
-      },
+        'collapsible-sidebar--collapsed': isCollapsed
+      }
     ]"
     :style="rootStyle"
   >
@@ -32,47 +32,47 @@ export default {
   props: {
     collapsed: {
       type: Boolean,
-      default: false,
+      default: false
     },
     direction: {
       type: String,
       default: 'left',
-      validator: (value) => ['left', 'right', 'top', 'bottom'].includes(value),
+      validator: (value) => ['left', 'right', 'top', 'bottom'].includes(value)
     },
     mobileMode: {
       type: String,
       default: 'force-expanded',
-      validator: (value) => ['force-expanded', 'collapsible'].includes(value),
+      validator: (value) => ['force-expanded', 'collapsible'].includes(value)
     },
     mobileBreakpoint: {
       type: Number,
-      default: MOBILE_BREAKPOINT,
+      default: MOBILE_BREAKPOINT
     },
     peekSize: {
       type: Number,
-      default: 48,
+      default: 48
     },
     toggleSize: {
       type: Number,
-      default: 28,
+      default: 28
     },
     collapsedMinHeight: {
       type: Number,
-      default: 0,
+      default: 0
     },
     collapsedMinWidth: {
       type: Number,
-      default: 0,
+      default: 0
     },
     tag: {
       type: String,
-      default: 'aside',
-    },
+      default: 'aside'
+    }
   },
   emits: ['toggle', 'update:collapsed'],
   data() {
     return {
-      viewportWidth: 0,
+      viewportWidth: 0
     }
   },
   computed: {
@@ -116,9 +116,9 @@ export default {
         '--collapsible-sidebar-peek-size': `${this.peekSize}px`,
         '--collapsible-sidebar-toggle-size': `${this.toggleSize}px`,
         '--collapsible-sidebar-collapsed-min-height': `${this.collapsedMinHeight}px`,
-        '--collapsible-sidebar-collapsed-min-width': `${this.collapsedMinWidth}px`,
+        '--collapsible-sidebar-collapsed-min-width': `${this.collapsedMinWidth}px`
       }
-    },
+    }
   },
   mounted() {
     this.syncViewportWidth()
@@ -138,8 +138,8 @@ export default {
       const nextValue = !this.collapsed
       this.$emit('toggle', nextValue)
       this.$emit('update:collapsed', nextValue)
-    },
-  },
+    }
+  }
 }
 </script>
 

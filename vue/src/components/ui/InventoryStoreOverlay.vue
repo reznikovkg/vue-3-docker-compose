@@ -27,7 +27,7 @@
           :key="modeOption.id"
           class="inventory-overlay__switch-button"
           :class="{
-            'inventory-overlay__switch-button--active': modeOption.id === mode,
+            'inventory-overlay__switch-button--active': modeOption.id === mode
           }"
           type="button"
           @click="() => emitModeChange(modeOption.id)"
@@ -42,7 +42,7 @@
           :key="tabOption.id"
           class="inventory-overlay__tab"
           :class="{
-            'inventory-overlay__tab--active': tabOption.id === activeTab,
+            'inventory-overlay__tab--active': tabOption.id === activeTab
           }"
           type="button"
           @click="() => emitTabChange(tabOption.id)"
@@ -146,14 +146,14 @@ const INVENTORY_TABS = [
   { id: 'lines', label: 'Lines' },
   { id: 'bait', label: 'Bait' },
   { id: 'landingNets', label: 'Landing Nets' },
-  { id: 'groundbait', label: 'Groundbait' },
+  { id: 'groundbait', label: 'Groundbait' }
 ]
 
 const STORE_TABS = INVENTORY_TABS.filter((tab) => tab.id !== 'fish')
 
 const MODE_OPTIONS = [
   { id: 'inventory', label: 'Inventory' },
-  { id: 'store', label: 'Store' },
+  { id: 'store', label: 'Store' }
 ]
 
 export default {
@@ -161,23 +161,23 @@ export default {
   props: {
     isOpen: {
       type: Boolean,
-      default: false,
+      default: false
     },
     mode: {
       type: String,
-      default: 'inventory',
+      default: 'inventory'
     },
     activeTab: {
       type: String,
-      default: 'fish',
+      default: 'fish'
     },
     money: {
       type: Number,
-      default: 0,
+      default: 0
     },
     inventoryFish: {
       type: Array,
-      default: () => [],
+      default: () => []
     },
     inventoryGearItems: {
       type: Object,
@@ -186,8 +186,8 @@ export default {
         lines: [],
         bait: [],
         landingNets: [],
-        groundbait: [],
-      }),
+        groundbait: []
+      })
     },
     storeGearItems: {
       type: Object,
@@ -196,9 +196,9 @@ export default {
         lines: [],
         bait: [],
         landingNets: [],
-        groundbait: [],
-      }),
-    },
+        groundbait: []
+      })
+    }
   },
   emits: [
     'close',
@@ -207,7 +207,7 @@ export default {
     'sell-item',
     'sell-all-fish',
     'buy-item',
-    'equip-item',
+    'equip-item'
   ],
   computed: {
     inventoryTabs() {
@@ -250,7 +250,7 @@ export default {
         meta: `Tier ${fish.tier} | ${Number(fish.size || 0).toFixed(2)} kg | Q${Number(fish.quality || 0).toFixed(1)}`,
         owned: null,
         price: Number(fish.sellPrice || 0),
-        imageSrc: `/images/fish/${fish.fishId}.webp`,
+        imageSrc: `/images/fish/${fish.fishId}.webp`
       }))
     },
     itemsForActiveTab() {
@@ -274,7 +274,7 @@ export default {
         this.activeTab === 'fish' &&
         this.normalizedInventoryFish.length > 0
       )
-    },
+    }
   },
   mounted() {
     window.addEventListener('keydown', this.onWindowKeyDown)
@@ -322,8 +322,8 @@ export default {
       }
 
       this.emitClose()
-    },
-  },
+    }
+  }
 }
 </script>
 

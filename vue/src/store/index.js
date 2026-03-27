@@ -7,18 +7,18 @@ import ui from '@/store/modules/ui'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+  SET_COUNT: 'SET_COUNT'
 }
 
 export default createStore({
   state() {
     return {
-      count: 0,
+      count: 0
     }
   },
   getters: {
     getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
+    getCount2: (state) => state.count * 2
     // getList: (state) => [4, 3]
   },
   mutations: {
@@ -27,7 +27,7 @@ export default createStore({
     },
     [MUTATIONS.SET_COUNT]: (state, value) => {
       state.count = value
-    },
+    }
   },
   actions: {
     runIncrement: (store, value) => {
@@ -38,13 +38,13 @@ export default createStore({
       setTimeout(() => {
         store.commit(MUTATIONS.SET_COUNT, value)
       }, timeout)
-    },
+    }
   },
   modules: {
     content,
     gameSession,
     list,
     progress,
-    ui,
-  },
+    ui
+  }
 })

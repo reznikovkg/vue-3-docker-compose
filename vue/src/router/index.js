@@ -5,23 +5,23 @@ import FishingPage from '@/components/pages/FishingPage.vue'
 
 export const ROUTES = {
   FISHING: 'FISHING',
-  INDEX: 'INDEX',
+  INDEX: 'INDEX'
 }
 
 const routes = [
   {
     name: ROUTES.FISHING,
     path: '/fishing',
-    component: FishingPage,
+    component: FishingPage
   },
   {
     name: ROUTES.INDEX,
     path: '/',
-    component: IndexPage,
-  },
+    component: IndexPage
+  }
 ]
 
 export const router = createRouter({
   history: createWebHistory('/'),
-  routes,
+  routes
 })

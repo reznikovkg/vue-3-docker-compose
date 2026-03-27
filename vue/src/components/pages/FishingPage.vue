@@ -133,7 +133,7 @@
             class="fishing-page__groundbait-item"
             :class="{
               'fishing-page__groundbait-item--active':
-                groundbait.id === effectiveSelectedGroundbaitId,
+                groundbait.id === effectiveSelectedGroundbaitId
             }"
             type="button"
             @click="() => selectGroundbait(groundbait.id)"
@@ -188,7 +188,7 @@
               class="fishing-page__bar-marker fishing-page__bar-marker--barrier"
               :class="{
                 'fishing-page__bar-marker--barrier-active':
-                  activeBarrier && barrier.id === activeBarrier.id,
+                  activeBarrier && barrier.id === activeBarrier.id
               }"
               :style="{ left: `${Math.round(barrier.position * 100)}%` }"
             ></div>
@@ -215,7 +215,7 @@
           class="fishing-page__result-panel"
           :class="{
             'fishing-page__result-panel--success': resultPanel.isSuccess,
-            'fishing-page__result-panel--fail': !resultPanel.isSuccess,
+            'fishing-page__result-panel--fail': !resultPanel.isSuccess
           }"
         >
           <div class="fishing-page__result-head">
@@ -296,7 +296,7 @@ const PHASE_PAGE_TITLES = defineConfig({
   idle: 'Looking for fish...',
   waitingBite: 'Patiently waiting...',
   minigame: '3..2..1.. FIGHT!',
-  result: 'Another one!',
+  result: 'Another one!'
 })
 
 export default {
@@ -306,7 +306,7 @@ export default {
     CollapsibleSidebar,
     FishingScene,
     InventoryStoreOverlay,
-    LocationSelector,
+    LocationSelector
   },
   data() {
     return {
@@ -319,7 +319,7 @@ export default {
       inventoryOverlayMode: 'inventory',
       inventoryOverlayTab: 'fish',
       selectedGroundbaitId: null,
-      isGroundbaitArmed: false,
+      isGroundbaitArmed: false
     }
   },
   computed: {
@@ -331,7 +331,7 @@ export default {
       landingNetDefinitions: 'getLandingNetDefinitions',
       fishDefinitions: 'getFishDefinitions',
       getLocationWarnings: 'getLocationWarnings',
-      getLocationById: 'getLocationById',
+      getLocationById: 'getLocationById'
     }),
     ...mapGetters('progress', {
       money: 'getMoney',
@@ -348,7 +348,7 @@ export default {
       currentBaitId: 'getCurrentBaitId',
       currentLandingNetId: 'getCurrentLandingNetId',
       equippedLandingNet: 'getEquippedLandingNet',
-      selectedLocationId: 'getSelectedLocationId',
+      selectedLocationId: 'getSelectedLocationId'
     }),
     ...mapGetters('gameSession', {
       phase: 'getPhase',
@@ -360,10 +360,10 @@ export default {
       activeBarrier: 'getActiveBarrier',
       barrierRemainingClicks: 'getBarrierRemainingClicks',
       isBarrierBlocking: 'getIsBarrierBlocking',
-      getGroundbaitAreaByLocation: 'getGroundbaitAreaByLocation',
+      getGroundbaitAreaByLocation: 'getGroundbaitAreaByLocation'
     }),
     ...mapGetters('ui', {
-      resultPanel: 'getResultPanel',
+      resultPanel: 'getResultPanel'
     }),
     inventoryGearItems() {
       return {
@@ -371,7 +371,7 @@ export default {
         lines: this.buildInventoryGearRows('lines'),
         bait: this.buildInventoryGearRows('bait'),
         landingNets: this.buildInventoryLandingNetRows(),
-        groundbait: this.buildInventoryGroundbaitRows(),
+        groundbait: this.buildInventoryGroundbaitRows()
       }
     },
     storeGearItems() {
@@ -380,7 +380,7 @@ export default {
         lines: this.buildStoreGearRows('lines'),
         bait: this.buildStoreGearRows('bait'),
         landingNets: this.buildStoreLandingNetRows(),
-        groundbait: this.buildStoreGroundbaitRows(),
+        groundbait: this.buildStoreGroundbaitRows()
       }
     },
     availableGroundbaitItems() {
@@ -389,7 +389,7 @@ export default {
         .map((item) => ({
           id: item.id,
           name: item.name,
-          count: Number(this.inventoryGroundbait?.[item.id] || 0),
+          count: Number(this.inventoryGroundbait?.[item.id] || 0)
         }))
         .filter((item) => item.count > 0)
     },
@@ -398,7 +398,7 @@ export default {
     },
     effectiveSelectedGroundbaitId() {
       const selectedExists = this.availableGroundbaitItems.some(
-        (item) => item.id === this.selectedGroundbaitId,
+        (item) => item.id === this.selectedGroundbaitId
       )
       if (selectedExists) {
         return this.selectedGroundbaitId
@@ -413,7 +413,7 @@ export default {
 
       return (
         (this.groundbaitDefinitions || []).find(
-          (item) => item.id === this.effectiveSelectedGroundbaitId,
+          (item) => item.id === this.effectiveSelectedGroundbaitId
         ) || null
       )
     },
@@ -439,7 +439,7 @@ export default {
     },
     sceneWarnings() {
       return [
-        ...new Set([...this.configWarnings, ...this.selectedLocationWarnings]),
+        ...new Set([...this.configWarnings, ...this.selectedLocationWarnings])
       ]
     },
     phaseMessage() {
@@ -488,7 +488,7 @@ export default {
     sceneBobber() {
       if (!this.selectedLocation) {
         return {
-          isVisible: false,
+          isVisible: false
         }
       }
 
@@ -500,13 +500,13 @@ export default {
         !Number.isFinite(anchorPosition.y)
       ) {
         return {
-          isVisible: false,
+          isVisible: false
         }
       }
 
       const targetPosition = {
         x: 50,
-        y: HOOKED_BOBBER_Y,
+        y: HOOKED_BOBBER_Y
       }
 
       if (this.phase === 'casting' || this.phase === 'waitingBite') {
@@ -516,7 +516,7 @@ export default {
           mode: 'waiting',
           anchorPosition,
           progress: 0,
-          targetPosition,
+          targetPosition
         }
       }
 
@@ -527,12 +527,12 @@ export default {
           mode: 'hooked',
           anchorPosition,
           progress: this.minigameState.greenProgress || 0,
-          targetPosition,
+          targetPosition
         }
       }
 
       return {
-        isVisible: false,
+        isVisible: false
       }
     },
     castStartedAtLabel() {
@@ -549,7 +549,7 @@ export default {
       return Boolean(
         this.resultPanel.isOpen &&
         this.resultPanel.isSuccess &&
-        this.resultEncounter,
+        this.resultEncounter
       )
     },
     catchImageSrc() {
@@ -647,7 +647,7 @@ export default {
     maxTimeLabel() {
       const maxMs = this.minigameState.config?.maxTimeMs || 0
       return `${maxMs}ms`
-    },
+    }
   },
   mounted() {
     window.addEventListener('pointerup', this.onReelingStop)
@@ -698,17 +698,17 @@ export default {
       dispatchBuyGearItem: 'buyGearItem',
       dispatchEquipLandingNetItem: 'equipLandingNetItem',
       dispatchEquipGearItem: 'equipGearItem',
-      dispatchSelectLocation: 'selectLocation',
+      dispatchSelectLocation: 'selectLocation'
     }),
     ...mapActions('gameSession', {
       dispatchStartCast: 'startCast',
       dispatchThrowGroundbait: 'throwGroundbait',
       dispatchAttemptLandingNetCatch: 'attemptLandingNetCatch',
       dispatchSetReeling: 'setReeling',
-      dispatchRegisterBarrierClick: 'registerBarrierClick',
+      dispatchRegisterBarrierClick: 'registerBarrierClick'
     }),
     ...mapActions('ui', {
-      dispatchHideResultPanel: 'hideResultPanel',
+      dispatchHideResultPanel: 'hideResultPanel'
     }),
     resolvePageTitle(phase) {
       return PHASE_PAGE_TITLES[phase] || DEFAULT_PAGE_TITLE
@@ -787,7 +787,7 @@ export default {
 
       const specialBuyHandlers = {
         landingNets: () => this.dispatchBuyLandingNetItem(item.id),
-        groundbait: () => this.dispatchBuyGroundbaitItem(item.id),
+        groundbait: () => this.dispatchBuyGroundbaitItem(item.id)
       }
 
       const specialHandler = specialBuyHandlers[item.slot]
@@ -797,7 +797,7 @@ export default {
 
       return this.dispatchBuyGearItem({
         slot: item.slot,
-        itemId: item.id,
+        itemId: item.id
       })
     },
     onInventoryEquipItem(item) {
@@ -806,7 +806,7 @@ export default {
       }
 
       const specialEquipHandlers = {
-        landingNets: () => this.dispatchEquipLandingNetItem(item.id),
+        landingNets: () => this.dispatchEquipLandingNetItem(item.id)
       }
 
       const specialHandler = specialEquipHandlers[item.slot]
@@ -816,7 +816,7 @@ export default {
 
       return this.dispatchEquipGearItem({
         slot: item.slot,
-        itemId: item.id,
+        itemId: item.id
       })
     },
     resolveGearName(slot, gearId) {
@@ -870,7 +870,7 @@ export default {
       const rodImageById = {
         spinning: '/images/rods/rod-spinning.png',
         fly: '/images/rods/rod-flywheel.png',
-        baitcast: '/images/rods/rod-baitcast.png',
+        baitcast: '/images/rods/rod-baitcast.png'
       }
 
       return rodImageById[itemId] || null
@@ -878,7 +878,7 @@ export default {
     resolveLandingNetImageSrc(itemId) {
       const landingNetImageById = {
         'landing-net-small': '/images/nets/net-default.png',
-        'landing-net-big': '/images/nets/net-square.png',
+        'landing-net-big': '/images/nets/net-square.png'
       }
 
       return landingNetImageById[itemId] || null
@@ -903,7 +903,7 @@ export default {
           isEquipped,
           canEquip: item.isUnlimited || ownedCount > 0,
           price: Number(item.price || 0),
-          imageSrc: this.resolveGearImageSrc(slot, item.id),
+          imageSrc: this.resolveGearImageSrc(slot, item.id)
         }
       })
     },
@@ -922,7 +922,7 @@ export default {
           meta: 'Store item',
           price: Number(item.price || 0),
           canBuy: this.money >= Number(item.price || 0),
-          imageSrc: this.resolveGearImageSrc(slot, item.id),
+          imageSrc: this.resolveGearImageSrc(slot, item.id)
         }))
     },
     buildInventoryLandingNetRows() {
@@ -938,7 +938,7 @@ export default {
           isEquipped,
           canEquip: ownedCount > 0,
           price: Number(item.price || 0),
-          imageSrc: this.resolveLandingNetImageSrc(item.id),
+          imageSrc: this.resolveLandingNetImageSrc(item.id)
         }
       })
     },
@@ -950,7 +950,7 @@ export default {
         meta: `Capacity ${Number(item.capacityKg || 0).toFixed(2)} kg`,
         price: Number(item.price || 0),
         canBuy: this.money >= Number(item.price || 0),
-        imageSrc: this.resolveLandingNetImageSrc(item.id),
+        imageSrc: this.resolveLandingNetImageSrc(item.id)
       }))
     },
     buildInventoryGroundbaitRows() {
@@ -965,7 +965,7 @@ export default {
           isEquipped: false,
           canEquip: false,
           price: Number(item.price || 0),
-          imageSrc: null,
+          imageSrc: null
         }
       })
     },
@@ -977,7 +977,7 @@ export default {
         meta: `Targets ${this.resolveFishName(item.targetFishId)}`,
         price: Number(item.price || 0),
         canBuy: this.money >= Number(item.price || 0),
-        imageSrc: null,
+        imageSrc: null
       }))
     },
     applyPageTitle(phase) {
@@ -988,7 +988,7 @@ export default {
     },
     startCast(castAnchor = null) {
       this.dispatchStartCast({
-        castAnchor,
+        castAnchor
       })
     },
     onSceneCast(castAnchor) {
@@ -999,7 +999,7 @@ export default {
       if (this.isGroundbaitArmed && this.effectiveSelectedGroundbaitId) {
         return this.dispatchThrowGroundbait({
           baitId: this.effectiveSelectedGroundbaitId,
-          castAnchor,
+          castAnchor
         }).then((didThrow) => {
           if (!didThrow) {
             return false
@@ -1019,7 +1019,7 @@ export default {
       }
 
       return Boolean(
-        element.closest('input, textarea, select, [contenteditable="true"]'),
+        element.closest('input, textarea, select, [contenteditable="true"]')
       )
     },
     onWindowKeyDown(event) {
@@ -1103,8 +1103,8 @@ export default {
     },
     closeResultPanel() {
       this.dispatchHideResultPanel()
-    },
-  },
+    }
+  }
 }
 </script>
 

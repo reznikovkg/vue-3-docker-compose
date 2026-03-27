@@ -14,13 +14,13 @@ export default {
   props: {
     disabled: {
       type: Boolean,
-      default: false,
+      default: false
     },
     type: {
       type: String,
-      default: 'button',
-    },
-  },
+      default: 'button'
+    }
+  }
 }
 </script>
 

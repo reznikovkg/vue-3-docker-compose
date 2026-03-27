@@ -13,8 +13,8 @@ export const FISH_DEFINITIONS = defineConfig([
     baitAffinity: {},
     stressProfile: {
       pull: 0.8,
-      surge: 0.7,
-    },
+      surge: 0.7
+    }
   },
   {
     id: 'perch',
@@ -28,8 +28,8 @@ export const FISH_DEFINITIONS = defineConfig([
     baitAffinity: {},
     stressProfile: {
       pull: 1,
-      surge: 1,
-    },
+      surge: 1
+    }
   },
   {
     id: 'pike',
@@ -43,52 +43,52 @@ export const FISH_DEFINITIONS = defineConfig([
     baitAffinity: {},
     stressProfile: {
       pull: 1.25,
-      surge: 1.3,
-    },
-  },
+      surge: 1.3
+    }
+  }
 ])
 
 export const FISH_TABLES = defineConfig({
   'freshwater-basic': [
     {
       fishId: 'roach',
-      weight: 0.62,
+      weight: 0.62
     },
     {
       fishId: 'perch',
-      weight: 0.3,
+      weight: 0.3
     },
     {
       fishId: 'pike',
-      weight: 0.08,
-    },
+      weight: 0.08
+    }
   ],
   'river-mixed': [
     {
       fishId: 'roach',
-      weight: 0.42,
+      weight: 0.42
     },
     {
       fishId: 'perch',
-      weight: 0.43,
+      weight: 0.43
     },
     {
       fishId: 'pike',
-      weight: 0.15,
-    },
+      weight: 0.15
+    }
   ],
   'marsh-predators': [
     {
       fishId: 'roach',
-      weight: 0.28,
+      weight: 0.28
     },
     {
       fishId: 'perch',
-      weight: 0.38,
+      weight: 0.38
     },
     {
       fishId: 'pike',
-      weight: 0.34,
-    },
-  ],
+      weight: 0.34
+    }
+  ]
 })

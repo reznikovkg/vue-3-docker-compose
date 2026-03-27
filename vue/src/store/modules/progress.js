@@ -2,7 +2,7 @@ import {
   buildDefaultSaveState,
   clear as clearSavedProgress,
   load as loadSavedProgress,
-  save as saveProgress,
+  save as saveProgress
 } from '@/services/saveStorage'
 
 const MUTATIONS = {
@@ -26,7 +26,7 @@ const MUTATIONS = {
   SET_GROUNDBAIT_INVENTORY_COUNT: 'SET_GROUNDBAIT_INVENTORY_COUNT',
   SET_LANDING_NET_INVENTORY_COUNT: 'SET_LANDING_NET_INVENTORY_COUNT',
   SET_BOOSTED_LOCATION_ID: 'SET_BOOSTED_LOCATION_ID',
-  SET_BOOSTED_CASTS_REMAINING: 'SET_BOOSTED_CASTS_REMAINING',
+  SET_BOOSTED_CASTS_REMAINING: 'SET_BOOSTED_CASTS_REMAINING'
 }
 const DEFAULT_ROD_ID = 'spinning'
 const DEFAULT_LINE_ID = 'monofilament'
@@ -99,7 +99,7 @@ const getRandomIntInRange = (min, max, rng = Math.random) =>
 const pickRandomBoostLocationId = (
   locations,
   excludedLocationId = null,
-  rng = Math.random,
+  rng = Math.random
 ) => {
   if (!Array.isArray(locations) || !locations.length) {
     return null
@@ -125,7 +125,7 @@ const computeFishSellPrice = (fishDefinition, payload) => {
     1 + quality / QUALITY_FACTOR_DIVISOR + size / SIZE_FACTOR_DIVISOR
   return Math.max(
     1,
-    Math.round(baseValue * scaling * FISH_SELL_PRICE_MULTIPLIER),
+    Math.round(baseValue * scaling * FISH_SELL_PRICE_MULTIPLIER)
   )
 }
 
@@ -137,7 +137,7 @@ const buildFishInventoryEntry = (payload, fishDefinition) => ({
   size: Number(payload.size || 0),
   quality: Number(payload.quality || 0),
   sellPrice: computeFishSellPrice(fishDefinition, payload),
-  caughtAt: Date.now(),
+  caughtAt: Date.now()
 })
 
 const buildInitialState = () => ({
@@ -159,8 +159,8 @@ const buildInitialState = () => ({
   stats: {
     attempts: 0,
     catches: 0,
-    fails: 0,
-  },
+    fails: 0
+  }
 })
 
 const buildSaveState = (state) => ({
@@ -174,7 +174,7 @@ const buildSaveState = (state) => ({
   stats: {
     attempts: state.stats.attempts,
     catches: state.stats.catches,
-    fails: state.stats.fails,
+    fails: state.stats.fails
   },
   catchLog: state.catchLog,
   inventoryFish: state.inventoryFish,
@@ -184,7 +184,7 @@ const buildSaveState = (state) => ({
   inventoryGroundbait: state.inventoryGroundbait,
   inventoryLandingNets: state.inventoryLandingNets,
   boostedLocationId: state.boostedLocationId,
-  boostedCastsRemaining: state.boostedCastsRemaining,
+  boostedCastsRemaining: state.boostedCastsRemaining
 })
 
 export default {
@@ -202,7 +202,7 @@ export default {
       rodId: state.currentRodId,
       lineId: state.currentLineId,
       baitId: state.currentBaitId,
-      landingNetId: state.currentLandingNetId,
+      landingNetId: state.currentLandingNetId
     }),
     getMoney: (state) => state.money,
     getCatchLog: (state) => state.catchLog,
@@ -218,7 +218,7 @@ export default {
       Boolean(
         locationId &&
         state.boostedLocationId === locationId &&
-        state.boostedCastsRemaining > 0,
+        state.boostedCastsRemaining > 0
       ),
     getGearInventoryCount: (state) => (slot, id) =>
       getOwnedCount(state, slot, id),
@@ -233,7 +233,7 @@ export default {
       }
 
       return Number((state.stats.catches / state.stats.attempts).toFixed(2))
-    },
+    }
   },
   mutations: {
     [MUTATIONS.HYDRATE_PROGRESS]: (state, payload) => {
@@ -275,7 +275,7 @@ export default {
       state.stats = {
         attempts: payload.stats?.attempts ?? 0,
         catches: payload.stats?.catches ?? 0,
-        fails: payload.stats?.fails ?? 0,
+        fails: payload.stats?.fails ?? 0
       }
     },
     [MUTATIONS.SET_SELECTED_LOCATION_ID]: (state, locationId) => {
@@ -319,7 +319,7 @@ export default {
     },
     [MUTATIONS.REMOVE_INVENTORY_FISH]: (state, inventoryFishId) => {
       state.inventoryFish = state.inventoryFish.filter(
-        (item) => item.id !== inventoryFishId,
+        (item) => item.id !== inventoryFishId
       )
     },
     [MUTATIONS.CLEAR_INVENTORY_FISH]: (state) => {
@@ -328,7 +328,7 @@ export default {
     [MUTATIONS.SET_GEAR_INVENTORY_COUNT]: (state, payload) => {
       const inventoryKey = getGearInventoryKey(payload.slot)
       const nextInventory = {
-        ...state[inventoryKey],
+        ...state[inventoryKey]
       }
 
       if (payload.count > 0) {
@@ -341,7 +341,7 @@ export default {
     },
     [MUTATIONS.SET_GROUNDBAIT_INVENTORY_COUNT]: (state, payload) => {
       const nextInventory = {
-        ...state.inventoryGroundbait,
+        ...state.inventoryGroundbait
       }
 
       if (payload.count > 0) {
@@ -354,7 +354,7 @@ export default {
     },
     [MUTATIONS.SET_LANDING_NET_INVENTORY_COUNT]: (state, payload) => {
       const nextInventory = {
-        ...state.inventoryLandingNets,
+        ...state.inventoryLandingNets
       }
 
       if (payload.count > 0) {
@@ -370,7 +370,7 @@ export default {
     },
     [MUTATIONS.SET_BOOSTED_CASTS_REMAINING]: (state, castsRemaining) => {
       state.boostedCastsRemaining = Math.max(0, Number(castsRemaining || 0))
-    },
+    }
   },
   actions: {
     hydrateProgress({ commit }, payload) {
@@ -384,15 +384,15 @@ export default {
             'gameSession/setActiveLocation',
             saved?.selectedLocationId || null,
             {
-              root: true,
-            },
-          ).then(() => dispatch('initializeLocationBoost')),
+              root: true
+            }
+          ).then(() => dispatch('initializeLocationBoost'))
       )
     },
     initializeLocationBoost({ state, commit, dispatch, rootGetters }) {
       const locations = rootGetters['content/getLocations'] || []
       const hasValidBoostLocation = locations.some(
-        (location) => location?.id === state.boostedLocationId,
+        (location) => location?.id === state.boostedLocationId
       )
       if (
         hasValidBoostLocation &&
@@ -412,7 +412,7 @@ export default {
       commit(MUTATIONS.SET_BOOSTED_LOCATION_ID, nextLocationId)
       commit(
         MUTATIONS.SET_BOOSTED_CASTS_REMAINING,
-        getRandomIntInRange(BOOSTED_CASTS_MIN, BOOSTED_CASTS_MAX),
+        getRandomIntInRange(BOOSTED_CASTS_MIN, BOOSTED_CASTS_MAX)
       )
       return dispatch('persistProgress').then(() => true)
     },
@@ -437,7 +437,7 @@ export default {
       const locations = rootGetters['content/getLocations'] || []
       const nextLocationId = pickRandomBoostLocationId(
         locations,
-        excludedLocationId,
+        excludedLocationId
       )
       if (!nextLocationId) {
         commit(MUTATIONS.SET_BOOSTED_LOCATION_ID, null)
@@ -448,7 +448,7 @@ export default {
       commit(MUTATIONS.SET_BOOSTED_LOCATION_ID, nextLocationId)
       commit(
         MUTATIONS.SET_BOOSTED_CASTS_REMAINING,
-        getRandomIntInRange(BOOSTED_CASTS_MIN, BOOSTED_CASTS_MAX),
+        getRandomIntInRange(BOOSTED_CASTS_MIN, BOOSTED_CASTS_MAX)
       )
       return dispatch('persistProgress').then(() => true)
     },
@@ -458,7 +458,7 @@ export default {
     selectLocation({ commit, dispatch }, locationId) {
       commit(MUTATIONS.SET_SELECTED_LOCATION_ID, locationId)
       return dispatch('gameSession/setActiveLocation', locationId, {
-        root: true,
+        root: true
       }).then(() => dispatch('persistProgress'))
     },
     recordAttempt({ commit, dispatch }) {
@@ -469,11 +469,11 @@ export default {
       const fishDefinitions = rootGetters['content/getFishDefinitions'] || []
       const fishDefinition = getFishDefinitionById(
         fishDefinitions,
-        payload.fishId,
+        payload.fishId
       )
       const inventoryFishEntry = buildFishInventoryEntry(
         payload,
-        fishDefinition,
+        fishDefinition
       )
 
       commit(MUTATIONS.INCREMENT_ATTEMPTS)
@@ -481,21 +481,21 @@ export default {
       commit(MUTATIONS.ADD_CATCH_LOG, {
         ...payload,
         result: 'caught',
-        timestamp: Date.now(),
+        timestamp: Date.now()
       })
       commit(MUTATIONS.ADD_INVENTORY_FISH, inventoryFishEntry)
       return dispatch(
         'ui/showResultPanel',
         {
           isSuccess: true,
-          message: 'Fish caught.',
+          message: 'Fish caught.'
         },
-        { root: true },
+        { root: true }
       ).then(() => dispatch('persistProgress'))
     },
     sellFishByInstanceId({ state, commit, dispatch }, inventoryFishId) {
       const fishEntry = state.inventoryFish.find(
-        (item) => item.id === inventoryFishId,
+        (item) => item.id === inventoryFishId
       )
       if (!fishEntry) {
         return Promise.resolve(false)
@@ -509,10 +509,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Sold ${fishEntry.fishName} for ${fishEntry.sellPrice}.`,
+            message: `Sold ${fishEntry.fishName} for ${fishEntry.sellPrice}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     sellAllFish({ state, commit, dispatch }) {
@@ -522,7 +522,7 @@ export default {
 
       const totalSellValue = state.inventoryFish.reduce(
         (sum, fishEntry) => sum + Number(fishEntry.sellPrice || 0),
-        0,
+        0
       )
       const soldCount = state.inventoryFish.length
 
@@ -534,10 +534,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Sold ${soldCount} fish for ${totalSellValue}.`,
+            message: `Sold ${soldCount} fish for ${totalSellValue}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     buyGearItem({ state, commit, dispatch, rootGetters }, payload) {
@@ -558,9 +558,9 @@ export default {
           'ui/pushNotification',
           {
             type: 'error',
-            message: `Not enough money for ${gearDefinition.name}.`,
+            message: `Not enough money for ${gearDefinition.name}.`
           },
-          { root: true },
+          { root: true }
         ).then(() => false)
       }
 
@@ -569,7 +569,7 @@ export default {
       commit(MUTATIONS.SET_GEAR_INVENTORY_COUNT, {
         slot,
         id: itemId,
-        count: ownedCount + 1,
+        count: ownedCount + 1
       })
 
       return dispatch('persistProgress').then(() =>
@@ -577,10 +577,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Bought ${gearDefinition.name} for ${price}.`,
+            message: `Bought ${gearDefinition.name} for ${price}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     buyGroundbaitItem({ state, commit, dispatch, rootGetters }, groundbaitId) {
@@ -595,9 +595,9 @@ export default {
           'ui/pushNotification',
           {
             type: 'error',
-            message: `Not enough money for ${definition.name}.`,
+            message: `Not enough money for ${definition.name}.`
           },
-          { root: true },
+          { root: true }
         ).then(() => false)
       }
 
@@ -606,7 +606,7 @@ export default {
       commit(MUTATIONS.SPEND_MONEY, price)
       commit(MUTATIONS.SET_GROUNDBAIT_INVENTORY_COUNT, {
         id: definition.id,
-        count: ownedCount + usesPerPurchase,
+        count: ownedCount + usesPerPurchase
       })
 
       return dispatch('persistProgress').then(() =>
@@ -614,10 +614,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Bought ${definition.name} for ${price}. (+${usesPerPurchase} throws)`,
+            message: `Bought ${definition.name} for ${price}. (+${usesPerPurchase} throws)`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     buyLandingNetItem({ state, commit, dispatch, rootGetters }, landingNetId) {
@@ -632,9 +632,9 @@ export default {
           'ui/pushNotification',
           {
             type: 'error',
-            message: `Not enough money for ${definition.name}.`,
+            message: `Not enough money for ${definition.name}.`
           },
-          { root: true },
+          { root: true }
         ).then(() => false)
       }
 
@@ -642,7 +642,7 @@ export default {
       commit(MUTATIONS.SPEND_MONEY, price)
       commit(MUTATIONS.SET_LANDING_NET_INVENTORY_COUNT, {
         id: definition.id,
-        count: ownedCount + 1,
+        count: ownedCount + 1
       })
 
       return dispatch('persistProgress').then(() =>
@@ -650,10 +650,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Bought ${definition.name} for ${price}.`,
+            message: `Bought ${definition.name} for ${price}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     consumeGroundbaitUse({ state, commit, dispatch }, groundbaitId) {
@@ -668,14 +668,14 @@ export default {
 
       commit(MUTATIONS.SET_GROUNDBAIT_INVENTORY_COUNT, {
         id: groundbaitId,
-        count: ownedCount - 1,
+        count: ownedCount - 1
       })
 
       return dispatch('persistProgress').then(() => true)
     },
     equipLandingNetItem(
       { state, commit, dispatch, rootGetters },
-      landingNetId,
+      landingNetId
     ) {
       const definition = getLandingNetDefinition(rootGetters, landingNetId)
       if (!definition) {
@@ -694,10 +694,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Equipped ${definition.name}.`,
+            message: `Equipped ${definition.name}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     consumeEquippedLandingNetOnBreak({ state, commit, dispatch, rootGetters }) {
@@ -720,7 +720,7 @@ export default {
       const nextCount = Math.max(0, ownedCount - 1)
       commit(MUTATIONS.SET_LANDING_NET_INVENTORY_COUNT, {
         id: landingNetId,
-        count: nextCount,
+        count: nextCount
       })
 
       if (nextCount <= 0) {
@@ -732,10 +732,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'warning',
-            message: `${definition.name} broke.`,
+            message: `${definition.name} broke.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     equipGearItem({ state, commit, dispatch, rootGetters }, payload) {
@@ -764,10 +764,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'success',
-            message: `Equipped ${gearDefinition.name}.`,
+            message: `Equipped ${gearDefinition.name}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     consumeEquippedBaitOnHook({ state, commit, dispatch, rootGetters }) {
@@ -775,7 +775,7 @@ export default {
       const baitDefinition = getGearDefinition(
         rootGetters,
         'bait',
-        currentBaitId,
+        currentBaitId
       )
       if (!baitDefinition || baitDefinition.isUnlimited) {
         return Promise.resolve(false)
@@ -786,7 +786,7 @@ export default {
       commit(MUTATIONS.SET_GEAR_INVENTORY_COUNT, {
         slot: 'bait',
         id: currentBaitId,
-        count: nextCount,
+        count: nextCount
       })
 
       if (nextCount > 0) {
@@ -799,10 +799,10 @@ export default {
           'ui/pushNotification',
           {
             type: 'info',
-            message: 'Bait depleted. Switched to Worm.',
+            message: 'Bait depleted. Switched to Worm.'
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     consumeBrokenGearOnFail({ dispatch }, failReason) {
@@ -828,7 +828,7 @@ export default {
       commit(MUTATIONS.SET_GEAR_INVENTORY_COUNT, {
         slot,
         id: currentItemId,
-        count: nextCount,
+        count: nextCount
       })
 
       if (nextCount > 0) {
@@ -837,10 +837,10 @@ export default {
             'ui/pushNotification',
             {
               type: 'warning',
-              message: `${gearDefinition.name} was lost.`,
+              message: `${gearDefinition.name} was lost.`
             },
-            { root: true },
-          ).then(() => true),
+            { root: true }
+          ).then(() => true)
         )
       }
 
@@ -856,17 +856,17 @@ export default {
       const fallbackDefinition = getGearDefinition(
         rootGetters,
         slot,
-        defaultGearId,
+        defaultGearId
       )
       return dispatch('persistProgress').then(() =>
         dispatch(
           'ui/pushNotification',
           {
             type: 'warning',
-            message: `${gearDefinition.name} was lost. Switched to ${fallbackDefinition?.name || defaultGearId}.`,
+            message: `${gearDefinition.name} was lost. Switched to ${fallbackDefinition?.name || defaultGearId}.`
           },
-          { root: true },
-        ).then(() => true),
+          { root: true }
+        ).then(() => true)
       )
     },
     recordFail({ commit, dispatch }, payload) {
@@ -877,7 +877,7 @@ export default {
       commit(MUTATIONS.ADD_CATCH_LOG, {
         ...payload,
         result: 'failed',
-        timestamp: Date.now(),
+        timestamp: Date.now()
       })
 
       const message =
@@ -891,17 +891,17 @@ export default {
         'ui/showResultPanel',
         {
           isSuccess: false,
-          message,
+          message
         },
-        { root: true },
+        { root: true }
       ).then(() => dispatch('persistProgress'))
     },
     resetProgress({ commit, dispatch }) {
       commit(MUTATIONS.HYDRATE_PROGRESS, buildInitialState())
       clearSavedProgress()
       return dispatch('gameSession/setActiveLocation', null, {
-        root: true,
+        root: true
       }).then(() => dispatch('initializeLocationBoost'))
-    },
-  },
+    }
+  }
 }

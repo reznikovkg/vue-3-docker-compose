@@ -9,7 +9,7 @@ const buildBarriers = (encounter, tuning, rng = Math.random) => {
   const difficultyScore = encounter.difficultyScore
   const difficultyNorm = getDifficultyNorm(difficultyScore)
   const barrierCount = Math.round(
-    minCount + difficultyNorm * (maxCount - minCount),
+    minCount + difficultyNorm * (maxCount - minCount)
   )
   const tier = encounter.tier
   const clickRange = tuning?.minigame?.barrierClicksByTier?.[tier]
@@ -26,20 +26,20 @@ const buildBarriers = (encounter, tuning, rng = Math.random) => {
       index === 0 ? start : barriers[index - 1].position + 0.12
     const maxPosition = end - (barrierCount - index - 1) * 0.12
     const position = Number(
-      clamp(rawPosition, minPosition, maxPosition).toFixed(3),
+      clamp(rawPosition, minPosition, maxPosition).toFixed(3)
     )
     const baseClicks =
       clickRange.min + rng() * (clickRange.max - clickRange.min)
     const difficultyClicks = difficultyNorm * 2 + index * 0.5
     const requiredClicks = Math.max(
       1,
-      Math.round((baseClicks + difficultyClicks) / 2.5),
+      Math.round((baseClicks + difficultyClicks) / 2.5)
     )
 
     barriers.push({
       id: `barrier-${index + 1}`,
       position,
-      requiredClicks,
+      requiredClicks
     })
   }
 
@@ -61,12 +61,12 @@ const buildMinigameConfig = (encounter, tuning) => {
   const greenSpeedPerSec = clamp(
     baseGreenSpeed - difficultyDelta * 0.028,
     0.08,
-    0.7,
+    0.7
   )
   const redSpeedPerSec = clamp(
     baseRedSpeed + difficultyDelta * 0.036,
     0.02,
-    0.9,
+    0.9
   )
 
   const reelWearPerSec = 0.07 + 0.09 * difficultyNorm
@@ -83,7 +83,7 @@ const buildMinigameConfig = (encounter, tuning) => {
     targetProgress: 1,
     redStartDelayMs: 750,
     difficultyScore,
-    barriers: buildBarriers(encounter, tuning),
+    barriers: buildBarriers(encounter, tuning)
   }
 }
 
@@ -99,17 +99,17 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
   let greenProgress = clamp(
     runtimeState.greenProgress + greenDelta,
     0,
-    config.targetProgress,
+    config.targetProgress
   )
   const durabilityWear = clamp(
     runtimeState.durabilityWear + durabilityDelta,
     0,
-    1,
+    1
   )
   const redProgress = clamp(
     runtimeState.redProgress + redDelta,
     0,
-    config.targetProgress,
+    config.targetProgress
   )
   const activeBarrier =
     config.barriers?.[runtimeState.activeBarrierIndex] || null
@@ -117,7 +117,7 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
     activeBarrier &&
     runtimeState.barrierClicksDone < activeBarrier.requiredClicks
   const isBarrierBlocking = Boolean(
-    isBarrierUnresolved && greenProgress >= activeBarrier.position,
+    isBarrierUnresolved && greenProgress >= activeBarrier.position
   )
 
   if (isBarrierBlocking) {
@@ -128,7 +128,7 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
     greenProgress,
     redProgress,
     elapsedMs,
-    durabilityWear,
+    durabilityWear
   }
 
   if (greenProgress >= config.targetProgress) {
@@ -136,12 +136,12 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
       nextState,
       outcome: {
         status: 'success',
-        reason: 'target',
+        reason: 'target'
       },
       meta: {
         isBarrierBlocking,
-        activeBarrier,
-      },
+        activeBarrier
+      }
     }
   }
 
@@ -150,12 +150,12 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
       nextState,
       outcome: {
         status: 'fail',
-        reason: 'caught_up',
+        reason: 'caught_up'
       },
       meta: {
         isBarrierBlocking,
-        activeBarrier,
-      },
+        activeBarrier
+      }
     }
   }
 
@@ -164,8 +164,8 @@ const stepMinigame = (runtimeState, dtMs, inputState, config) => {
     outcome: null,
     meta: {
       isBarrierBlocking,
-      activeBarrier,
-    },
+      activeBarrier
+    }
   }
 }
 

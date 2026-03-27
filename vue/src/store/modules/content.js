@@ -1,7 +1,7 @@
 import { GAME_CONFIG } from '@/game-config'
 
 const MUTATIONS = {
-  SET_CONTENT: 'SET_CONTENT',
+  SET_CONTENT: 'SET_CONTENT'
 }
 
 const buildInitialState = () => ({
@@ -11,7 +11,7 @@ const buildInitialState = () => ({
   gearDefinitions: GAME_CONFIG.gearDefinitions,
   groundbaitDefinitions: GAME_CONFIG.groundbaitDefinitions,
   landingNetDefinitions: GAME_CONFIG.landingNetDefinitions,
-  tuning: GAME_CONFIG.tuning,
+  tuning: GAME_CONFIG.tuning
 })
 
 export default {
@@ -69,7 +69,7 @@ export default {
 
           if (!location.bgImage) {
             warnings.push(
-              `Location ${location.name || location.id || index + 1} is missing background image.`,
+              `Location ${location.name || location.id || index + 1} is missing background image.`
             )
           }
 
@@ -79,20 +79,20 @@ export default {
             !Number.isFinite(location.bobberAnchor.y)
           ) {
             warnings.push(
-              `Location ${location.name || location.id || index + 1} is missing bobber anchor coordinates.`,
+              `Location ${location.name || location.id || index + 1} is missing bobber anchor coordinates.`
             )
           }
 
           if (!location.fishTableId) {
             warnings.push(
-              `Location ${location.name || location.id || index + 1} has no fish table id.`,
+              `Location ${location.name || location.id || index + 1} has no fish table id.`
             )
             return
           }
 
           if (!state.fishTables?.[location.fishTableId]) {
             warnings.push(
-              `Location ${location.name || location.id || index + 1} references missing fish table "${location.fishTableId}".`,
+              `Location ${location.name || location.id || index + 1} references missing fish table "${location.fishTableId}".`
             )
           }
         })
@@ -111,7 +111,7 @@ export default {
 
       if (!location.bgImage) {
         warnings.push(
-          `Location "${location.name || location.id}" has no background image. Using fallback scene.`,
+          `Location "${location.name || location.id}" has no background image. Using fallback scene.`
         )
       }
 
@@ -121,18 +121,18 @@ export default {
         !Number.isFinite(location.bobberAnchor.y)
       ) {
         warnings.push(
-          `Location "${location.name || location.id}" has no bobber anchor. Hiding bobber.`,
+          `Location "${location.name || location.id}" has no bobber anchor. Hiding bobber.`
         )
       }
 
       if (!location.fishTableId || !state.fishTables?.[location.fishTableId]) {
         warnings.push(
-          `Location "${location.name || location.id}" has an invalid fish table configuration.`,
+          `Location "${location.name || location.id}" has an invalid fish table configuration.`
         )
       }
 
       return warnings
-    },
+    }
   },
   mutations: {
     [MUTATIONS.SET_CONTENT]: (state, payload) => {
@@ -143,11 +143,11 @@ export default {
       state.groundbaitDefinitions = payload.groundbaitDefinitions
       state.landingNetDefinitions = payload.landingNetDefinitions
       state.tuning = payload.tuning
-    },
+    }
   },
   actions: {
     resetContent({ commit }) {
       commit(MUTATIONS.SET_CONTENT, buildInitialState())
-    },
-  },
+    }
+  }
 }

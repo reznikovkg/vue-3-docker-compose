@@ -6,13 +6,13 @@ export const GROUNDBAIT_DEFINITIONS = defineConfig([
     name: 'Perch Mix',
     targetFishId: 'perch',
     price: 18,
-    usesPerPurchase: 3,
+    usesPerPurchase: 3
   },
   {
     id: 'pike-mix',
     name: 'Pike Mix',
     targetFishId: 'pike',
     price: 27,
-    usesPerPurchase: 3,
-  },
+    usesPerPurchase: 3
+  }
 ])

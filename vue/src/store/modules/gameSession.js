@@ -7,7 +7,7 @@ const PHASES = defineConfig({
   CASTING: 'casting',
   WAITING_BITE: 'waitingBite',
   MINIGAME: 'minigame',
-  RESULT: 'result',
+  RESULT: 'result'
 })
 
 let biteTimeoutId = null
@@ -31,7 +31,7 @@ const MUTATIONS = {
   REMOVE_GROUNDBAIT_AREA: 'REMOVE_GROUNDBAIT_AREA',
   SET_ENCOUNTER: 'SET_ENCOUNTER',
   SET_MINIGAME_STATE: 'SET_MINIGAME_STATE',
-  SET_RESULT: 'SET_RESULT',
+  SET_RESULT: 'SET_RESULT'
 }
 
 const buildInitialMinigameState = () => ({
@@ -44,7 +44,7 @@ const buildInitialMinigameState = () => ({
   isReeling: false,
   isBarrierBlocking: false,
   activeBarrierIndex: 0,
-  barrierClicksDone: 0,
+  barrierClicksDone: 0
 })
 
 const buildInitialState = () => ({
@@ -55,7 +55,7 @@ const buildInitialState = () => ({
   groundbaitAreasByLocation: {},
   encounter: null,
   minigame: buildInitialMinigameState(),
-  result: null,
+  result: null
 })
 
 const getRandomInRange = (min, max) => min + Math.random() * (max - min)
@@ -72,7 +72,7 @@ const normalizeCastAnchor = (castAnchor) => {
 
   return {
     x: roundValue(clamp(castAnchor.x, 0, 100)),
-    y: roundValue(clamp(castAnchor.y, 0, 100)),
+    y: roundValue(clamp(castAnchor.y, 0, 100))
   }
 }
 const getGroundbaitAreaByLocationId = (state, locationId) => {
@@ -107,7 +107,7 @@ const buildNewGroundbaitArea = (definition, anchor) => ({
   tier: 1,
   center: anchor,
   radiusPct: GROUNDBAIT_BASE_RADIUS_PCT,
-  castsRemaining: GROUNDBAIT_BASE_CASTS_REMAINING,
+  castsRemaining: GROUNDBAIT_BASE_CASTS_REMAINING
 })
 const getNextGroundbaitArea = (currentArea, definition, anchor) => {
   if (!currentArea) {
@@ -134,7 +134,7 @@ const getNextGroundbaitArea = (currentArea, definition, anchor) => {
     tier: nextTier,
     center: anchor,
     radiusPct: nextRadius,
-    castsRemaining: currentArea.castsRemaining + castBonus,
+    castsRemaining: currentArea.castsRemaining + castBonus
   }
 }
 const consumeGroundbaitCastFromArea = (area) => {
@@ -149,7 +149,7 @@ const consumeGroundbaitCastFromArea = (area) => {
 
   return {
     ...area,
-    castsRemaining: remaining,
+    castsRemaining: remaining
   }
 }
 const buildGroundbaitWeightMultipliers = (castAnchor, area) => {
@@ -159,7 +159,7 @@ const buildGroundbaitWeightMultipliers = (castAnchor, area) => {
 
   const tier = Math.max(
     1,
-    Math.min(Number(area.tier || 1), GROUNDBAIT_MAX_TIER),
+    Math.min(Number(area.tier || 1), GROUNDBAIT_MAX_TIER)
   )
   const multiplier = roundValue(1 + (tier - 1) * GROUNDBAIT_TIER_WEIGHT_STEP)
   if (!area.targetFishId) {
@@ -167,7 +167,7 @@ const buildGroundbaitWeightMultipliers = (castAnchor, area) => {
   }
 
   return {
-    [area.targetFishId]: multiplier,
+    [area.targetFishId]: multiplier
   }
 }
 const getDurabilityFailReason = (encounter, rng = Math.random) => {
@@ -228,7 +228,7 @@ const buildGearContext = (rootGetters) => {
   return {
     rod: rootGetters['content/getGearBySlotAndId']('rods', currentRodId),
     line: rootGetters['content/getGearBySlotAndId']('lines', currentLineId),
-    bait: rootGetters['content/getGearBySlotAndId']('bait', currentBaitId),
+    bait: rootGetters['content/getGearBySlotAndId']('bait', currentBaitId)
   }
 }
 
@@ -251,7 +251,7 @@ const applyLocationQualityBoost = (encounter, isBoostedLocation) => {
     return {
       ...encounter,
       baseQuality,
-      isLocationBoosted: false,
+      isLocationBoosted: false
     }
   }
 
@@ -259,7 +259,7 @@ const applyLocationQualityBoost = (encounter, isBoostedLocation) => {
     ...encounter,
     baseQuality,
     quality: Number((baseQuality * 2).toFixed(2)),
-    isLocationBoosted: true,
+    isLocationBoosted: true
   }
 }
 
@@ -292,11 +292,11 @@ export default {
 
       return Math.max(
         activeBarrier.requiredClicks - state.minigame.barrierClicksDone,
-        0,
+        0
       )
     },
     getIsBarrierBlocking: (state) => state.minigame.isBarrierBlocking,
-    getResult: (state) => state.result,
+    getResult: (state) => state.result
   },
   mutations: {
     [MUTATIONS.RESET_SESSION]: (state) => {
@@ -332,12 +332,12 @@ export default {
     [MUTATIONS.UPSERT_GROUNDBAIT_AREA]: (state, payload) => {
       state.groundbaitAreasByLocation = {
         ...state.groundbaitAreasByLocation,
-        [payload.locationId]: payload.area,
+        [payload.locationId]: payload.area
       }
     },
     [MUTATIONS.REMOVE_GROUNDBAIT_AREA]: (state, locationId) => {
       const nextAreas = {
-        ...state.groundbaitAreasByLocation,
+        ...state.groundbaitAreasByLocation
       }
       delete nextAreas[locationId]
       state.groundbaitAreasByLocation = nextAreas
@@ -348,13 +348,13 @@ export default {
     [MUTATIONS.SET_MINIGAME_STATE]: (state, nextState) => {
       state.minigame = {
         ...state.minigame,
-        ...nextState,
+        ...nextState
       }
     },
     [MUTATIONS.SET_RESULT]: (state, result) => {
       state.result = result
       state.phase = PHASES.RESULT
-    },
+    }
   },
   actions: {
     setActiveLocation({ commit }, locationId) {
@@ -375,12 +375,12 @@ export default {
       if (encounterSize <= capacityKg) {
         return dispatch('resolveMinigame', {
           status: 'success',
-          reason: 'landing_net',
+          reason: 'landing_net'
         }).then(() => true)
       }
 
       return dispatch('progress/consumeEquippedLandingNetOnBreak', null, {
-        root: true,
+        root: true
       }).then(() => false)
     },
     startCast({ state, commit, dispatch }, payload = {}) {
@@ -398,14 +398,14 @@ export default {
       const currentCycleToken = biteCycleToken
       commit(MUTATIONS.START_CAST, {
         timestamp: Date.now(),
-        castAnchor: normalizeCastAnchor(payload.castAnchor),
+        castAnchor: normalizeCastAnchor(payload.castAnchor)
       })
       dispatch('progress/consumeLocationBoostCast', state.activeLocationId, {
-        root: true,
+        root: true
       }) // Promise-returning action; fire-and-forget is intentional
       dispatch('ui/hideResultPanel', null, { root: true }) // synchronous action body; immediate UI reset
       dispatch('scheduleBite', {
-        cycleToken: currentCycleToken,
+        cycleToken: currentCycleToken
       }) // synchronous action body; schedules timeout-driven flow
       return true
     },
@@ -430,40 +430,40 @@ export default {
       }
 
       return dispatch('progress/consumeGroundbaitUse', baitId, {
-        root: true,
+        root: true
       }).then((didConsume) => {
         if (!didConsume) {
           return dispatch(
             'ui/pushNotification',
             {
               type: 'error',
-              message: `${definition.name} is out of stock.`,
+              message: `${definition.name} is out of stock.`
             },
-            { root: true },
+            { root: true }
           ).then(() => false)
         }
 
         const currentArea = getGroundbaitAreaByLocationId(
           state,
-          state.activeLocationId,
+          state.activeLocationId
         )
         const nextArea = getNextGroundbaitArea(
           currentArea,
           definition,
-          castAnchor,
+          castAnchor
         )
         commit(MUTATIONS.UPSERT_GROUNDBAIT_AREA, {
           locationId: state.activeLocationId,
-          area: nextArea,
+          area: nextArea
         })
 
         return dispatch(
           'ui/pushNotification',
           {
             type: 'success',
-            message: `${definition.name} deployed.`,
+            message: `${definition.name} deployed.`
           },
-          { root: true },
+          { root: true }
         ).then(() => true)
       })
     },
@@ -485,7 +485,7 @@ export default {
 
       commit(MUTATIONS.UPSERT_GROUNDBAIT_AREA, {
         locationId,
-        area: nextArea,
+        area: nextArea
       })
       return true
     },
@@ -500,7 +500,7 @@ export default {
       commit(MUTATIONS.SET_PHASE, PHASES.WAITING_BITE)
       biteTimeoutId = setTimeout(() => {
         dispatch('triggerBite', {
-          cycleToken,
+          cycleToken
         }) // synchronous action body called from timeout
       }, delayMs)
 
@@ -517,18 +517,18 @@ export default {
 
       clearBiteTimeout()
       const location = rootGetters['content/getLocationById'](
-        state.activeLocationId,
+        state.activeLocationId
       )
       const fishTables = rootGetters['content/getFishTables']
       const fishDefinitions = rootGetters['content/getFishDefinitions']
       const gearContext = buildGearContext(rootGetters)
       const groundbaitArea = getGroundbaitAreaByLocationId(
         state,
-        state.activeLocationId,
+        state.activeLocationId
       )
       const fishWeightMultipliers = buildGroundbaitWeightMultipliers(
         state.castAnchor,
-        groundbaitArea,
+        groundbaitArea
       )
       dispatch('consumeGroundbaitAreaCast', state.activeLocationId) // synchronous action body; consume after this cast snapshots multiplier
       const rolledEncounter = rollEncounter(
@@ -536,25 +536,25 @@ export default {
         fishTables,
         fishDefinitions,
         gearContext,
-        fishWeightMultipliers,
+        fishWeightMultipliers
       )
       if (!rolledEncounter) {
         commit(MUTATIONS.SET_PHASE, PHASES.IDLE)
         return false
       }
       const isBoostedLocation = rootGetters['progress/getIsLocationBoosted'](
-        state.activeLocationId,
+        state.activeLocationId
       )
       const encounter = applyLocationQualityBoost(
         rolledEncounter,
-        isBoostedLocation,
+        isBoostedLocation
       )
 
       dispatch('progress/consumeEquippedBaitOnHook', null, { root: true }) // Promise-returning action; no immediate minigame dependency
       commit(MUTATIONS.SET_ENCOUNTER, encounter)
       commit(MUTATIONS.SET_PHASE, PHASES.MINIGAME)
       dispatch('startMinigame', {
-        encounter,
+        encounter
       }) // synchronous action body; schedules RAF loop internally
       return true
     },
@@ -587,7 +587,7 @@ export default {
         isReeling: false,
         isBarrierBlocking: false,
         activeBarrierIndex: 0,
-        barrierClicksDone: 0,
+        barrierClicksDone: 0
       })
 
       rafCycleToken += 1
@@ -595,7 +595,7 @@ export default {
       rafId = requestAnimationFrame((timestamp) => {
         dispatch('tickMinigame', {
           timestamp,
-          loopToken,
+          loopToken
         }) // synchronous action body called from RAF
       })
 
@@ -615,7 +615,7 @@ export default {
       const lastTickMs = state.minigame.lastTickMs
       const dtMs = Math.max(
         0,
-        Math.min(lastTickMs === null ? 16 : timestamp - lastTickMs, 50),
+        Math.min(lastTickMs === null ? 16 : timestamp - lastTickMs, 50)
       )
       const runtimeState = {
         greenProgress: state.minigame.greenProgress,
@@ -623,17 +623,17 @@ export default {
         durabilityWear: state.minigame.durabilityWear,
         elapsedMs: state.minigame.elapsedMs,
         activeBarrierIndex: state.minigame.activeBarrierIndex,
-        barrierClicksDone: state.minigame.barrierClicksDone,
+        barrierClicksDone: state.minigame.barrierClicksDone
       }
       const inputState = {
-        isReeling: state.minigame.isReeling,
+        isReeling: state.minigame.isReeling
       }
 
       const stepResult = stepMinigame(
         runtimeState,
         dtMs,
         inputState,
-        state.minigame.config,
+        state.minigame.config
       )
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         greenProgress: stepResult.nextState.greenProgress,
@@ -641,12 +641,12 @@ export default {
         durabilityWear: stepResult.nextState.durabilityWear,
         elapsedMs: stepResult.nextState.elapsedMs,
         lastTickMs: timestamp,
-        isBarrierBlocking: Boolean(stepResult.meta?.isBarrierBlocking),
+        isBarrierBlocking: Boolean(stepResult.meta?.isBarrierBlocking)
       })
 
       if (stepResult.meta?.isBarrierBlocking && state.minigame.isReeling) {
         commit(MUTATIONS.SET_MINIGAME_STATE, {
-          isReeling: false,
+          isReeling: false
         })
       }
 
@@ -658,7 +658,7 @@ export default {
       if (stepResult.nextState.durabilityWear >= 1) {
         dispatch('resolveMinigame', {
           status: 'fail',
-          reason: getDurabilityFailReason(state.encounter),
+          reason: getDurabilityFailReason(state.encounter)
         }) // Promise-returning action; no dependent work in this tick
         return true
       }
@@ -671,7 +671,7 @@ export default {
       rafId = requestAnimationFrame((nextTimestamp) => {
         dispatch('tickMinigame', {
           timestamp: nextTimestamp,
-          loopToken,
+          loopToken
         }) // synchronous action body called from RAF
       })
 
@@ -687,7 +687,7 @@ export default {
       }
 
       commit(MUTATIONS.SET_MINIGAME_STATE, {
-        isReeling: Boolean(isReeling),
+        isReeling: Boolean(isReeling)
       })
       return true
     },
@@ -710,7 +710,7 @@ export default {
         (state.minigame.durabilityWear || 0) +
           (state.minigame.config?.barrierClickWear || 0),
         0,
-        1,
+        1
       )
 
       if (nextClicksDone >= activeBarrier.requiredClicks) {
@@ -719,20 +719,20 @@ export default {
           barrierClicksDone: 0,
           durabilityWear: nextDurabilityWear,
           isBarrierBlocking: false,
-          isReeling: false,
+          isReeling: false
         })
       } else {
         commit(MUTATIONS.SET_MINIGAME_STATE, {
           barrierClicksDone: nextClicksDone,
           durabilityWear: nextDurabilityWear,
-          isBarrierBlocking: true,
+          isBarrierBlocking: true
         })
       }
 
       if (nextDurabilityWear >= 1) {
         dispatch('resolveMinigame', {
           status: 'fail',
-          reason: getDurabilityFailReason(state.encounter),
+          reason: getDurabilityFailReason(state.encounter)
         }) // Promise-returning action; no dependent work in this click handler
         return true
       }
@@ -743,7 +743,7 @@ export default {
       dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         isReeling: false,
-        isBarrierBlocking: false,
+        isBarrierBlocking: false
       })
 
       const encounterPayload = state.encounter
@@ -754,7 +754,7 @@ export default {
             size: state.encounter.size,
             quality: state.encounter.quality,
             tier: state.encounter.tier,
-            reason: outcome.reason,
+            reason: outcome.reason
           }
         : null
 
@@ -768,15 +768,15 @@ export default {
         .then(() =>
           outcome.status === 'fail'
             ? dispatch('progress/consumeBrokenGearOnFail', outcome.reason, {
-                root: true,
+                root: true
               })
-            : Promise.resolve(),
+            : Promise.resolve()
         )
         .then(() => {
           commit(MUTATIONS.SET_RESULT, {
             status: outcome.status,
             reason: outcome.reason,
-            encounter: state.encounter,
+            encounter: state.encounter
           })
         })
     },
@@ -798,6 +798,6 @@ export default {
       dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
       biteCycleToken += 1
       commit(MUTATIONS.RESET_SESSION)
-    },
-  },
+    }
+  }
 }

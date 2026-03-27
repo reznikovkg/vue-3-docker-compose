@@ -11,36 +11,36 @@ $button-variants: (
     background: #e6ecf4,
     background-hover: #d9e3ef,
     border: #9da8b7,
-    text: #394555,
+    text: #394555
   ),
   primary: (
     background: #1d5ec9,
     background-hover: #174ca3,
     border: #174ca3,
-    text: #ffffff,
+    text: #ffffff
   ),
   ghost: (
     background: transparent,
     background-hover: rgba(20, 58, 112, 0.09),
     border: #8ea1b7,
-    text: #2d4058,
-  ),
+    text: #2d4058
+  )
 );
 
 $button-sizes: (
   sm: (
     font-size: 13px,
     padding-y: 6px,
-    padding-x: 10px,
+    padding-x: 10px
   ),
   md: (
     font-size: 14px,
     padding-y: 8px,
-    padding-x: 12px,
+    padding-x: 12px
   ),
   lg: (
     font-size: 15px,
     padding-y: 10px,
-    padding-x: 14px,
-  ),
+    padding-x: 14px
+  )
 );
