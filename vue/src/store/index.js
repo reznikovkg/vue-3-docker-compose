@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import list from './list'
+import gameRoad from './game-road'
 
 export const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -101,5 +102,6 @@ export default createStore({
   },
   modules: {
     list,
+    gameRoad,
   },
 })

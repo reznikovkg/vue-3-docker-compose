@@ -62,6 +62,13 @@
           :style-object="getCarStyle(enemy, false)"
         />
 
+        <div
+          v-for="item in gameState.roadItems"
+          :key="item.id"
+          :class="['road-item', `road-item--${item.type}`]"
+          :style="getRoadItemStyle(item)"
+        />
+
         <div v-if="isPaused" class="game__overlay game__overlay--pause">
           <div class="game__overlay-text">
             ПАУЗА
@@ -94,48 +101,22 @@ import { useRouter } from 'vue-router'
 import { ROUTES } from '@/router'
 import { ACTIONS } from '@/store'
 import GameCar from '@/components/ui/GameCar.vue'
-
-const ROAD_WIDTH = 400
-const LANE_COUNT = 3
-const TUNNEL_TOP_RATIO = 0.52
-const INITIAL_SPEED = 3
-const SPEED_INCREASE = 0.0005
-const INITIAL_LIVES = 3
-const ENEMY_WIDTH = 40
-const ENEMY_HEIGHT = 70
-const ENEMY_SPEED_FACTOR = 0.9
-const ENEMY_SPAWN_DISTANCE_STEP = 40
-const GAME_OVER_REDIRECT_DELAY = 800
+import {
+  GAME_CONFIG,
+  GAME_ROAD_MUTATIONS,
+  getLaneCenterX,
+  getRandomLane,
+  ROAD_CONFIG,
+  ROAD_ITEM_TYPES,
+  type Car,
+  type GameState,
+  type RoadItem,
+} from '@/store/game-road'
 
 const KEY_LEFT_VALUES = ['ArrowLeft', 'a', 'A', 'ф', 'Ф']
 const KEY_RIGHT_VALUES = ['ArrowRight', 'd', 'D', 'в', 'В']
 const KEY_PAUSE_VALUES = [' ', 'p', 'P', 'з', 'З']
 const GAME_LOOP_FPS = 60
-
-interface Car {
-  id?: number
-  x: number
-  y: number
-  width: number
-  height: number
-  speed: number
-  lane?: number
-  changingLane?: boolean
-  targetLane?: number
-  color?: string
-}
-
-interface GameState {
-  playerCar: Car
-  enemies: Car[]
-  speed: number
-  distance: number
-  lives: number
-  keys: {
-    left: boolean
-    right: boolean
-  }
-}
 
 interface CanvasSize {
   width: number
@@ -147,8 +128,8 @@ const gameCanvas = ref<HTMLCanvasElement | null>(null)
 const distance = ref(0)
 const isPaused = ref(false)
 const isGameOver = ref(false)
-const lives = ref(INITIAL_LIVES)
-const maxLives = INITIAL_LIVES
+const lives = ref(GAME_CONFIG.INITIAL_LIVES)
+const maxLives = GAME_CONFIG.INITIAL_LIVES
 const canvasSize = reactive<CanvasSize>({
   width: 0,
   height: 0,
@@ -158,41 +139,28 @@ const canvasSize = reactive<CanvasSize>({
 const store = useStore()
 const router = useRouter()
 
-const gameState = reactive<GameState>({
-  playerCar: {
-    x: ROAD_WIDTH / LANE_COUNT,
-    y: 0,
-    width: 40,
-    height: 70,
-    speed: 0,
-  },
-  enemies: [],
-  speed: INITIAL_SPEED,
-  distance: 0,
-  lives: INITIAL_LIVES,
-  keys: {
-    left: false,
-    right: false,
-  },
-})
+const gameState = store.state.gameRoad as GameState
 
 let gameLoopId: number | null = null
-let nextEnemySpawnDistance = ENEMY_SPAWN_DISTANCE_STEP
+let nextEnemySpawnDistance = GAME_CONFIG.ENEMY_SPAWN_DISTANCE_STEP
+let nextRoadItemSpawnDistance = GAME_CONFIG.ROAD_ITEM_SPAWN_DISTANCE_STEP
 let roadDashOffset = 0
 let enemyIdCounter = 1
+let roadItemIdCounter = 1
+let isSpeedRecovering = false
 
 const getCanvasSize = () => {
   const isMobile = window.innerWidth < 768
 
   const width = Math.min(
-    ROAD_WIDTH,
+    ROAD_CONFIG.WIDTH,
     window.innerWidth - 40,
   )
 
   const maxHeight = isMobile ? window.innerHeight - 180 : window.innerHeight - 200
   const height = Math.min(600, maxHeight)
 
-  const scale = width / ROAD_WIDTH
+  const scale = width / ROAD_CONFIG.WIDTH
 
   return {
     width,
@@ -213,105 +181,62 @@ const getRoadBoundsAtY = (yPx: number) => {
   const w = canvasSize.width
   const h = canvasSize.height
   const centerX = w / 2
-  const topWidth = w * TUNNEL_TOP_RATIO
+  const topWidth = w * ROAD_CONFIG.TUNNEL_TOP_RATIO
   const widthAtY = topWidth + (w - topWidth) * Math.min(1, Math.max(0, yPx / h))
   const leftPx = centerX - widthAtY / 2
 
   return { leftPx, widthPx: widthAtY }
 }
 
-const drawCar = (
-  context: CanvasRenderingContext2D,
-  car: Car,
-  color: string,
-  isPlayer: boolean,
-) => {
-  const canvasScale = canvasSize.scale
-
-  const centerX = car.x * canvasScale
-  const topY = car.y * canvasScale
-  const width = car.width * canvasScale
-  const height = car.height * canvasScale
-  context.fillStyle = color
-  context.fillRect(
-    centerX - width / 2,
-    topY,
-    width,
-    height,
-  )
-
-  context.fillStyle = isPlayer ? '#1e40af' : '#374151'
-
-  context.fillRect(
-    centerX - width / 2 + 5 * canvasScale,
-    topY + 10 * canvasScale,
-    width - 10 * canvasScale,
-    20 * canvasScale,
-  )
-
-  context.fillRect(
-    centerX - width / 2 + 5 * canvasScale,
-    topY + height - 35 * canvasScale,
-    width - 10 * canvasScale,
-    20 * canvasScale,
-  )
-
-  if (isPlayer) {
-    context.fillStyle = '#fef08a'
-
-    context.fillRect(
-      centerX - width / 2 + 5 * canvasScale,
-      topY + height - 5 * canvasScale,
-      10 * canvasScale,
-      5 * canvasScale,
-    )
-
-    context.fillRect(
-      centerX + width / 2 - 15 * canvasScale,
-      topY + height - 5 * canvasScale,
-      10 * canvasScale,
-      5 * canvasScale,
-    )
-
-    return
-  }
-
-  context.fillStyle = '#ef4444'
-
-  context.fillRect(
-    centerX - width / 2 + 5 * canvasScale,
-    topY,
-    10 * canvasScale,
-    5 * canvasScale,
-  )
-
-  context.fillRect(
-    centerX + width / 2 - 15 * canvasScale,
-    topY,
-    10 * canvasScale,
-    5 * canvasScale,
-  )
-}
-
-const getRandomLaneX = () => {
-  const laneWidth = ROAD_WIDTH / LANE_COUNT
-  const laneIndex = Math.floor(Math.random() * LANE_COUNT)
-
-  return laneWidth * laneIndex + laneWidth / 2
-}
-
 const spawnEnemy = () => {
+  const canSpawnOncoming = Math.random() < 0.35
+  const lane = canSpawnOncoming
+    ? ROAD_CONFIG.ONCOMING_LANE
+    : getRandomLane([1, 2])
+  const isOncoming = lane === ROAD_CONFIG.ONCOMING_LANE
+
   const enemyCar: Car = {
     id: enemyIdCounter++,
-    x: getRandomLaneX(),
-    y: -ENEMY_HEIGHT,
-    width: ENEMY_WIDTH,
-    height: ENEMY_HEIGHT,
-    speed: gameState.speed * ENEMY_SPEED_FACTOR,
+    x: getLaneCenterX(lane),
+    y: -GAME_CONFIG.ENEMY_HEIGHT,
+    width: GAME_CONFIG.ENEMY_WIDTH,
+    height: GAME_CONFIG.ENEMY_HEIGHT,
+    speed: gameState.speed * (
+      isOncoming
+        ? GAME_CONFIG.ONCOMING_ENEMY_SPEED_FACTOR
+        : GAME_CONFIG.ENEMY_SPEED_FACTOR
+    ),
+    lane,
+    isOncoming,
     color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 55%)`,
   }
 
   gameState.enemies.push(enemyCar)
+}
+
+const spawnRoadItem = () => {
+  const lane = getRandomLane([0, 1, 2])
+  const roll = Math.random()
+  const itemType = roll < 0.33
+    ? ROAD_ITEM_TYPES.PIT
+    : roll < 0.6
+      ? ROAD_ITEM_TYPES.BARRIER
+      : roll < 0.82
+        ? ROAD_ITEM_TYPES.EXTRA_LIFE
+        : ROAD_ITEM_TYPES.SPEED_BOOST
+
+  const roadItem: RoadItem = {
+    id: roadItemIdCounter++,
+    x: getLaneCenterX(lane),
+    y: -58,
+    width: itemType === ROAD_ITEM_TYPES.PIT ? 54 : 42,
+    height: itemType === ROAD_ITEM_TYPES.PIT ? 22 : 42,
+    lane,
+    speed: gameState.speed * 0.95,
+    type: itemType,
+  }
+
+  gameState.roadItems.push(roadItem)
 }
 
 const getCarStyle = (car: Car, isPlayer: boolean) => {
@@ -319,33 +244,85 @@ const getCarStyle = (car: Car, isPlayer: boolean) => {
     car,
     isPlayer,
     canvasSize,
-    roadWidth: ROAD_WIDTH,
-    tunnelTopRatio: TUNNEL_TOP_RATIO,
+    roadWidth: ROAD_CONFIG.WIDTH,
+    tunnelTopRatio: ROAD_CONFIG.TUNNEL_TOP_RATIO,
   })
 }
 
-const detectCollisions = () => {
+const getRoadItemStyle = (item: RoadItem) => {
+  const scale = canvasSize.scale
+  const centerYpx = (item.y + item.height / 2) * scale
+  const bounds = getRoadBoundsAtY(centerYpx)
+  const centerXpx = bounds.leftPx + (item.x / ROAD_CONFIG.WIDTH) * bounds.widthPx
+
+  const gameHeight = canvasSize.height / scale
+  const depthRatio = Math.max(0, Math.min(1, (item.y + item.height / 2) / gameHeight))
+  const sizeScale = 0.75 + 0.3 * depthRatio
+
+  return {
+    width: `${item.width * scale * sizeScale}px`,
+    height: `${item.height * scale * sizeScale}px`,
+    transform: `translate3d(${centerXpx}px, ${centerYpx}px, 0) translate(-50%, -50%) scale(${sizeScale})`,
+  }
+}
+
+const isRectOverlap = (a: Car | RoadItem, b: Car | RoadItem) => {
+  const aLeft = a.x - a.width / 2
+  const aRight = a.x + a.width / 2
+  const aTop = a.y
+  const aBottom = a.y + a.height
+  const bLeft = b.x - b.width / 2
+  const bRight = b.x + b.width / 2
+  const bTop = b.y
+  const bBottom = b.y + b.height
+
+  return aLeft < bRight && aRight > bLeft && aTop < bBottom && aBottom > bTop
+}
+
+const applyHitPenalty = () => {
+  gameState.speed = 0
+  gameState.boostRemainingMs = 0
+  gameState.speedPenaltyFactor = GAME_CONFIG.COLLISION_SLOWDOWN_FACTOR
+  isSpeedRecovering = true
+}
+
+const processLifeLoss = () => {
+  if (gameState.lives === 0) {
+    return
+  }
+
+  gameState.lives = gameState.lives - 1
+  lives.value = gameState.lives
+
+  if (gameState.lives !== 0) {
+    return
+  }
+
+  isGameOver.value = true
+  stopGameLoop()
+
+  window.setTimeout(
+    () => {
+      store.dispatch(
+        ACTIONS.SAVE_SCORE,
+        distance.value,
+      )
+
+      router.push({
+        name: ROUTES.RESULT,
+      })
+    },
+    GAME_CONFIG.GAME_OVER_REDIRECT_DELAY,
+  )
+}
+
+const detectEnemyCollisions = () => {
   const player = gameState.playerCar
-
-  const playerLeft = player.x - player.width / 2
-  const playerRight = player.x + player.width / 2
-  const playerTop = player.y
-  const playerBottom = player.y + player.height
-
   const remainingEnemies: Car[] = []
-
   let hasCollision = false
 
   gameState.enemies.forEach((enemy) => {
-    const enemyLeft = enemy.x - enemy.width / 2
-    const enemyRight = enemy.x + enemy.width / 2
-    const enemyTop = enemy.y
-    const enemyBottom = enemy.y + enemy.height
-
-    const isOverlapHorizontal = playerLeft < enemyRight && playerRight > enemyLeft
-    const isOverlapVertical = playerTop < enemyBottom && playerBottom > enemyTop
-
-    if (isOverlapHorizontal && isOverlapVertical) {
+    if (isRectOverlap(player, enemy)) {
       hasCollision = true
 
       return
@@ -360,31 +337,39 @@ const detectCollisions = () => {
     return
   }
 
-  if (gameState.lives === 0) {
-    return
-  }
+  applyHitPenalty()
+  processLifeLoss()
+}
 
-  gameState.lives = gameState.lives - 1
-  lives.value = gameState.lives
+const detectRoadItemCollisions = () => {
+  const player = gameState.playerCar
+  const remainingRoadItems: RoadItem[] = []
 
-  if (gameState.lives === 0) {
-    isGameOver.value = true
-    stopGameLoop()
+  gameState.roadItems.forEach((item) => {
+    if (!isRectOverlap(player, item)) {
+      remainingRoadItems.push(item)
 
-    window.setTimeout(
-      () => {
-        store.dispatch(
-          ACTIONS.SAVE_SCORE,
-          distance.value,
-        )
+      return
+    }
 
-        router.push({
-          name: ROUTES.RESULT,
-        })
-      },
-      GAME_OVER_REDIRECT_DELAY,
-    )
-  }
+    if (item.type === ROAD_ITEM_TYPES.EXTRA_LIFE) {
+      gameState.lives = Math.min(maxLives, gameState.lives + 1)
+      lives.value = gameState.lives
+
+      return
+    }
+
+    if (item.type === ROAD_ITEM_TYPES.SPEED_BOOST) {
+      gameState.boostRemainingMs = GAME_CONFIG.BOOST_DURATION_MS
+
+      return
+    }
+
+    applyHitPenalty()
+    processLifeLoss()
+  })
+
+  gameState.roadItems = remainingRoadItems
 }
 
 const gameLoop = () => {
@@ -407,6 +392,7 @@ const gameLoop = () => {
   const canvasScale = canvasSize.scale
   const cw = canvasElement.width
   const ch = canvasElement.height
+  const frameMs = 1000 / GAME_LOOP_FPS
 
   context.fillStyle = '#16a34a'
   context.fillRect(0, 0, cw, ch)
@@ -427,17 +413,26 @@ const gameLoop = () => {
   context.closePath()
   context.fill()
 
-  context.strokeStyle = '#ffffff'
-  context.lineWidth = 2
-  context.setLineDash([20 * canvasScale, 15 * canvasScale])
   roadDashOffset = roadDashOffset + gameState.speed * 1.5
-  context.lineDashOffset = -roadDashOffset * canvasScale
 
   let laneIndex = 1
 
-  while (laneIndex < LANE_COUNT) {
-    const xTop = roadLeftTop + (topBounds.widthPx / LANE_COUNT) * laneIndex
-    const xBottom = roadLeftBottom + (bottomBounds.widthPx / LANE_COUNT) * laneIndex
+  while (laneIndex < ROAD_CONFIG.LANE_COUNT) {
+    const xTop = roadLeftTop + (topBounds.widthPx / ROAD_CONFIG.LANE_COUNT) * laneIndex
+    const xBottom = roadLeftBottom + (bottomBounds.widthPx / ROAD_CONFIG.LANE_COUNT) * laneIndex
+
+    if (laneIndex === 1) {
+      context.strokeStyle = '#facc15'
+      context.lineWidth = 3
+      context.setLineDash([])
+      context.lineDashOffset = 0
+    } else {
+      context.strokeStyle = '#ffffff'
+      context.lineWidth = 2
+      context.setLineDash([20 * canvasScale, 15 * canvasScale])
+      context.lineDashOffset = -roadDashOffset * canvasScale
+    }
+
     context.beginPath()
     context.moveTo(xTop, 0)
     context.lineTo(xBottom, ch)
@@ -447,14 +442,38 @@ const gameLoop = () => {
 
   context.setLineDash([])
 
-  gameState.speed = gameState.speed + SPEED_INCREASE
+  if (isSpeedRecovering) {
+    gameState.speed = Math.min(
+      GAME_CONFIG.INITIAL_SPEED,
+      gameState.speed + GAME_CONFIG.BASE_RECOVERY_ACCEL,
+    )
+    isSpeedRecovering = gameState.speed < GAME_CONFIG.INITIAL_SPEED
+  } else {
+    gameState.speed = gameState.speed + GAME_CONFIG.SPEED_INCREASE * gameState.speedPenaltyFactor
+    gameState.speedPenaltyFactor = Math.min(
+      1,
+      gameState.speedPenaltyFactor + GAME_CONFIG.COLLISION_ACCEL_RECOVERY_STEP,
+    )
+  }
 
-  gameState.distance = gameState.distance + gameState.speed * 0.1
+  if (gameState.boostRemainingMs > 0) {
+    gameState.boostRemainingMs = Math.max(0, gameState.boostRemainingMs - frameMs)
+  }
+
+  const activeBoost = gameState.boostRemainingMs > 0 ? GAME_CONFIG.BOOST_SPEED_BONUS : 0
+  const gameSpeedWithBoost = gameState.speed + activeBoost
+
+  gameState.distance = gameState.distance + gameSpeedWithBoost * 0.1
   distance.value = Math.floor(gameState.distance)
 
   if (gameState.distance >= nextEnemySpawnDistance) {
     spawnEnemy()
-    nextEnemySpawnDistance = nextEnemySpawnDistance + ENEMY_SPAWN_DISTANCE_STEP
+    nextEnemySpawnDistance = nextEnemySpawnDistance + GAME_CONFIG.ENEMY_SPAWN_DISTANCE_STEP
+  }
+
+  if (gameState.distance >= nextRoadItemSpawnDistance) {
+    spawnRoadItem()
+    nextRoadItemSpawnDistance = nextRoadItemSpawnDistance + GAME_CONFIG.ROAD_ITEM_SPAWN_DISTANCE_STEP
   }
 
   const playerMoveSpeed = 5 * canvasScale
@@ -466,7 +485,7 @@ const gameLoop = () => {
   }
 
   if (gameState.keys.right) {
-    const maxX = ROAD_WIDTH - gameState.playerCar.width / 2
+    const maxX = ROAD_CONFIG.WIDTH - gameState.playerCar.width / 2
     const nextX = gameState.playerCar.x + playerMoveSpeed
     gameState.playerCar.x = Math.min(maxX, nextX)
   }
@@ -474,7 +493,7 @@ const gameLoop = () => {
   gameState.playerCar.y = canvasElement.height / canvasScale - 100
 
   gameState.enemies.forEach((enemy) => {
-    enemy.y = enemy.y + enemy.speed
+    enemy.y = enemy.y + enemy.speed + activeBoost
   })
 
   const visibleEnemies: Car[] = []
@@ -487,7 +506,22 @@ const gameLoop = () => {
 
   gameState.enemies = visibleEnemies
 
-  detectCollisions()
+  gameState.roadItems.forEach((item) => {
+    item.y = item.y + item.speed + activeBoost
+  })
+
+  const visibleRoadItems: RoadItem[] = []
+
+  gameState.roadItems.forEach((item) => {
+    if (item.y * canvasScale < canvasElement.height + item.height * canvasScale) {
+      visibleRoadItems.push(item)
+    }
+  })
+
+  gameState.roadItems = visibleRoadItems
+
+  detectEnemyCollisions()
+  detectRoadItemCollisions()
 }
 
 const startGameLoop = () => {
@@ -565,7 +599,10 @@ const onTouchEnd = () => {
 }
 
 onMounted(() => {
+  store.commit(`gameRoad/${GAME_ROAD_MUTATIONS.RESET_GAME_STATE}`)
   updateCanvasSize()
+  distance.value = 0
+  lives.value = GAME_CONFIG.INITIAL_LIVES
   window.addEventListener('resize', updateCanvasSize)
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
@@ -739,6 +776,49 @@ onUnmounted(() => {
         display: none;
       }
     }
+  }
+}
+
+.road-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1;
+  transform-style: preserve-3d;
+
+  &--pit {
+    border-radius: 999px;
+    background: radial-gradient(circle at 50% 35%, #374151 0%, #111827 60%, #030712 100%);
+    border: 2px solid rgba(15, 23, 42, 0.95);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+  }
+
+  &--barrier {
+    background: repeating-linear-gradient(
+      45deg,
+      #f97316 0,
+      #f97316 10px,
+      #111827 10px,
+      #111827 20px
+    );
+    border: 2px solid #1f2937;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+  }
+
+  &--extraLife {
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #fca5a5 0%, #ef4444 65%, #be123c 100%);
+    border: 2px solid #fef2f2;
+    box-shadow: 0 0 12px rgba(248, 113, 113, 0.55);
+  }
+
+  &--speedBoost {
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #fde68a 0%, #eab308 65%, #a16207 100%);
+    border: 2px solid #fef9c3;
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.55);
   }
 }
 </style>
