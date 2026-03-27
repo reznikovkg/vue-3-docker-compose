@@ -13,6 +13,7 @@ export const MUTATIONS = {
   ADD_COINS: 'ADD_COINS',
   ADD_ENEMY_BULLET: 'ADD_ENEMY_BULLET',
   UPDATE_ENEMY_BULLETS: 'UPDATE_ENEMY_BULLETS',
+  SET_PLAYER_DIRECTION: 'SET_PLAYER_DIRECTION'
 }
 
 export default {
@@ -21,7 +22,8 @@ export default {
     player: {
       x: 0,
       y: 0,
-      speed: 5
+      speed: 5,
+      direction: 'down'
     },
     mouseX: 0,
     mouseY: 0,
@@ -99,12 +101,21 @@ export default {
     },
     [MUTATIONS.ADD_COINS](state, amount) {
       state.coins += amount
+    },
+    [MUTATIONS.SET_PLAYER_DIRECTION](state, direction) {
+      state.player.direction = direction
     }
   },
   actions: {
     setPlayerPosition({ commit }, position) {
       return new Promise((resolve) => {
         commit(MUTATIONS.SET_PLAYER_POSITION, position)
+        resolve()
+      })
+    },
+    setPlayerDirection({ commit }, direction){
+      return new Promise((resolve) => {
+        commit(MUTATIONS.SET_PLAYER_DIRECTION, direction)
         resolve()
       })
     },
@@ -150,7 +161,7 @@ export default {
         resolve()
       })
     },
-    addEnemyBullets({ commit }, bullet){
+    addEnemyBullet({ commit }, bullet){
       return new Promise((resolve) => {
           commit(MUTATIONS.ADD_ENEMY_BULLET, bullet)
           resolve()

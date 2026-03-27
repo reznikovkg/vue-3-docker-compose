@@ -12,6 +12,7 @@
     <div class="game__world">
       <div
         class="game__player"
+        :class="`game__player--${player.direction}`"
         :style="{
           left: player.x + 'px',
           top: player.y + 'px'
@@ -41,7 +42,8 @@
         v-for="(enemy, index) in enemies"
         :key="index"
         class="game__enemy"
-        :class="{'game__enemy--shoter': enemy.type === 'shooter'}"
+        :class="[`game__enemy--${enemy.type}`,
+         `game__enemy--${enemy.type}-${enemy.direction}`]"
         :style="{
           left: enemy.x + 'px',
           top: enemy.y + 'px'
@@ -195,8 +197,9 @@ export default {
       'setPause',
       'updateStats',
       'addCoins',
-      'addEnemyBullets',
-      'updateEnemyBullets'
+      'addEnemyBullet',
+      'updateEnemyBullets',
+      'setPlayerDirection'
     ]),
 
     comMouseMove(e) {
@@ -311,16 +314,26 @@ export default {
       //this.setPlayerPosition(newPos)
 
       if (newX !== 0 || newY !== 0) {
+
         const shiftedEnemies = this.enemies.map(enemy => ({
         ...enemy,
         x: enemy.x + newX,
         y: enemy.y + newY
       }))
-    this.updateEnemies(shiftedEnemies)
+      this.updateEnemies(shiftedEnemies)
     
       const shiftedBullets = this.bullets.map(bullet => ({...bullet,
         x: bullet.x + newX, y: bullet.y + newY}))
       this.updateBullets(shiftedBullets)
+      }
+    },
+
+    updatePlayerDirection(){
+      const dx = this.mousePos.x - this.player.x
+      const dy = this.mousePos.y - this.player.y
+      const direction = this.getDirection(dx, dy)
+      if (direction !== this.player.direction) {
+        this.setPlayerDirection(direction)
       }
     },
 
@@ -331,6 +344,7 @@ export default {
       this.checkCollisions()
       this.spawnEnemyIfNeeded(currentTime)
       this.shoot(currentTime)
+      this.updatePlayerDirection()
     },
 
     updateBulletsPosition() {
@@ -381,26 +395,29 @@ export default {
             })
             return {
               ...enemy,
-              x: enemy.x + direction.x * 2,
-              y: enemy.y + direction.y * 2,
+              x: enemy.x + direction.x * enemy.speed,
+              y: enemy.y + direction.y * enemy.speed,
+              direction: this.getDirection(direction.x, direction.y),
               lastShot: currentTime
             }
           }
           return {
               ...enemy,
-              x: enemy.x + direction.x * 2,
-              y: enemy.y + direction.y * 2,
+              x: enemy.x + direction.x * enemy.speed,
+              y: enemy.y + direction.y * enemy.speed,
+              direction: this.getDirection(direction.x, direction.y)
             }
         }
         return {
           ...enemy,
-          x: enemy.x + direction.x * 2,
-          y: enemy.y + direction.y * 2
+          x: enemy.x + direction.x * enemy.speed,
+          y: enemy.y + direction.y * enemy.speed,
+          direction: this.getDirection(direction.x, direction.y)
         }
       })
       
       this.updateEnemies(updatedEnemies)
-      newEnemyBullets.forEach(b => this.addEnemyBullets(b))
+      newEnemyBullets.forEach(b => this.addEnemyBullet(b))
     },
 
     calculateDirection(fromX, fromY, toX, toY) {
@@ -408,6 +425,18 @@ export default {
       const dy = toY - fromY
       const length = Math.sqrt(dx * dx + dy * dy)
       return length > 0 ? { x: dx / length, y: dy / length } : { x: 0, y: 0 }
+    },
+
+    getDirection(dx, dy){
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+      if (angle > -22 && angle <= 22) return 'right'
+      if (angle > 22 && angle <= 67) return 'down-right'
+      if (angle > 67 && angle <= 112) return 'down'
+      if (angle > 112 && angle <= 157) return 'down-left'
+      if (angle > 157 || angle <= -157) return 'left'
+      if (angle > -157 && angle <= -112) return 'up-left'
+      if (angle > -112 && angle <= -67) return 'up'
+      return 'up-right'
     },
 
     checkCollisions() {
@@ -491,7 +520,8 @@ export default {
       if (currentTime - this.lastEnemyAppear > this.enemySpawnCD) {
         const position = this.generateEnemyPosition()
         const type = Math.random() < 0.30 ? 'shooter' : 'melee'
-        this.addEnemy({ x: position.x, y: position.y, health: 3, type, lastShot: 0 })
+        const speed = type === 'shooter' ? 1 : 2
+        this.addEnemy({ x: position.x, y: position.y, health: 3, type, lastShot: 0, speed, direction: 'down' })
         this.lastEnemyAppear = currentTime
       }
     },
@@ -629,9 +659,20 @@ export default {
     position: absolute;
     width: 40px;
     height: 40px;
-    background-color: red;
+    //background-color: red;
     transform: translate(-50%, -50%);
     will-change: left, top;
+    background-image: url('/sprites/player.png');
+    background-size: 320px 30px;
+    background-repeat: no-repeat;
+    &--down        { background-position: 0   0 }
+    &--down-right  { background-position: -40px 0 }
+    &--right       { background-position: -80px 0 }
+    &--up-right    { background-position: -120px 0 }
+    &--up          { background-position: -160px 0 }
+    &--up-left     { background-position: -200px 0 }
+    &--left        { background-position: -240px 0 }
+    &--down-left   { background-position: -280px 0 }
   }
 
   &__bullet {
@@ -650,10 +691,37 @@ export default {
     background: grey;
     transform: translate(-50%, -50%);
     will-change: left, top;
-  }
+    
+    &--shooter {
+      //background: purple;
+      background-image: url('/sprites/enemy1.png');
+      background-size: 320px 30px;
+      background-repeat: no-repeat;
+    }
 
-  &__enemy--shooter {
-    background: purple;
+    &--shooter-down        { background-position: 0 0 }
+    &--shooter-down-right  { background-position: -40px 0 }
+    &--shooter-right       { background-position: -80px 0 }
+    &--shooter-up-right    { background-position: -120px 0 }
+    &--shooter-up          { background-position: -160px 0 }
+    &--shooter-up-left     { background-position: -200px 0 }
+    &--shooter-left        { background-position: -240px 0 }
+    &--shooter-down-left   { background-position: -280px 0 }
+
+    &--melee {
+      //background: rgb(120, 236, 19);
+      background-image: url('/sprites/enemy2.png');
+      background-size: 320px 30px;
+      background-repeat: no-repeat;
+    }
+    &--melee-down        { background-position: 0 0 }
+    &--melee-down-right  { background-position: -40px 0 }
+    &--melee-right       { background-position: -80px 0 }
+    &--melee-up-right    { background-position: -120px 0 }
+    &--melee-up          { background-position: -160px 0 }
+    &--melee-up-left     { background-position: -200px 0 }
+    &--melee-left        { background-position: -240px 0 }
+    &--melee-down-left   { background-position: -280px 0 }
   }
 
   &__enemy-bullet {
