@@ -1,39 +1,39 @@
 <template>
     <div
-      v-if="isOpen"
-      class="modal"
-      @click="() => close()"
+        v-if="isOpen"
+        class="modal"
+        @click="() => close()"
     >
         <div
-          class="modal__content"
-          @click.stop
+            class="modal__content"
+            @click.stop
         >
             <div class="modal__head">
                 <h3>Рекорды</h3>
 
                 <button
-                  class="modal__close"
-                  @click="() => close()"
+                    class="modal__close"
+                    @click="() => close()"
                 >
                     Закрыть
                 </button>
             </div>
 
             <div
-              v-if="!records.length"
-              class="modal__empty"
+                v-if="!records.length"
+                class="modal__empty"
             >
                 Пока нет записей
             </div>
 
             <div
-              v-else
-              class="modal__grid"
+                v-else
+                class="modal__grid"
             >
                 <div
-                  v-for="(record, index) in records"
-                  :key="index"
-                  class="modal__record"
+                    v-for="(record, index) in records"
+                    :key="index"
+                    class="modal__record"
                 >
                     <span class="modal__place">
                         {{ index + 1 }}.
