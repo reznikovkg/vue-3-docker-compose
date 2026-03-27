@@ -1,10 +1,10 @@
+version: '3.9'
+
 services:
-  web:
-    build:
-      context: ./vue
-      dockerfile: Dockerfile.runtime
-    image: vue-fiit-web:latest
-    network_mode: host
-    restart: unless-stopped
-    volumes:
-      - ${CERTS_HOST_DIR}:/etc/nginx/certs:rw
+    vue:
+        build: ./vue
+        ports:
+            - "9999:5173"
+        volumes:
+            - ./vue/src:/vue/src
+            - ./vue/package.json:/vue/package.json
