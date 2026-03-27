@@ -15,7 +15,7 @@ export default createStore({
   getters: {
     getCount: (state) => state.count,
     getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
+    
   },
   mutations: {
     [MUTATIONS.INCREMENT]: (state, value) => {
