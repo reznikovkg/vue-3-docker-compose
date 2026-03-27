@@ -27,3 +27,7 @@ const setValue = () => store.dispatch('setCount', {
   timeout: timeout.value
 })
 </script>
+
+<style scoped>
+
+</style>
