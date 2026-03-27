@@ -296,12 +296,7 @@ export default {
   }
 
   &__groundbait-area {
-    background: radial-gradient(
-      circle,
-      rgba(246, 219, 121, 0.22) 0%,
-      rgba(224, 156, 39, 0.14) 58%,
-      rgba(204, 118, 24, 0.08) 100%
-    );
+    background: rgba(224, 156, 39, 0.16);
     border: 1px dashed rgba(238, 186, 80, 0.9);
     border-radius: 50%;
     left: 50%;
