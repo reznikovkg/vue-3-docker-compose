@@ -106,6 +106,9 @@
             <button
               v-else-if="isInventoryMode && activeTab !== 'groundbait'"
               class="inventory-overlay__action inventory-overlay__action--equip"
+              :class="{
+                'inventory-overlay__action--equipped': item.isEquipped
+              }"
               :disabled="item.isEquipped || !item.canEquip"
               type="button"
               @click="() => emitEquipItem(item)"
@@ -120,6 +123,14 @@
               @click="() => emitBuyItem(item)"
             >
               Buy
+            </button>
+            <button
+              v-else
+              class="inventory-overlay__action inventory-overlay__action--muted"
+              disabled
+              type="button"
+            >
+              No action
             </button>
           </div>
         </article>
@@ -328,274 +339,134 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as mixins;
-@use '@/styles/tokens' as tokens;
-
 .inventory-overlay {
   align-items: center;
   background: rgba(4, 10, 17, 0.72);
   display: flex;
   inset: 0;
   justify-content: center;
-  padding: 16px;
+  padding: 12px;
   position: fixed;
   z-index: 40;
 
   &__panel {
-    @include mixins.glass-panel(
-      rgba(6, 13, 22, 0.94),
-      rgba(217, 228, 240, 0.24),
-      16px,
-      0 24px 44px rgba(0, 0, 0, 0.34),
-      16px
-    );
+    background: rgba(6, 13, 22, 0.94);
+    border: 1px solid rgba(217, 228, 240, 0.24);
+    border-radius: 12px;
+    color: #f2f7fb;
     display: grid;
+    gap: 10px;
     grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-    gap: 12px;
-    height: min(92dvh, 980px);
-    max-width: 1240px;
+    height: min(92dvh, 960px);
     overflow: hidden;
-    width: min(96vw, 1240px);
+    padding: 12px;
+    width: min(96vw, 1100px);
+  }
+
+  &__header,
+  &__mode-switch,
+  &__tabs,
+  &__footer {
+    align-items: center;
+    display: flex;
+    gap: 8px;
   }
 
   &__header {
-    align-items: center;
-    display: flex;
     justify-content: space-between;
-  }
-
-  &__title-wrap {
-    display: grid;
-    gap: 4px;
-  }
-
-  &__title {
-    color: tokens.$fishing-panel-text;
-    font-size: clamp(18px, 2.3vw, 28px);
-    margin: 0;
-    text-transform: uppercase;
-  }
-
-  &__money {
-    color: #9de5a5;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    margin: 0;
-    text-transform: uppercase;
-  }
-
-  &__close {
-    align-items: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid tokens.$fishing-panel-border;
-    border-radius: 8px;
-    color: tokens.$fishing-panel-text;
-    cursor: pointer;
-    display: inline-flex;
-    font-size: 14px;
-    font-weight: 700;
-    height: 30px;
-    justify-content: center;
-    line-height: 1;
-    text-transform: uppercase;
-    width: 30px;
-  }
-
-  &__mode-switch {
-    display: flex;
-    gap: 8px;
-  }
-
-  &__switch-button {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid tokens.$fishing-panel-border;
-    border-radius: 10px;
-    color: tokens.$fishing-panel-text;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 700;
-    min-width: 124px;
-    padding: 9px 12px;
-    text-transform: uppercase;
-
-    &--active {
-      background: rgba(18, 80, 44, 0.55);
-      border-color: #2daa66;
-    }
-  }
-
-  &__tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  &__tab {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid tokens.$fishing-panel-border;
-    border-radius: 999px;
-    color: tokens.$fishing-panel-text;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 8px 12px;
-    text-transform: uppercase;
-
-    &--active {
-      background: rgba(31, 143, 78, 0.58);
-      border-color: #3ac780;
-    }
   }
 
   &__items {
     align-content: start;
     display: grid;
-    gap: 10px;
-    grid-auto-rows: max-content;
-    min-height: 0;
+    gap: 8px;
     overflow: auto;
-    padding-right: 2px;
   }
 
   &__item {
-    align-items: stretch;
+    align-items: center;
     background: rgba(13, 27, 40, 0.82);
     border: 1px solid rgba(203, 219, 236, 0.2);
-    border-radius: 12px;
+    border-radius: 10px;
     display: grid;
-    gap: 12px;
-    grid-template-columns: 96px max-content auto;
-    justify-content: start;
-    padding: 12px;
+    gap: 10px;
+    grid-template-columns: 84px 1fr auto;
+    padding: 10px;
+    width: 100%;
   }
 
   &__item-media {
+    align-self: start;
+    border: 1px solid rgba(203, 219, 236, 0.28);
     border-radius: 8px;
-    height: 100%;
-    min-height: 100%;
+    line-height: 0;
     overflow: hidden;
-    width: 100%;
+    width: 84px;
   }
 
   &__item-image {
     display: block;
-    height: 100%;
-    object-fit: cover;
-    user-select: none;
-    -webkit-user-drag: none;
     width: 100%;
   }
 
-  &__item-title {
-    color: #f3f8fd;
-    font-size: 16px;
-    margin: 0 0 6px;
-  }
-
-  &__item-info {
-    align-self: center;
-    max-width: 100%;
-    width: max-content;
-  }
-
-  &__item-meta {
-    color: tokens.$fishing-panel-muted;
-    font-size: 13px;
-    margin: 0;
-  }
-
   &__item-actions {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 116px;
-  }
-
-  &__action {
-    border: 1px solid transparent;
-    border-radius: 10px;
-    color: #fff;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 700;
-    min-height: 36px;
-    padding: 8px 12px;
-    text-transform: uppercase;
-
-    &--sell {
-      background: #8e3434;
-      border-color: #c65e5e;
-    }
-
-    &--buy {
-      background: #206d47;
-      border-color: #2ea36a;
-    }
-
-    &--equip {
-      background: #2b4f8f;
-      border-color: #4b78c5;
-    }
-
-    &:disabled {
-      cursor: default;
-      opacity: 0.6;
-    }
-  }
-
-  &__footer {
-    align-items: center;
     display: flex;
     justify-content: flex-end;
-    min-height: 42px;
   }
 
+  &__close,
+  &__switch-button,
+  &__tab,
+  &__action,
   &__bulk-sell {
-    background: #a23f3f;
-    border: 1px solid #d37272;
-    border-radius: 10px;
-    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(205, 220, 235, 0.3);
+    border-radius: 8px;
+    color: #f2f7fb;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: 700;
-    min-height: 38px;
-    padding: 8px 14px;
-    text-transform: uppercase;
+    font-size: 12px;
+    padding: 8px 10px;
   }
 
-  &__close:focus-visible,
-  &__switch-button:focus-visible,
-  &__tab:focus-visible,
-  &__action:focus-visible,
-  &__bulk-sell:focus-visible {
-    @include mixins.focus-ring(tokens.$button-focus-ring);
+  &__action:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
-}
 
-@media (max-width: tokens.$fishing-breakpoint-tablet) {
-  .inventory-overlay {
-    padding: 12px;
+  &__action--equip {
+    background: #1a4f8f;
+    border-color: #3b78bc;
+  }
 
-    &__panel {
-      gap: 10px;
-      height: calc(100dvh - 24px);
-      width: calc(100vw - 24px);
-    }
+  &__action--equip:disabled {
+    opacity: 0.7;
+  }
 
-    &__item {
-      grid-template-columns: 84px max-content auto;
-    }
+  &__action--equipped {
+    background: #66a6e0;
+    border-color: #8fc1eb;
+    color: #eef7ff;
+  }
 
-    &__item-media {
-      width: 100%;
-    }
+  &__action--equipped:disabled {
+    opacity: 1;
+  }
 
-    &__item-actions {
-      min-width: 88px;
-    }
+  &__action--buy {
+    background: #1f7f44;
+    border-color: #2ea85b;
+  }
+
+  &__action--sell,
+  &__bulk-sell {
+    background: #9c2e2e;
+    border-color: #c24a4a;
+    color: #fff;
+  }
+
+  &__switch-button--active,
+  &__tab--active {
+    background: rgba(18, 80, 44, 0.55);
   }
 }
 </style>

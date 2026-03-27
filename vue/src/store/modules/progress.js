@@ -504,16 +504,7 @@ export default {
       commit(MUTATIONS.REMOVE_INVENTORY_FISH, inventoryFishId)
       commit(MUTATIONS.ADD_MONEY, fishEntry.sellPrice)
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Sold ${fishEntry.fishName} for ${fishEntry.sellPrice}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     sellAllFish({ state, commit, dispatch }) {
       if (!state.inventoryFish.length) {
@@ -524,21 +515,11 @@ export default {
         (sum, fishEntry) => sum + Number(fishEntry.sellPrice || 0),
         0
       )
-      const soldCount = state.inventoryFish.length
 
       commit(MUTATIONS.CLEAR_INVENTORY_FISH)
       commit(MUTATIONS.ADD_MONEY, totalSellValue)
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Sold ${soldCount} fish for ${totalSellValue}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     buyGearItem({ state, commit, dispatch, rootGetters }, payload) {
       const slot = payload?.slot
@@ -554,14 +535,7 @@ export default {
 
       const price = Number(gearDefinition.price || 0)
       if (state.money < price) {
-        return dispatch(
-          'ui/pushNotification',
-          {
-            type: 'error',
-            message: `Not enough money for ${gearDefinition.name}.`
-          },
-          { root: true }
-        ).then(() => false)
+        return Promise.resolve(false)
       }
 
       const ownedCount = getOwnedCount(state, slot, itemId)
@@ -572,16 +546,7 @@ export default {
         count: ownedCount + 1
       })
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Bought ${gearDefinition.name} for ${price}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     buyGroundbaitItem({ state, commit, dispatch, rootGetters }, groundbaitId) {
       const definition = getGroundbaitDefinition(rootGetters, groundbaitId)
@@ -591,14 +556,7 @@ export default {
 
       const price = Number(definition.price || 0)
       if (state.money < price) {
-        return dispatch(
-          'ui/pushNotification',
-          {
-            type: 'error',
-            message: `Not enough money for ${definition.name}.`
-          },
-          { root: true }
-        ).then(() => false)
+        return Promise.resolve(false)
       }
 
       const usesPerPurchase = Number(definition.usesPerPurchase || 0)
@@ -609,16 +567,7 @@ export default {
         count: ownedCount + usesPerPurchase
       })
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Bought ${definition.name} for ${price}. (+${usesPerPurchase} throws)`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     buyLandingNetItem({ state, commit, dispatch, rootGetters }, landingNetId) {
       const definition = getLandingNetDefinition(rootGetters, landingNetId)
@@ -628,14 +577,7 @@ export default {
 
       const price = Number(definition.price || 0)
       if (state.money < price) {
-        return dispatch(
-          'ui/pushNotification',
-          {
-            type: 'error',
-            message: `Not enough money for ${definition.name}.`
-          },
-          { root: true }
-        ).then(() => false)
+        return Promise.resolve(false)
       }
 
       const ownedCount = getOwnedLandingNetCount(state, definition.id)
@@ -645,16 +587,7 @@ export default {
         count: ownedCount + 1
       })
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Bought ${definition.name} for ${price}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     consumeGroundbaitUse({ state, commit, dispatch }, groundbaitId) {
       if (!groundbaitId) {
@@ -689,16 +622,7 @@ export default {
 
       commit(MUTATIONS.SET_CURRENT_LANDING_NET_ID, landingNetId)
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Equipped ${definition.name}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     consumeEquippedLandingNetOnBreak({ state, commit, dispatch, rootGetters }) {
       const landingNetId = state.currentLandingNetId
@@ -727,16 +651,7 @@ export default {
         commit(MUTATIONS.SET_CURRENT_LANDING_NET_ID, null)
       }
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'warning',
-            message: `${definition.name} broke.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     equipGearItem({ state, commit, dispatch, rootGetters }, payload) {
       const slot = payload?.slot
@@ -759,16 +674,7 @@ export default {
         commit(MUTATIONS.SET_CURRENT_BAIT_ID, itemId)
       }
 
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `Equipped ${gearDefinition.name}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     consumeEquippedBaitOnHook({ state, commit, dispatch, rootGetters }) {
       const currentBaitId = state.currentBaitId
@@ -794,16 +700,7 @@ export default {
       }
 
       commit(MUTATIONS.SET_CURRENT_BAIT_ID, getDefaultGearIdBySlot('bait'))
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'info',
-            message: 'Bait depleted. Switched to Worm.'
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     consumeBrokenGearOnFail({ dispatch }, failReason) {
       if (failReason === 'rod_broke') {
@@ -832,16 +729,7 @@ export default {
       })
 
       if (nextCount > 0) {
-        return dispatch('persistProgress').then(() =>
-          dispatch(
-            'ui/pushNotification',
-            {
-              type: 'warning',
-              message: `${gearDefinition.name} was lost.`
-            },
-            { root: true }
-          ).then(() => true)
-        )
+        return dispatch('persistProgress').then(() => true)
       }
 
       const defaultGearId = getDefaultGearIdBySlot(slot)
@@ -853,21 +741,7 @@ export default {
         commit(MUTATIONS.SET_CURRENT_BAIT_ID, defaultGearId)
       }
 
-      const fallbackDefinition = getGearDefinition(
-        rootGetters,
-        slot,
-        defaultGearId
-      )
-      return dispatch('persistProgress').then(() =>
-        dispatch(
-          'ui/pushNotification',
-          {
-            type: 'warning',
-            message: `${gearDefinition.name} was lost. Switched to ${fallbackDefinition?.name || defaultGearId}.`
-          },
-          { root: true }
-        ).then(() => true)
-      )
+      return dispatch('persistProgress').then(() => true)
     },
     recordFail({ commit, dispatch }, payload) {
       const failReason = payload?.reason || 'caught_up'

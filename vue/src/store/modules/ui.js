@@ -1,9 +1,6 @@
 const MUTATIONS = {
   SHOW_RESULT_PANEL: 'SHOW_RESULT_PANEL',
-  HIDE_RESULT_PANEL: 'HIDE_RESULT_PANEL',
-  PUSH_NOTIFICATION: 'PUSH_NOTIFICATION',
-  REMOVE_NOTIFICATION: 'REMOVE_NOTIFICATION',
-  CLEAR_NOTIFICATIONS: 'CLEAR_NOTIFICATIONS'
+  HIDE_RESULT_PANEL: 'HIDE_RESULT_PANEL'
 }
 
 const buildInitialState = () => ({
@@ -11,11 +8,8 @@ const buildInitialState = () => ({
     isOpen: false,
     isSuccess: null,
     message: ''
-  },
-  notifications: []
+  }
 })
-
-let notificationCounter = 0
 
 export default {
   namespaced: true,
@@ -23,8 +17,7 @@ export default {
     return buildInitialState()
   },
   getters: {
-    getResultPanel: (state) => state.resultPanel,
-    getNotifications: (state) => state.notifications
+    getResultPanel: (state) => state.resultPanel
   },
   mutations: {
     [MUTATIONS.SHOW_RESULT_PANEL]: (state, payload) => {
@@ -40,19 +33,6 @@ export default {
         isSuccess: null,
         message: ''
       }
-    },
-    [MUTATIONS.PUSH_NOTIFICATION]: (state, payload) => {
-      state.notifications.push({
-        id: payload.id,
-        type: payload.type || 'info',
-        message: payload.message
-      })
-    },
-    [MUTATIONS.REMOVE_NOTIFICATION]: (state, id) => {
-      state.notifications = state.notifications.filter((item) => item.id !== id)
-    },
-    [MUTATIONS.CLEAR_NOTIFICATIONS]: (state) => {
-      state.notifications = []
     }
   },
   actions: {
@@ -61,19 +41,6 @@ export default {
     },
     hideResultPanel({ commit }) {
       commit(MUTATIONS.HIDE_RESULT_PANEL)
-    },
-    pushNotification({ commit }, payload) {
-      notificationCounter += 1
-      commit(MUTATIONS.PUSH_NOTIFICATION, {
-        ...payload,
-        id: `notification-${notificationCounter}`
-      })
-    },
-    removeNotification({ commit }, id) {
-      commit(MUTATIONS.REMOVE_NOTIFICATION, id)
-    },
-    clearNotifications({ commit }) {
-      commit(MUTATIONS.CLEAR_NOTIFICATIONS)
     }
   }
 }

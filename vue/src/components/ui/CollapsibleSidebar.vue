@@ -144,12 +144,28 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/mixins' as mixins;
-@use '@/styles/tokens' as tokens;
-
 .collapsible-sidebar {
   position: relative;
-  transition: transform 180ms ease;
+
+  &__toggle {
+    height: var(--collapsible-sidebar-toggle-size);
+    position: absolute;
+    top: 10px;
+    width: var(--collapsible-sidebar-toggle-size);
+    z-index: 1;
+  }
+
+  &__content {
+    margin-top: calc(var(--collapsible-sidebar-toggle-size) + 8px);
+  }
+
+  &--left &__toggle {
+    right: 10px;
+  }
+
+  &--right &__toggle {
+    left: 10px;
+  }
 
   &--collapsed {
     &.collapsible-sidebar--left {
@@ -161,63 +177,6 @@ export default {
       min-height: var(--collapsible-sidebar-collapsed-min-height);
       transform: translateX(calc(100% - var(--collapsible-sidebar-peek-size)));
     }
-
-    &.collapsible-sidebar--top {
-      min-width: var(--collapsible-sidebar-collapsed-min-width);
-      transform: translateY(calc(-100% + var(--collapsible-sidebar-peek-size)));
-    }
-
-    &.collapsible-sidebar--bottom {
-      min-width: var(--collapsible-sidebar-collapsed-min-width);
-      transform: translateY(calc(100% - var(--collapsible-sidebar-peek-size)));
-    }
-  }
-
-  &__toggle {
-    align-items: center;
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid tokens.$fishing-panel-border;
-    border-radius: 8px;
-    color: tokens.$fishing-panel-text;
-    cursor: pointer;
-    display: inline-flex;
-    font-size: 14px;
-    font-weight: 700;
-    height: var(--collapsible-sidebar-toggle-size);
-    justify-content: center;
-    padding: 0;
-    position: absolute;
-    width: var(--collapsible-sidebar-toggle-size);
-    z-index: 1;
-  }
-
-  &--left &__toggle {
-    right: 10px;
-    top: 10px;
-  }
-
-  &--right &__toggle {
-    left: 10px;
-    top: 10px;
-  }
-
-  &--top &__toggle {
-    bottom: 10px;
-    left: 10px;
-  }
-
-  &--bottom &__toggle {
-    left: 10px;
-    top: 10px;
-  }
-
-  &__content {
-    display: grid;
-    margin-top: calc(var(--collapsible-sidebar-toggle-size) + 8px);
-  }
-
-  &__toggle:focus-visible {
-    @include mixins.focus-ring(tokens.$button-focus-ring);
   }
 }
 </style>

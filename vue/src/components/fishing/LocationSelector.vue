@@ -70,54 +70,36 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/tokens' as tokens;
-
 .location-selector {
-  display: grid;
-  gap: tokens.$fishing-location-selector-gap;
-
   &__item {
-    align-items: flex-start;
-    display: grid;
-    gap: 2px;
     text-align: left;
     width: 100%;
-
-    &--active {
-      border-color: tokens.$fishing-location-selector-active;
-      box-shadow: inset 0 0 0 1px tokens.$fishing-location-selector-active;
-    }
-
-    &--boosted {
-      border-color: #f39a22;
-      box-shadow:
-        inset 0 0 0 1px #f39a22,
-        0 0 16px rgba(243, 154, 34, 0.62);
-    }
   }
 
   &__item-label {
     align-items: center;
     display: inline-flex;
-    gap: 8px;
+    gap: 6px;
   }
 
   &__boost-mark {
     align-items: center;
-    color: #8a4500;
+    background: #f39a22;
+    border-radius: 999px;
+    color: #1d1204;
     display: inline-flex;
+    font-size: 11px;
     font-weight: 700;
+    height: 16px;
     justify-content: center;
-    min-width: 12px;
+    width: 16px;
   }
 
   &__boost-casts {
-    background: rgba(138, 69, 0, 0.12);
-    border-radius: 6px;
-    color: #6e3400;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 1px 6px;
+    color: #f39a22;
+    display: block;
+    font-size: 12px;
+    margin-top: 2px;
   }
 }
 </style>

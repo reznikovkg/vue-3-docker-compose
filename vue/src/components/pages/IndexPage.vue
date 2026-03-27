@@ -18,13 +18,11 @@ export default {
 
 <style scoped lang="scss">
 .index-page {
+  align-content: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
   min-height: 100dvh;
-  width: 100%;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   text-align: center;
 }
 </style>

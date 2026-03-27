@@ -40,7 +40,7 @@
           class="fishing-scene__landing-net-badge"
           :style="landingNetBadgeStyle"
         >
-          Use landing net
+          Press S to use landing net
         </div>
         <div v-if="showWaterOverlay" class="fishing-scene__water"></div>
         <div v-if="showFallbackNote" class="fishing-scene__fallback-note">
@@ -236,141 +236,123 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@use '@/styles/tokens' as tokens;
-
 .fishing-scene {
   height: 100%;
   width: 100%;
 
   &__viewport {
-    align-items: center;
-    display: flex;
+    display: grid;
     height: 100%;
-    justify-content: center;
-    padding: 0 tokens.$fishing-scene-viewport-padding;
+    place-items: center;
     width: 100%;
   }
 
   &__surface {
     aspect-ratio: 3 / 2;
-    background-color: tokens.$fishing-scene-surface-background;
-    box-shadow: inset 0 0 0 1px tokens.$fishing-scene-surface-border;
+    border: 1px solid rgba(255, 255, 255, 0.35);
     overflow: hidden;
     position: relative;
-    width: min(
-      100%,
-      tokens.$fishing-scene-image-max-width,
-      calc((100dvh - tokens.$fishing-scene-viewport-height-offset) * 1.5)
-    );
+    width: min(100%, 1440px, calc((100dvh - 180px) * 1.5));
   }
 
   &__image {
-    display: block;
     height: 100%;
     inset: 0;
     object-fit: cover;
     position: absolute;
-    user-select: none;
-    -webkit-user-drag: none;
     width: 100%;
   }
 
   &__water {
-    backdrop-filter: blur(0.4px);
     background: linear-gradient(
       180deg,
-      rgba(56, 103, 140, 0.18) 0%,
-      rgba(22, 71, 92, 0.35) 100%
+      rgba(56, 103, 140, 0.18),
+      rgba(22, 71, 92, 0.35)
     );
-    bottom: 0;
-    left: 0;
+    inset: 45% 0 0;
     position: absolute;
-    right: 0;
-    top: 45%;
   }
 
-  &__groundbait-area {
-    align-items: center;
-    background: rgba(232, 193, 84, 0.18);
-    border: 2px dashed rgba(255, 220, 120, 0.88);
-    border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgba(52, 32, 0, 0.2);
-    display: flex;
-    justify-content: center;
-    left: 0;
-    position: absolute;
-    top: 0;
-    transform: translate(-50%, -50%);
-  }
-
-  &__groundbait-label {
-    background: rgba(15, 20, 29, 0.84);
+  &__caption,
+  &__fallback-note {
     border-radius: 8px;
-    color: #ecf2fb;
-    font-size: 11px;
-    opacity: 0;
-    padding: 4px 6px;
-    pointer-events: none;
-    transform: translateY(-8px);
-    transition: opacity 120ms ease;
-    white-space: nowrap;
-  }
-
-  &__groundbait-area:hover &__groundbait-label {
-    opacity: 1;
+    font-size: 12px;
+    left: 12px;
+    padding: 4px 8px;
+    position: absolute;
   }
 
   &__caption {
-    background: tokens.$fishing-scene-caption-background;
-    border-radius: tokens.$fishing-scene-caption-radius;
-    bottom: tokens.$fishing-scene-caption-offset;
+    background: rgba(0, 0, 0, 0.38);
+    bottom: 12px;
     color: #fff;
-    font-size: tokens.$fishing-scene-caption-font-size;
-    left: tokens.$fishing-scene-caption-offset;
-    letter-spacing: 0.04em;
-    padding: tokens.$fishing-scene-caption-padding-y
-      tokens.$fishing-scene-caption-padding-x;
-    position: absolute;
-    text-transform: uppercase;
-  }
-
-  &__landing-net-badge {
-    background: rgba(12, 24, 37, 0.88);
-    border: 1px solid rgba(244, 217, 134, 0.9);
-    border-radius: 999px;
-    color: #f6de9f;
-    font-size: 11px;
-    font-weight: 700;
-    left: 0;
-    letter-spacing: 0.02em;
-    padding: 4px 9px;
-    pointer-events: none;
-    position: absolute;
-    top: 0;
-    transform: translate(-50%, -170%);
-    z-index: 4;
   }
 
   &__fallback-note {
-    background: tokens.$fishing-scene-fallback-background;
-    border: 1px solid tokens.$fishing-scene-fallback-border;
-    border-radius: tokens.$fishing-scene-caption-radius;
-    color: tokens.$fishing-scene-fallback-text;
-    font-size: tokens.$fishing-scene-caption-font-size;
-    left: tokens.$fishing-scene-caption-offset;
-    max-width: calc(100% - (tokens.$fishing-scene-caption-offset * 2));
-    padding: tokens.$fishing-scene-caption-padding-y
-      tokens.$fishing-scene-caption-padding-x;
-    position: absolute;
-    top: tokens.$fishing-scene-caption-offset;
+    background: rgba(250, 231, 195, 0.95);
+    border: 1px solid #d68429;
+    color: #5c2f00;
+    top: 12px;
   }
-}
 
-@media (max-width: tokens.$fishing-breakpoint-tablet) {
-  .fishing-scene {
-    &__viewport {
-      padding: 0;
+  &__groundbait-area {
+    background: radial-gradient(
+      circle,
+      rgba(246, 219, 121, 0.22) 0%,
+      rgba(224, 156, 39, 0.14) 58%,
+      rgba(204, 118, 24, 0.08) 100%
+    );
+    border: 1px dashed rgba(238, 186, 80, 0.9);
+    border-radius: 50%;
+    left: 50%;
+    pointer-events: auto;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+
+    &:hover .fishing-scene__groundbait-label {
+      opacity: 1;
+      transform: translate(-50%, calc(-100% - 8px));
     }
+  }
+
+  &__groundbait-label {
+    background: rgba(7, 14, 24, 0.9);
+    border: 1px solid rgba(234, 204, 140, 0.7);
+    border-radius: 6px;
+    color: #f6e7c3;
+    font-size: 11px;
+    left: 50%;
+    opacity: 0;
+    padding: 3px 6px;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    transform: translate(-50%, calc(-100% - 4px));
+    transition:
+      opacity 0.12s ease,
+      transform 0.12s ease;
+    white-space: nowrap;
+    z-index: 3;
+  }
+
+  &__landing-net-badge {
+    background: rgba(12, 26, 41, 0.92);
+    border: 1px solid rgba(152, 214, 255, 0.72);
+    border-radius: 999px;
+    color: #eaf6ff;
+    font-size: 11px;
+    font-weight: 600;
+    left: 0;
+    line-height: 1;
+    padding: 6px 10px;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    transform: translate(-50%, calc(-100% - 8px));
+    white-space: nowrap;
+    z-index: 6;
   }
 }
 </style>

@@ -393,7 +393,7 @@ export default {
       }
 
       clearBiteTimeout()
-      dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
+      dispatch('stopMinigameLoop')
       biteCycleToken += 1
       const currentCycleToken = biteCycleToken
       commit(MUTATIONS.START_CAST, {
@@ -402,11 +402,11 @@ export default {
       })
       dispatch('progress/consumeLocationBoostCast', state.activeLocationId, {
         root: true
-      }) // Promise-returning action; fire-and-forget is intentional
-      dispatch('ui/hideResultPanel', null, { root: true }) // synchronous action body; immediate UI reset
+      })
+      dispatch('ui/hideResultPanel', null, { root: true })
       dispatch('scheduleBite', {
         cycleToken: currentCycleToken
-      }) // synchronous action body; schedules timeout-driven flow
+      })
       return true
     },
     throwGroundbait({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -433,14 +433,7 @@ export default {
         root: true
       }).then((didConsume) => {
         if (!didConsume) {
-          return dispatch(
-            'ui/pushNotification',
-            {
-              type: 'error',
-              message: `${definition.name} is out of stock.`
-            },
-            { root: true }
-          ).then(() => false)
+          return false
         }
 
         const currentArea = getGroundbaitAreaByLocationId(
@@ -457,14 +450,7 @@ export default {
           area: nextArea
         })
 
-        return dispatch(
-          'ui/pushNotification',
-          {
-            type: 'success',
-            message: `${definition.name} deployed.`
-          },
-          { root: true }
-        ).then(() => true)
+        return true
       })
     },
     consumeGroundbaitAreaCast({ state, commit }, locationId) {
@@ -501,7 +487,7 @@ export default {
       biteTimeoutId = setTimeout(() => {
         dispatch('triggerBite', {
           cycleToken
-        }) // synchronous action body called from timeout
+        })
       }, delayMs)
 
       return true
@@ -530,7 +516,7 @@ export default {
         state.castAnchor,
         groundbaitArea
       )
-      dispatch('consumeGroundbaitAreaCast', state.activeLocationId) // synchronous action body; consume after this cast snapshots multiplier
+      dispatch('consumeGroundbaitAreaCast', state.activeLocationId)
       const rolledEncounter = rollEncounter(
         location,
         fishTables,
@@ -550,12 +536,12 @@ export default {
         isBoostedLocation
       )
 
-      dispatch('progress/consumeEquippedBaitOnHook', null, { root: true }) // Promise-returning action; no immediate minigame dependency
+      dispatch('progress/consumeEquippedBaitOnHook', null, { root: true })
       commit(MUTATIONS.SET_ENCOUNTER, encounter)
       commit(MUTATIONS.SET_PHASE, PHASES.MINIGAME)
       dispatch('startMinigame', {
         encounter
-      }) // synchronous action body; schedules RAF loop internally
+      })
       return true
     },
     startMinigame({ state, rootGetters, commit, dispatch }, payload = {}) {
@@ -576,7 +562,7 @@ export default {
         return false
       }
 
-      dispatch('stopMinigameLoop') // synchronous action body; immediate loop reset
+      dispatch('stopMinigameLoop')
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         config,
         elapsedMs: 0,
@@ -596,7 +582,7 @@ export default {
         dispatch('tickMinigame', {
           timestamp,
           loopToken
-        }) // synchronous action body called from RAF
+        })
       })
 
       return true
@@ -651,7 +637,7 @@ export default {
       }
 
       if (stepResult.outcome?.status === 'success') {
-        dispatch('resolveMinigame', stepResult.outcome) // Promise-returning action; no dependent work in this tick
+        dispatch('resolveMinigame', stepResult.outcome)
         return true
       }
 
@@ -659,12 +645,12 @@ export default {
         dispatch('resolveMinigame', {
           status: 'fail',
           reason: getDurabilityFailReason(state.encounter)
-        }) // Promise-returning action; no dependent work in this tick
+        })
         return true
       }
 
       if (stepResult.outcome) {
-        dispatch('resolveMinigame', stepResult.outcome) // Promise-returning action; no dependent work in this tick
+        dispatch('resolveMinigame', stepResult.outcome)
         return true
       }
 
@@ -672,7 +658,7 @@ export default {
         dispatch('tickMinigame', {
           timestamp: nextTimestamp,
           loopToken
-        }) // synchronous action body called from RAF
+        })
       })
 
       return true
@@ -733,14 +719,14 @@ export default {
         dispatch('resolveMinigame', {
           status: 'fail',
           reason: getDurabilityFailReason(state.encounter)
-        }) // Promise-returning action; no dependent work in this click handler
+        })
         return true
       }
 
       return true
     },
     resolveMinigame({ state, commit, dispatch }, outcome) {
-      dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
+      dispatch('stopMinigameLoop')
       commit(MUTATIONS.SET_MINIGAME_STATE, {
         isReeling: false,
         isBarrierBlocking: false
@@ -795,7 +781,7 @@ export default {
     },
     resetSession({ commit, dispatch }) {
       clearBiteTimeout()
-      dispatch('stopMinigameLoop') // synchronous action body; immediate loop cleanup
+      dispatch('stopMinigameLoop')
       biteCycleToken += 1
       commit(MUTATIONS.RESET_SESSION)
     }

@@ -29,7 +29,7 @@
         mobile-mode="force-expanded"
         :mobile-breakpoint="900"
         :peek-size="48"
-        :collapsed-min-height="72"
+        :collapsed-min-height="144"
         @toggle="(nextCollapsed) => toggleLocationPanel(nextCollapsed)"
       >
         <h2 class="fishing-page__panel-title">Locations</h2>
@@ -51,7 +51,7 @@
         mobile-mode="force-expanded"
         :mobile-breakpoint="900"
         :peek-size="48"
-        :collapsed-min-height="72"
+        :collapsed-min-height="144"
         @toggle="(nextCollapsed) => toggleStatusPanel(nextCollapsed)"
       >
         <h2 class="fishing-page__panel-title">Status</h2>
@@ -119,7 +119,7 @@
         mobile-mode="force-expanded"
         :mobile-breakpoint="900"
         :peek-size="48"
-        :collapsed-min-height="72"
+        :collapsed-min-height="144"
         @toggle="(nextCollapsed) => toggleGroundbaitPanel(nextCollapsed)"
       >
         <h2 class="fishing-page__panel-title">Groundbait</h2>
@@ -127,7 +127,7 @@
           Select mix and click water to deploy.
         </p>
         <div class="fishing-page__groundbait-list">
-          <button
+          <BaseButton
             v-for="groundbait in availableGroundbaitItems"
             :key="groundbait.id"
             class="fishing-page__groundbait-item"
@@ -135,12 +135,11 @@
               'fishing-page__groundbait-item--active':
                 groundbait.id === effectiveSelectedGroundbaitId
             }"
-            type="button"
             @click="() => selectGroundbait(groundbait.id)"
           >
             <span>{{ groundbait.name }}</span>
             <span>x{{ groundbait.count }}</span>
-          </button>
+          </BaseButton>
         </div>
         <BaseButton
           :disabled="!canArmGroundbait"
@@ -1109,467 +1108,200 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@use 'sass:map';
-@use '@/styles/mixins' as mixins;
-@use '@/styles/tokens' as tokens;
-
 .fishing-page {
-  background: tokens.$fishing-page-background;
-  box-sizing: border-box;
+  background: #07121d;
+  color: #f2f7fb;
   display: flex;
   flex-direction: column;
   height: 100dvh;
   overflow: hidden;
-  padding: 16px;
+  padding: 12px;
 
   &__header {
     align-items: center;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 12px;
-
-    h1 {
-      color: #f5f8fc;
-      margin: 0;
-    }
+    margin-bottom: 10px;
   }
 
   &__stage {
     flex: 1;
     min-height: 0;
-    overflow: hidden;
     position: relative;
   }
 
-  &__cast-row {
-    align-items: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  &__cast-hint {
-    color: tokens.$fishing-panel-text;
-    font-size: clamp(16px, 1.6vw, 20px);
-    font-weight: 600;
-    line-height: 1.4;
-    margin: 0;
-    max-width: 38ch;
-  }
-
-  &__phase-chip {
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 4px 10px;
-
-    @each $phase, $phase-style in tokens.$fishing-phase-chip-styles {
-      &--#{$phase} {
-        background: map.get($phase-style, background);
-        color: map.get($phase-style, color);
-      }
-    }
-  }
-
-  &__result-panel {
-    background: tokens.$fishing-result-background;
-    border: 1px solid tokens.$fishing-result-border;
-    border-radius: tokens.$fishing-result-radius;
-    padding: tokens.$fishing-result-padding;
-
-    &--success {
-      border-color: tokens.$fishing-result-border-success;
-    }
-
-    &--fail {
-      border-color: tokens.$fishing-result-border-fail;
-    }
-  }
-
   &__play-area {
-    height: 100%;
-    inset: 0;
-    min-height: 0;
+    inset: 0 0 170px;
     position: absolute;
-    user-select: none;
-    width: 100%;
+    z-index: 1;
+  }
+
+  &__hud-panel,
+  &__hud-tray {
+    background: rgba(8, 14, 24, 0.82);
+    border: 1px solid rgba(228, 236, 247, 0.24);
+    border-radius: 12px;
+    padding: 12px;
   }
 
   &__hud-panel {
-    @include mixins.glass-panel(
-      tokens.$fishing-panel-background,
-      tokens.$fishing-panel-border,
-      tokens.$fishing-panel-radius,
-      tokens.$fishing-panel-shadow,
-      tokens.$fishing-panel-padding
-    );
-    color: tokens.$fishing-panel-text;
-    max-height: calc(100% - 176px);
+    max-height: calc(100% - 170px);
     overflow: auto;
     position: absolute;
-    top: 16px;
-    width: min(260px, calc(50% - 28px));
-    z-index: 2;
+    top: 12px;
+    width: min(260px, calc(50% - 24px));
+    z-index: 10;
 
     &--left {
-      left: 16px;
+      left: 12px;
     }
-
     &--right {
-      right: 16px;
+      right: 12px;
     }
   }
 
   &__groundbait-panel {
-    bottom: 164px;
-    max-height: calc(100% - 340px);
-    top: auto;
+    max-height: calc(100% - 330px);
+    top: 52%;
   }
 
-  &__panel-title {
-    font-size: 13px;
-    letter-spacing: 0.08em;
-    margin: 0 0 8px;
-    text-transform: uppercase;
-  }
-
-  &__panel-copy {
-    color: tokens.$fishing-panel-muted;
-    font-size: 13px;
-    line-height: 1.4;
-    margin: 0 0 14px;
-  }
-
-  &__status-list {
+  &__hud-tray {
+    bottom: 12px;
     display: grid;
     gap: 10px;
-    margin: 0 0 16px;
-  }
-
-  &__status-row {
-    border-bottom: 1px solid tokens.$fishing-status-border;
-    display: grid;
-    gap: 4px;
-    padding-bottom: 10px;
-
-    dt {
-      color: tokens.$fishing-panel-muted;
-      font-size: 12px;
-      letter-spacing: 0.05em;
-      margin: 0;
-      text-transform: uppercase;
-    }
-
-    dd {
-      margin: 0;
-    }
-  }
-
-  &__warning-panel {
-    @include mixins.warning-panel(
-      tokens.$fishing-warning-background,
-      tokens.$fishing-warning-border,
-      tokens.$fishing-warning-text,
-      tokens.$fishing-warning-radius,
-      tokens.$fishing-warning-padding
-    );
-    margin-bottom: 14px;
-  }
-
-  &__warning-title {
-    font-size: 13px;
-    margin: 0 0 6px;
-    text-transform: uppercase;
-  }
-
-  &__warning-list {
-    margin: 0;
-    padding-left: 18px;
+    left: 50%;
+    max-width: min(1100px, calc(100% - 24px));
+    position: absolute;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    z-index: 20;
   }
 
   &__groundbait-list {
     display: grid;
     gap: 8px;
-    margin-bottom: 12px;
-  }
-
-  &__groundbait-item {
-    align-items: center;
-    background: rgba(14, 28, 43, 0.66);
-    border: 1px solid tokens.$fishing-panel-border;
-    border-radius: 8px;
-    color: tokens.$fishing-panel-text;
-    cursor: pointer;
-    display: flex;
-    font-size: 13px;
-    justify-content: space-between;
-    padding: 8px 10px;
-    width: 100%;
-
-    &--active {
-      border-color: #d7b15a;
-      box-shadow: inset 0 0 0 1px #d7b15a;
-    }
-  }
-
-  &__hud-tray {
-    @include mixins.glass-panel(
-      tokens.$fishing-tray-background,
-      tokens.$fishing-tray-border,
-      tokens.$fishing-tray-radius,
-      tokens.$fishing-panel-shadow,
-      tokens.$fishing-tray-padding,
-      14px
-    );
-    bottom: 16px;
-    color: tokens.$fishing-panel-text;
-    display: grid;
-    gap: 14px;
-    left: 50%;
-    max-width: min(1120px, calc(100% - 32px));
-    position: absolute;
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-    z-index: 3;
-  }
-
-  &__inventory-launcher {
-    bottom: 16px;
-    position: fixed;
-    right: 16px;
-    z-index: 25;
-  }
-
-  &__tray-primary {
-    align-items: start;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px 20px;
-    justify-content: space-between;
-  }
-
-  &__catch-card {
-    align-items: center;
-    border: 1px solid tokens.$fishing-catch-card-border;
-    border-radius: tokens.$fishing-catch-card-radius;
-    display: grid;
-    gap: tokens.$fishing-catch-card-gap;
-    grid-template-columns: tokens.$fishing-catch-card-width 1fr;
-    margin: 10px 0;
-    padding: tokens.$fishing-catch-card-padding;
-  }
-
-  &__catch-media {
-    @include mixins.catch-frame(
-      tokens.$fishing-catch-media-background,
-      tokens.$fishing-catch-media-border,
-      tokens.$fishing-catch-media-radius
-    );
-    width: clamp(
-      tokens.$fishing-catch-media-width-min,
-      22vw,
-      tokens.$fishing-catch-media-width-max
-    );
-  }
-
-  &__catch-image {
-    display: block;
-    height: auto;
-    max-width: 100%;
-    width: 100%;
-  }
-
-  &__result-head {
-    align-items: center;
-    display: flex;
-    gap: 10px;
-    justify-content: space-between;
     margin-bottom: 10px;
   }
 
-  &__result-message {
-    margin: 0;
+  &__groundbait-item {
+    display: flex;
+    justify-content: space-between;
+    text-align: left;
+    width: 100%;
   }
 
-  &__catch-details {
-    h3 {
-      font-size: 16px;
-      margin-bottom: 6px;
-    }
+  &__groundbait-item--active {
+    border-color: #1d8f4e;
   }
 
-  &__catch-row {
-    font-size: 13px;
-    margin: 2px 0;
+  &__phase-chip {
+    background: #e6ecf4;
+    border-radius: 999px;
+    color: #314155;
+    font-size: 12px;
+    padding: 4px 10px;
   }
-
   &__minigame-hud {
     display: grid;
-    gap: 10px;
+    gap: 12px;
   }
-
   &__bar {
-    background: tokens.$fishing-minigame-bar-background;
-    border-radius: tokens.$fishing-minigame-bar-radius;
-    height: tokens.$fishing-minigame-bar-height;
+    background: #1f2f44;
+    border-radius: 10px;
+    height: 18px;
     overflow: hidden;
     position: relative;
   }
-
   &__bar-fill {
     height: 100%;
-    transition: width 90ms linear;
-
     &--green {
-      background: tokens.$fishing-minigame-fill-green;
+      background: #20a05b;
     }
   }
-
   &__bar-marker {
-    border-left: tokens.$fishing-minigame-red-width solid
-      tokens.$fishing-minigame-marker-red;
-    bottom: 0;
+    border-left: 4px solid #d52929;
+    inset: 0 auto 0 0;
     position: absolute;
-    top: 0;
-    transform: translateX(calc(tokens.$fishing-minigame-red-width * -0.5));
-    transition: left 90ms linear;
-
-    &--red {
-      border-left-color: tokens.$fishing-minigame-marker-red;
-    }
-
-    &--barrier {
-      border-left: tokens.$fishing-minigame-barrier-width dotted
-        tokens.$fishing-minigame-marker-barrier;
-    }
-
-    &--barrier-active {
-      border-left-color: tokens.$fishing-minigame-marker-active;
-    }
+    transform: translateX(-2px);
   }
-
-  &__minigame-copy {
-    font-size: 16px;
-    font-weight: 700;
-    margin: 0;
-  }
-
   &__durability {
-    align-items: center;
     display: grid;
     gap: 8px;
     grid-template-columns: auto 1fr auto;
   }
-
-  &__durability-label {
-    color: tokens.$fishing-panel-muted;
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
   &__durability-track {
     background: #2f3643;
     border-radius: 999px;
     height: 12px;
     overflow: hidden;
   }
-
   &__durability-fill {
-    background: linear-gradient(90deg, #46c27a 0%, #ef8748 55%, #d93a3a 100%);
+    background: linear-gradient(90deg, #46c27a, #ef8748 55%, #d93a3a);
     height: 100%;
-    transition: width 90ms linear;
   }
-
-  &__durability-value {
-    color: tokens.$fishing-panel-muted;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+  &__result-panel {
+    background: rgba(6, 14, 23, 0.82);
+    border: 1px solid #98a4b4;
+    border-radius: 8px;
+    padding: 10px;
+    position: relative;
+    z-index: 21;
   }
-
-  a:focus-visible {
-    @include mixins.focus-ring(tokens.$button-focus-ring);
+  &__catch-card {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 140px 1fr;
+  }
+  &__catch-media {
+    align-self: start;
+    border: 1px solid rgba(203, 219, 236, 0.35);
+    border-radius: 8px;
+    line-height: 0;
+    overflow: hidden;
+    width: 100%;
+  }
+  &__catch-image {
+    display: block;
+    height: auto;
+    width: 100%;
+  }
+  &__inventory-launcher {
+    bottom: 12px;
+    position: fixed;
+    right: 12px;
+    z-index: 30;
   }
 }
 
-@media (max-width: tokens.$fishing-breakpoint-tablet) {
+@media (max-width: 900px) {
   .fishing-page {
     height: auto;
     min-height: 100dvh;
     overflow: auto;
 
-    &__stage {
-      display: grid;
-      gap: 12px;
-      overflow: visible;
-    }
-
     &__play-area {
       aspect-ratio: 3 / 2;
-      height: auto;
-      inset: auto;
       position: relative;
     }
-
     &__hud-panel,
     &__hud-tray {
-      left: auto;
       max-height: none;
       max-width: none;
       position: relative;
-      right: auto;
-      top: auto;
       transform: none;
       width: 100%;
     }
 
+    &__hud-panel--left {
+      margin-right: auto;
+    }
+
+    &__hud-panel--right {
+      margin-left: auto;
+    }
+
     &__groundbait-panel {
-      bottom: auto;
-    }
-
-    &__inventory-launcher {
-      bottom: 12px;
-      right: 12px;
-    }
-  }
-}
-
-@media (max-width: tokens.$fishing-breakpoint-mobile) {
-  .fishing-page {
-    padding: 12px;
-
-    &__header {
-      align-items: flex-start;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    &__hud-panel,
-    &__hud-tray {
-      padding: 14px;
-    }
-
-    &__cast-row {
-      gap: 8px;
-    }
-
-    &__phase-chip {
-      font-size: 12px;
-    }
-
-    &__catch-card {
-      grid-template-columns: 1fr;
-    }
-
-    &__catch-media {
-      width: 100%;
-    }
-
-    &__result-head {
-      align-items: stretch;
-      flex-direction: column;
+      max-height: none;
     }
   }
 }
