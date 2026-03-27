@@ -1,9 +1,9 @@
 <template>
   <div
-      class="tile-block"
-      :class="blockClasses"
+      class="game-area__tile"
+      :class="tileClasses"
       :style="tileSize"
-      @click="() => emitClick()"
+      @click="() => handleClick()"
   >
     <span v-if="!isVoid">{{ num }}</span>
   </div>
@@ -32,15 +32,15 @@ export default {
   },
   emits: ['click'],
   computed: {
-    blockClasses() {
+    tileClasses() {
       return {
-        'tile-block--empty': this.isVoid,
-        'tile-block--complete': this.finished
+        'game-area__tile--empty': this.isVoid,
+        'game-area__tile--complete': this.finished
       }
     }
   },
   methods: {
-    emitClick() {
+    handleClick() {
       if (!this.isVoid) {
         this.$emit('click')
       }
@@ -50,7 +50,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.tile-block {
+.game-area__tile {
   width: 100%;
   height: 100%;
   background-color: #1976d2;

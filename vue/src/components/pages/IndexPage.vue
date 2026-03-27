@@ -1,13 +1,13 @@
 <template>
   <div class="game-area">
-    <div class="game-content">
-      <h2 class="game-title">Пятнашки {{ boardSize }}×{{ boardSize }}</h2>
+    <div class="game-area__content">
+      <h2 class="game-area__title">Пятнашки {{ boardSize }}×{{ boardSize }}</h2>
 
-      <div v-if="winStatus" class="game-message">ПОБЕДА!</div>
+      <div v-if="winStatus" class="game-area__message">ПОБЕДА!</div>
 
-      <div class="game-stats">Ходы: {{ stepCount }}</div>
+      <div class="game-area__stats">Ходы: {{ stepCount }}</div>
 
-      <div class="game-field" :style="fieldConfig">
+      <div class="game-area__field" :style="fieldConfig">
         <PuzzleTile
             v-for="item in tileArray"
             :key="item.pos"
@@ -19,9 +19,9 @@
         />
       </div>
 
-      <div class="game-controls">
+      <div class="game-area__controls">
         <button
-            class="game-btn game-btn--minus"
+            class="game-area__btn game-area__btn--minus"
             @click="() => resizeBoard(-1)"
             :disabled="boardSize <= minBoardSize"
         >
@@ -29,14 +29,14 @@
         </button>
 
         <button
-            class="game-btn game-btn--reset"
+            class="game-area__btn game-area__btn--reset"
             @click="() => resetGame()"
         >
           Перемешать
         </button>
 
         <button
-            class="game-btn game-btn--plus"
+            class="game-area__btn game-area__btn--plus"
             @click="() => resizeBoard(1)"
         >
           +
@@ -216,104 +216,100 @@ export default {
   justify-content: center;
   padding: 20px;
   box-sizing: border-box;
-}
 
-.game-content {
-  text-align: center;
-  width: 100%;
-  max-width: 100%;
-}
-
-.game-title {
-  color: #fff;
-  font-size: 32px;
-  margin: 0 0 20px 0;
-  font-family: sans-serif;
-}
-
-.game-stats {
-  color: #64b5f6;
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  font-family: sans-serif;
-}
-
-.game-message {
-  color: #81c784;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 15px;
-}
-
-.game-field {
-  display: inline-grid;
-  gap: 3px;
-  margin: 0 auto 30px;
-  background-color: #1565c0;
-  padding: 3px;
-  border-radius: 8px;
-}
-
-.game-controls {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.game-btn {
-  padding: 12px 20px;
-  font-size: 18px;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  font-family: sans-serif;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  &--reset {
-    padding: 12px 40px;
-    font-size: 16px;
-    background-color: #1976d2;
-  }
-
-  &--minus {
-    background-color: #0d47a1;
-  }
-
-  &--plus {
-    background-color: #0d47a1;
-  }
-}
-
-@media (max-width: 500px) {
-  .game-area {
+  @media (max-width: 500px) {
     padding: 15px;
   }
 
-  .game-title {
-    font-size: 28px;
+  &__content {
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
   }
 
-  .game-stats {
-    font-size: 16px;
+  &__title {
+    color: #fff;
+    font-size: 32px;
+    margin: 0 0 20px 0;
+    font-family: sans-serif;
+
+    @media (max-width: 500px) {
+      font-size: 28px;
+    }
+
+    @media (max-width: 350px) {
+      font-size: 24px;
+    }
   }
 
-  .game-btn {
-    padding: 10px 30px;
-    font-size: 14px;
-  }
-}
+  &__stats {
+    color: #64b5f6;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    font-family: sans-serif;
 
-@media (max-width: 350px) {
-  .game-title {
+    @media (max-width: 500px) {
+      font-size: 16px;
+    }
+  }
+
+  &__message {
+    color: #81c784;
     font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+
+  &__field {
+    display: inline-grid;
+    gap: 3px;
+    margin: 0 auto 30px;
+    background-color: #1565c0;
+    padding: 3px;
+    border-radius: 8px;
+  }
+
+  &__controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  &__btn {
+    padding: 12px 20px;
+    font-size: 18px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: sans-serif;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 500px) {
+      padding: 10px 30px;
+      font-size: 14px;
+    }
+
+    &--reset {
+      padding: 12px 40px;
+      font-size: 16px;
+      background-color: #1976d2;
+    }
+
+    &--minus {
+      background-color: #0d47a1;
+    }
+
+    &--plus {
+      background-color: #0d47a1;
+    }
   }
 }
 </style>
