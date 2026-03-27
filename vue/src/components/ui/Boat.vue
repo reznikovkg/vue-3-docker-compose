@@ -9,11 +9,13 @@ import boatImg from '../../assets/boat.png'
 
 export default {
   name: 'IconBoat',
+  
   data() {
     return {
       boatImage: boatImg
     }
   },
+
   props: {
     direction: {
       type: String,

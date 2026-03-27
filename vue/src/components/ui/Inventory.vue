@@ -2,7 +2,8 @@
   <div class="inventory">
     <div class="inventory__title">Inventory</div>
     <div class="inventory__grid">
-      <div v-for="(fish, index) in ownedFish" :key="index" class="inventory__item" :title="fish.name">
+      <div v-for="(fish, index) in ownedFish" :key="index" class="inventory__item" :title="fish.name"
+        @click="() => trySellFish(index)">
         <img :src="fish.icon" :alt="fish.name" class="inventory__item-icon" />
       </div>
     </div>
@@ -10,15 +11,14 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import { mapState, mapActions } from 'vuex';
 export default {
   name: 'Inventory',
-  data() {
-    return {
-    }
-  },
   computed: {
     ...mapState(['ownedFish'])
+  },
+  methods: {
+    ...mapActions(['trySellFish'])
   }
 }
 </script>
@@ -26,7 +26,7 @@ export default {
 <style scoped lang="scss">
 .inventory {
   position: absolute;
-  top: 50%;
+  top: 35%;
   right: 10px;
   transform: translateY(-50%);
   width: 200px;
@@ -57,6 +57,13 @@ export default {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+
+    cursor: pointer;
+    transition: transform 0.1s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
 
     &-icon {
       max-width: 100%;
