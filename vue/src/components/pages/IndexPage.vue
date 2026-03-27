@@ -1,5 +1,5 @@
 <template>
-  <div class="puzzle" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
+  <div class="puzzle" @touchstart="() => handleTouchStart($event)" @touchend="() => handleTouchEnd($event)">
     <div class="puzzle__content">
       <h2 class="puzzle__title">Пятнашки {{ gridSize }}×{{ gridSize }}</h2>
 
@@ -124,8 +124,8 @@ export default {
 
     boardStyle() {
       return {
-        'grid-template-columns': `repeat(${this.gridSize}, 1fr)`,
-        'grid-template-rows': `repeat(${this.gridSize}, 1fr)`,
+        'grid-template-columns': `repeat(this.gridSize, 1fr)`,
+        'grid-template-rows': `repeat(this.gridSize, 1fr)`,
       }
     },
 

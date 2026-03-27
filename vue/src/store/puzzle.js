@@ -4,6 +4,35 @@ const IDLE_TIME_THRESHOLD = 5
 const PENALTY_TIME = 10
 const FAST_TIMER_MULTIPLIER = 2
 
+const MUTATIONS = {
+    SET_GRID_SIZE: 'SET_GRID_SIZE',
+    SET_TILES: 'SET_TILES',
+    SET_MOVES: 'SET_MOVES',
+    SET_TIMER: 'SET_TIMER',
+    SET_SPECIAL_MOVES: 'SET_SPECIAL_MOVES',
+    SET_BLOCKED_INDEX: 'SET_BLOCKED_INDEX',
+    SET_RECORDS: 'SET_RECORDS',
+    SET_GAME_ACTIVE: 'SET_GAME_ACTIVE',
+    SET_LAST_MOVE_INDEX: 'SET_LAST_MOVE_INDEX',
+    SET_PENALTY_TIME: 'SET_PENALTY_TIME',
+    SET_BONUS_TIME: 'SET_BONUS_TIME',
+    SET_IDLE_TIME: 'SET_IDLE_TIME',
+    SET_FAST_TIMER: 'SET_FAST_TIMER',
+    SET_FROZEN_TILES: 'SET_FROZEN_TILES',
+    SET_TIMER_TIMEOUT: 'SET_TIMER_TIMEOUT',
+    SET_SPECIAL_MOVE_TIMEOUT: 'SET_SPECIAL_MOVE_TIMEOUT',
+    SET_IDLE_TIMEOUT: 'SET_IDLE_TIMEOUT',
+    SWAP_TILES: 'SWAP_TILES',
+    INCREMENT_TIMER: 'INCREMENT_TIMER',
+    INCREMENT_SPECIAL_MOVES: 'INCREMENT_SPECIAL_MOVES',
+    INCREMENT_IDLE_TIME: 'INCREMENT_IDLE_TIME',
+    RESET_IDLE_TIME: 'RESET_IDLE_TIME',
+    CLEAR_TIMER_TIMEOUT: 'CLEAR_TIMER_TIMEOUT',
+    CLEAR_SPECIAL_MOVE_TIMEOUT: 'CLEAR_SPECIAL_MOVE_TIMEOUT',
+    CLEAR_IDLE_TIMEOUT: 'CLEAR_IDLE_TIMEOUT',
+    UPDATE_FROZEN_TILES: 'UPDATE_FROZEN_TILES',
+}
+
 const getNeighbors = (gridSize, index) => {
     const row = Math.floor(index / gridSize)
     const col = index % gridSize
@@ -51,7 +80,7 @@ const isTileFrozen = (frozenTiles, index, value) => {
 }
 
 const swapTilesAndCommit = (commit, tiles, idx1, idx2) => {
-    commit('SWAP_TILES', { idx1, idx2 })
+    commit(MUTATIONS.SWAP_TILES, { idx1, idx2 })
 }
 
 const updateBlockedIndex = (commit, state, emptyIndex) => {
@@ -59,35 +88,35 @@ const updateBlockedIndex = (commit, state, emptyIndex) => {
 
     if (neighbors.length > 0) {
         const randomIndex = Math.floor(Math.random() * neighbors.length)
-        commit('SET_BLOCKED_INDEX', neighbors[randomIndex])
+        commit(MUTATIONS.SET_BLOCKED_INDEX, neighbors[randomIndex])
     } else {
-        commit('SET_BLOCKED_INDEX', null)
+        commit(MUTATIONS.SET_BLOCKED_INDEX, null)
     }
 }
 
 const processMove = (commit, state, clickedIndex, emptyIndex) => {
-    commit('RESET_IDLE_TIME')
+    commit(MUTATIONS.RESET_IDLE_TIME)
 
     if (checkPenalty(state.lastMoveIndex, state.secondLastMoveIndex, clickedIndex, emptyIndex)) {
-        commit('SET_PENALTY_TIME', state.penaltyTime + PENALTY_TIME)
+        commit(MUTATIONS.SET_PENALTY_TIME, state.penaltyTime + PENALTY_TIME)
     }
 
-    commit('SET_LAST_MOVE_INDEX', clickedIndex)
-    commit('UPDATE_FROZEN_TILES')
+    commit(MUTATIONS.SET_LAST_MOVE_INDEX, clickedIndex)
+    commit(MUTATIONS.UPDATE_FROZEN_TILES)
 
     const newEmptyIndex = state.tiles.indexOf(0)
     updateBlockedIndex(commit, state, newEmptyIndex)
 
     if (checkWin(state.tiles, state.gridSize)) {
-        commit('SET_GAME_ACTIVE', false)
+        commit(MUTATIONS.SET_GAME_ACTIVE, false)
     }
 }
 
 const executeSpecialMove = (commit, state, index, emptyIndex) => {
     swapTilesAndCommit(commit, state.tiles, index, emptyIndex)
-    commit('SET_SPECIAL_MOVES', state.specialMoves - 1)
-    commit('SET_MOVES', state.moves + 1)
-    commit('SET_BLOCKED_INDEX', null)
+    commit(MUTATIONS.SET_SPECIAL_MOVES, state.specialMoves - 1)
+    commit(MUTATIONS.SET_MOVES, state.moves + 1)
+    commit(MUTATIONS.SET_BLOCKED_INDEX, null)
 
     processMove(commit, state, index, emptyIndex)
 
@@ -102,8 +131,8 @@ const executeNormalMove = (commit, state, index, emptyIndex) => {
     }
 
     swapTilesAndCommit(commit, state.tiles, emptyIndex, index)
-    commit('SET_MOVES', state.moves + 1)
-    commit('SET_BLOCKED_INDEX', null)
+    commit(MUTATIONS.SET_MOVES, state.moves + 1)
+    commit(MUTATIONS.SET_BLOCKED_INDEX, null)
 
     processMove(commit, state, index, emptyIndex)
 
@@ -211,82 +240,82 @@ export default {
     },
 
     mutations: {
-        SET_GRID_SIZE: (state, size) => {
+        [MUTATIONS.SET_GRID_SIZE]: (state, size) => {
             state.gridSize = size
         },
 
-        SET_TILES: (state, tiles) => {
+        [MUTATIONS.SET_TILES]: (state, tiles) => {
             state.tiles = tiles
         },
 
-        SET_MOVES: (state, moves) => {
+        [MUTATIONS.SET_MOVES]: (state, moves) => {
             state.moves = moves
         },
 
-        SET_TIMER: (state, timer) => {
+        [MUTATIONS.SET_TIMER]: (state, timer) => {
             state.timer = timer
         },
 
-        SET_SPECIAL_MOVES: (state, count) => {
+        [MUTATIONS.SET_SPECIAL_MOVES]: (state, count) => {
             state.specialMoves = count
         },
 
-        SET_BLOCKED_INDEX: (state, index) => {
+        [MUTATIONS.SET_BLOCKED_INDEX]: (state, index) => {
             state.blockedIndex = index
         },
 
-        SET_RECORDS: (state, records) => {
+        [MUTATIONS.SET_RECORDS]: (state, records) => {
             state.records = records
         },
 
-        SET_GAME_ACTIVE: (state, active) => {
+        [MUTATIONS.SET_GAME_ACTIVE]: (state, active) => {
             state.isGameActive = active
         },
 
-        SET_LAST_MOVE_INDEX: (state, index) => {
+        [MUTATIONS.SET_LAST_MOVE_INDEX]: (state, index) => {
             state.secondLastMoveIndex = state.lastMoveIndex
             state.lastMoveIndex = index
         },
 
-        SET_PENALTY_TIME: (state, time) => {
+        [MUTATIONS.SET_PENALTY_TIME]: (state, time) => {
             state.penaltyTime = time
         },
 
-        SET_BONUS_TIME: (state, time) => {
+        [MUTATIONS.SET_BONUS_TIME]: (state, time) => {
             state.bonusTime = time
         },
 
-        SET_IDLE_TIME: (state, time) => {
+        [MUTATIONS.SET_IDLE_TIME]: (state, time) => {
             state.idleTime = time
         },
 
-        SET_FAST_TIMER: (state, isFast) => {
+        [MUTATIONS.SET_FAST_TIMER]: (state, isFast) => {
             state.isFastTimer = isFast
         },
 
-        SET_FROZEN_TILES: (state, tiles) => {
+        [MUTATIONS.SET_FROZEN_TILES]: (state, tiles) => {
             state.frozenTiles = tiles
         },
 
-        SET_TIMER_TIMEOUT: (state, timeout) => {
+        [MUTATIONS.SET_TIMER_TIMEOUT]: (state, timeout) => {
             state.timerTimeout = timeout
         },
 
-        SET_SPECIAL_MOVE_TIMEOUT: (state, timeout) => {
+        [MUTATIONS.SET_SPECIAL_MOVE_TIMEOUT]: (state, timeout) => {
             state.specialMoveTimeout = timeout
         },
 
-        SET_IDLE_TIMEOUT: (state, timeout) => {
+        [MUTATIONS.SET_IDLE_TIMEOUT]: (state, timeout) => {
             state.idleTimeout = timeout
         },
 
-        SWAP_TILES: (state, { idx1, idx2 }) => {
+        [MUTATIONS.SWAP_TILES]: (state, { idx1, idx2 }) => {
             const temp = state.tiles[idx1]
             state.tiles[idx1] = state.tiles[idx2]
             state.tiles[idx2] = temp
         },
 
-        INCREMENT_TIMER: (state) => {
+        [MUTATIONS.INCREMENT_TIMER]: (state) => {
             if (state.isGameActive) {
                 if (state.isFastTimer) {
                     state.timer += FAST_TIMER_MULTIPLIER
@@ -296,13 +325,13 @@ export default {
             }
         },
 
-        INCREMENT_SPECIAL_MOVES: (state) => {
+        [MUTATIONS.INCREMENT_SPECIAL_MOVES]: (state) => {
             if (state.isGameActive) {
                 state.specialMoves++
             }
         },
 
-        INCREMENT_IDLE_TIME: (state) => {
+        [MUTATIONS.INCREMENT_IDLE_TIME]: (state) => {
             if (state.isGameActive) {
                 state.idleTime++
 
@@ -312,33 +341,33 @@ export default {
             }
         },
 
-        RESET_IDLE_TIME: (state) => {
+        [MUTATIONS.RESET_IDLE_TIME]: (state) => {
             state.idleTime = 0
             state.isFastTimer = false
         },
 
-        CLEAR_TIMER_TIMEOUT: (state) => {
+        [MUTATIONS.CLEAR_TIMER_TIMEOUT]: (state) => {
             if (state.timerTimeout) {
                 clearTimeout(state.timerTimeout)
                 state.timerTimeout = null
             }
         },
 
-        CLEAR_SPECIAL_MOVE_TIMEOUT: (state) => {
+        [MUTATIONS.CLEAR_SPECIAL_MOVE_TIMEOUT]: (state) => {
             if (state.specialMoveTimeout) {
                 clearTimeout(state.specialMoveTimeout)
                 state.specialMoveTimeout = null
             }
         },
 
-        CLEAR_IDLE_TIMEOUT: (state) => {
+        [MUTATIONS.CLEAR_IDLE_TIMEOUT]: (state) => {
             if (state.idleTimeout) {
                 clearTimeout(state.idleTimeout)
                 state.idleTimeout = null
             }
         },
 
-        UPDATE_FROZEN_TILES: (state) => {
+        [MUTATIONS.UPDATE_FROZEN_TILES]: (state) => {
             const total = state.gridSize * state.gridSize
             const newFrozenTiles = []
 
@@ -357,20 +386,20 @@ export default {
 
     actions: {
         initGame: ({ commit, state }) => {
-            commit('SET_MOVES', 0)
-            commit('SET_TIMER', 0)
-            commit('SET_SPECIAL_MOVES', 0)
-            commit('SET_BLOCKED_INDEX', null)
-            commit('SET_GAME_ACTIVE', false)
-            commit('SET_LAST_MOVE_INDEX', null)
-            commit('SET_PENALTY_TIME', 0)
-            commit('SET_BONUS_TIME', 0)
-            commit('SET_IDLE_TIME', 0)
-            commit('SET_FAST_TIMER', false)
-            commit('SET_FROZEN_TILES', [])
-            commit('CLEAR_TIMER_TIMEOUT')
-            commit('CLEAR_SPECIAL_MOVE_TIMEOUT')
-            commit('CLEAR_IDLE_TIMEOUT')
+            commit(MUTATIONS.SET_MOVES, 0)
+            commit(MUTATIONS.SET_TIMER, 0)
+            commit(MUTATIONS.SET_SPECIAL_MOVES, 0)
+            commit(MUTATIONS.SET_BLOCKED_INDEX, null)
+            commit(MUTATIONS.SET_GAME_ACTIVE, false)
+            commit(MUTATIONS.SET_LAST_MOVE_INDEX, null)
+            commit(MUTATIONS.SET_PENALTY_TIME, 0)
+            commit(MUTATIONS.SET_BONUS_TIME, 0)
+            commit(MUTATIONS.SET_IDLE_TIME, 0)
+            commit(MUTATIONS.SET_FAST_TIMER, false)
+            commit(MUTATIONS.SET_FROZEN_TILES, [])
+            commit(MUTATIONS.CLEAR_TIMER_TIMEOUT)
+            commit(MUTATIONS.CLEAR_SPECIAL_MOVE_TIMEOUT)
+            commit(MUTATIONS.CLEAR_IDLE_TIMEOUT)
 
             const total = state.gridSize * state.gridSize
 
@@ -381,7 +410,7 @@ export default {
                 }
             )
 
-            commit('SET_TILES', tiles)
+            commit(MUTATIONS.SET_TILES, tiles)
         },
 
         shuffleBoard: ({ commit, state }) => {
@@ -392,7 +421,7 @@ export default {
                 const result = shuffleOnce(state, previousIndex)
 
                 if (result.emptyIndex !== undefined) {
-                    commit('SWAP_TILES', { idx1: result.emptyIndex, idx2: result.randomNeighbor })
+                    commit(MUTATIONS.SWAP_TILES, { idx1: result.emptyIndex, idx2: result.randomNeighbor })
                     previousIndex = result.emptyIndex
                 }
             }
@@ -400,8 +429,8 @@ export default {
             const emptyIndex = state.tiles.indexOf(0)
             updateBlockedIndex(commit, state, emptyIndex)
 
-            commit('UPDATE_FROZEN_TILES')
-            commit('SET_GAME_ACTIVE', true)
+            commit(MUTATIONS.UPDATE_FROZEN_TILES)
+            commit(MUTATIONS.SET_GAME_ACTIVE, true)
         },
 
         handleTileClick: ({ commit, state }, index) => {
@@ -431,7 +460,7 @@ export default {
         },
 
         changeGridSize: ({ commit }, newSize) => {
-            commit('SET_GRID_SIZE', newSize)
+            commit(MUTATIONS.SET_GRID_SIZE, newSize)
         },
 
         handleSwipe: ({ commit, state }, direction) => {
@@ -451,57 +480,57 @@ export default {
             }
 
             if (targetIndex !== null) {
-                commit('SWAP_TILES', { idx1: emptyIndex, idx2: targetIndex })
-                commit('SET_MOVES', state.moves + 1)
-                commit('RESET_IDLE_TIME')
-                commit('UPDATE_FROZEN_TILES')
+                commit(MUTATIONS.SWAP_TILES, { idx1: emptyIndex, idx2: targetIndex })
+                commit(MUTATIONS.SET_MOVES, state.moves + 1)
+                commit(MUTATIONS.RESET_IDLE_TIME)
+                commit(MUTATIONS.UPDATE_FROZEN_TILES)
             }
         },
 
         startTimers: ({ commit, state }) => {
-            commit('CLEAR_TIMER_TIMEOUT')
-            commit('CLEAR_SPECIAL_MOVE_TIMEOUT')
-            commit('CLEAR_IDLE_TIMEOUT')
+            commit(MUTATIONS.CLEAR_TIMER_TIMEOUT)
+            commit(MUTATIONS.CLEAR_SPECIAL_MOVE_TIMEOUT)
+            commit(MUTATIONS.CLEAR_IDLE_TIMEOUT)
 
             const timerLoop = () => {
                 if (!state.isGameActive) {
                     return
                 }
-                commit('INCREMENT_TIMER')
+                commit(MUTATIONS.INCREMENT_TIMER)
                 const timeout = setTimeout(timerLoop, TIMER_DELAY)
-                commit('SET_TIMER_TIMEOUT', timeout)
+                commit(MUTATIONS.SET_TIMER_TIMEOUT, timeout)
             }
 
             const specialMoveLoop = () => {
                 if (!state.isGameActive) {
                     return
                 }
-                commit('INCREMENT_SPECIAL_MOVES')
+                commit(MUTATIONS.INCREMENT_SPECIAL_MOVES)
                 const timeout = setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY)
-                commit('SET_SPECIAL_MOVE_TIMEOUT', timeout)
+                commit(MUTATIONS.SET_SPECIAL_MOVE_TIMEOUT, timeout)
             }
 
             const idleLoop = () => {
                 if (!state.isGameActive) {
                     return
                 }
-                commit('INCREMENT_IDLE_TIME')
+                commit(MUTATIONS.INCREMENT_IDLE_TIME)
                 const timeout = setTimeout(idleLoop, TIMER_DELAY)
-                commit('SET_IDLE_TIMEOUT', timeout)
+                commit(MUTATIONS.SET_IDLE_TIMEOUT, timeout)
             }
 
             timerLoop()
 
             const specialTimeout = setTimeout(specialMoveLoop, SPECIAL_MOVE_DELAY)
-            commit('SET_SPECIAL_MOVE_TIMEOUT', specialTimeout)
+            commit(MUTATIONS.SET_SPECIAL_MOVE_TIMEOUT, specialTimeout)
 
             idleLoop()
         },
 
         stopTimers: ({ commit }) => {
-            commit('CLEAR_TIMER_TIMEOUT')
-            commit('CLEAR_SPECIAL_MOVE_TIMEOUT')
-            commit('CLEAR_IDLE_TIMEOUT')
+            commit(MUTATIONS.CLEAR_TIMER_TIMEOUT)
+            commit(MUTATIONS.CLEAR_SPECIAL_MOVE_TIMEOUT)
+            commit(MUTATIONS.CLEAR_IDLE_TIMEOUT)
         },
     },
 }
