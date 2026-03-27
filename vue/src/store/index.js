@@ -1,20 +1,24 @@
 import { createStore } from 'vuex'
 import list from './list'
+import content from '@/store/modules/content'
+import gameSession from '@/store/modules/gameSession'
+import progress from '@/store/modules/progress'
+import ui from '@/store/modules/ui'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+  SET_COUNT: 'SET_COUNT'
 }
 
 export default createStore({
-  state () {
+  state() {
     return {
       count: 0
     }
   },
   getters: {
     getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
+    getCount2: (state) => state.count * 2
     // getList: (state) => [4, 3]
   },
   mutations: {
@@ -23,7 +27,7 @@ export default createStore({
     },
     [MUTATIONS.SET_COUNT]: (state, value) => {
       state.count = value
-    },
+    }
   },
   actions: {
     runIncrement: (store, value) => {
@@ -34,9 +38,13 @@ export default createStore({
       setTimeout(() => {
         store.commit(MUTATIONS.SET_COUNT, value)
       }, timeout)
-    },
+    }
   },
   modules: {
-    list
+    content,
+    gameSession,
+    list,
+    progress,
+    ui
   }
 })
