@@ -1,23 +1,34 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
-import IndexPage from './../components/pages/IndexPage.vue'
-import ExamplePage from './../components/pages/ExamplePage.vue'
+import HomePage from '@/components/pages/HomePage.vue'
+import GamePage from '@/components/pages/GamePage.vue'
+import ResultPage from '@/components/pages/ResultPage.vue'
 
 export const ROUTES = {
-  EXAMPLE: 'EXAMPLE',
-  INDEX: 'INDEX',
+  HOME: 'HOME',
+  GAME: 'GAME',
+  RESULT: 'RESULT',
 }
 
 const routes = [
   {
-    name: ROUTES.EXAMPLE,
-    path: '/example',
-    component: ExamplePage
+    path: '/',
+    redirect: { name: ROUTES.HOME }
   },
   {
-    name: ROUTES.INDEX,
-    path: '/',
-    component: IndexPage
+    name: ROUTES.HOME,
+    path: '/home',
+    component: HomePage
+  },
+  {
+    name: ROUTES.GAME,
+    path: '/game',
+    component: GamePage
+  },
+  {
+    name: ROUTES.RESULT,
+    path: '/result',
+    component: ResultPage
   },
 ]
 
