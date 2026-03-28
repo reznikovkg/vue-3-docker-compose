@@ -26,6 +26,15 @@
         @mousemove="(e) => handleMouseMove(e)"
     ></canvas>
 
+    <BombExplosion
+      v-for="explosion in bombExplosions"
+      :key="explosion.id"
+      :x="explosion.x"
+      :y="explosion.y"
+      @complete="() => removeExplosion(explosion.id)"
+      @detonate="(data) => detonateBomb(explosion.bombWorldX, explosion.bombWorldY)"
+    />
+
     <div v-if="paused" class="bubble-game__pause">
       <div class="bubble-game__pause__content">
         <h2>Пауза</h2>
@@ -63,10 +72,14 @@ import soundManager from './../../utils/soundManager'
 import CursorManager from './../../utils/cursor/CursorManager'
 import GameModeManager from './../../utils/game/GameModeManager'
 import { mapGetters } from 'vuex'
+import BombExplosion from './BombExplosion.vue'
 
 
 export default {
   name: 'Bubblegame',
+  components: {
+    BombExplosion
+  },
   props: {
     totalColors: { type: Number, required: true },
     targetColor: { type: String, required: true },
@@ -115,7 +128,11 @@ export default {
       lastFrameTime: 0,
       accumulator: 0,
 
-      clickHandlerEnabled: true
+      clickHandlerEnabled: true,
+
+      isBombMode: false,
+      bombExplosions: [],
+      bombRadius: 80,
     }
   },
   computed: {
@@ -196,7 +213,6 @@ export default {
     }
   },
   mounted() {
-    console.log('BubbleGame смонтирован')
     this.resizeCanvas()
     window.addEventListener('resize', this.resizeCanvas)
     this.canvasContext = this.$refs.canvas.getContext('2d')
@@ -205,21 +221,30 @@ export default {
     this.initModeManager()
 
     window.addEventListener('keydown', this.handleKeyDown)
+    window.addEventListener('keyup', this.handleKeyUp)
   },
   methods: {
     enableClickHandler(enabled) {
       this.clickHandlerEnabled = enabled
     },
     handleMouseDown(event) {
-      if (!this.clickHandlerEnabled) return
       if (this.paused || this.gameOver) return
+
+      if (this.isBombMode && this.cursorManager) {
+        event.preventDefault()
+        this.cursorManager.handleBombClick(event.clientX, event.clientY)
+        return
+      }
       
+      if (!this.clickHandlerEnabled) return
+
       if (this.getGameMode === 'click') {
         this.handleClickMode(event)
       }
     },
     handleMouseMove(event) {
       if (this.paused || this.gameOver) return
+      if (this.isBombMode) return
       
       if (this.modeManager) {
         this.modeManager.updateMousePosition(event.clientX, event.clientY)
@@ -247,6 +272,7 @@ export default {
     },
     popBubbleAtPosition(clientX, clientY) {
       if (this.paused || this.gameOver) return
+      if (this.isBombMode) return
       
       const rect = this.$refs.canvas.getBoundingClientRect()
       const scaleX = this.canvasWidth / rect.width
@@ -277,7 +303,6 @@ export default {
       this.playPopSound()
 
       let totalPoints = 0
-      //let hadCorrect = false
       const allNewBubbles = []
 
       unprocessedBubbles.forEach(bubble => {
@@ -325,15 +350,12 @@ export default {
       this.pressedBubbleIds.clear()
     },
     initModeManager() {
-      console.log('Инициализация менеджера режимов...')
       this.modeManager = new GameModeManager(this)
       this.modeManager.setMode(this.getGameMode)
       this.modeManagerReady = true
       this.tryStartGame()
-      console.log('Менеджер режимов инициализирован')
     },
     initCursorManager() {
-      console.log('Инициализация курсора...')
       this.cursorManager = new CursorManager(this.$refs.canvas)
 
       this.cursorManager.setOnShootCallback((x, y) => {
@@ -342,11 +364,14 @@ export default {
         }
       })
 
+      this.cursorManager.setOnBombPlaced((x, y) => {
+        this.placeBomb(x, y)
+      })
+
       this.cursorManager.setMode(this.getGameMode)
       this.cursorManager.show()
       this.cursorManagerReady = true
       this.tryStartGame()
-      console.log('Курсор инициализирован')
     },
     loadImages() {   
       let loadedCount = 0
@@ -550,6 +575,19 @@ export default {
 
       if (e.key === 'Escape') {
         this.togglePause()
+        return
+      }
+
+      if (e.code === 'KeyB' && !this.paused && !this.gameOver) {
+        e.preventDefault()
+        this.activateBombMode()
+      }
+    },
+    handleKeyUp(e) {
+      if (!this.$refs.canvas) return
+      
+      if (e.code === 'KeyB') {
+        this.deactivateBombMode()
       }
     },
     tryStartGame() {
@@ -587,7 +625,6 @@ export default {
     togglePause() {
       if (this.gameOver) return
       this.paused = !this.paused
-      console.log('Пауза:', this.paused)
 
       if (this.paused) {
         this.stopTimer()
@@ -598,7 +635,6 @@ export default {
       this.updateCursorByState()
     },
     resumegame() {
-      console.log('Продолжение игры')
       this.playClickSound()
       this.paused = false
       this.startTimer()
@@ -620,6 +656,11 @@ export default {
         cancelAnimationFrame(this.animationFrame)
         this.animationFrame = null
       }
+
+      if (this.isBombMode) {
+        this.deactivateBombMode()
+      }
+      this.bombExplosions = []
 
       this.stopTimer()
       this.updateCursorByState()
@@ -805,8 +846,6 @@ export default {
     updateCursorByState() {
       if (!this.cursorManager) return
 
-      console.log('Обновление курсора, paused:', this.paused, 'gameOver:', this.gameOver)
-
       if (this.cursorManager.autoAnimationFrame) {
         cancelAnimationFrame(this.cursorManager.autoAnimationFrame)
         this.cursorManager.autoAnimationFrame = null
@@ -817,17 +856,121 @@ export default {
       }
       
       if (this.paused || this.gameOver) {
-        console.log('Сброс курсора')
         this.cursorManager.resetToDefault()
       } else {
-        console.log('Показ курсора, режим:', this.getGameMode)
         this.cursorManager.show()
         this.cursorManager.setMode(this.getGameMode)
       }
     },
+    activateBombMode() {
+      if (this.isBombMode) return
+      if (this.paused || this.gameOver) return
+      
+      this.isBombMode = true
+      
+      if (this.cursorManager) {
+        this.cursorManager.activateBombMode()
+      }
+      
+      this.clickHandlerEnabled = false
+      if (this.modeManager) {
+        this.modeManager.stopCurrentMode()
+      }
+    },
+    deactivateBombMode() {
+      if (!this.isBombMode) return
+      
+      this.isBombMode = false
+      
+      if (this.cursorManager) {
+        this.cursorManager.deactivateBombMode()
+      }
+      
+      this.clickHandlerEnabled = true
+      if (this.modeManager) {
+        this.modeManager.startCurrentMode()
+      }
+    },
+    placeBomb(clientX, clientY) {
+      if (!this.isBombMode) return
+      if (this.paused || this.gameOver) return
+      
+      const rect = this.$refs.canvas.getBoundingClientRect()
+      const scaleX = this.canvasWidth / rect.width
+      const scaleY = this.canvasHeight / rect.height
+      
+      const bombX = (clientX - rect.left) * scaleX
+      const bombY = (clientY - rect.top) * scaleY
+      const explosionId = Date.now() + Math.random()
+      
+      this.bombExplosions.push({
+        id: explosionId,
+        x: clientX,
+        y: clientY,
+        bombWorldX: bombX,
+        bombWorldY: bombY
+      })
+    },
+    detonateBomb(x, y) {
+      const bubblesToPop = this.bubbles.filter(bubble => {
+        if (!bubble.active) return false
+        const distance = this.euclideanDistance(x, y, bubble.x, bubble.y)
+        return distance <= this.bombRadius
+      })
+      
+      if (bubblesToPop.length === 0) return
+      
+      bubblesToPop.forEach(bubble => {
+        bubble.isPopped = true
+      })
+      
+      this.processBombExplosion(bubblesToPop)
+    },
+    processBombExplosion(bubblesToPop) {
+      if (bubblesToPop.length === 0) return
+      
+      let totalPoints = 0
+      const allNewBubbles = []
+      
+      bubblesToPop.forEach(bubble => {
+        const isCorrect = bubble.color === this.targetColor
+        let points
+        
+        if (isCorrect) {
+          points = this.pointsForCorrect
+        } else {
+          const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
+          points = config.sizePenalties
+        }
+        
+        totalPoints += points
+        
+        const childBubbles = this.handleBubbleSplit(bubble)
+        allNewBubbles.push(...childBubbles)
+        
+        this.pushBubblesAway(bubble, 2)
+        bubble.active = false
+      })
+      
+      this.score += totalPoints
+      this.$emit('score', { points: totalPoints, count: bubblesToPop.length, source: 'bomb' })
+      
+      if (allNewBubbles.length > 0) {
+        this.bubbles.push(...allNewBubbles)
+      }
+      
+      this.bubbles = this.bubbles.filter(b => {
+        if (!b.active) {
+          this.pushedBubbles.delete(b.id)
+          return false
+        }
+        return true
+      })
+    },
+    removeExplosion(id) {
+      this.bombExplosions = this.bombExplosions.filter(e => e.id !== id)
+    },
     cleanupGame() {
-      console.log('Компонент уничтожается')
-      console.log('Очистка игры')
       if (this.animationFrame) {
         cancelAnimationFrame(this.animationFrame)
         this.animationFrame = null
@@ -843,12 +986,12 @@ export default {
       }
       window.removeEventListener('resize', this.resizeCanvas)
       window.removeEventListener('keydown', this.handleKeyDown)
+      window.removeEventListener('keyup', this.handleKeyUp)
 
       this.isReady = false
       this.imagesLoaded = false
       this.cursorManagerReady = false
       this.modeManagerReady = false
-      console.log('Игра очищена')
     },
     playPopSound() {
       soundManager.play('pop')

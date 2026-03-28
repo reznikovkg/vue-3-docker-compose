@@ -7,6 +7,7 @@ import LaserPulseAnimation from './animations/LaserPulseAnimation.js'
 import defaultCursor from './../../assets/cursors/default.png'
 import autoCursor from './../../assets/cursors/auto.png'
 import laserCursor from './../../assets/cursors/laser.png'
+import bombCursor from './../../assets/cursors/bomb.png'
 
 class CursorManager {
   constructor(canvas) {
@@ -23,7 +24,8 @@ class CursorManager {
     this.cursorImages = {
       click: { path: defaultCursor, width: 64, height: 64 },
       auto: { path: autoCursor, width: 64, height: 64 },
-      laser: { path: laserCursor, width: 32, height: 32 }
+      laser: { path: laserCursor, width: 32, height: 32 },
+      bomb: { path: bombCursor, width: 64, height: 64}
     }
     
     if (this.canvas) {
@@ -33,10 +35,52 @@ class CursorManager {
     this.initMouseTracking()
     this.setMode('click')
     this.onShootCallback = null
+    this.onBombPlacedCallback = null
+    this.isBombMode = false
+    this.savedMode = 'click'
   }
 
   setOnShootCallback(callback) {
     this.onShootCallback = callback
+  }
+
+  setOnBombPlaced(callback) {
+    this.onBombPlacedCallback = callback
+  }
+
+  activateBombMode() {
+    if (this.isBombMode) return
+    
+    this.isBombMode = true
+    this.savedMode = this.currentMode
+    
+    const currentAnim = this.animations[this.currentMode]
+    if (currentAnim) {
+      currentAnim.stop()
+    }
+
+    const bombImage = this.cursorImages.bomb
+    this.cursorUI.setImage(bombImage.path, bombImage.width, bombImage.height)
+    this.cursorUI.setTransform('')
+  }
+
+  deactivateBombMode() {
+    if (!this.isBombMode) return
+    
+    this.isBombMode = false
+    this.setMode(this.savedMode)
+  }
+
+  isBombActive() {
+    return this.isBombMode
+  }
+
+  handleBombClick(x, y) {
+    if (this.isBombMode && this.onBombPlacedCallback) {
+      this.onBombPlacedCallback(x, y)
+      return true
+    }
+    return false
   }
 
   startModeAnimation() {
@@ -78,6 +122,11 @@ class CursorManager {
   }
 
   setMode(mode) {
+    if (this.isBombMode) {
+      this.savedMode = mode
+      return
+    }
+
     this.currentMode = mode
     const image = this.cursorImages[mode]
     this.cursorUI.setImage(image.path, image.width, image.height)
@@ -91,6 +140,7 @@ class CursorManager {
     if (this.canvas) {
       this.canvas.style.cursor = 'default'
     }
+    this.isBombMode = false
   }
 
   show() {
@@ -98,7 +148,9 @@ class CursorManager {
     if (this.canvas) {
       this.canvas.style.cursor = 'none'
     }
-    this.startModeAnimation()
+    if (!this.isBombMode) {
+      this.startModeAnimation()
+    }
   }
 
   destroy() {
