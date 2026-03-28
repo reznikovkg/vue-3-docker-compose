@@ -40,14 +40,20 @@
         </button>
       </div>
 
-      <div class="game__canvas-wrapper">
-        <canvas
-          ref="gameCanvas"
-          class="game__canvas"
-          :width="canvasSize.width"
-          :height="canvasSize.height"
-          @touchstart="(event) => onTouchStart(event)"
-          @touchend="() => onTouchEnd()"
+      <div
+        ref="gameField"
+        class="game__canvas-wrapper"
+        :style="fieldStyle"
+        @touchstart="(event) => onTouchStart(event)"
+        @touchend="() => onTouchEnd()"
+      >
+        <div class="game__road" :style="{ clipPath: roadClipPath }" />
+
+        <div
+          v-for="index in laneLineIndices"
+          :key="'lane-' + index"
+          class="game__lane-line"
+          :style="getLaneLineStyle(index)"
         />
 
         <GameCar
@@ -95,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { ROUTES } from '@/router'
@@ -118,19 +124,19 @@ const KEY_RIGHT_VALUES = ['ArrowRight', 'd', 'D', 'в', 'В']
 const KEY_PAUSE_VALUES = [' ', 'p', 'P', 'з', 'З']
 const GAME_LOOP_FPS = 60
 
-interface CanvasSize {
+interface FieldSize {
   width: number
   height: number
   scale: number
 }
 
-const gameCanvas = ref<HTMLCanvasElement | null>(null)
+const gameField = ref<HTMLDivElement | null>(null)
 const distance = ref(0)
 const isPaused = ref(false)
 const isGameOver = ref(false)
 const lives = ref(GAME_CONFIG.INITIAL_LIVES)
 const maxLives = GAME_CONFIG.INITIAL_LIVES
-const canvasSize = reactive<CanvasSize>({
+const canvasSize = reactive<FieldSize>({
   width: 0,
   height: 0,
   scale: 1,
@@ -144,10 +150,26 @@ const gameState = store.state.gameRoad as GameState
 let gameLoopId: number | null = null
 let nextEnemySpawnDistance = GAME_CONFIG.ENEMY_SPAWN_DISTANCE_STEP
 let nextRoadItemSpawnDistance = GAME_CONFIG.ROAD_ITEM_SPAWN_DISTANCE_STEP
-let roadDashOffset = 0
+const roadDashOffset = ref(0)
 let enemyIdCounter = 1
 let roadItemIdCounter = 1
 let isSpeedRecovering = false
+
+const laneLineIndices = Array.from(
+  { length: ROAD_CONFIG.LANE_COUNT - 1 },
+  (_, i) => i + 1,
+)
+
+const roadClipPath = (() => {
+  const leftPct = ((1 - ROAD_CONFIG.TUNNEL_TOP_RATIO) / 2) * 100
+  const rightPct = 100 - leftPct
+  return `polygon(${leftPct}% 0%, ${rightPct}% 0%, 100% 100%, 0% 100%)`
+})()
+
+const fieldStyle = computed(() => ({
+  width: `${canvasSize.width}px`,
+  height: `${canvasSize.height}px`,
+}))
 
 const getCanvasSize = () => {
   const isMobile = window.innerWidth < 768
@@ -266,6 +288,41 @@ const getRoadItemStyle = (item: RoadItem) => {
   }
 }
 
+const getLaneLineStyle = (laneIndex: number) => {
+  const h = canvasSize.height
+  const scale = canvasSize.scale
+
+  const topBounds = getRoadBoundsAtY(0)
+  const bottomBounds = getRoadBoundsAtY(h)
+
+  const xTop = topBounds.leftPx + (topBounds.widthPx / ROAD_CONFIG.LANE_COUNT) * laneIndex
+  const xBottom = bottomBounds.leftPx + (bottomBounds.widthPx / ROAD_CONFIG.LANE_COUNT) * laneIndex
+
+  const dx = xBottom - xTop
+  const skewAngle = Math.atan(dx / h) * (180 / Math.PI)
+
+  const isSolid = laneIndex === 1
+  const lineWidth = isSolid ? 3 : 2
+
+  const style: Record<string, string> = {
+    left: `${xTop}px`,
+    width: `${lineWidth}px`,
+    transformOrigin: 'top left',
+    transform: `skewX(${skewAngle}deg)`,
+  }
+
+  if (isSolid) {
+    style.backgroundColor = '#facc15'
+  } else {
+    const dashLen = 20 * scale
+    const gapLen = 15 * scale
+    style.background = `repeating-linear-gradient(to bottom, #ffffff 0px, #ffffff ${dashLen}px, transparent ${dashLen}px, transparent ${dashLen + gapLen}px)`
+    style.backgroundPositionY = `${roadDashOffset.value * scale}px`
+  }
+
+  return style
+}
+
 const isRectOverlap = (a: Car | RoadItem, b: Car | RoadItem) => {
   const aLeft = a.x - a.width / 2
   const aRight = a.x + a.width / 2
@@ -373,74 +430,15 @@ const detectRoadItemCollisions = () => {
 }
 
 const gameLoop = () => {
-  const canvasElement = gameCanvas.value
-
-  if (!canvasElement) {
-    return
-  }
-
   if (isPaused.value) {
     return
   }
 
-  const context = canvasElement.getContext('2d')
-
-  if (!context) {
-    return
-  }
-
-  const canvasScale = canvasSize.scale
-  const cw = canvasElement.width
-  const ch = canvasElement.height
+  const scale = canvasSize.scale
+  const fieldHeight = canvasSize.height
   const frameMs = 1000 / GAME_LOOP_FPS
 
-  context.fillStyle = '#16a34a'
-  context.fillRect(0, 0, cw, ch)
-
-  const topBounds = getRoadBoundsAtY(0)
-  const bottomBounds = getRoadBoundsAtY(ch)
-  const roadLeftTop = topBounds.leftPx
-  const roadRightTop = topBounds.leftPx + topBounds.widthPx
-  const roadLeftBottom = bottomBounds.leftPx
-  const roadRightBottom = bottomBounds.leftPx + bottomBounds.widthPx
-
-  context.fillStyle = '#374151'
-  context.beginPath()
-  context.moveTo(roadLeftTop, 0)
-  context.lineTo(roadRightTop, 0)
-  context.lineTo(roadRightBottom, ch)
-  context.lineTo(roadLeftBottom, ch)
-  context.closePath()
-  context.fill()
-
-  roadDashOffset = roadDashOffset + gameState.speed * 1.5
-
-  let laneIndex = 1
-
-  while (laneIndex < ROAD_CONFIG.LANE_COUNT) {
-    const xTop = roadLeftTop + (topBounds.widthPx / ROAD_CONFIG.LANE_COUNT) * laneIndex
-    const xBottom = roadLeftBottom + (bottomBounds.widthPx / ROAD_CONFIG.LANE_COUNT) * laneIndex
-
-    if (laneIndex === 1) {
-      context.strokeStyle = '#facc15'
-      context.lineWidth = 3
-      context.setLineDash([])
-      context.lineDashOffset = 0
-    } else {
-      context.strokeStyle = '#ffffff'
-      context.lineWidth = 2
-      context.setLineDash([20 * canvasScale, 15 * canvasScale])
-      context.lineDashOffset = -roadDashOffset * canvasScale
-    }
-
-    context.beginPath()
-    context.moveTo(xTop, 0)
-    context.lineTo(xBottom, ch)
-    context.stroke()
-    laneIndex = laneIndex + 1
-  }
-
-  context.setLineDash([])
+  roadDashOffset.value = roadDashOffset.value + gameState.speed * 1.5
 
   if (isSpeedRecovering) {
     gameState.speed = Math.min(
@@ -476,7 +474,7 @@ const gameLoop = () => {
     nextRoadItemSpawnDistance = nextRoadItemSpawnDistance + GAME_CONFIG.ROAD_ITEM_SPAWN_DISTANCE_STEP
   }
 
-  const playerMoveSpeed = 5 * canvasScale
+  const playerMoveSpeed = 5 * scale
 
   if (gameState.keys.left) {
     const minX = gameState.playerCar.width / 2
@@ -490,7 +488,7 @@ const gameLoop = () => {
     gameState.playerCar.x = Math.min(maxX, nextX)
   }
 
-  gameState.playerCar.y = canvasElement.height / canvasScale - 100
+  gameState.playerCar.y = fieldHeight / scale - 100
 
   gameState.enemies.forEach((enemy) => {
     enemy.y = enemy.y + enemy.speed + activeBoost
@@ -499,7 +497,7 @@ const gameLoop = () => {
   const visibleEnemies: Car[] = []
 
   gameState.enemies.forEach((enemy) => {
-    if (enemy.y * canvasScale < canvasElement.height + enemy.height * canvasScale) {
+    if (enemy.y * scale < fieldHeight + enemy.height * scale) {
       visibleEnemies.push(enemy)
     }
   })
@@ -513,7 +511,7 @@ const gameLoop = () => {
   const visibleRoadItems: RoadItem[] = []
 
   gameState.roadItems.forEach((item) => {
-    if (item.y * canvasScale < canvasElement.height + item.height * canvasScale) {
+    if (item.y * scale < fieldHeight + item.height * scale) {
       visibleRoadItems.push(item)
     }
   })
@@ -577,14 +575,14 @@ const onKeyUp = (event: KeyboardEvent) => {
 }
 
 const onTouchStart = (event: TouchEvent) => {
-  const canvasElement = gameCanvas.value
+  const fieldElement = gameField.value
 
-  if (!canvasElement) {
+  if (!fieldElement) {
     return
   }
 
   const firstTouch = event.touches[0]
-  const boundingRect = canvasElement.getBoundingClientRect()
+  const boundingRect = fieldElement.getBoundingClientRect()
   const touchX = firstTouch.clientX - boundingRect.left
 
   const isLeftSide = touchX < boundingRect.width / 2
@@ -643,13 +641,21 @@ onUnmounted(() => {
     border-radius: var(--vt-radius-default);
     overflow: hidden;
     box-shadow: var(--vt-shadow-default);
+    background-color: #16a34a;
+    border: 4px solid var(--color-border);
   }
 
-  &__canvas {
-    display: block;
-    border-radius: var(--vt-radius-default);
-    border: 4px solid var(--color-border);
-    background-color: #16a34a;
+  &__road {
+    position: absolute;
+    inset: 0;
+    background-color: #374151;
+  }
+
+  &__lane-line {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    pointer-events: none;
   }
 
   &__overlay {
