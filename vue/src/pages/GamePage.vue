@@ -1,88 +1,108 @@
 <template>
-  <div class="game-page">
-    <div class="game-page__header">
-      <div class="game-page__coins"> Coins: {{ coins }}</div>
-      <div class="game-page__controls">
-        <button class="game-page__btn" @click="() => addTestEnemy()">
+  <div class = "game-page">
+    <div class = "game-page__header">
+      <div class = "game-page__coins"> Coins: {{ coins }}</div>
+      <div class = "game-page__controls">
+        <button class = "game-page__btn" @click="() => addTestEnemy()">
           Add Enemy
         </button>
-        <button class="game-page__btn" @click="() => clearEnemies()">
+        <button class = "game-page__btn" @click="() => clearEnemies()">
           Clear Enemies
         </button>
       </div>
     </div>
 
-    <div class="game-page__game-area" @click="() => handleGameAreaClick($event)">
-      <div
-        v-for="route in level.routes"
-        :key="route.id"
-        class="game-page__route"
-        :style="getRouteStyle(route)"
-      ></div>
+    <div class = "game-page__game-area" @click="() => handleGameAreaClick($event)">
+    <svg class = "game-page__route-svg" viewBox = "0 0 900 600">
+      <path
+        v-for = "route in level.routes"
+        :key = "route.id"
+        :d = "getRoutePath(route)"
+        class = "game-page__route-path"
+        fill = "none"
+        stroke = "#e94560"
+        stroke-width = "40"
+        stroke-linecap = "round"
+        stroke-linejoin = "round"
+        opacity = "0.3"
+      />
+      <path
+        v-for = "route in level.routes"
+        :key = "'line-' + route.id"
+        :d = "getRoutePath(route)"
+        class = "game-page__route-line"
+        fill = "none"
+        stroke = "#e94560"
+        stroke-width = "3"
+        stroke-dasharray = "5,5"
+        stroke-linecap = "round"
+        stroke-linejoin = "round"
+      />
+    </svg>
 
       <div
-        v-for="position in towerPositions"
-        :key="position.id"
-        class="game-page__tower-slot"
-        :style="getSlotStyle(position)"
-        @click.stop="() => placeTower(position)"
+        v-for = "position in towerPositions"
+        :key = "position.id"
+        class = "game-page__tower-slot"
+        :style = "getSlotStyle(position)"
+        @click.stop = "() => placeTower(position)"
       ></div>
 
       <Tower
-        v-for="tower in towers"
-        :key="tower.id"
-        :tower="tower"
-        :is-selected="selectedTower && selectedTower.id === tower.id"
-        @select="() => selectTower(tower)"
-        @remove="() => removeTower(tower.id)"
-        @upgrade="() => upgradeTower(tower.id)"
+        v-for = "tower in towers"
+        :key = "tower.id"
+        :tower = "tower"
+        :is-selected = "selectedTower && selectedTower.id === tower.id"
+        @select = "() => selectTower(tower)"
+        @remove = "() => removeTower(tower.id)"
+        @upgrade = "() => upgradeTower(tower.id)"
       />
 
       <Enemy
-        v-for="enemy in enemies"
-        :key="enemy.id"
-        :enemy="enemy"
-        @move="() => handleEnemyMove(enemy)"
+        v-for = "enemy in enemies"
+        :key = "enemy.id"
+        :enemy = "enemy"
+        @move = "() => handleEnemyMove(enemy)"
       />
     </div>
 
-    <div v-if="selectedTower" class="game-page__tower-panel">
-      <h3 class="game-page__panel-title">Tower Stats</h3>
-      <div class="game-page__stat">Level: {{ selectedTower.level }}</div>
-      <div class="game-page__stat">Damage: {{ selectedTower.damage }}</div>
-      <div class="game-page__stat">Health: {{ selectedTower.health }}</div>
-      <div class="game-page__stat">Fire Rate: {{ selectedTower.fireRate }}ms</div>
-      <div class="game-page__stat">Range: {{ selectedTower.range }}px</div>
+    <div v-if = "selectedTower" class="game-page__tower-panel">
+      <h3 class = "game-page__panel-title">Tower Stats</h3>
+      <div class = "game-page__stat">Level: {{ selectedTower.level }}</div>
+      <div class = "game-page__stat">Damage: {{ selectedTower.damage }}</div>
+      <div class = "game-page__stat">Health: {{ selectedTower.health }}</div>
+      <div class = "game-page__stat">Fire Rate: {{ selectedTower.fireRate }}ms</div>
+      <div class = "game-page__stat">Range: {{ selectedTower.range }}px</div>
       <button
-        class="game-page__upgrade-btn"
-        @click="() => upgradeTower(selectedTower.id, 'damage')"
+        class = "game-page__upgrade-btn"
+        @click = "() => upgradeTower(selectedTower.id, 'damage')"
       >
         Upgrade Damage ({{ selectedTower.level * 30 }})
       </button>
       <button
-        class="game-page__upgrade-btn"
-        @click="() => upgradeTower(selectedTower.id, 'health')"
+        class = "game-page__upgrade-btn"
+        @click = "() => upgradeTower(selectedTower.id, 'health')"
       >
         Upgrade Health ({{ selectedTower.level * 30 }})
       </button>
       <button
-        class="game-page__upgrade-btn"
-        @click="() => upgradeTower(selectedTower.id, 'fireRate')"
+        class = "game-page__upgrade-btn"
+        @click = "() => upgradeTower(selectedTower.id, 'fireRate')"
       >
         Upgrade Speed ({{ selectedTower.level * 30 }})
       </button>
       <button
-        class="game-page__upgrade-btn"
-        @click="() => upgradeTower(selectedTower.id, 'range')"
+        class = "game-page__upgrade-btn"
+        @click = "() => upgradeTower(selectedTower.id, 'range')"
       >
         Upgrade Range ({{ selectedTower.level * 30 }})
       </button>
-      <button class="game-page__remove-btn" @click="() => removeTower(selectedTower.id)">
+      <button class = "game-page__remove-btn" @click="() => removeTower(selectedTower.id)">
         Remove Tower (+25)
       </button>
     </div>
 
-    <div class="game-page__info">
+    <div class = "game-page__info">
       <p>Click on slots to place towers (50)</p>
       <p>Click on tower to select and upgrade</p>
       <p>Use arrow keys to move enemies</p>
@@ -105,6 +125,7 @@ export default {
     return {
       currentLevel: 1,
       enemyMoveInterval: null,
+      selectedEnemy: null,
     }
   },
   computed: {
@@ -217,15 +238,12 @@ export default {
         this.setLevel(levels[levelNum])
       }
     },
-    getRouteStyle(route) {
+    getRoutePath(route) {
       if (!route.points || route.points.length < 2) {
-        return {}
+        return ''
       }
       const path = route.points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
-      return {
-        position: 'absolute',
-        pointerEvents: 'none',
-      }
+      return path
     },
     getSlotStyle(position) {
       return {
@@ -332,7 +350,7 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped lang = "scss">
 .game-page {
   width: 100%;
   min-height: 100vh;
@@ -387,25 +405,22 @@ export default {
 
   &__route {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 50px,
-        rgba(233, 69, 96, 0.3) 50px,
-        rgba(233, 69, 96, 0.3) 100px
-      );
-    }
+    pointer-events: none;
+    z-index: 1;
   }
+    &__route-path {
+      filter: drop-shadow(0 0 5px rgba(233, 69, 96, 0.5));
+    }
+
+    &__route-line {
+      opacity: 0.6;
+    }
+    
+  
 
   &__tower-slot {
     position: absolute;
