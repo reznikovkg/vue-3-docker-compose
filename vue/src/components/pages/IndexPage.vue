@@ -124,8 +124,10 @@ export default {
 
     boardStyle() {
       return {
-        'grid-template-columns': `repeat(this.gridSize, 1fr)`,
-        'grid-template-rows': `repeat(this.gridSize, 1fr)`,
+        'grid-template-columns': `repeat(${this.gridSize}, 1fr)`,
+        'grid-template-rows': `repeat(${this.gridSize}, 1fr)`,
+        'width': `${this.gridSize * 80}px`,
+        'height': `${this.gridSize * 80}px`,
       }
     },
 
@@ -317,13 +319,12 @@ export default {
   }
 
   &__board {
-    display: inline-grid;
+    display: grid;
     gap: 3px;
     margin: 0 auto 30px;
     background-color: #222;
     padding: 3px;
     border-radius: 8px;
-    position: relative;
   }
 
   &__controls {

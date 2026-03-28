@@ -68,7 +68,6 @@ export default {
 
 <style scoped lang="scss">
 .puzzle__tile {
-  position: relative;
   width: 100%;
   height: 100%;
   background-color: #333;
