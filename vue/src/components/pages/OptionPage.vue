@@ -1,176 +1,180 @@
 <template>
   <div class="options">
-    <div class="options__nav">
-      <RouterLink :to="{ name: $routes.MAINMENU }" class="options__nav__link" @click="() => playClickSound()">
-        Назад к игре
-      </RouterLink>
-    </div>
+    <BackgroundVideo :src="bgVideoUrl" />
 
-    <div class="options__tabs">
-      <button 
-        class="options__tabs__tab" 
-        :class="{ 'options__tabs__tab--active': activeTab === 'game' }"
-        @click="() => switchTab('game')"
-      >
-        Игровые настройки
-      </button>
-      <button 
-        class="options__tabs__tab" 
-        :class="{ 'options__tabs__tab--active': activeTab === 'video' }"
-        @click="() => switchTab('video')"
-      >
-        Видео
-      </button>
-    </div>
+    <div class="options__page">
+      <div class="options__page__nav">
+        <RouterLink :to="{ name: $routes.MAINMENU }" class="options__page__nav__link" @click="() => playClickSound()">
+          Назад к игре
+        </RouterLink>
+      </div>
 
-    <div v-if="activeTab === 'game'">
-      <h2>Настройки игры</h2>
-          
-      <div class="options__grid">
-        <div class="options__grid__item">
-          <label>Количество цветов:</label>
-          <input 
-              type="number" 
-              min="1" 
-              max="8" 
-              step="1"  
-              v-model.number="localSettings.totalColors" 
-          />
-          <span class="hint">от 1 до 8</span>
-        </div>
+      <div class="options__page__tabs">
+        <button 
+          class="options__page__tabs__tab" 
+          :class="{ 'options__page__tabs__tab--active': activeTab === 'game' }"
+          @click="() => switchTab('game')"
+        >
+          Игровые настройки
+        </button>
+        <button 
+          class="options__page__tabs__tab" 
+          :class="{ 'options__page__tabs__tab--active': activeTab === 'video' }"
+          @click="() => switchTab('video')"
+        >
+          Видео
+        </button>
+      </div>
 
-        <div class="options__grid__item">
-          <label>Целевой цвет:</label>
-          <div class="options__grid__item__color">
-            <div class="options__grid__item__color__current" @click="() => changeColorDropdown()">
-              <img :src="getColorImage(localSettings.targetColor)" class="options__grid__item__color__current__preview" />
-              <span>{{ getColorName(localSettings.targetColor) }}</span>
-              <span class="options__grid__item__color__current__arrow">{{ showColorDropdown ? '▲' : '▼' }}</span>
-            </div>
-              
-            <div class="options__grid__item__color__dropdown" v-if="showColorDropdown">
-              <div 
-                  v-for="color in colorOptions" 
-                  class="options__grid__item__color__dropdown__option" 
-                  :key="color.value" 
-                  :class="{ active: color.value === localSettings.targetColor }" 
-                  @click="() => selectColor(color.value)"
-              >
-                <img :src="color.image" class="options__grid__item__color__dropdown__option__preview" />
-                <span>{{ color.name }}</span>
+      <div v-if="activeTab === 'game'">
+        <h2>Настройки игры</h2>
+            
+        <div class="options__page__grid">
+          <div class="options__page__grid__item">
+            <label>Количество цветов:</label>
+            <input 
+                type="number" 
+                min="1" 
+                max="8" 
+                step="1"  
+                v-model.number="localSettings.totalColors" 
+            />
+            <span class="hint">от 1 до 8</span>
+          </div>
+
+          <div class="options__page__grid__item">
+            <label>Целевой цвет:</label>
+            <div class="options__page__grid__item__color">
+              <div class="options__page__grid__item__color__current" @click="() => changeColorDropdown()">
+                <img :src="getColorImage(localSettings.targetColor)" class="options__page__grid__item__color__current__preview" />
+                <span>{{ getColorName(localSettings.targetColor) }}</span>
+                <span class="options__page__grid__item__color__current__arrow">{{ showColorDropdown ? '▲' : '▼' }}</span>
+              </div>
+                
+              <div class="options__page__grid__item__color__dropdown" v-if="showColorDropdown">
+                <div 
+                    v-for="color in colorOptions" 
+                    class="options__page__grid__item__color__dropdown__option" 
+                    :key="color.value" 
+                    :class="{ active: color.value === localSettings.targetColor }" 
+                    @click="() => selectColor(color.value)"
+                >
+                  <img :src="color.image" class="options__page__grid__item__color__dropdown__option__preview" />
+                  <span>{{ color.name }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="options__grid__item">
-          <label>Интенсивность (шт/сек):</label>
-          <input 
-              type="number" 
-              min="0.1" 
-              max="1000" 
-              step="0.1" 
-              v-model.number="localSettings.spawnRate" 
-          />
-          <span class="hint">{{ getLocalSpawnInterval }} сек на пузырь</span>
-        </div>
+          <div class="options__page__grid__item">
+            <label>Интенсивность (шт/сек):</label>
+            <input 
+                type="number" 
+                min="0.1" 
+                max="1000" 
+                step="0.1" 
+                v-model.number="localSettings.spawnRate" 
+            />
+            <span class="hint">{{ getLocalSpawnInterval }} сек на пузырь</span>
+          </div>
 
-        <div class="options__grid__item">
-          <label>Очки за попадание:</label>
-          <input 
-              type="number" 
-              min="1" 
-              max="10" 
-              v-model.number="localSettings.pointsForCorrect" 
-          />
-        </div>
+          <div class="options__page__grid__item">
+            <label>Очки за попадание:</label>
+            <input 
+                type="number" 
+                min="1" 
+                max="10" 
+                v-model.number="localSettings.pointsForCorrect" 
+            />
+          </div>
 
-        <div class="options__grid__item">
-          <label>Очки за ошибку:</label>
-          <input 
-              type="number" 
-              min="-20" 
-              max="0" 
-              v-model.number="localSettings.pointsForWrong" 
-          />
-        </div>
+          <div class="options__page__grid__item">
+            <label>Очки за ошибку:</label>
+            <input 
+                type="number" 
+                min="-20" 
+                max="0" 
+                v-model.number="localSettings.pointsForWrong" 
+            />
+          </div>
 
-        <div class="options__grid__item">
-          <label>Режим курсора:</label>
-          <div class="options__grid__item__select">
-            <div class="options__grid__item__select__current" @click="() => toggleCursorModeDropdown()">
-              <span>{{ getCursorModeText(localGameMode) }}</span>
-              <span class="options__grid__item__select__current__arrow">{{ showCursorModeDropdown ? '▲' : '▼' }}</span>
-            </div>
-              
-            <div class="options__grid__item__select__dropdown" v-if="showCursorModeDropdown">
-              <div 
-                  v-for="mode in cursorModeOptions" 
-                  class="options__grid__item__select__dropdown__option" 
-                  :key="mode.value" 
-                  :class="{ active: mode.value === localGameMode }" 
-                  @click="() => selectCursorMode(mode.value)"
-              >
-                <span>{{ mode.label }}</span>
+          <div class="options__page__grid__item">
+            <label>Режим курсора:</label>
+            <div class="options__page__grid__item__select">
+              <div class="options__page__grid__item__select__current" @click="() => toggleCursorModeDropdown()">
+                <span>{{ getCursorModeText(localGameMode) }}</span>
+                <span class="options__page__grid__item__select__current__arrow">{{ showCursorModeDropdown ? '▲' : '▼' }}</span>
+              </div>
+                
+              <div class="options__page__grid__item__select__dropdown" v-if="showCursorModeDropdown">
+                <div 
+                    v-for="mode in cursorModeOptions" 
+                    class="options__page__grid__item__select__dropdown__option" 
+                    :key="mode.value" 
+                    :class="{ active: mode.value === localGameMode }" 
+                    @click="() => selectCursorMode(mode.value)"
+                >
+                  <span>{{ mode.label }}</span>
+                </div>
               </div>
             </div>
+            <span class="hint">Режим взаимодействия с пузырями</span>
           </div>
-          <span class="hint">Режим взаимодействия с пузырями</span>
         </div>
       </div>
-    </div>
-    
-    <div v-if="activeTab === 'video'">
-      <h2>Настройки видео</h2>
-          
-      <div class="options__grid">
-        <div class="options__grid__item">
-          <label>Частота кадров (FPS):</label>
-          <div class="options__grid__item__select">
-            <div class="options__grid__item__select__current" @click="() => toggleFPSDropdown()">
-              <span>{{ getFPSText(localSettings.fps) }}</span>
-              <span class="options__grid__item__select__current__arrow">{{ showFPSDropdown ? '▲' : '▼' }}</span>
-            </div>
-              
-            <div class="options__grid__item__select__dropdown" v-if="showFPSDropdown">
-              <div 
-                  v-for="fps in fpsOptions" 
-                  class="options__grid__item__select__dropdown__option" 
-                  :key="fps.value" 
-                  :class="{ active: fps.value === localSettings.fps }" 
-                  @click="() => selectFPS(fps.value)"
-              >
-                <span>{{ fps.label }}</span>
+      
+      <div v-if="activeTab === 'video'">
+        <h2>Настройки видео</h2>
+            
+        <div class="options__page__grid">
+          <div class="options__page__grid__item">
+            <label>Частота кадров (FPS):</label>
+            <div class="options__page__grid__item__select">
+              <div class="options__page__grid__item__select__current" @click="() => toggleFPSDropdown()">
+                <span>{{ getFPSText(localSettings.fps) }}</span>
+                <span class="options__page__grid__item__select__current__arrow">{{ showFPSDropdown ? '▲' : '▼' }}</span>
+              </div>
+                
+              <div class="options__page__grid__item__select__dropdown" v-if="showFPSDropdown">
+                <div 
+                    v-for="fps in fpsOptions" 
+                    class="options__page__grid__item__select__dropdown__option" 
+                    :key="fps.value" 
+                    :class="{ active: fps.value === localSettings.fps }" 
+                    @click="() => selectFPS(fps.value)"
+                >
+                  <span>{{ fps.label }}</span>
+                </div>
               </div>
             </div>
+            <span class="hint">Выберите целевую частоту кадров. Влияет на плавность анимации и нагрузку на процессор.</span>
           </div>
-          <span class="hint">Выберите целевую частоту кадров. Влияет на плавность анимации и нагрузку на процессор.</span>
         </div>
       </div>
-    </div>
 
-    <div class="options__actions">
-      <button class="options__actions__btn__save" @click="() => saveSettings()">Сохранить</button>
-      <button class="options__actions__btn__reset" @click="() => resetToDefault()">Сбросить</button>
-    </div>
+      <div class="options__page__actions">
+        <button class="options__page__actions__btn__save" @click="() => saveSettings()">Сохранить</button>
+        <button class="options__page__actions__btn__reset" @click="() => resetToDefault()">Сбросить</button>
+      </div>
 
-    <div class="options__preview">
-      <h3>Текущие настройки:</h3>
-      <ul>
-        <li>Цветов:  {{getTotalColors}} </li>
-        <li>
-          <div class="options__preview__color">
-            Цель:
-            <img :src="getColorImage(getTargetColor)" class="options__preview__color__bubble" />
-            <span :style="{ color: getTargetColor }">{{ getColorName(getTargetColor) }}</span>
-          </div>
-        </li>
-        <li>Скорость: {{ getSpawnRate }} шт/сек ({{ getSpawnInterval }} сек)</li>
-        <li>Попадание: +{{ getPointsForCorrect }}</li>
-        <li>Ошибка: {{ getPointsForWrong }}</li>
-        <li>FPS: {{ getFPS }}</li>
-        <li>Режим курсора: {{ getGameModeName }}</li>
-      </ul>
+      <div class="options__page__preview">
+        <h3>Текущие настройки:</h3>
+        <ul>
+          <li>Цветов:  {{getTotalColors}} </li>
+          <li>
+            <div class="options__page__preview__color">
+              Цель:
+              <img :src="getColorImage(getTargetColor)" class="options__page__preview__color__bubble" />
+              <span :style="{ color: getTargetColor }">{{ getColorName(getTargetColor) }}</span>
+            </div>
+          </li>
+          <li>Скорость: {{ getSpawnRate }} шт/сек ({{ getSpawnInterval }} сек)</li>
+          <li>Попадание: +{{ getPointsForCorrect }}</li>
+          <li>Ошибка: {{ getPointsForWrong }}</li>
+          <li>FPS: {{ getFPS }}</li>
+          <li>Режим курсора: {{ getGameModeName }}</li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -186,7 +190,9 @@ import purpleBubble from './../../assets/bubbles/bubble_purple.png'
 import redBubble from './../../assets/bubbles/bubble_red.png'
 import whiteBubble from './../../assets/bubbles/bubble_white.png'
 import yellowBubble from './../../assets/bubbles/bubble_yellow.png'
+import bgVideo from './../../assets/videos/background.mp4'
 import soundManager from './../../utils/soundManager'
+import BackgroundVideo from './../ui/BackgroundVideo.vue';
 
 export default {
   name: 'OptionPage',
@@ -207,6 +213,7 @@ export default {
       activeTab: 'game'
     }
   },
+  components: { BackgroundVideo },
   computed: {
     ...mapGetters([
       'getSettings',
@@ -254,13 +261,15 @@ export default {
         { value: 240, label: '240 FPS (экспериментальный)' }
       ]
     },
-    
     cursorModeOptions() {
       return [
         { value: 'click', label: 'Клик' },
         { value: 'auto', label: 'Авто' },
         { value: 'laser', label: 'Лазер' }
       ]
+    },
+    bgVideoUrl() {
+      return bgVideo
     }
   },
   mounted() {
@@ -373,7 +382,7 @@ $accentGreen: #00d389;
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: hidden;
 
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -397,243 +406,228 @@ $accentGreen: #00d389;
 }
 
 .options {
-  user-select: none;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  background: $bgDark;
-  border-radius: 10px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 
-  h2 {
-    text-align: center;
-    color:$textLight;
-    margin-bottom: 30px;
-  }
+  &__page {
+    user-select: none;
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    background: $bgDark;
+    border-radius: 10px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    max-height: 90vh;
+    overflow-y: auto;
 
-  &__tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 30px;
-    border-bottom: 1px solid $bgElement;
-    padding-bottom: 10px;
-
-    &__tab {
-      padding: 10px 20px;
-      background: transparent;
-      border: none;
-      color: $textMuted;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-radius: 6px;
-
-      &:hover {
-        color: $textLight;
-        background: rgba($accentGreen, 0.1);
-      }
+    &::-webkit-scrollbar {
+      width: 6px;
     }
 
-    &__tab--active {
-      color: $accentGreen;
-      border-bottom: 2px solid $accentGreen;
+    &::-webkit-scrollbar-track {
+      background: $bgElement;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: $accentGreen;
+      border-radius: 3px;
       
       &:hover {
-        background: transparent;
+        background: darken($accentGreen, 10%);
       }
     }
-  }
 
-  &__nav {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid $bgElement;
-
-    &__link {
-      display: inline-block;
-      padding: 8px 16px;
-      background: $bgElement;
+    h2 {
+      text-align: center;
       color: $textLight;
-      text-decoration: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s ease;
+      margin-bottom: 30px;
+    }
 
-      &:hover {
-        background: $bgInputHover;
-        transform: translateX(-5px);
+    &__nav {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid $bgElement;
+
+      &__link {
+        display: inline-block;
+        padding: 8px 16px;
+        background: $bgElement;
+        color: $textLight;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: $bgInputHover;
+          transform: translateX(-5px);
+        }
       }
     }
-  }
 
-  &__grid {
-    display: grid;
-    gap: 20px;
-    margin-bottom: 30px;
-
-    &__item {
+    &__tabs {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid $bgElement;
+      padding-bottom: 10px;
 
-      label {
-        color: $textLight;
-        font-weight: 600;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-    
-      input, select { 
-        @include input-style; 
-      }
-
-      select { 
-        cursor: pointer; 
-      }
-
-      .hint {
-        font-size: 12px;
+      &__tab {
+        padding: 10px 20px;
+        background: transparent;
+        border: none;
         color: $textMuted;
-        font-style: italic;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: 6px;
+
+        &:hover {
+          color: $textLight;
+          background: rgba($accentGreen, 0.1);
+        }
       }
 
-      &__select {
-        position: relative;
+      &__tab--active {
+        color: $accentGreen;
+        border-bottom: 2px solid $accentGreen;
+        
+        &:hover {
+          background: transparent;
+        }
+      }
+    }
 
-        &__current {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-          padding: 10px 12px;
-          background: $bgElement;
-          border: 2px solid $bgElement;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.3s ease;
+    &__grid {
+      display: grid;
+      gap: 20px;
+      margin-bottom: 30px;
 
-          &:hover {
-            border-color: $bgInputHover;
-          }
+      &__item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
 
-          span {
-            color: $textLight;
-          }
-
-          &__arrow {
-            color: $textMuted;
-            font-size: 12px;
-          }
+        label {
+          color: $textLight;
+          font-weight: 600;
+          font-size: 14px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+      
+        input, select { 
+          @include input-style; 
         }
 
-        &__dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          margin-top: 5px;
-          background: $bgElement;
-          border: 2px solid $bgInputHover;
-          border-radius: 6px;
-          z-index: 10;
-          max-height: 300px;
-          overflow-y: auto;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        select { 
+          cursor: pointer; 
+        }
 
-          &__option {
+        .hint {
+          font-size: 12px;
+          color: $textMuted;
+          font-style: italic;
+        }
+
+        &__select {
+          position: relative;
+
+          &__current {
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             padding: 10px 12px;
+            background: $bgElement;
+            border: 2px solid $bgElement;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
 
             &:hover {
-              background: $bgInputHover;
-            }
-
-            &.active {
-              background: $accentGreen;
-            
-              span {
-                color: white;
-                font-weight: 600;
-              }
+              border-color: $bgInputHover;
             }
 
             span {
               color: $textLight;
             }
+
+            &__arrow {
+              color: $textMuted;
+              font-size: 12px;
+            }
+          }
+
+          &__dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 5px;
+            background: $bgElement;
+            border: 2px solid $bgInputHover;
+            border-radius: 6px;
+            z-index: 10;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+            &__option {
+              display: flex;
+              align-items: center;
+              padding: 10px 12px;
+              cursor: pointer;
+              transition: all 0.2s ease;
+
+              &:hover {
+                background: $bgInputHover;
+              }
+
+              &.active {
+                background: $accentGreen;
+              
+                span {
+                  color: white;
+                  font-weight: 600;
+                }
+              }
+
+              span {
+                color: $textLight;
+              }
+            }
           }
         }
-      }
 
-      &__color {
-        position: relative;
+        &__color {
+          position: relative;
 
-        &__current {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 12px;
-          background: $bgElement;
-          border: 2px solid $bgElement;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-
-          &:hover {
-            border-color: $bgInputHover;
-          }
-
-          &__preview {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            object-fit: cover;
-          }
-
-          &__arrow {
-            margin-left: auto;
-            color: $textMuted;
-            font-size: 12px;
-          }
-        }
-
-        &__dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          right: 0;
-          margin-top: 5px;
-          background: $bgElement;
-          border: 2px solid $bgInputHover;
-          border-radius: 6px;
-          z-index: 10;
-          max-height: 300px;
-          overflow-y: auto;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-
-          &__option {
+          &__current {
             display: flex;
             align-items: center;
             gap: 10px;
             padding: 10px 12px;
+            background: $bgElement;
+            border: 2px solid $bgElement;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
 
             &:hover {
-              background: $bgInputHover;
-            }
-
-            &.active {
-              background: $accentGreen;
-            
-              span {
-                color: white;
-                font-weight: 600;
-              }
+              border-color: $bgInputHover;
             }
 
             &__preview {
@@ -643,106 +637,156 @@ $accentGreen: #00d389;
               object-fit: cover;
             }
 
-            span {
-              color: $textLight;
+            &__arrow {
+              margin-left: auto;
+              color: $textMuted;
+              font-size: 12px;
+            }
+          }
+
+          &__dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 5px;
+            background: $bgElement;
+            border: 2px solid $bgInputHover;
+            border-radius: 6px;
+            z-index: 10;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+            &__option {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              padding: 10px 12px;
+              cursor: pointer;
+              transition: all 0.2s ease;
+
+              &:hover {
+                background: $bgInputHover;
+              }
+
+              &.active {
+                background: $accentGreen;
+              
+                span {
+                  color: white;
+                  font-weight: 600;
+                }
+              }
+
+              &__preview {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                object-fit: cover;
+              }
+
+              span {
+                color: $textLight;
+              }
             }
           }
         }
       }
     }
-  }
 
-  &__actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 30px;
+    &__actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 30px;
 
-    button {
-      padding: 12px 30px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      }
-    }
-
-    &__btn {
-      &__save {
-        background: $accentGreen;
-        color: white;
-        
+      button {
+        padding: 12px 30px;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      
         &:hover {
-          background: darken($accentGreen, 10%);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
       }
-    
-      &__reset {
-        background: #ff6b6b;
-        color: white;
-    
-        &:hover {
-          background: darken(#ff6b6b, 10%);
+
+      &__btn {
+        &__save {
+          background: $accentGreen;
+          color: white;
+          
+          &:hover {
+            background: darken($accentGreen, 10%);
+          }
+        }
+      
+        &__reset {
+          background: #ff6b6b;
+          color: white;
+      
+          &:hover {
+            background: darken(#ff6b6b, 10%);
+          }
         }
       }
     }
-  }
 
-  &__preview {
-    background: $bgElement;
-    padding: 20px;
-    border-radius: 8px;
-    border-left: 4px solid $accentGreen;
-    
-    h3 {
-      margin: 0 0 15px 0;
-      color: $textLight;
-      font-size: 18px;
-      font-weight: 600;
-    }
-    
-    ul {
-      margin: 0;
-      padding-left: 20px;
-      color: $textMuted;
-    
-      li {
-        margin: 8px 0;
-        font-size: 14px;
-        
+    &__preview {
+      background: $bgElement;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid $accentGreen;
+      
+      h3 {
+        margin: 0 0 15px 0;
+        color: $textLight;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      
+      ul {
+        margin: 0;
+        padding-left: 20px;
+        color: $textMuted;
+      
+        li {
+          margin: 8px 0;
+          font-size: 14px;
+          
+          span {
+            font-weight: 600;
+            text-transform: capitalize;
+          }
+        }
+      }
+
+      &__color {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        &__bubble {
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+
         span {
           font-weight: 600;
           text-transform: capitalize;
-        }
-      }
-    }
-
-    &__color {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      &__bubble {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      span {
-        font-weight: 600;
-        text-transform: capitalize;
-        
-        &[style*="color"] {
-          text-shadow: 0 0 5px currentColor;
+          
+          &[style*="color"] {
+            text-shadow: 0 0 5px currentColor;
+          }
         }
       }
     }
