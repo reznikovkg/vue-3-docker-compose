@@ -71,6 +71,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import BubbleGame from './../game/BubbleGame.vue'
 
 export default {
@@ -89,15 +90,7 @@ export default {
     }
   },
   computed: {
-    colorsCount() {
-      return this.$store.state.colorsCount
-    },
-    targetColor() {
-      return this.$store.state.targetColor
-    },
-    spawnRate() {
-      return this.$store.state.spawnRate
-    },
+    ...mapState(['colorsCount', 'targetColor', 'spawnRate']),
     targetColorLabel() {
       const colorNames = {
         blue: 'синий',
@@ -204,14 +197,14 @@ export default {
     text-decoration: none;
     text-align: center;
     box-sizing: border-box;
-  }
 
-  &__button--stop {
-    background-color: #e85d75;
-  }
+    &--stop {
+      background-color: #e85d75;
+    }
 
-  &__button--menu {
-    background-color: #6c757d;
+    &--menu {
+      background-color: #6c757d;
+    }
   }
 
   &__game-area {
@@ -262,10 +255,10 @@ export default {
     cursor: pointer;
     text-decoration: none;
     box-sizing: border-box;
-  }
 
-  &__modal-button--menu {
-    background-color: #6c757d;
+    &--menu {
+      background-color: #6c757d;
+    }
   }
 }
 </style>

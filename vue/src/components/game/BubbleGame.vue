@@ -1,6 +1,9 @@
 <template>
   <section class="bubble-game">
-    <div ref="gameField" class="bubble-game__field" @click="checkBubbleClick">
+    <div
+      class="bubble-game__field"
+      @click="(event) => checkBubbleClick(event, event.currentTarget)"
+    >
       <div
         v-for="item in bubbleList"
         :key="item.id"
@@ -130,9 +133,10 @@ export default {
       this.timerInterval = null
     },
     setFieldSize() {
-      if (this.$refs.gameField) {
-        this.fieldWidth = this.$refs.gameField.clientWidth
-        this.fieldHeight = this.$refs.gameField.clientHeight
+      const gameField = this.$el?.querySelector('.bubble-game__field')
+      if (gameField) {
+        this.fieldWidth = gameField.clientWidth
+        this.fieldHeight = gameField.clientHeight
       }
     },
     addBubble() {
@@ -165,11 +169,11 @@ export default {
       })
       this.bubbleList = this.bubbleList.filter((item) => item.y <= this.fieldHeight + item.size)
     },
-    checkBubbleClick(event) {
-      if (!this.gameActive || this.isPaused || !this.$refs.gameField) {
+    checkBubbleClick(event, gameField) {
+      if (!this.gameActive || this.isPaused || !gameField) {
         return
       }
-      const rect = this.$refs.gameField.getBoundingClientRect()
+      const rect = gameField.getBoundingClientRect()
       const clickX = event.clientX - rect.left
       const clickY = event.clientY - rect.top
       const touchedBubbles = this.bubbleList.filter((item) => {
