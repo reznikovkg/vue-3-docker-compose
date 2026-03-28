@@ -1,14 +1,14 @@
 <template>
   <div
-    class="tower"
-    :class="{ 'tower--selected': isSelected }"
-    :style="towerStyle"
-    @click.stop="() => handleSelect()"
+    class = "tower"
+    :class = "{ 'tower--selected': isSelected }"
+    :style = "towerStyle"
+    @click.stop = "() => handleSelect()"
   >
-    <div class="tower__body" :style="bodyStyle"></div>
-    <div class="tower__range" :style="rangeStyle"></div>
-    <div class="tower__level">{{ tower.level }}</div>
-    <button class="tower__remove-btn" @click.stop="() => handleRemove()">×</button>
+    <div class = "tower__body" :style = "bodyStyle"></div>
+    <div class = "tower__range" :style = "rangeStyle"></div>
+    <div class = "tower__level">{{ tower.level }}</div>
+    <button class = "tower__remove-btn" @click.stop = "() => handleRemove()">×</button>
   </div>
 </template>
 

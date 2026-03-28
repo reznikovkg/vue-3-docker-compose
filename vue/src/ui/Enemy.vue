@@ -1,8 +1,8 @@
 <template>
-  <div class="enemy" :style="enemyStyle" @click.stop="() => handleMove()">
-    <div class="enemy__body"></div>
-    <div class="enemy__health">
-      <div class="enemy__health-bar" :style="healthBarStyle"></div>
+  <div class = "enemy" :style = "enemyStyle" @click.stop="() => handleMove()">
+    <div class = "enemy__body"></div>
+    <div class = "enemy__health">
+      <div class = "enemy__health-bar" :style = "healthBarStyle"></div>
     </div>
   </div>
 </template>
