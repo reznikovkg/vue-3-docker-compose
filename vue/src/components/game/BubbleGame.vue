@@ -35,6 +35,14 @@
       @detonate="(data) => detonateBomb(explosion.bombWorldX, explosion.bombWorldY)"
     />
 
+    <div class="bubble-game__bomb-counter">
+      <div class="bubble-game__bomb-counter__icon">💣</div>
+      <div class="bubble-game__bomb-counter__count">{{ bombCount }}</div>
+      <div class="bubble-game__bomb-counter__hits">
+        {{ successfulHits % bombsPerReward }}/{{ bombsPerReward }}
+      </div>
+    </div>
+
     <div v-if="paused" class="bubble-game__pause">
       <div class="bubble-game__pause__content">
         <h2>Пауза</h2>
@@ -133,6 +141,12 @@ export default {
       isBombMode: false,
       bombExplosions: [],
       bombRadius: 80,
+
+      bombCount: 0,
+      successfulHits: 0,
+      bombsPerReward: 10,
+      lastNoBombsNotification: 0,
+      bombHintShown: false,
     }
   },
   computed: {
@@ -304,6 +318,7 @@ export default {
 
       let totalPoints = 0
       const allNewBubbles = []
+      let correctHitsInThisBatch = 0
 
       unprocessedBubbles.forEach(bubble => {
         bubble.isPopped = true
@@ -315,6 +330,7 @@ export default {
           points = this.pointsForCorrect * this.correctMultiplier
           this.correctMultiplier = Math.min(5, this.correctMultiplier * 1.2)
           this.wrongMultiplier = Math.max(1, this.wrongMultiplier - 0.2)
+          correctHitsInThisBatch++
         } else {
           const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
           points = config.sizePenalties * this.wrongMultiplier
@@ -334,6 +350,10 @@ export default {
       
       this.score += totalPoints
       this.$emit('score', { points: totalPoints, count: unprocessedBubbles.length })
+
+      if (correctHitsInThisBatch > 0) {
+        this.addSuccessfulHits(correctHitsInThisBatch)
+      }
 
       if (allNewBubbles.length > 0) {
         this.bubbles.push(...allNewBubbles)
@@ -628,6 +648,7 @@ export default {
 
       if (this.paused) {
         this.stopTimer()
+        soundManager.stopAll()
       } else {
         this.startTimer()
       }      
@@ -651,6 +672,8 @@ export default {
       this.bubbles = []
       this.pressedBubbleIds.clear()
       this.pushedBubbles.clear()
+      this.bombCount = 0
+      this.successfulHits = 0
 
       if (this.animationFrame) {
         cancelAnimationFrame(this.animationFrame)
@@ -865,6 +888,10 @@ export default {
     activateBombMode() {
       if (this.isBombMode) return
       if (this.paused || this.gameOver) return
+      if (this.bombCount <= 0) {
+        this.showNoBombsNotification()
+        return
+      }
       
       this.isBombMode = true
       
@@ -894,7 +921,13 @@ export default {
     placeBomb(clientX, clientY) {
       if (!this.isBombMode) return
       if (this.paused || this.gameOver) return
-      
+      if (this.bombCount <= 0) {
+        this.deactivateBombMode()
+        this.showNoBombsNotification()
+        return
+      }
+      this.bombCount--
+
       const rect = this.$refs.canvas.getBoundingClientRect()
       const scaleX = this.canvasWidth / rect.width
       const scaleY = this.canvasHeight / rect.height
@@ -967,6 +1000,117 @@ export default {
         return true
       })
     },
+    addSuccessfulHits(count) {
+      const oldHits = this.successfulHits
+      this.successfulHits += count
+      
+      const oldBombCount = Math.floor(oldHits / this.bombsPerReward)
+      const newBombCount = Math.floor(this.successfulHits / this.bombsPerReward)
+      const bombsEarned = newBombCount - oldBombCount
+      
+      if (bombsEarned > 0) {
+        this.bombCount += bombsEarned
+        this.showBombRewardEffect(bombsEarned)
+
+        if (this.bombCount > 0 && !this.bombHintShown) {
+          this.showBombHint()
+        }
+      }
+    },
+    showBombRewardEffect(count) {
+      const notification = document.createElement('div')
+      notification.textContent = `+${count} 💣`
+      notification.style.position = 'fixed'
+      notification.style.top = '100px'
+      notification.style.right = '30px'
+      notification.style.backgroundColor = 'rgba(0,0,0,0.8)'
+      notification.style.color = '#ffaa00'
+      notification.style.padding = '10px 20px'
+      notification.style.borderRadius = '20px'
+      notification.style.fontSize = '1.5rem'
+      notification.style.fontWeight = 'bold'
+      notification.style.zIndex = '200'
+      notification.style.animation = 'fadeOutUp 2s ease-out forwards'
+      notification.style.userSelect = 'none'
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        notification.remove()
+      }, 2000)
+    },
+    showNoBombsNotification() {
+      const now = Date.now()
+
+      if (now - this.lastNoBombsNotification < 2000) {
+        return
+      }
+      
+      this.lastNoBombsNotification = now
+
+      const notification = document.createElement('div')
+      notification.textContent = '❌ Нет бомб! Сделайте 10 успешных попаданий'
+      
+      notification.style.position = 'fixed'
+      notification.style.bottom = '140px'
+      notification.style.left = '0'
+      notification.style.right = '0'
+      notification.style.marginLeft = 'auto'
+      notification.style.marginRight = 'auto'
+      notification.style.width = 'fit-content'
+      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'
+      notification.style.color = '#ff6b6b'
+      notification.style.padding = '12px 24px'
+      notification.style.borderRadius = '30px'
+      notification.style.fontSize = '1rem'
+      notification.style.fontWeight = 'bold'
+      notification.style.border = '2px solid #ff6b6b'
+      notification.style.boxShadow = '0 0 15px rgba(255, 107, 107, 0.3)'
+      notification.style.animation = 'fadeOutUp 2s ease-out forwards'
+      notification.style.userSelect = 'none'
+      
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        if (notification && notification.remove) {
+          notification.remove()
+        }
+      }, 2000)
+    },
+    showBombHint() {
+      if (this.bombHintShown) return
+      
+      this.bombHintShown = true
+      
+      const hint = document.createElement('div')
+      hint.innerHTML = '💣 <strong>Бомба готова!</strong> Зажми <kbd style="background:#333;padding:2px 8px;border-radius:6px;margin:0 4px;">B</kbd> и кликни, чтобы взорвать пузыри!'
+      
+      hint.style.position = 'fixed'
+      hint.style.bottom = '200px'
+      hint.style.left = '0'
+      hint.style.right = '0'
+      hint.style.marginLeft = 'auto'
+      hint.style.marginRight = 'auto'
+      hint.style.width = 'fit-content'
+      hint.style.maxWidth = '90vw'
+      hint.style.backgroundColor = 'rgba(0, 0, 0, 0.95)'
+      hint.style.color = '#ffaa00'
+      hint.style.padding = '16px 28px'
+      hint.style.borderRadius = '40px'
+      hint.style.fontSize = '1.1rem'
+      hint.style.fontWeight = 'bold'
+      hint.style.border = '2px solid #ffaa00'
+      hint.style.boxShadow = '0 0 20px rgba(255, 170, 0, 0.5)'
+      hint.style.animation = 'fadeOutUp 4s ease-out forwards'
+      hint.style.userSelect = 'none'
+      
+      document.body.appendChild(hint)
+      
+      setTimeout(() => {
+        if (hint && hint.remove) {
+          hint.remove()
+        }
+      }, 4000)
+    },
     removeExplosion(id) {
       this.bombExplosions = this.bombExplosions.filter(e => e.id !== id)
     },
@@ -1023,6 +1167,40 @@ html, body {
   background: linear-gradient(160deg, #5d4065 0%, #1b191d 100%);
   user-select: none;
   overflow: hidden;
+
+  &__bomb-counter {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 40px;
+    backdrop-filter: blur(5px);
+    z-index: 20;
+    
+    &__icon {
+      font-size: 1.8rem;
+    }
+    
+    &__count {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #ffaa00;
+      min-width: 50px;
+      text-align: center;
+    }
+    
+    &__hits {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 8px;
+      border-radius: 20px;
+    }
+  }
 
   &__score {
     position: absolute;
@@ -1277,5 +1455,16 @@ html, body {
     text-shadow: 0 0 20px #ff6b6b;
   }
   100% { transform: translateX(-50%) scale(1); }
+}
+
+@keyframes fadeOutUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
 }
 </style>

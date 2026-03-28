@@ -7,36 +7,65 @@ import bombSound from './../assets/sounds/bomb-sound.mp3'
 
 class SoundManager {
   constructor() {
-    this.sounds = {
-      pop: new Audio(popSound),
-      click: new Audio(clickSound),
-      save: new Audio(saveSound),
-      cancel: new Audio(cancelSound),
-      shot: new Audio(shotSound),
-      bomb: new Audio(bombSound),
+    this.soundPaths = {
+      pop: popSound,
+      click: clickSound,
+      save: saveSound,
+      cancel: cancelSound,
+      shot: shotSound,
+      bomb: bombSound,
     }
 
-    this.sounds.pop.volume = 0.5
-    this.sounds.click.volume = 0.7
-    this.sounds.save.volume = 0.6
-    this.sounds.cancel.volume = 0.3
-    this.sounds.shot.volume = 0.4
-    this.sounds.bomb.volume = 0.6
+    this.volumes = {
+      pop: 0.5,
+      click: 0.7,
+      save: 0.6,
+      cancel: 0.3,
+      shot: 0.4,
+      bomb: 0.6,
+    }
+
+    this.activeSounds = []
   }
   
   play(soundName) {
-    const sound = this.sounds[soundName]
-    if (sound) {
-      sound.currentTime = 0
-      sound.play().catch(e => console.log('Ошибка воспроизведения:', e))
+    const soundPath = this.soundPaths[soundName]
+    if (!soundPath) {
+      console.log(`Звук ${soundName} не найден`)
+      return
+    }
+    
+    const audio = new Audio(soundPath)
+    audio.volume = this.volumes[soundName] || 0.5
+
+    this.activeSounds.push(audio)
+
+    audio.addEventListener('ended', () => {
+      const index = this.activeSounds.indexOf(audio)
+      if (index > -1) {
+        this.activeSounds.splice(index, 1)
+      }
+    })
+
+    audio.play().catch(e => console.log('Ошибка воспроизведения:', e))
+  }
+
+  stopAll() {
+    this.activeSounds.forEach(audio => {
+      audio.pause()
+      audio.currentTime = 0
+    })
+    this.activeSounds = []
+  }
+
+  setVolume(soundName, volume) {
+    if (this.volumes[soundName] !== undefined) {
+      this.volumes[soundName] = Math.max(0, Math.min(1, volume))
     }
   }
   
   destroy() {
-    Object.values(this.sounds).forEach(sound => {
-      sound.pause()
-      sound.src = ''
-    })
+    this.stopAll()
   }
 }
 
