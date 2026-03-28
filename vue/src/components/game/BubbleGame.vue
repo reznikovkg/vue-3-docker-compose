@@ -2,7 +2,14 @@
   <div class="bubble-game">
     <div class="bubble-game__score">Счёт {{ score.toFixed(1) }}</div>
     <div class="bubble-game__timer" :class="{'bubble-game__timer--warning': timeLeft <= 15}">{{ formattedTime }}</div>
-    <div class="bubble-game__multiplier">{{ multiplier.toFixed(1) }}x</div>
+    <div class="bubble-game__multiplier">
+      <div class="bubble-game__multiplier--correct">
+        +{{ correctMultiplier.toFixed(1) }}x
+      </div>
+      <div class="bubble-game__multiplier--wrong">
+        -{{ wrongMultiplier.toFixed(1) }}x
+      </div>
+    </div>
 
     <div class="bubble-game__target">
       <div class="bubble-game__target__label">Цель:</div>
@@ -74,7 +81,8 @@ export default {
   data() {
     return {
       score: 0,
-      multiplier: 1,
+      correctMultiplier: 1,
+      wrongMultiplier: 1,
       timeLeft: this.gameDuration,
       gameOver: false,
       paused: false,
@@ -269,7 +277,7 @@ export default {
       this.playPopSound()
 
       let totalPoints = 0
-      let hadCorrect = false
+      //let hadCorrect = false
       const allNewBubbles = []
 
       unprocessedBubbles.forEach(bubble => {
@@ -279,18 +287,17 @@ export default {
         let points
 
         if (isCorrect) {
-          points = this.pointsForCorrect
+          points = this.pointsForCorrect * this.correctMultiplier
+          this.correctMultiplier = Math.min(5, this.correctMultiplier * 1.2)
+          this.wrongMultiplier = Math.max(1, this.wrongMultiplier - 0.2)
         } else {
           const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
-          points = config.sizePenalties
+          points = config.sizePenalties * this.wrongMultiplier
+          this.wrongMultiplier = Math.min(7, this.wrongMultiplier * 1.3)
+          this.correctMultiplier = Math.max(1, this.correctMultiplier - 0.2)
         }
 
-        totalPoints += points * (isCorrect ? this.multiplier : 1)
-        
-        if (isCorrect) {
-          hadCorrect = true
-          this.multiplier = Math.min(5, this.multiplier + 0.2)
-        }
+        totalPoints += points
 
         const childBubbles = this.handleBubbleSplit(bubble)
         allNewBubbles.push(...childBubbles)
@@ -298,11 +305,7 @@ export default {
         this.pushBubblesAway(bubble, 2)
         
         bubble.active = false
-      })      
-      
-      if (!hadCorrect && unprocessedBubbles.length > 0) {
-        this.multiplier = 1
-      }
+      })
       
       this.score += totalPoints
       this.$emit('score', { points: totalPoints, count: unprocessedBubbles.length })
@@ -473,7 +476,6 @@ export default {
         })
 
         this.score =  this.score + totalPenalty
-        this.multiplier = 1
         
         this.$emit('score', { 
           points: totalPenalty, 
@@ -605,7 +607,8 @@ export default {
     restartgame() {
       this.playClickSound()
       this.score = 0
-      this.multiplier = 1
+      this.correctMultiplier = 1
+      this.wrongMultiplier = 1
       this.timeLeft = this.gameDuration
       this.gameOver = false
       this.paused = false
@@ -929,18 +932,37 @@ html, body {
     position: absolute;
     bottom: 30px;
     left: 30px;
-    color: #00d389;
-    font-size: 4rem;
-    font-weight: bold;
-    text-shadow: 0 0 20px rgba(0, 211, 137, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     z-index: 20;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 10px 30px;
-    border-radius: 15px;
+  }
+
+  &__multiplier--correct, &__multiplier--wrong {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 8px 20px;
+    border-radius: 12px;
     backdrop-filter: blur(5px);
-    animation: pulse 1.5s ease-in-out infinite;
+    font-size: 2rem;
+    font-weight: bold;
     cursor: default;
     pointer-events: none;
+    text-align: center;
+    min-width: 120px;
+    transition: all 0.1s ease;
+  }
+
+  &__multiplier--correct {
+    color: #00d389;
+    text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
+    border-left: 3px solid #00d389;
+    animation: pulseCorrect 1.2s ease-in-out infinite;
+  }
+
+  &__multiplier--wrong {
+    color: #ff6b6b;
+    text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+    border-left: 3px solid #ff6b6b;
   }
 
   &__target {
@@ -1089,13 +1111,19 @@ html, body {
   } 
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { 
-    transform: scale(1.1); 
-    text-shadow: 0 0 30px rgba(0, 211, 137, 0.8);
+@keyframes pulseCorrect {
+  0% { 
+    transform: scale(1);
+    text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
   }
-  100% { transform: scale(1); }
+  50% { 
+    transform: scale(1.05);
+    text-shadow: 0 0 25px rgba(0, 211, 137, 0.9);
+  }
+  100% { 
+    transform: scale(1);
+    text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
+  }
 }
 
 @keyframes warningPulse {
