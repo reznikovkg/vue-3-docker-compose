@@ -1,16 +1,17 @@
 import { createWebHistory, createRouter } from 'vue-router'
-
-import HomeView from './../components/HelloWorld.vue'
-import AboutView from './../components/TheWelcome.vue'
-import WelcomeItem from './../components/WelcomeItem.vue'
+import GamePage from '../pages/GamePage.vue'
 
 const routes = [
-  { path: '/about', component: AboutView },
-  { path: '/t/:id', component: WelcomeItem },
-  { path: '/', component: HomeView },
+  {
+    path: '/',
+    name: 'Game',
+    component: GamePage,
+  },
 ]
 
-export const router = createRouter({
-  history: createWebHistory('/'),
+const router = createRouter({
+  history: createWebHistory(),
   routes,
 })
+
+export default router
