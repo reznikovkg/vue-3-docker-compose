@@ -768,16 +768,22 @@ export default {
       
       return childBubbles
     },    
-    handleBubbleSplit(bubble) {
+    handleBubbleSplit(bubble, customChildren = null) {
       let childBubblesToAdd = []
       const now = performance.now()
       const maxSpeed = 4
 
-      if (bubble.sizeName === 'large') {
-        childBubblesToAdd = this.createChildBubbles(bubble, 3, 'medium', 20)
-      }
-      else if (bubble.sizeName === 'medium') {
-        childBubblesToAdd = this.createChildBubbles(bubble, 5, 'small', 10)
+      if (customChildren) {
+        const { count, sizeName, offset = 10 } = customChildren
+        childBubblesToAdd = this.createChildBubbles(bubble, count, sizeName, offset)
+      } 
+      else {
+        if (bubble.sizeName === 'large') {
+          childBubblesToAdd = this.createChildBubbles(bubble, 3, 'medium', 20)
+        }
+        else if (bubble.sizeName === 'medium') {
+          childBubblesToAdd = this.createChildBubbles(bubble, 5, 'small', 10)
+        }
       }
 
       childBubblesToAdd.forEach(childBubble => {
@@ -978,8 +984,14 @@ export default {
         
         totalPoints += points
         
-        const childBubbles = this.handleBubbleSplit(bubble)
-        allNewBubbles.push(...childBubbles)
+        if (bubble.sizeName === 'large') {
+          const childBubbles = this.handleBubbleSplit(bubble, {
+            count: 7,
+            sizeName: 'small',
+            offset: 15
+          })
+          allNewBubbles.push(...childBubbles)
+        }
         
         this.pushBubblesAway(bubble, 2)
         bubble.active = false
