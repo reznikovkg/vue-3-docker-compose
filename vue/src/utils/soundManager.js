@@ -2,6 +2,7 @@ import popSound from './../assets/sounds/bubble-pop.mp3'
 import clickSound from './../assets/sounds/button-click.mp3'
 import saveSound from './../assets/sounds/button-save.mp3'
 import cancelSound from './../assets/sounds/button-cancel.mp3'
+import shotSound from './../assets/sounds/shot.mp3'
 
 class SoundManager {
   constructor() {
@@ -10,12 +11,14 @@ class SoundManager {
       click: new Audio(clickSound),
       save: new Audio(saveSound),
       cancel: new Audio(cancelSound),
+      shot: new Audio(shotSound),
     }
 
     this.sounds.pop.volume = 0.5
     this.sounds.click.volume = 0.7
     this.sounds.save.volume = 0.6
     this.sounds.cancel.volume = 0.3
+    this.sounds.shot.volume = 0.4
   }
   
   play(soundName) {

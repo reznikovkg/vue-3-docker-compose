@@ -1,3 +1,5 @@
+import soundManager from "./../../soundManager"
+
 class AutoShootAnimation {
   constructor(cursorUI, shotMarkerManager) {
     this.cursorUI = cursorUI
@@ -29,6 +31,7 @@ class AutoShootAnimation {
                 onShoot(pos.x, pos.y)
               }
               this.shotMarkerManager.create(pos.x, pos.y)
+              soundManager.play('shot')
             }
           }
         }, 50)
