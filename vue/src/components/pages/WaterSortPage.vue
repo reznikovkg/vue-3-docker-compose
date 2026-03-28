@@ -12,12 +12,12 @@
           :layers = "bottle"
           :is-selected = "getSelected === index"
           :max-layers = "4"
-          @select = "handleBottleClick(index)"
+          @select = "() => handleBottleClick(index)"
       />
     </div>
 
     <div class = "game__controls">
-      <Btn :pr = "1" @click = "initGame">
+      <Btn :pr = "1" @click = "() => initGame">
         Начать заново
       </Btn>
     </div>
