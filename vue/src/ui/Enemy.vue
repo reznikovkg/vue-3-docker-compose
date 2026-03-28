@@ -1,5 +1,7 @@
 <template>
-  <div class = "enemy" :style = "enemyStyle" @click.stop="() => handleMove()">
+  <<div class = "enemy" :style = "enemyStyle" @click.stop = "() => handleSelect()" @mousedown = "() => handleDragStart($event)"
+  >
+    
     <div class = "enemy__body"></div>
     <div class = "enemy__health">
       <div class = "enemy__health-bar" :style = "healthBarStyle"></div>
@@ -16,7 +18,7 @@ export default {
       required: true,
     },
   },
-  emits: ['move'],
+  emits: ['move', 'select'],
   computed: {
     enemyStyle() {
       return {
@@ -35,6 +37,10 @@ export default {
     handleMove() {
       this.$emit('move')
     },
+    handleDragStart(event) {
+      this.$emit('select')
+      this.$emit('move', this.enemy, event)
+    },
   },
 }
 </script>
@@ -44,9 +50,13 @@ export default {
   position: absolute;
   width: 30px;
   height: 30px;
-  cursor: pointer;
+  cursor: grab;
   z-index: 5;
   transition: left 0.1s, top 0.1s;
+
+  &:active {
+    cursor: grabbing;
+  }
 
   &__body {
     width: 100%;

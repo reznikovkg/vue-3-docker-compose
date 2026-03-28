@@ -62,7 +62,7 @@
         v-for = "enemy in enemies"
         :key = "enemy.id"
         :enemy = "enemy"
-        @move = "() => handleEnemyMove(enemy)"
+        @move = "() => selectEnemy(enemy)"
       />
     </div>
 
@@ -125,6 +125,7 @@ export default {
     return {
       currentLevel: 1,
       enemyMoveInterval: null,
+      towerShootInterval: null,
       selectedEnemy: null,
     }
   },
@@ -159,12 +160,16 @@ export default {
   mounted() {
     this.loadLevel(this.currentLevel)
     document.addEventListener('keydown', this.handleKeyPress)
+    this.towerShooting()
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeyPress)
     if (this.enemyMoveInterval) {
       clearInterval(this.enemyMoveInterval)
     }
+    if (this.towerShootInterval) {
+    clearInterval(this.towerShootInterval)
+  }
   },
   methods: {
     ...mapActions('game', [
@@ -268,6 +273,19 @@ export default {
     selectTower(tower) {
       this.selectTower(tower)
     },
+    selectEnemy(enemy) {
+      this.selectedEnemy = enemy
+    },
+    handleEnemyDrag(enemy, event) {
+      this.selectedEnemy = enemy
+      const gameArea = document.querySelector('.game-page__game-area')
+      const rect = gameArea.getBoundingClientRect()
+      
+      const x = event.clientX - rect.left
+      const y = event.clientY - rect.top
+      
+      this.moveEnemy({ enemyId: enemy.id, x, y })
+    },
     removeTower(towerId) {
       this.removeTower(towerId)
       if (this.selectedTower && this.selectedTower.id === towerId) {
@@ -277,6 +295,28 @@ export default {
     upgradeTower(towerId, upgradeType) {
       this.upgradeTower({ towerId, upgradeType })
     },
+    towerShooting() {
+      if (!this.towerShootInterval) {
+        this.towerShootInterval = setInterval(() => {
+          this.towers.forEach((tower) => {
+            const enemyInRange = this.enemies.find((enemy) => {
+              const dx = enemy.x - tower.x
+              const dy = enemy.y - tower.y
+              const distance = Math.sqrt(dx * dx + dy * dy)
+              return distance <= tower.range
+            })
+
+            if (enemyInRange) {
+              enemyInRange.health -= tower.damage
+              if (enemyInRange.health <= 0) {
+                this.$store.commit('game/SET_ENEMIES', this.enemies.filter((e) => e.id !== enemyInRange.id))
+                this.$store.commit('game/SET_GAME_COINS', this.coins + 10)
+              }
+            }
+          })
+        }, 1000)
+      }
+    },
     addTestEnemy() {
       const startX = this.level.routes[0]?.points[0]?.x || 0
       const startY = this.level.routes[0]?.points[0]?.y || 100
@@ -284,42 +324,7 @@ export default {
     },
     clearEnemies() {
       this.$store.commit('game/SET_ENEMIES', [])
-    },
-    handleEnemyMove(enemy) {
-      if (!this.enemyMoveInterval) {
-        this.enemyMoveInterval = setInterval(() => {
-          this.enemies.forEach((e) => {
-            const route = this.level.routes[0]
-            if (!route) return
-
-            let moved = false
-            for (let i = 0; i < route.points.length - 1; i++) {
-              const current = route.points[i]
-              const next = route.points[i + 1]
-
-              const dx = next.x - e.x
-              const dy = next.y - e.y
-              const distance = Math.sqrt(dx * dx + dy * dy)
-
-              if (distance < 10) {
-                continue
-              }
-
-              const moveX = (dx / distance) * e.speed
-              const moveY = (dy / distance) * e.speed
-
-              this.moveEnemy({ enemyId: e.id, x: e.x + moveX, y: e.y + moveY })
-              moved = true
-              break
-            }
-
-            if (!moved) {
-              this.moveEnemy({ enemyId: e.id, x: e.x, y: e.y })
-            }
-          })
-        }, 50)
-      }
-    },
+    }, 
     handleKeyPress(event) {
       if (!this.selectedEnemy) return
 

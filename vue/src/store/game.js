@@ -127,7 +127,6 @@ export default {
         y: enemyData.y,
         health: enemyData.health || 50,
         maxHealth: enemyData.health || 50,
-        speed: enemyData.speed || 5,
       }
       commit(MUTATIONS.ADD_ENEMY, enemy)
     },
