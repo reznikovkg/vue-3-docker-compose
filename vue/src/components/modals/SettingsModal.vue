@@ -35,6 +35,17 @@
               placeholder="4"
           >
         </div>
+
+        <div class="settings-modal__input-group">
+          <label class="settings-modal__label settings-modal__label--checkbox">
+            <input
+                type="checkbox"
+                v-model="blockedModeValue"
+                class="settings-modal__checkbox"
+            >
+            Сложный режим (блокировка клеток)
+          </label>
+        </div>
       </div>
 
       <div class="settings-modal__footer">
@@ -65,19 +76,25 @@ export default {
     height: {
       type: Number,
       default: 4
+    },
+    blockedMode: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
       widthValue: this.width,
-      heightValue: this.height
+      heightValue: this.height,
+      blockedModeValue: this.blockedMode
     }
   },
   methods: {
     playGame() {
       this.$emit('play', {
         width: this.widthValue,
-        height: this.heightValue
+        height: this.heightValue,
+        blockedMode: this.blockedModeValue
       })
     },
     closeModal() {
@@ -103,7 +120,6 @@ export default {
 
   &__container {
     width: 400px;
-    height: 500px;
     color: $purpleText;
     border: 4px solid $purpleBorder;
     border-radius: 60px;
@@ -152,6 +168,13 @@ export default {
     font-size: 20px;
     color: $purpleDarker;
     margin-bottom: 5px;
+
+    &--checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
   }
 
   &__input {
@@ -173,6 +196,12 @@ export default {
       -webkit-appearance: none;
       margin: 0;
     }
+  }
+
+  &__checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
   }
 
   &__footer {

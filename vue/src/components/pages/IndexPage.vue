@@ -14,9 +14,17 @@
         которые находятся рядом с пустой клеткой
         (по горизонтали или вертикали)
       </div>
+      <div class="index-page__section-title">Режимы игры</div>
+      <div class="index-page__text">- Стандартный режим: классические пятнашки</div>
+      <div class="index-page__text">- Сложный режим: одна из возможных клеток хода блокируется и каждую минуту доступен
+        специальный ход.
+      </div>
+      <div class="index-page__text">*Специальный ход - когда он доступен, вы можете кликнуть на любую клетку,
+        и она переместится на пустое место, независимо от её расположения.
+      </div>
       <div class="index-page__section-title">Важно</div>
-      <div class="index-page__text">Перед началом игра необходимо задать размер поля.</div>
-      <div class="index-page__text">Нажмите "Начать игру" и введите ширину и высоту поля.</div>
+      <div class="index-page__text">Перед началом игры необходимо задать размер поля и выбрать режим.</div>
+      <div class="index-page__text">Нажмите "Начать игру" для настройки.</div>
       <div class="index-page__text">Удачи!</div>
     </div>
 
@@ -49,9 +57,10 @@ export default {
     }
   },
   methods: {
-    ...mapActions({
-      saveGameSize: 'updateGameSize'
-    }),
+    ...mapActions([
+      'updateGameSize',
+      'setBlockedMode'
+    ]),
     openModal() {
       this.isModalVisible = true
     },
@@ -59,11 +68,13 @@ export default {
       this.isModalVisible = false
     },
     startGame(sizeData) {
-      this.saveGameSize(sizeData)
-          .then(() => {
-            this.closeModal()
-            this.$router.push({name: this.$routes.TAG_GAME})
-          })
+      this.updateGameSize({
+        width: sizeData.width,
+        height: sizeData.height
+      })
+      this.setBlockedMode(sizeData.blockedMode)
+      this.closeModal()
+      this.$router.push({name: this.$routes.TAG_GAME})
     }
   }
 }
