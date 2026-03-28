@@ -15,7 +15,7 @@
         />
         <div class="resources__info">
           <span class="resources__count">
-            {{ inventory[element.id] || 0 }}
+             {{ getInventoryCount(element.id) }}
           </span>
           <button class="resources__button" @click="() => startMining(element.id)">
             Добыть
@@ -27,27 +27,20 @@
 </template>
 
 <script>
-
-import { mapGetters, mapState, mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
-
   name: 'ResourcesPanel',
-
   computed: {
-    ...mapGetters(['openedElements']),
-    ...mapState(['inventory'])
+    ...mapGetters(['openedElements', 'getInventoryCount']),
   },
-
   methods: {
     ...mapActions(['startMining'])
   }
 }
-
 </script>
 
 <style scoped lang="scss">
-
 .resources {
   display: flex;
   flex-direction: column;
@@ -98,5 +91,4 @@ export default {
     padding: 2px 6px;
   }
 }
-
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="workers">
     <div class="workers__info">
-      Рабочие {{ freeWorkers.length }}/{{ workers.length }}
+      Рабочие {{ freeWorkers.length }}/{{ workersCount }}
     </div>
     <div class="workers__tasks-wrapper">
       <div class="workers__tasks">
@@ -38,18 +38,13 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 
 export default {
+  name: 'WorkersPanel',
   computed: {
-    ...mapState(['workers']),
-    ...mapGetters(['freeWorkers', 'getElementById']),
-
-    busyWorkers() {
-      return this.workers.filter(w => w.job)
-    }
+    ...mapGetters(['freeWorkers', 'busyWorkers', 'workersCount', 'getElementById'])
   },
-
   methods: {
     getTaskName(worker) {
       if (!worker.job) return ''
@@ -65,13 +60,11 @@ export default {
       }
       return ''
     },
-
     getElementLevel(worker) {
       if (!worker.job) return null
       const element = this.getElementById(worker.job.elementId)
       return element?.level || null
     },
-
     getRemainingTime(worker) {
       if (!worker.job || !worker.progress) return '?'
       const element = this.getElementById(worker.job.elementId)

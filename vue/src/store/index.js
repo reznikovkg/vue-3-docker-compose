@@ -66,13 +66,19 @@ export default createStore({
     getElementById: state => id => state.elements.find(e => e.id === id),
     craftSlots: state => state.craftGrid,
     freeWorkers: state => state.workers.filter(w => !w.job),
+    allWorkers: state => state.workers,
+    busyWorkers: state => state.workers.filter(w => w.job),
+    workersCount: state => state.workers.length,
     resources: state => state.elements.filter(e => e.resource),
     inventoryItems: state =>
       Object.entries(state.inventory)
         .map(([id, count]) => ({
           id: Number(id),
           count
-        }))
+        })),
+    getInventoryCount: state => id => {
+      return state.inventory[id] || 0
+    }
   },
 
   mutations: {

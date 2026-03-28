@@ -23,15 +23,12 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'AlchemistTable',
-
   computed: {
     ...mapGetters(['tableElements', 'getElementById']),
-
     getElementName() {
       return id => this.getElementById(id).name
     }
   },
-
   methods: {
     ...mapActions(['addToTable', 'decreaseFromTable', 'clearTable', 'mix'])
   }

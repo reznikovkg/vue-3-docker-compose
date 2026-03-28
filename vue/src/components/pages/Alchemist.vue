@@ -58,5 +58,4 @@ export default {
     min-height: 0; 
   }
 }
-
 </style>

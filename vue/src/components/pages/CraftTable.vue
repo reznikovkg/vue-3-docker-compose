@@ -32,7 +32,6 @@ export default {
 	},
 	methods: {
 		...mapActions(['placeInSlot', 'craftMix', 'clearCraft']),
-
 		drop(e, index) {
 			const id = Number(e.dataTransfer.getData('elementId'))
 			this.placeInSlot({

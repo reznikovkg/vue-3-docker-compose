@@ -21,18 +21,15 @@ import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'ElementsGrid',
-
   computed: {
     ...mapGetters(['openedElements'])
   },
-
   methods: {
     ...mapActions(['addToTable']),
     dragStart:(e,id)=>{
       e.dataTransfer.setData('elementId',id)
     }
   }
-  
 }
 </script>
 
