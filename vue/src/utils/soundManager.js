@@ -4,6 +4,7 @@ import saveSound from './../assets/sounds/button-save.mp3'
 import cancelSound from './../assets/sounds/button-cancel.mp3'
 import shotSound from './../assets/sounds/shot.mp3'
 import bombSound from './../assets/sounds/bomb-sound.mp3'
+import laserSound from './../assets/sounds/laser-sound.mp3'
 
 class SoundManager {
   constructor() {
@@ -14,15 +15,17 @@ class SoundManager {
       cancel: cancelSound,
       shot: shotSound,
       bomb: bombSound,
+      laser: laserSound
     }
 
     this.volumes = {
-      pop: 0.5,
-      click: 0.7,
-      save: 0.6,
-      cancel: 0.3,
-      shot: 0.4,
-      bomb: 0.6,
+      pop: 0.2,
+      click: 0.1,
+      save: 0.1,
+      cancel: 0.05,
+      shot: 0.1,
+      bomb: 0.5,
+      laser: 0.1
     }
 
     this.activeSounds = []
@@ -38,10 +41,10 @@ class SoundManager {
     const audio = new Audio(soundPath)
     audio.volume = this.volumes[soundName] || 0.5
 
-    this.activeSounds.push(audio)
+    this.activeSounds.push({ audio, soundName })
 
     audio.addEventListener('ended', () => {
-      const index = this.activeSounds.indexOf(audio)
+      const index = this.activeSounds.findIndex(item => item.audio === audio)
       if (index > -1) {
         this.activeSounds.splice(index, 1)
       }
@@ -51,11 +54,22 @@ class SoundManager {
   }
 
   stopAll() {
-    this.activeSounds.forEach(audio => {
-      audio.pause()
-      audio.currentTime = 0
+    this.activeSounds.forEach(item => {
+      item.audio.pause()
+      item.audio.currentTime = 0
     })
     this.activeSounds = []
+  }
+
+  stop(soundName) {
+    const soundsToRemove = this.activeSounds.filter(item => item.soundName === soundName)
+    
+    soundsToRemove.forEach(item => {
+      item.audio.pause()
+      item.audio.currentTime = 0
+    })
+    
+    this.activeSounds = this.activeSounds.filter(item => item.soundName !== soundName)
   }
 
   setVolume(soundName, volume) {
