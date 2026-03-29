@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import list from './list'
+import puzzle from './puzzle'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -37,6 +38,7 @@ export default createStore({
     },
   },
   modules: {
-    list
+    list,
+    puzzle,
   }
 })
