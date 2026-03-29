@@ -1,13 +1,13 @@
 <template>
   <div
-      class="puzzle__tile"
+      class="puzzle-tile"
       :class="tileClasses"
       :style="tileStyle"
       @click="() => handleClick()"
   >
     <span v-if="!isEmpty">{{ value }}</span>
-    <span v-if="isBlocked" class="puzzle__tile__blocked">🚫</span>
-    <span v-if="isFrozen" class="puzzle__tile__frozen">❄️</span>
+    <span v-if="isBlocked" class="puzzle-tile__icon">🚫</span>
+    <span v-if="isFrozen" class="puzzle-tile__icon">❄️</span>
   </div>
 </template>
 
@@ -48,11 +48,11 @@ export default {
   computed: {
     tileClasses() {
       return {
-        'puzzle__tile--empty': this.isEmpty,
-        'puzzle__tile--win': this.isWin,
-        'puzzle__tile--blocked': this.isBlocked,
-        'puzzle__tile--special': this.allowAnyMove && !this.isEmpty,
-        'puzzle__tile--frozen': this.isFrozen,
+        'puzzle-tile--empty': this.isEmpty,
+        'puzzle-tile--win': this.isWin,
+        'puzzle-tile--blocked': this.isBlocked,
+        'puzzle-tile--special': this.allowAnyMove && !this.isEmpty,
+        'puzzle-tile--frozen': this.isFrozen,
       }
     },
   },
@@ -67,7 +67,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.puzzle__tile {
+.puzzle-tile {
   width: 100%;
   height: 100%;
   background-color: #333;
@@ -82,6 +82,7 @@ export default {
   user-select: none;
   box-sizing: border-box;
   transition: transform 0.2s ease, background-color 0.2s ease;
+  position: relative;
 
   &:active {
     transform: scale(0.95);
@@ -102,13 +103,6 @@ export default {
     background-color: #666;
     cursor: not-allowed;
     opacity: 0.6;
-
-    &::after {
-      content: '🚫';
-      position: absolute;
-      font-size: 20px;
-      opacity: 0.8;
-    }
   }
 
   &--special {
@@ -124,22 +118,9 @@ export default {
     background-color: #00bcd4;
     cursor: not-allowed;
     opacity: 0.8;
-
-    &::after {
-      content: '❄️';
-      position: absolute;
-      font-size: 20px;
-      opacity: 0.8;
-    }
   }
 
-  &__blocked {
-    position: absolute;
-    font-size: 20px;
-    opacity: 0.8;
-  }
-
-  &__frozen {
+  &__icon {
     position: absolute;
     font-size: 20px;
     opacity: 0.8;

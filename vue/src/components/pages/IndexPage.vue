@@ -242,6 +242,38 @@ export default {
   box-sizing: border-box;
   touch-action: none;
 
+  @media (max-width: 500px) {
+    padding: 15px;
+
+    .puzzle__title {
+      font-size: 28px;
+    }
+
+    .puzzle__stats {
+      gap: 10px;
+    }
+
+    .puzzle__stat {
+      padding: 8px 12px;
+    }
+
+    .puzzle__stat-value {
+      font-size: 16px;
+    }
+
+    .puzzle__restart,
+    .puzzle__button {
+      padding: 10px 30px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 350px) {
+    .puzzle__title {
+      font-size: 24px;
+    }
+  }
+
   &__content {
     text-align: center;
     width: 100%;
@@ -325,6 +357,7 @@ export default {
     background-color: #222;
     padding: 3px;
     border-radius: 8px;
+    width: fit-content;
   }
 
   &__controls {
@@ -396,42 +429,6 @@ export default {
   }
   50% {
     box-shadow: 0 0 20px rgba(102, 126, 234, 0.8);
-  }
-}
-
-@media (max-width: 500px) {
-  .puzzle {
-    padding: 15px;
-
-    &__title {
-      font-size: 28px;
-    }
-
-    &__stats {
-      gap: 10px;
-    }
-
-    &__stat {
-      padding: 8px 12px;
-    }
-
-    &__stat-value {
-      font-size: 16px;
-    }
-
-    &__restart,
-    &__button {
-      padding: 10px 30px;
-      font-size: 14px;
-    }
-  }
-}
-
-@media (max-width: 350px) {
-  .puzzle {
-    &__title {
-      font-size: 24px;
-    }
   }
 }
 </style>
