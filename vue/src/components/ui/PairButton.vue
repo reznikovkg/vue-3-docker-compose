@@ -1,11 +1,11 @@
 <template>
-  <button class="custom-button" @click="() => onClick">
-    <slot />
+  <button class="custom-button" @click="() => onClick()">
+    {{ label }}
   </button>
 </template>
 
 <script setup>
-defineProps(["onClick"])
+defineProps(["label", "onClick"])
 </script>
 
 <style lang="scss" scoped>
