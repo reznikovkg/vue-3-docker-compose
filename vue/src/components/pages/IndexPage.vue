@@ -1,39 +1,24 @@
 <template>
-  <div>
-
-    <div>
-      R: {{ count }}
-    </div>
-    <div>
-      2PR : {{ c2pr }}
-    </div>
-
-    <button @click="() => addCount(10)">Кнопка +5</button>
-    <button @click="() => addCount(20)">Кнопка +10</button>
+  <div class="layout">
+    <GameMap />
+    <InfoBar />
+    <MiniGame />
+    <Inventory />
   </div>
-
 </template>
 
-<script>
-export default {
-  name: 'IndexPage',
-  data() {
-    return {
-      count: 10
-    }
-  },
-  computed: {
-    c2pr() {
-      return 2 * Math.PI * this.count
-    }
-
-  },
-  methods: {
-    addCount(v = 10) {
-      this.count += v
-    }
-  }
-}
+<script setup>
+import GameMap from '../GameMap.vue';
+import InfoBar from '../InfoBar.vue';
+import Inventory from '../Inventory.vue';
+import MiniGame from '../MiniGame.vue';
 </script>
 
-<style scoped></style>
+<style scoped lang="scss">
+.layout {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+</style>
