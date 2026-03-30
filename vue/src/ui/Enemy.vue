@@ -1,6 +1,5 @@
 <template>
-  <<div class = "enemy" :style = "enemyStyle" @click.stop = "() => handleSelect()" @mousedown = "() => handleDragStart($event)">
-    
+  <div  ref = "enemyRef" class = "enemy" :style = "enemyStyle" @click.stop = "() => handleSelect()" @mousedown = "() => handleDragStart($event)">
     <div class = "enemy__body"></div>
     <div class = "enemy__health">
       <div class = "enemy__health-bar" :style = "healthBarStyle"></div>
@@ -17,7 +16,7 @@ export default {
       required: true,
     },
   },
-  emits: ['move', 'select'],
+  emits: ['move', 'select', 'drag'],
   computed: {
     enemyStyle() {
       return {
@@ -38,7 +37,10 @@ export default {
     },
     handleDragStart(event) {
       this.$emit('select')
-      this.$emit('move', this.enemy, event)
+      this.$emit('drag', {
+        enemy: this.enemy,
+        event
+      })
     },
   },
 }

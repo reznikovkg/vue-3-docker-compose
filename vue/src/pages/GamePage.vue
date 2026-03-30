@@ -1,21 +1,21 @@
 <template>
   <div class = "game-page">
     <div class = "game-page__header">
-      <div class = "game-page__coins"> Coins: {{ coins }}</div>
+      <div class = "game-page__coins"> Coins: {{ getCoins }}</div>
       <div class = "game-page__controls">
-        <button class = "game-page__btn" @click="() => addTestEnemy()">
+        <button class = "game-page__btn" @click = "() => addTestEnemy()">
           Add Enemy
         </button>
-        <button class = "game-page__btn" @click="() => clearEnemies()">
+        <button class = "game-page__btn" @click = "() => clearEnemies()">
           Clear Enemies
         </button>
       </div>
     </div>
 
-    <div class = "game-page__game-area" @click="() => handleGameAreaClick($event)">
+    <div ref = "gameArea" class = "game-page__game-area" @click = "() => handleGameAreaClick($event)">
     <svg class = "game-page__route-svg" viewBox = "0 0 900 600">
       <path
-        v-for = "route in level.routes"
+        v-for = "route in getLevel.routes"
         :key = "route.id"
         :d = "getRoutePath(route)"
         class = "game-page__route-path"
@@ -27,7 +27,7 @@
         opacity = "0.3"
       />
       <path
-        v-for = "route in level.routes"
+        v-for = "route in getLevel.routes"
         :key = "'line-' + route.id"
         :d = "getRoutePath(route)"
         class = "game-page__route-line"
@@ -41,7 +41,7 @@
     </svg>
 
       <div
-        v-for = "position in towerPositions"
+        v-for = "position in getTowerPositions"
         :key = "position.id"
         class = "game-page__tower-slot"
         :style = "getSlotStyle(position)"
@@ -49,55 +49,55 @@
       ></div>
 
       <Tower
-        v-for = "tower in towers"
+        v-for = "tower in getTowers"
         :key = "tower.id"
         :tower = "tower"
-        :is-selected = "selectedTower && selectedTower.id === tower.id"
+        :is-selected = "getSelectedTower && getSelectedTower.id === tower.id"
         @select = "() => selectTower(tower)"
         @remove = "() => removeTower(tower.id)"
-        @upgrade = "() => upgradeTower(tower.id)"
       />
 
       <Enemy
-        v-for = "enemy in enemies"
+        v-for = "enemy in getEnemies"
         :key = "enemy.id"
         :enemy = "enemy"
-        @move = "() => selectEnemy(enemy)"
+        @select = "() => selectEnemy(enemy)"
+        @move = "() => handleEnemyDrag(enemy, $event)"
       />
     </div>
 
-    <div v-if = "selectedTower" class="game-page__tower-panel">
+    <div v-if = "getSelectedTower" class = "game-page__tower-panel">
       <h3 class = "game-page__panel-title">Tower Stats</h3>
-      <div class = "game-page__stat">Level: {{ selectedTower.level }}</div>
-      <div class = "game-page__stat">Damage: {{ selectedTower.damage }}</div>
-      <div class = "game-page__stat">Health: {{ selectedTower.health }}</div>
-      <div class = "game-page__stat">Fire Rate: {{ selectedTower.fireRate }}ms</div>
-      <div class = "game-page__stat">Range: {{ selectedTower.range }}px</div>
+      <div class = "game-page__stat">Level: {{ getSelectedTower.level }}</div>
+      <div class = "game-page__stat">Damage: {{ getSelectedTower.damage }}</div>
+      <div class = "game-page__stat">Health: {{ getSelectedTower.health }}</div>
+      <div class = "game-page__stat">Fire Rate: {{ getSelectedTower.fireRate }}ms</div>
+      <div class = "game-page__stat">Range: {{ getSelectedTower.range }}px</div>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(selectedTower.id, 'damage')"
+        @click = "() => upgradeTower(getSelectedTower.id, 'damage')"
       >
-        Upgrade Damage ({{ selectedTower.level * 30 }})
+        Upgrade Damage ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(selectedTower.id, 'health')"
+        @click = "() => upgradeTower(getSelectedTower.id, 'health')"
       >
-        Upgrade Health ({{ selectedTower.level * 30 }})
+        Upgrade Health ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(selectedTower.id, 'fireRate')"
+        @click = "() => upgradeTower(getSelectedTower.id, 'fireRate')"
       >
-        Upgrade Speed ({{ selectedTower.level * 30 }})
+        Upgrade Speed ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(selectedTower.id, 'range')"
+        @click = "() => upgradeTower(getSelectedTower.id, 'range')"
       >
-        Upgrade Range ({{ selectedTower.level * 30 }})
+        Upgrade Range ({{ getSelectedTower.level * 30 }})
       </button>
-      <button class = "game-page__remove-btn" @click="() => removeTower(selectedTower.id)">
+      <button class = "game-page__remove-btn" @click = "() => removeTower(getSelectedTower.id)">
         Remove Tower (+25)
       </button>
     </div>
@@ -138,24 +138,6 @@ export default {
       'getCoins',
       'getTowerPositions',
     ]),
-    level() {
-      return this.getLevel
-    },
-    towers() {
-      return this.getTowers
-    },
-    enemies() {
-      return this.getEnemies
-    },
-    selectedTower() {
-      return this.getSelectedTower
-    },
-    coins() {
-      return this.getCoins
-    },
-    towerPositions() {
-      return this.getTowerPositions
-    },
   },
   mounted() {
     this.loadLevel(this.currentLevel)
@@ -262,7 +244,7 @@ export default {
       }
     },
     placeTower(position) {
-      const existingTower = this.towers.find(
+      const existingTower = this.getTowers.find(
         (t) => Math.abs(t.x - position.x) < 10 && Math.abs(t.y - position.y) < 10
       )
       if (existingTower) {
@@ -270,15 +252,12 @@ export default {
       }
       this.addTower({ x: position.x, y: position.y, cost: 50 })
     },
-    selectTower(tower) {
-      this.selectTower(tower)
-    },
     selectEnemy(enemy) {
       this.selectedEnemy = enemy
     },
-    handleEnemyDrag(enemy, event) {
+    handleEnemyDrag({enemy, event}) {
       this.selectedEnemy = enemy
-      const gameArea = document.querySelector('.game-page__game-area')
+      const gameArea = this.$refs.gameArea
       const rect = gameArea.getBoundingClientRect()
       
       const x = event.clientX - rect.left
@@ -286,20 +265,11 @@ export default {
       
       this.moveEnemy({ enemyId: enemy.id, x, y })
     },
-    removeTower(towerId) {
-      this.removeTower(towerId)
-      if (this.selectedTower && this.selectedTower.id === towerId) {
-        this.selectTower(null)
-      }
-    },
-    upgradeTower(towerId, upgradeType) {
-      this.upgradeTower({ towerId, upgradeType })
-    },
     towerShooting() {
       if (!this.towerShootInterval) {
         this.towerShootInterval = setInterval(() => {
-          this.towers.forEach((tower) => {
-            const enemyInRange = this.enemies.find((enemy) => {
+          this.getTowers.forEach((tower) => {
+            const enemyInRange = this.getEnemies.find((enemy) => {
               const dx = enemy.x - tower.x
               const dy = enemy.y - tower.y
               const distance = Math.sqrt(dx * dx + dy * dy)
@@ -307,10 +277,17 @@ export default {
             })
 
             if (enemyInRange) {
-              enemyInRange.health -= tower.damage
-              if (enemyInRange.health <= 0) {
-                this.$store.commit('game/SET_ENEMIES', this.enemies.filter((e) => e.id !== enemyInRange.id))
-                this.$store.commit('game/SET_GAME_COINS', this.coins + 10)
+              const updatedEnemies = this.getEnemies.map((e) => {
+                if (e.id === enemyInRange.id) {
+                  return { ...e, health: e.health - tower.damage }
+                }
+                return e
+              })
+              const aliveEnemies = updatedEnemies.filter((e) => e.health > 0)
+              const wasDead = updatedEnemies.length !== aliveEnemies.length
+              this.$store.commit('game/SET_ENEMIES', aliveEnemies)
+              if (wasDead) {
+                this.$store.commit('game/SET_GAME_COINS', this.getCoins + 10)
               }
             }
           })
@@ -318,8 +295,8 @@ export default {
       }
     },
     addTestEnemy() {
-      const startX = this.level.routes[0]?.points[0]?.x || 0
-      const startY = this.level.routes[0]?.points[0]?.y || 100
+      const startX = this.getLevel.routes[0]?.points[0]?.x || 0
+      const startY = this.getLevel.routes[0]?.points[0]?.y || 100
       this.addEnemy({ x: startX, y: startY, health: 50 + this.currentLevel * 10 })
     },
     clearEnemies() {
@@ -408,7 +385,7 @@ export default {
     margin: 0 auto;
   }
 
-  &__route {
+  &__route-svg {
     position: absolute;
     top: 0;
     left: 0;
