@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import list from './list'
+import figure from './figure'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -9,13 +9,12 @@ const MUTATIONS = {
 export default createStore({
   state () {
     return {
-      count: 0
+      count: 10000
     }
   },
   getters: {
     getCount: (state) => state.count,
     getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
   },
   mutations: {
     [MUTATIONS.INCREMENT]: (state, value) => {
@@ -37,6 +36,6 @@ export default createStore({
     },
   },
   modules: {
-    list
+    figure
   }
 })

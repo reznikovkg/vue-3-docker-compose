@@ -1,0 +1,21 @@
+{
+  "name": "vue-3-docker-compose",
+  "version": "1.0.0",
+  "description": "README",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nastya-kolle/vue-3-docker-compose.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nastya-kolle/vue-3-docker-compose/issues"
+  },
+  "homepage": "https://github.com/nastya-kolle/vue-3-docker-compose#readme"
+}

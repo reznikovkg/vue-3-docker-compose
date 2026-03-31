@@ -1,17 +1,16 @@
 <template>
-  Index
-
+  <h1>Игра "Тетростров"</h1><br>
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
+    <RouterLink :to="{ name: $routes.GAME }">
+     Начать игру 
     </RouterLink>
   </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 
 </style>
