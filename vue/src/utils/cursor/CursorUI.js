@@ -9,13 +9,7 @@ class CursorUI {
 
   init() {
     this.element = document.createElement('div')
-    this.element.style.position = 'fixed'
-    this.element.style.pointerEvents = 'none'
-    this.element.style.zIndex = '9999'
-    this.element.style.backgroundSize = 'contain'
-    this.element.style.backgroundRepeat = 'no-repeat'
-    this.element.style.backgroundPosition = 'center'
-    this.element.style.transition = 'transform 0.05s ease'
+    this.element.className = 'custom-cursor'
     document.body.appendChild(this.element)
     this.hide()
   }

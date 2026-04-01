@@ -1,0 +1,9 @@
+.custom-cursor {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.05s ease;
+}

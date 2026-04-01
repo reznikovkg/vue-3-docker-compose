@@ -1032,18 +1032,7 @@ export default {
     showBombRewardEffect(count) {
       const notification = document.createElement('div')
       notification.textContent = `+${count} 💣`
-      notification.style.position = 'fixed'
-      notification.style.top = '100px'
-      notification.style.right = '30px'
-      notification.style.backgroundColor = 'rgba(0,0,0,0.8)'
-      notification.style.color = '#ffaa00'
-      notification.style.padding = '10px 20px'
-      notification.style.borderRadius = '20px'
-      notification.style.fontSize = '1.5rem'
-      notification.style.fontWeight = 'bold'
-      notification.style.zIndex = '200'
-      notification.style.animation = 'fadeOutUp 2s ease-out forwards'
-      notification.style.userSelect = 'none'
+      notification.className = 'bomb-notification bomb-notification--reward'
       document.body.appendChild(notification)
       
       setTimeout(() => {
@@ -1061,24 +1050,7 @@ export default {
 
       const notification = document.createElement('div')
       notification.textContent = '❌ Нет бомб! Сделайте 10 успешных попаданий'
-      
-      notification.style.position = 'fixed'
-      notification.style.bottom = '140px'
-      notification.style.left = '0'
-      notification.style.right = '0'
-      notification.style.marginLeft = 'auto'
-      notification.style.marginRight = 'auto'
-      notification.style.width = 'fit-content'
-      notification.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'
-      notification.style.color = '#ff6b6b'
-      notification.style.padding = '12px 24px'
-      notification.style.borderRadius = '30px'
-      notification.style.fontSize = '1rem'
-      notification.style.fontWeight = 'bold'
-      notification.style.border = '2px solid #ff6b6b'
-      notification.style.boxShadow = '0 0 15px rgba(255, 107, 107, 0.3)'
-      notification.style.animation = 'fadeOutUp 2s ease-out forwards'
-      notification.style.userSelect = 'none'
+      notification.className = 'bomb-notification bomb-notification--error'
       
       document.body.appendChild(notification)
       
@@ -1095,25 +1067,7 @@ export default {
       
       const hint = document.createElement('div')
       hint.innerHTML = '💣 <strong>Бомба готова!</strong> Зажми <kbd style="background:#333;padding:2px 8px;border-radius:6px;margin:0 4px;">B</kbd> и кликни, чтобы взорвать пузыри!'
-      
-      hint.style.position = 'fixed'
-      hint.style.bottom = '200px'
-      hint.style.left = '0'
-      hint.style.right = '0'
-      hint.style.marginLeft = 'auto'
-      hint.style.marginRight = 'auto'
-      hint.style.width = 'fit-content'
-      hint.style.maxWidth = '90vw'
-      hint.style.backgroundColor = 'rgba(0, 0, 0, 0.95)'
-      hint.style.color = '#ffaa00'
-      hint.style.padding = '16px 28px'
-      hint.style.borderRadius = '40px'
-      hint.style.fontSize = '1.1rem'
-      hint.style.fontWeight = 'bold'
-      hint.style.border = '2px solid #ffaa00'
-      hint.style.boxShadow = '0 0 20px rgba(255, 170, 0, 0.5)'
-      hint.style.animation = 'fadeOutUp 4s ease-out forwards'
-      hint.style.userSelect = 'none'
+      hint.className = 'bomb-notification bomb-notification--hint'
       
       document.body.appendChild(hint)
       
@@ -1467,16 +1421,5 @@ html, body {
     text-shadow: 0 0 20px #ff6b6b;
   }
   100% { transform: translateX(-50%) scale(1); }
-}
-
-@keyframes fadeOutUp {
-  0% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-50px);
-  }
 }
 </style>
