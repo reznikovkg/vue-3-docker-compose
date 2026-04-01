@@ -38,7 +38,8 @@ export default {
   methods: {
     ...mapActions([
       'move',
-      'setMoving'
+      'setMoving',
+      'setFishing'
     ]),
     updateMoving() {
       let updMoving = false
@@ -68,6 +69,9 @@ export default {
     movingKeyDown (event) {
       if (this.pressed.hasOwnProperty(event.key)) {
         this.pressed[event.key] = true
+      }
+      if (event.key === ' ') {
+        this.setFishing()
       }
     },
     movingKeyUp (event) {
