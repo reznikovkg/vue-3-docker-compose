@@ -329,13 +329,13 @@ export default {
         if (isCorrect) {
           points = this.pointsForCorrect * this.correctMultiplier
           this.correctMultiplier = Math.min(5, this.correctMultiplier * 1.2)
-          this.wrongMultiplier = Math.max(1, this.wrongMultiplier - 0.2)
+          this.wrongMultiplier = 1
           correctHitsInThisBatch++
         } else {
           const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
           points = config.sizePenalties * this.wrongMultiplier
           this.wrongMultiplier = Math.min(7, this.wrongMultiplier * 1.3)
-          this.correctMultiplier = Math.max(1, this.correctMultiplier - 0.2)
+          this.correctMultiplier = 1
         }
 
         totalPoints += points
