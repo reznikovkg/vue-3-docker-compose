@@ -5,7 +5,7 @@ import App from './App.vue'
 import store from './store'
 import { router, ROUTES } from '@/router/index.js'
 import './assets/styles/cursor.css'
-import './assets/styles/notifications.css'
+import './assets/styles/notifications.scss'
 
 const routes = {
   install(app, options) {

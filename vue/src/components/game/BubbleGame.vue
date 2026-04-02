@@ -3,11 +3,8 @@
     <div class="bubble-game__score">Счёт {{ score.toFixed(1) }}</div>
     <div class="bubble-game__timer" :class="{'bubble-game__timer--warning': timeLeft <= 15}">{{ formattedTime }}</div>
     <div class="bubble-game__multiplier">
-      <div class="bubble-game__multiplier--correct">
-        +{{ correctMultiplier.toFixed(1) }}x
-      </div>
-      <div class="bubble-game__multiplier--wrong">
-        -{{ wrongMultiplier.toFixed(1) }}x
+      <div class="bubble-game__multiplier--current">
+        {{ currentMultiplier.toFixed(1) }}x
       </div>
     </div>
 
@@ -102,8 +99,8 @@ export default {
   data() {
     return {
       score: 0,
-      correctMultiplier: 1,
-      wrongMultiplier: 1,
+      currentMultiplier: 1,
+      lastHitWasWrong: false,
       timeLeft: this.gameDuration,
       gameOver: false,
       paused: false,
@@ -327,15 +324,25 @@ export default {
         let points
 
         if (isCorrect) {
-          points = this.pointsForCorrect * this.correctMultiplier
-          this.correctMultiplier = Math.min(5, this.correctMultiplier * 1.2)
-          this.wrongMultiplier = 1
+          points = this.pointsForCorrect * this.currentMultiplier
+
+          if (this.lastHitWasWorng) {
+            this.currentMultiplier = 1
+            this.lastHitWasWorng = false
+          } else {
+            this.currentMultiplier = Math.min(5, this.currentMultiplier * 1.2)
+          }
           correctHitsInThisBatch++
         } else {
           const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
-          points = config.sizePenalties * this.wrongMultiplier
-          this.wrongMultiplier = Math.min(7, this.wrongMultiplier * 1.3)
-          this.correctMultiplier = 1
+          points = config.sizePenalties * this.currentMultiplier
+
+          if (!this.lastHitWasWorng) {
+            this.currentMultiplier = 1
+            this.lastHitWasWorng = true
+          } else {
+            this.currentMultiplier = Math.min(7, this.currentMultiplier * 1.3)
+          }
         }
 
         totalPoints += points
@@ -664,8 +671,8 @@ export default {
     restartgame() {
       this.playClickSound()
       this.score = 0
-      this.correctMultiplier = 1
-      this.wrongMultiplier = 1
+      this.currentMultiplier = 1
+      this.lastHitWasWrong = false
       this.timeLeft = this.gameDuration
       this.gameOver = false
       this.paused = false
@@ -1032,7 +1039,7 @@ export default {
     showBombRewardEffect(count) {
       const notification = document.createElement('div')
       notification.textContent = `+${count} 💣`
-      notification.className = 'bomb-notification bomb-notification--reward'
+      notification.className = 'bomb-notification bomb-notification__reward'
       document.body.appendChild(notification)
       
       setTimeout(() => {
@@ -1050,7 +1057,7 @@ export default {
 
       const notification = document.createElement('div')
       notification.textContent = '❌ Нет бомб! Сделайте 10 успешных попаданий'
-      notification.className = 'bomb-notification bomb-notification--error'
+      notification.className = 'bomb-notification bomb-notification__error'
       
       document.body.appendChild(notification)
       
@@ -1067,7 +1074,7 @@ export default {
       
       const hint = document.createElement('div')
       hint.innerHTML = '💣 <strong>Бомба готова!</strong> Зажми <kbd style="background:#333;padding:2px 8px;border-radius:6px;margin:0 4px;">B</kbd> и кликни, чтобы взорвать пузыри!'
-      hint.className = 'bomb-notification bomb-notification--hint'
+      hint.className = 'bomb-notification bomb-notification__hint'
       
       document.body.appendChild(hint)
       
@@ -1225,7 +1232,7 @@ html, body {
     z-index: 20;
   }
 
-  &__multiplier--correct, &__multiplier--wrong {
+  &__multiplier--current {
     background: rgba(0, 0, 0, 0.4);
     padding: 8px 20px;
     border-radius: 12px;
@@ -1236,20 +1243,10 @@ html, body {
     pointer-events: none;
     text-align: center;
     min-width: 120px;
-    transition: all 0.1s ease;
-  }
-
-  &__multiplier--correct {
     color: #00d389;
     text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
     border-left: 3px solid #00d389;
     animation: pulseCorrect 1.2s ease-in-out infinite;
-  }
-
-  &__multiplier--wrong {
-    color: #ff6b6b;
-    text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
-    border-left: 3px solid #ff6b6b;
   }
 
   &__target {
