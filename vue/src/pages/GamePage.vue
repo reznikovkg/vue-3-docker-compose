@@ -394,16 +394,15 @@ export default {
     pointer-events: none;
     z-index: 1;
   }
-    &__route-path {
-      filter: drop-shadow(0 0 5px rgba(233, 69, 96, 0.5));
-    }
 
-    &__route-line {
-      opacity: 0.6;
-    }
-    
+  &__route-path {
+    filter: drop-shadow(0 0 5px rgba(233, 69, 96, 0.5));
+  }
+
+  &__route-line {
+    opacity: 0.6;
+  }
   
-
   &__tower-slot {
     position: absolute;
     width: 40px;
