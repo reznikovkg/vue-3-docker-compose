@@ -115,56 +115,7 @@ import { mapGetters, mapActions } from 'vuex'
 import Tower from '../ui/Tower.vue'
 import Enemy from '../ui/Enemy.vue'
 
-export default {
-  name: 'GamePage',
-  components: {
-    Tower,
-    Enemy,
-  },
-  data() {
-    return {
-      currentLevel: 1,
-      enemyMoveInterval: null,
-      towerShootInterval: null,
-      selectedEnemy: null,
-    }
-  },
-  computed: {
-    ...mapGetters('game', [
-      'getLevel',
-      'getTowers',
-      'getEnemies',
-      'getSelectedTower',
-      'getCoins',
-      'getTowerPositions',
-    ]),
-  },
-  mounted() {
-    this.loadLevel(this.currentLevel)
-    document.addEventListener('keydown', this.handleKeyPress)
-    this.towerShooting()
-  },
-  beforeUnmount() {
-    document.removeEventListener('keydown', this.handleKeyPress)
-    if (this.enemyMoveInterval) {
-      clearInterval(this.enemyMoveInterval)
-    }
-    if (this.towerShootInterval) {
-    clearInterval(this.towerShootInterval)
-  }
-  },
-  methods: {
-    ...mapActions('game', [
-      'setLevel',
-      'addTower',
-      'removeTower',
-      'upgradeTower',
-      'addEnemy',
-      'moveEnemy',
-      'selectTower',
-    ]),
-    loadLevel(levelNum) {
-      const levels = {
+const LEVELS = {
         1: {
           routes: [
             {
@@ -221,8 +172,57 @@ export default {
         },
       }
 
-      if (levels[levelNum]) {
-        this.setLevel(levels[levelNum])
+export default {
+  name: 'GamePage',
+  components: {
+    Tower,
+    Enemy,
+  },
+  data() {
+    return {
+      currentLevel: 1,
+      enemyMoveInterval: null,
+      towerShootInterval: null,
+      selectedEnemy: null,
+    }
+  },
+  computed: {
+    ...mapGetters('game', [
+      'getLevel',
+      'getTowers',
+      'getEnemies',
+      'getSelectedTower',
+      'getCoins',
+      'getTowerPositions',
+    ]),
+  },
+  mounted() {
+    this.loadLevel(this.currentLevel)
+    document.addEventListener('keydown', this.handleKeyPress)
+    this.towerShooting()
+  },
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.handleKeyPress)
+    if (this.enemyMoveInterval) {
+      clearInterval(this.enemyMoveInterval)
+    }
+    if (this.towerShootInterval) {
+    clearInterval(this.towerShootInterval)
+  }
+  },
+  methods: {
+    ...mapActions('game', [
+      'setLevel',
+      'addTower',
+      'removeTower',
+      'upgradeTower',
+      'addEnemy',
+      'moveEnemy',
+      'selectTower',
+    ]),
+    loadLevel(levelNum) {
+      if (LEVELS[levelNum]) {
+        this.setLevel(LEVELS[levelNum])
       }
     },
     getRoutePath(route) {
