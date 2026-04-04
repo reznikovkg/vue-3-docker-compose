@@ -6,77 +6,81 @@
 
   <div class="game">
 
-  <PlayingField 
-  :fieldSize="fieldSize" 
-  :islandPosition="islandPosition"
-  :corePosition="corePosition"
-  :figures="getFigures"
-  />
+    <PlayingField 
+    :fieldSize="fieldSize" 
+    :islandPosition="islandPosition"
+    :corePosition="corePosition"
+    :figures="getFigures"
+    />
 
-  <div class="game__controls">
-    <div>
-      <label>Field Size (нечетное число):</label>
+    <div class="game__controls">
+      <div>
+        <label>Field Size (нечетное число):</label>
 
-      <div class="game__fieldSize">
-      <input v-model="value" type="number" step="2" min="1" class="game__fieldSize--input">
-      <button class="game__fieldSize--btn" @click="() => incFieldSize()" >Применить</button>
-      </div>
-    </div>
-
-    <div class="game__stats">
-      <div class="game__stats--score">
-        Очки: <strong>{{ getScore }}</strong>
+        <div class="game__fieldSize">
+        <input v-model="value" type="number" step="2" min="1" class="game__fieldSize--input">
+        <button class="game__fieldSize--btn" @click="() => incFieldSize()" >Применить</button>
+        </div>
       </div>
 
-      <div class="game__stats--highscore">
-        Рекорд: <strong>{{ highScore }}</strong>
+      <div class="game__stats">
+        <div class="game__stats--score">
+          Очки: <strong>{{ getScore }}</strong>
+        </div>
+
+        <div class="game__stats--highscore">
+          Рекорд: <strong>{{ highScore }}</strong>
+        </div>
+
+        <div class="game__stats--timer">
+          Время: <strong>{{ timeLeft }}</strong> сек
+        </div>
+
+        <div class="game__stats--besttime">
+          Лучшее время: <strong>{{ bestTime }}</strong> сек
+        </div>
       </div>
 
-      <div class="game__stats--timer">
-        Время: <strong>{{ timeLeft }}</strong> сек
-      </div>
+      <div class="game__movement">
 
-      <div class="game__stats--besttime">
-        Лучшее время: <strong>{{ bestTime }}</strong> сек
-      </div>
-    </div>
-
-    <div class="game__movement">
-      <div class="game__arrow">
-        <button class="game__arrow--btn" @click="() => moveIsland('up')">
-          <img :src="upArrow" class="game__arrow--icon">
-        </button>
-        <div class="game__arrow--row">
-          <button class="game__arrow--btn" @click="() => moveIsland('left')">
-            <img :src="leftArrow" class="game__arrow--icon">
+        <div class="game__arrow">
+          <button class="game__arrow--btn" @click="() => moveIsland('up')">
+            <img :src="upArrow" class="game__arrow--icon">
           </button>
-          <button class="game__arrow--btn" @click="() => moveIsland('right')" >
-            <img :src="rightArrow" class="game__arrow--icon">
+
+          <div class="game__arrow--row">
+            <button class="game__arrow--btn" @click="() => moveIsland('left')">
+              <img :src="leftArrow" class="game__arrow--icon">
+            </button>
+
+            <button class="game__arrow--btn" @click="() => moveIsland('right')" >
+              <img :src="rightArrow" class="game__arrow--icon">
+            </button>  
+          </div>
+
+          <button class="game__arrow--btn" @click="() => moveIsland('down')" >
+            <img :src="downArrow" class="game__arrow--icon">
           </button>
         </div>
-        <button class="game__arrow--btn" @click="() => moveIsland('down')" >
-          <img :src="downArrow" class="game__arrow--icon">
-        </button>
-      </div>
 
-      <div class="game__rotateArrow">
-        <button class="game__rotateArrow--btn" @click="() => rotateIsland('counterclockwise')">
-          <img :src="clockwiseArrow" class="game__rotateArrow--icon">
-        </button>
+        <div class="game__rotateArrow">
+          <button class="game__rotateArrow--btn" @click="() => rotateIsland('counterclockwise')">
+            <img :src="clockwiseArrow" class="game__rotateArrow--icon">
+          </button>
 
-        <button class="game__rotateArrow--btn" @click="() => rotateIsland('clockwise')" >
-          <img :src="counterwiseArrow" class="game__rotateArrow--icon">
-        </button>
-      </div>
+          <button class="game__rotateArrow--btn" @click="() => rotateIsland('clockwise')" >
+            <img :src="counterwiseArrow" class="game__rotateArrow--icon">
+          </button>
+        </div>
 
-      <div class="game__speedArrow">
-        <button class="game__speedArrow--btn" :class="{'accelerated': isAccelerated}" @click="() => accelerateFigures()" >
-          {{ isAccelerated ? 'Турбо ВКЛ': 'Ускорить фигуры' }}
-          <img :src="speedArrow" class="game__speedArrow--icon">
-        </button>
+        <div class="game__speedArrow">
+          <button class="game__speedArrow--btn" :class="{'accelerated': isAccelerated}" @click="() => accelerateFigures()" >
+            {{ isAccelerated ? 'Турбо ВКЛ': 'Ускорить фигуры' }}
+            <img :src="speedArrow" class="game__speedArrow--icon">
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
   </div>
 </template>
