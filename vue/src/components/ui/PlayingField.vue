@@ -1,20 +1,20 @@
 <template>
-  <div class="playing_field">
+  <div class="PlayingField">
 
     <div 
       v-for="(cell, index) in cells" 
       :key="index" 
-      class="playing_field__cell"
+      class="PlayingField__cell"
       :class="{
         'has-figure': hasFigureAt(cell),
         'has-island': isIslandAt(cell)
       }">
       
-      <div v-if="hasFigureAt(cell)" class="playing_field__figure"></div>
+      <div v-if="hasFigureAt(cell)" class="PlayingField__figure"></div>
       
       <div 
       v-if="isIslandAt(cell)"
-      class="playing_field__island"
+      class="PlayingField__island"
       :class="{
         'core': isCoreCell(cell)
       }">
@@ -25,7 +25,7 @@
 
 <script lang="ts">
 export default{
-    name: 'Playing_field',
+    name: 'PlayingField',
     props:{
         fieldSize:{
             type: Number,
@@ -79,7 +79,7 @@ export default{
 
 <style scoped lang="scss">
 $cGray: #7c3939;
-.playing_field{
+.PlayingField{
   display: grid;
   grid-template-rows: repeat(v-bind(fieldSize), 50px);
   grid-template-columns: repeat(v-bind(fieldSize), 50px);
