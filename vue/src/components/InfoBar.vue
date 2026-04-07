@@ -1,6 +1,6 @@
 <template>
   <div class="infobar">
-    <span class="infobar__text">Координаты: (X: {{ boat.x }}, Y: {{ boat.y }})</span>
+    <span class="infobar__text">(X: {{ boat.x }}, Y: {{ boat.y }})</span>
     <span class="infobar__text">Тип области: {{ currentZone }}</span>
     <span class="infobar__text">Баланс: {{ balance }}₽</span>
   </div>
