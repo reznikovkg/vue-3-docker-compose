@@ -1,42 +1,68 @@
 import { createStore } from 'vuex'
-import list from './list'
 
-const MUTATIONS = {
-  INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+export const MUTATIONS= {
+    SET_SHAPE: 'SET_SHAPE',
+    ADD_OBJECT: 'ADD_OBJECT',
+    REMOVE_OBJECT: 'REMOVE_OBJECT',
+    SET_MODE: 'SET_MODE',
+    SET_DRAGGING: 'SET_DRAGGING',
+    SET_PREVIEW_ORIGIN: 'SET_PREVIEW_ORIGIN'
 }
 
 export default createStore({
-  state () {
-    return {
-      count: 0
+    state: {
+        grid: {
+            width: 10,
+            height: 10,
+            objects: [],
+            selectedShape: null,
+            draggingShape: null,
+            previewOrigin: null,
+            mode: 'build'
+        },
+        shapes: [
+            {
+                id: 'zoo',
+                color: 'blue',
+                cells: [{ x: 0, y: 0 }]
+            },
+            {
+                id: 'park',
+                color: 'green',
+                cells: [
+                    { x: 0, y: 0 },
+                    { x: 1, y: 0 },
+                    { x: 0, y: 1 }
+                ]
+            }
+        ],
+    },
+    mutations: {
+        SET_DRAGGING(state, shape) {
+            state.grid.draggingShape = shape
+        },
+        SET_PREVIEW_ORIGIN(state, origin) {
+            state.grid.previewOrigin = origin
+        },
+        SET_SHAPE(state, shape) {
+            state.grid.selectedShape = shape
+        },
+        ADD_OBJECT(state, obj) {
+            state.grid.objects.push(obj)
+        },
+        REMOVE_OBJECT(state, { x, y }) {
+            state.grid.objects = state.grid.objects.filter(obj => {
+                return !obj.shape.cells.some(cell => {
+                    return (
+                        obj.origin.x + cell.x === x &&
+                        obj.origin.y + cell.y === y
+                    )
+                })
+            })
+        },
+        SET_MODE(state, mode) {
+            state.grid.mode = mode
+        }
     }
-  },
-  getters: {
-    getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
-  },
-  mutations: {
-    [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
-    },
-    [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
-    },
-  },
-  actions: {
-    runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
-    },
-    setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
-    },
-  },
-  modules: {
-    list
-  }
 })
+
