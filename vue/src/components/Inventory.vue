@@ -28,27 +28,27 @@
 
       <div class="inventory__item">
         <span class="inventory__label">Удилище</span>
-        <span class="inventory__value"></span>
+        <span class="inventory__value">{{ rod.name }} (x{{ rod.power }})</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Катушка</span>
-        <span class="inventory__value"></span>
+        <span class="inventory__value">{{ reel.name }} (x{{ reel.power }})</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Поплавок</span>
-        <span class="inventory__value"></span>
+        <span class="inventory__value">{{ bobber.name }} (x{{ bobber.power }})</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Крючок</span>
-        <span class="inventory__value"></span>
+        <span class="inventory__value">{{ hook.name }} (x{{ hook.power }})</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Леска</span>
-        <span class="inventory__value"></span>
+        <span class="inventory__value">{{ line.name }} (x{{ line.power }})</span>
       </div>
     </div>
 
@@ -57,17 +57,17 @@
 
       <div class="inventory__item">
         <span class="inventory__label">Черви</span>
-        <span class="inventory__value"> шт.</span>
+        <span class="inventory__value">{{ hookbaits.worms }} шт.</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Кукуруза</span>
-        <span class="inventory__value"> шт.</span>
+        <span class="inventory__value">{{ hookbaits.corn }} шт.</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Опарыши</span>
-        <span class="inventory__value"> шт.</span>
+        <span class="inventory__value">{{ hookbaits.maggots }} шт.</span>
       </div>
     </div>
 
@@ -75,10 +75,11 @@
       <span class="inventory__title">Прикормка</span>
 
       <div class="inventory__item">
-        <span class="inventory__label">0 шт.</span>
-        <span class="inventory__value"></span>
+        <span class="inventory__value">{{ groundbait }} шт.</span>
       </div>
     </div>
+
+    <span class="inventory__label">Мощность удочки: {{ power }}</span>
   </div>
 </template>
 
@@ -87,7 +88,40 @@ import { computed } from 'vue'
 import { useStore } from 'vuex'
 
 const store = useStore()
+
 const inventory = computed(() => store.getters['game/getInventory'])
+
+const tackles = computed(() => store.getters['game/getTackles'])
+
+const rod = computed(() => {
+  const list = store.getters['game/tacklesList/getRodsList']
+  return list[tackles.value.rod]
+})
+
+const reel = computed(() => {
+  const list = store.getters['game/tacklesList/getReelsList']
+  return list[tackles.value.reel]
+})
+
+const bobber = computed(() => {
+  const list = store.getters['game/tacklesList/getBobbersList']
+  return list[tackles.value.bobber]
+})
+
+const hook = computed(() => {
+  const list = store.getters['game/tacklesList/getHooksList']
+  return list[tackles.value.hook]
+})
+
+const line = computed(() => {
+  const list = store.getters['game/tacklesList/getLinesList']
+  return list[tackles.value.line]
+})
+
+const hookbaits = computed(() => store.getters['game/getHookbaits'])
+const groundbait = computed(() => store.getters['game/getGroundbait'])
+
+const power = computed(() => store.getters['game/getPower'])
 </script>
 
 <style scoped lang="scss">
@@ -97,7 +131,7 @@ const inventory = computed(() => store.getters['game/getInventory'])
   transform: translateY(-50%);
   z-index: 3;
 
-  width: 300px;
+  width: 400px;
 
   padding: 8px;
   background-color: rgb(200, 200, 200);

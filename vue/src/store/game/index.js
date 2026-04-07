@@ -1,3 +1,5 @@
+import tacklesList from './tacklesList'
+
 const MUTATIONS = {
   MOVE_BOAT: 'MOVE_BOAT',
   SET_DIRECTION: 'SET_DIRECTION',
@@ -22,6 +24,46 @@ const defaultState = {
     rare: 0, 
     legendary: 0
   },
+  tackles: {
+    rod: 0,
+    reel: 0,
+    bobber: 0,
+    hook: 0,
+    line: 0
+  },
+  tackles_owned: {
+    rods: {
+      a: true, 
+      b: false,
+      c: false
+    },
+    reel: {
+      a: true, 
+      b: false,
+      c: false
+    },
+    bobber: {
+      a: true, 
+      b: false,
+      c: false
+    },
+    hook: {
+      a: true, 
+      b: false,
+      c: false
+    },
+    line: {
+      a: true, 
+      b: false,
+      c: false
+    }
+  },
+  hookbaits: {
+    worms: 0,
+    corn: 0,
+    maggots: 0
+  },
+  groundbait: 0,
   isFishing: false,
   zones: []
 }
@@ -30,12 +72,28 @@ export default {
   namespaced: true,
   state () {
     const savedState = localStorage.getItem('game_state')
-    return (savedState !== null) ? JSON.parse(savedState) : defaultState 
+    return (savedState !== null) ? JSON.parse(savedState) : defaultState
   },
   getters: {
     getBoat: (state) => state.boat,
     getBalance: (state) => state.balance,
     getInventory: (state) => state.inventory,
+    getTackles: (state) => state.tackles,
+    getTacklesOwned: (state) => state.tackles_owned,
+    getHookbaits: (state) => state.hookbaits,
+    getGroundbait: (state) => state.groundbait,
+    getPower: (state, getters, rootState) => {
+      const t = state.tackles
+      const list = rootState.game.tacklesList
+      const power = (
+        list.rods[t.rod].power * 
+        list.reels[t.reel].power * 
+        list.bobbers[t.bobber].power *
+        list.hooks[t.hook].power *
+        list.lines[t.line].power
+      )
+      return power
+    },
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 
     getCurrentZone: (state) => {
@@ -139,5 +197,8 @@ export default {
       store.commit(MUTATIONS.REMOVE_ZONE);
       store.dispatch('save')
     }
+  },
+  modules: {
+    tacklesList
   }
 }
