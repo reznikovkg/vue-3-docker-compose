@@ -57,17 +57,17 @@
 
       <div class="inventory__item">
         <span class="inventory__label">Черви</span>
-        <span class="inventory__value">{{ hookbaits.worms }} шт.</span>
+        <span class="inventory__value">{{ baits.worms }} шт.</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Кукуруза</span>
-        <span class="inventory__value">{{ hookbaits.corn }} шт.</span>
+        <span class="inventory__value">{{ baits.corn }} шт.</span>
       </div>
 
       <div class="inventory__item">
         <span class="inventory__label">Опарыши</span>
-        <span class="inventory__value">{{ hookbaits.maggots }} шт.</span>
+        <span class="inventory__value">{{ baits.maggots }} шт.</span>
       </div>
     </div>
 
@@ -75,7 +75,8 @@
       <span class="inventory__title">Прикормка</span>
 
       <div class="inventory__item">
-        <span class="inventory__value">{{ groundbait }} шт.</span>
+        <span class="inventory__label">Прикормка</span>
+        <span class="inventory__value">{{ baits.groundbait }} шт.</span>
       </div>
     </div>
 
@@ -118,8 +119,7 @@ const line = computed(() => {
   return list[tackles.value.line]
 })
 
-const hookbaits = computed(() => store.getters['game/getHookbaits'])
-const groundbait = computed(() => store.getters['game/getGroundbait'])
+const baits = computed(() => store.getters['game/getBaits'])
 
 const power = computed(() => store.getters['game/getPower'])
 </script>

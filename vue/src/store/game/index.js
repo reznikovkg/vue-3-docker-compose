@@ -8,7 +8,12 @@ const MUTATIONS = {
   ADD_FISH: 'ADD_FISH',
   GENERATE_ZONES: 'GENERATE_ZONES',
   SAVE: 'SAVE',
-  REMOVE_ZONE: 'REMOVE_ZONE'
+  REMOVE_ZONE: 'REMOVE_ZONE',
+  BUY_TACKLE: 'BUY_TACKLE',
+  SELL_TACKLE: 'SELL_TACKLE',
+  SELL_FISH: 'SELL_FISH',
+  CHANGE_BALANCE: 'CHANGE_BALANCE',
+  BUY_BAIT: 'BUY_BAIT' 
 }
 
 const defaultState = {
@@ -32,38 +37,18 @@ const defaultState = {
     line: 0
   },
   tackles_owned: {
-    rods: {
-      a: true, 
-      b: false,
-      c: false
-    },
-    reel: {
-      a: true, 
-      b: false,
-      c: false
-    },
-    bobber: {
-      a: true, 
-      b: false,
-      c: false
-    },
-    hook: {
-      a: true, 
-      b: false,
-      c: false
-    },
-    line: {
-      a: true, 
-      b: false,
-      c: false
-    }
+    rods: [0],
+    reels: [0],
+    bobbers: [0],
+    hooks: [0],
+    lines: [0]
   },
-  hookbaits: {
+  baits: {
     worms: 0,
     corn: 0,
-    maggots: 0
+    maggots: 0,
+    groundbait: 0
   },
-  groundbait: 0,
   isFishing: false,
   zones: [],
   islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }]
@@ -81,8 +66,7 @@ export default {
     getInventory: (state) => state.inventory,
     getTackles: (state) => state.tackles,
     getTacklesOwned: (state) => state.tackles_owned,
-    getHookbaits: (state) => state.hookbaits,
-    getGroundbait: (state) => state.groundbait,
+    getBaits: (state) => state.baits,
     getPower: (state, getters, rootState) => {
       const t = state.tackles
       const list = rootState.game.tacklesList
@@ -103,14 +87,14 @@ export default {
 
       for (const zone of state.zones) {
         if (zone.type === 'high') {
-          if (boat.x >= zone.x - 25 && boat.x <= zone.x + 25 && boat.y >= zone.y - 25 && boat.y <= zone.y + 25) 
+          if (boat.x >= zone.x - 60 && boat.x <= zone.x + 60 && boat.y >= zone.y - 60 && boat.y <= zone.y + 60) 
             return 'Высокий'
         }
       }
 
       for (const zone of state.zones) {
         if (zone.type === 'medium') {
-          if (boat.x >= zone.x - 50 && boat.x <= zone.x + 50 && boat.y >= zone.y - 50 && boat.y <= zone.y + 50) 
+          if (boat.x >= zone.x - 80 && boat.x <= zone.x + 80 && boat.y >= zone.y - 80 && boat.y <= zone.y + 80) 
             return 'Средний'
         }
       }
@@ -158,6 +142,18 @@ export default {
     [MUTATIONS.REMOVE_ZONE]: (state) => {
       const boat = state.boat
       state.zones = state.zones.filter(zone => !(zone.x - 25 <= boat.x && zone.x + 25 >= boat.x && zone.y - 25 <= boat.y && zone.y + 25 >= boat.y))
+    },
+    [MUTATIONS.SELL_FISH]: (state, type) => {
+      if (state.inventory[type] > 0) {
+        state.inventory[type]--
+      }
+    },
+    [MUTATIONS.BUY_BAIT]: (state, type) => {
+      state.baits[type]++
+    },
+    [MUTATIONS.CHANGE_BALANCE]: (state, diff) => {
+      if (state.balance + diff >= 0) 
+        state.balance += diff 
     }
   },
   actions: {
@@ -187,8 +183,8 @@ export default {
       const {x: bx, y: by} = store.state.boat
 
       for (let i = 0; i < 500; i++) {
-        const x = (Math.round(Math.floor(Math.random() * 2500 - 1250) + bx) / 10) * 10
-        const y = (Math.round(Math.floor(Math.random() * 2500 - 1250) + by) / 10) * 10
+        const x = Math.round(Math.random() * 500 - 250) * 10 + bx
+        const y = Math.round(Math.random() * 500 - 250) * 10 + by
         zones.push({
           type: 'medium',
           x, y
@@ -196,14 +192,14 @@ export default {
       }
 
       for (let i = 0; i < 100; i++) {
-        const x = (Math.round(Math.floor(Math.random() * 2500 - 1250) + bx) / 10) * 10
-        const y = (Math.round(Math.floor(Math.random() * 2500 - 1250) + by) / 10) * 10
+        const x = Math.round(Math.random() * 500 - 250) * 10 + bx
+        const y = Math.round(Math.random() * 500 - 250) * 10 + by
         zones.push({
           type: 'high',
           x, y
         })
       }
-      
+
       store.commit(MUTATIONS.GENERATE_ZONES, zones)
       store.dispatch('save')
     },
@@ -213,6 +209,22 @@ export default {
     removeZone: (store) => {
       store.commit(MUTATIONS.REMOVE_ZONE);
       store.dispatch('save')
+    },
+    sellFish: (store, payload) => {
+      const {type, price} = payload
+      if (store.state.inventory[type] > 0) {
+        store.commit('SELL_FISH', type)
+        store.commit('CHANGE_BALANCE', price)
+        store.dispatch('save')
+      }
+    },
+    buyBait: (store, payload) => {
+      const {type, price} = payload
+      if (store.state.balance - price >= 0) {
+        store.commit('BUY_BAIT', type)
+        store.commit('CHANGE_BALANCE', -price)
+        store.dispatch('save')
+      }
     }
   },
   modules: {
