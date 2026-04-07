@@ -1,7 +1,8 @@
 <template>
   <div class="infobar">
-    <span class="infobar__text">Координаты (X: {{ boat.x }}, Y: {{ boat.y }})</span>
+    <span class="infobar__text">Координаты: (X: {{ boat.x }}, Y: {{ boat.y }})</span>
     <span class="infobar__text">Тип области: {{ currentZone }}</span>
+    <span class="infobar__text">Баланс: {{ balance }}₽</span>
   </div>
 </template>
 
@@ -13,6 +14,7 @@ const store = useStore()
 const boat = computed(() => store.getters['game/getBoat'])
 
 const currentZone = computed(() => store.getters['game/getCurrentZone'])
+const balance = computed(() => store.getters['game/getBalance'])
 </script>
 
 <style scoped lang="scss">
@@ -24,10 +26,10 @@ const currentZone = computed(() => store.getters['game/getCurrentZone'])
 
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 20px;
 
-  width: 800px;
+  width: 1200px;
 
   padding: 18px;
   background-color: rgb(200, 200, 200);
@@ -39,8 +41,8 @@ const currentZone = computed(() => store.getters['game/getCurrentZone'])
     color: rgb(10, 10, 100);
     font-size: 24px;
     white-space: nowrap;
+    text-align: center;
+    width: 400px;
   }
 }
-
-
 </style>

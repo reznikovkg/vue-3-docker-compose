@@ -16,6 +16,7 @@ const defaultState = {
     direction: 1,
     rowing: false
   },
+  balance: 1000,
   inventory: {
     common: 0,
     rare: 0, 
@@ -29,10 +30,11 @@ export default {
   namespaced: true,
   state () {
     const savedState = localStorage.getItem('game_state')
-    return (savedState !== null) ? JSON.parse(savedState) : defaultState
+    return (savedState !== null) ? JSON.parse(savedState) : defaultState 
   },
   getters: {
     getBoat: (state) => state.boat,
+    getBalance: (state) => state.balance,
     getInventory: (state) => state.inventory,
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 
