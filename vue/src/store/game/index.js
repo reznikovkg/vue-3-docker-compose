@@ -92,7 +92,7 @@ export default {
         list.hooks[t.hook].power *
         list.lines[t.line].power
       )
-      return power
+      return Math.round(power * 100) / 100
     },
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 

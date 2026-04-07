@@ -3,12 +3,12 @@ export default {
   state () {
     return {
       rods: [
-        { id: 0, name: 'Тростниковое', price: 0, power: 0.2 },
+        { id: 0, name: 'Тростниковое', price: 0, power: 1.2 },
         { id: 1, name: 'Деревянное', price: 120, power: 2.0 },
         { id: 2, name: 'Карбоновое', price: 800, power: 5.0 }
       ],
       reels: [
-        { id: 0, name: 'Простая', price: 0, power: 0.4 },
+        { id: 0, name: 'Простая', price: 0, power: 1.4 },
         { id: 1, name: 'Улучшенная', price: 200, power: 4.0 },
         { id: 2, name: 'Профессиональная', price: 1200, power: 7.0 }
       ],
