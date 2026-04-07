@@ -1,7 +1,7 @@
 <template>
   <div class="boat">
     <div class="boat__images" :style="boatStyle">
-        <img class="boat__boat" src="../assets/images/Boat.png" width="200px">
+        <img class="boat__boat" src="../assets/images/Boat.png">
         <div class="boat__sailor" :class="{ 'boat__sailor--rowing': rowing, 'boat__sailor--fishing': fishing }" />
     </div>
   </div>
@@ -28,8 +28,14 @@ const boatStyle = computed(() => ({
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.5);
   z-index: 2;
+  transform-origin: center bottom;
+
+
+  &__boat {
+    width: 200px;
+  }
 
   &__images {
     position: relative;

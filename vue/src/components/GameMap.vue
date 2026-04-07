@@ -1,7 +1,10 @@
 <template>
   <div class="game-map">
     <div class="game-map__world"/>
+
   </div>
+
+  <Island v-for="island in islands" :islandX="island.x" :islandY="island.y"/>
 
   <Boat/>
 </template>
@@ -10,8 +13,12 @@
 import { onMounted, onUnmounted, computed } from 'vue'
 import { useStore } from 'vuex'
 import Boat from './Boat.vue'
+import Island from './Island.vue'
 
 const store = useStore()
+
+const islands = computed(() => store.getters['game/getIslands'])
+console.log(islands)
 
 const speed = 1
 

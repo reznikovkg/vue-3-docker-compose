@@ -65,7 +65,8 @@ const defaultState = {
   },
   groundbait: 0,
   isFishing: false,
-  zones: []
+  zones: [],
+  islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }]
 }
 
 export default {
@@ -96,19 +97,20 @@ export default {
     },
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 
+    getIslands: (state) => state.islands,
     getCurrentZone: (state) => {
       const boat = state.boat
 
       for (const zone of state.zones) {
         if (zone.type === 'high') {
-          if (boat.x >= zone.x - 10 && boat.x <= zone.x + 10 && boat.y >= zone.y - 10 && boat.y <= zone.y + 10) 
+          if (boat.x >= zone.x - 25 && boat.x <= zone.x + 25 && boat.y >= zone.y - 25 && boat.y <= zone.y + 25) 
             return 'Высокий'
         }
       }
 
       for (const zone of state.zones) {
         if (zone.type === 'medium') {
-          if (boat.x >= zone.x - 25 && boat.x <= zone.x + 25 && boat.y >= zone.y - 25 && boat.y <= zone.y + 25) 
+          if (boat.x >= zone.x - 50 && boat.x <= zone.x + 50 && boat.y >= zone.y - 50 && boat.y <= zone.y + 50) 
             return 'Средний'
         }
       }
@@ -119,8 +121,23 @@ export default {
   mutations: {
     [MUTATIONS.MOVE_BOAT]: (state, payload) => {
       const {x, y} = payload
-      state.boat.x += x
-      state.boat.y += y
+      const speed = 10
+
+      const nextX = state.boat.x + x * speed
+      const nextY = state.boat.y + y * speed
+
+      const islandHitbox = 90
+
+      const isCollision = state.islands.some(island => {
+        const dx = nextX - island.x
+        const dy = nextY - island.y
+        return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox 
+      })
+
+      if (!isCollision) {
+        state.boat.x = nextX
+        state.boat.y = nextY
+      }
     },
     [MUTATIONS.SET_DIRECTION]: (state, direction) => {
       state.boat.direction = direction
@@ -170,8 +187,8 @@ export default {
       const {x: bx, y: by} = store.state.boat
 
       for (let i = 0; i < 500; i++) {
-        const x = Math.floor(Math.random() * 2500 - 1250) + bx
-        const y = Math.floor(Math.random() * 2500 - 1250) + by
+        const x = (Math.round(Math.floor(Math.random() * 2500 - 1250) + bx) / 10) * 10
+        const y = (Math.round(Math.floor(Math.random() * 2500 - 1250) + by) / 10) * 10
         zones.push({
           type: 'medium',
           x, y
@@ -179,8 +196,8 @@ export default {
       }
 
       for (let i = 0; i < 100; i++) {
-        const x = Math.floor(Math.random() * 2500 - 1250) + bx
-        const y = Math.floor(Math.random() * 2500 - 1250) + by
+        const x = (Math.round(Math.floor(Math.random() * 2500 - 1250) + bx) / 10) * 10
+        const y = (Math.round(Math.floor(Math.random() * 2500 - 1250) + by) / 10) * 10
         zones.push({
           type: 'high',
           x, y
