@@ -4,40 +4,102 @@
         v-for="shape in shapes"
         :key="shape.id"
         class="shape-list__item"
-        draggable="true"
-        @dragstart="handleDragStart(shape)"
+        :class="{ 'shape-list__item--active': selectedShape?.id === shape.id }"
+        @click="handleSelect(shape)"
     >
-      {{ shape.id }}
+      <div class="shape-list__color" :style="{ background: shape.color }"></div>
+
+      <div class="shape-list__info">
+        <div class="shape-list__name">{{ shape.name }}</div>
+
+        <div class="shape-list__size">
+          {{ getWidth(shape) }} × {{ getHeight(shape) }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import {useStore} from "vuex";
-import {MUTATIONS} from "@/store/index.js";
+import {computed} from "vue";
 
 const store = useStore()
 
-const shapes = store.state.shapes
+const shapes = computed(() => store.state.shapes)
 
-const handleDragStart = (shape) => {
-  store.commit(MUTATIONS.SET_DRAGGING, shape)
+const getWidth = (shape) => {
+  const xs = shape.cells.map(c => c.x)
+  return Math.max(...xs) - Math.min(...xs) + 1
+}
+
+const getHeight = (shape) => {
+  const ys = shape.cells.map(c => c.y)
+  return Math.max(...ys) - Math.min(...ys) + 1
+}
+
+const selectedShape = computed(() => store.state.grid.selectedShape)
+
+const handleSelect = (shape) => {
+  store.dispatch('setPreviewOrigin', null)
+
+  if (selectedShape.value?.id === shape.id) {
+    store.dispatch('setShape', null)
+    return
+  }
+
+  store.dispatch('setShape', shape)
 }
 </script>
 
 <style lang="less" scoped>
 .shape-list {
   display: flex;
+  flex-direction: column;
   gap: 10px;
 
   &__item {
-    padding: 8px;
-    border: 1px solid #ccc;
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 
-    &:hover {
-      background: #eee;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    &--active {
+      border: 2px solid #4caf50;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
     }
+  }
+
+  &__color {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    flex: 1;
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #000;
+  }
+
+  &__size {
+    font-size: 12px;
+    opacity: 0.6;
+    color: #000;
+    margin-left: auto;
   }
 }
 </style>

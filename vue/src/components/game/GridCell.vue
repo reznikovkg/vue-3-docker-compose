@@ -4,39 +4,38 @@
       :style="style"
       :class="classes"
       @click="handleClick"
-      @dragover.prevent="handleDragOver"
+      @mouseover="handleHover"
   />
 </template>
 
 <script setup>
 import {computed} from 'vue'
 import {useStore} from 'vuex'
-import {MUTATIONS} from "@/store/index.js";
 
 const props = defineProps({
   x: Number,
-  y: Number,
-  occupiedMap: Map,
-  previewMap: Map
+  y: Number
 })
 
 const store = useStore()
 
-const emit = defineEmits(['dropCell', 'hoverCell'])
+const occupiedMap = computed(() => store.getters.occupiedMap)
+const previewMap = computed(() => store.getters.previewMap)
 
-const handleDragOver = () => {
-  emit('hoverCell', {x: props.x, y: props.y})
-}
+const emit = defineEmits(['hoverCell'])
+
+const selectedShape = computed(() => store.state.grid.selectedShape)
+const mode = computed(() => store.state.grid.mode)
+
+const key = computed(() => `${props.x}-${props.y}`)
 
 const color = computed(() => {
-  const key = `${props.x}-${props.y}`
-
-  if (props.previewMap?.has(key)) {
-    return props.previewMap.get(key)
+  if (previewMap.value?.has(key.value)) {
+    return previewMap.value.get(key.value)
   }
 
-  if (props.occupiedMap?.has(key)) {
-    return props.occupiedMap.get(key)
+  if (occupiedMap.value?.has(key.value)) {
+    return occupiedMap.value.get(key.value)
   }
 
   return 'white'
@@ -51,23 +50,35 @@ const style = computed(() => {
   }
 })
 
-const handleClick = () => {
-  const grid = store.state.grid
+const handleHover = () => {
+  emit('hoverCell', { x: props.x, y: props.y })
+}
 
-  if (grid.mode === 'delete') {
-    store.commit(MUTATIONS.REMOVE_OBJECT, {
+const handleClick = () => {
+  const shape = store.state.grid.selectedShape
+  const origin = { x: props.x, y: props.y }
+
+  if (mode.value === 'delete') {
+    store.dispatch('removeObject', {
       x: props.x,
       y: props.y
     })
   }
-}
 
-const key = computed(() => `${props.x}-${props.y}`)
+  if (!shape) return
+
+  if (mode.value === 'build' && selectedShape.value) {
+    store.dispatch('placeObject', {
+      shape,
+      origin
+    })
+  }
+}
 
 const classes = computed(() => ({
   'grid-cell': true,
-  'grid-cell--preview': props.previewMap?.has(key.value),
-  'grid-cell--invalid': props.previewMap?.get(key.value) === 'red',
+  'grid-cell--preview': previewMap.value?.has(key.value),
+  'grid-cell--invalid': previewMap.value?.get(key.value) === 'red',
 }))
 </script>
 
