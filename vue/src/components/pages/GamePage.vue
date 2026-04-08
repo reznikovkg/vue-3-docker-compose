@@ -33,8 +33,6 @@ import {computed} from "vue";
 
 const store = useStore()
 
-const isPanning = computed(() => store.state.viewport.isPanning)
-
 let startX = 0
 let startY = 0
 
