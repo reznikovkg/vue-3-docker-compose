@@ -1,27 +1,23 @@
 <template>
-    <div class = "game">
-        <h1 class = "game__title"> Переливатор</h1>
-
-        <div v-if = "gameWon" class = "game__win-message">
+    <div class="game">
+        <h1 class="game__title"> Переливатор</h1>
+        <div v-if="getGameWon" class="game__win-message">
             Поздравляем! Вы победили! 
         </div>
-    
-
-        <div class = "game__flasks">
+        <div class="game__flasks">
             <Flask
-                v-for = "(flask, index) in flasks"
+                v-for = "(flask, index) in getFlasks"
                 :key = "index"
                 :layers = "flask"
-                :active = "currentFlask === index"
+                :active = "getCurrentFlask === index"
                 :label = "'Колба ' + (index + 1)"
-                :max-layers = "maxLayers"
+                :max-layers = "getMaxLayers"
                 @click = "() => handleFlaskClick(index)"
             />
         </div>
-
-        <div class = "game__controls">
+        <div class="game__controls">
             <button
-                class = "game__button"
+                class="game__button"
                 @click = "() => restartGame()"
             >
             Новая игра
@@ -36,62 +32,39 @@ import { mapGetters, mapActions } from 'vuex';
 
 export default {
     name: 'GamePage',
-
     components: {
         Flask
     },
-
     computed: {
         ...mapGetters('game', [
             'getFlasks',
             'getCurrentFlask',
             'getGameWon',
             'getMaxLayers'
-        ]),
-
-        flasks() {
-            return this.getFlasks
-        },
-
-        currentFlask() {
-            return this.getCurrentFlask
-        },
-
-        gameWon() {
-            return this.getGameWon
-        },
-
-        maxLayers() {
-            return this.getMaxLayers
-        }
+        ])
     },
-
     methods: {
         ...mapActions('game', [
             'initGame',
             'tryMove'
         ]),
-
         setCurrentFlask(index) {
             this.$store.commit('game/SET_CURRENT_FLASK', index)
         },
-
         handleFlaskClick(index) {
-            if (this.currentFlask === null) {
+            if (this.getCurrentFlask === null) {
                 this.setCurrentFlask(index)
             } else {
                 this.tryMove({
-                    fromFlask: this.currentFlask,
+                    fromFlask: this.getCurrentFlask,
                     toFlask: index
                 })
             }
         },
-
         restartGame() {
             this.initGame()
         }
     },
-
     mounted() {
         this.restartGame()
     }
@@ -150,7 +123,7 @@ export default {
         transition: background 0.3s;
 
         &:hover {
-        background: #2980B9;
+            background: #2980B9;
         }
     }
 }
