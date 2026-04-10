@@ -13,7 +13,8 @@ const MUTATIONS = {
   SELL_TACKLE: 'SELL_TACKLE',
   SELL_FISH: 'SELL_FISH',
   CHANGE_BALANCE: 'CHANGE_BALANCE',
-  BUY_BAIT: 'BUY_BAIT' 
+  BUY_BAIT: 'BUY_BAIT',
+  USE_TACKLE: 'USE_TACKLE'
 }
 
 const defaultState = {
@@ -36,7 +37,7 @@ const defaultState = {
     hook: 0,
     line: 0
   },
-  tackles_owned: {
+  tacklesOwned: {
     rods: [0],
     reels: [0],
     bobbers: [0],
@@ -65,7 +66,7 @@ export default {
     getBalance: (state) => state.balance,
     getInventory: (state) => state.inventory,
     getTackles: (state) => state.tackles,
-    getTacklesOwned: (state) => state.tackles_owned,
+    getTacklesOwned: (state) => state.tacklesOwned,
     getBaits: (state) => state.baits,
     getPower: (state, getters, rootState) => {
       const t = state.tackles
@@ -141,7 +142,7 @@ export default {
     },
     [MUTATIONS.REMOVE_ZONE]: (state) => {
       const boat = state.boat
-      state.zones = state.zones.filter(zone => !(zone.x - 25 <= boat.x && zone.x + 25 >= boat.x && zone.y - 25 <= boat.y && zone.y + 25 >= boat.y))
+      state.zones = state.zones.filter(zone => !(zone.x - 80 <= boat.x && zone.x + 80 >= boat.x && zone.y - 80 <= boat.y && zone.y + 80 >= boat.y))
     },
     [MUTATIONS.SELL_FISH]: (state, type) => {
       if (state.inventory[type] > 0) {
@@ -154,6 +155,26 @@ export default {
     [MUTATIONS.CHANGE_BALANCE]: (state, diff) => {
       if (state.balance + diff >= 0) 
         state.balance += diff 
+    },
+    [MUTATIONS.BUY_TACKLE]: (state, item) => {
+      const {type, id} = item
+      if (!state.tacklesOwned[type].includes(id)) {
+        state.tacklesOwned[type].push(id)
+      }
+    },
+    [MUTATIONS.SELL_TACKLE]: (state, item) => {
+      const {type, id} = item
+      if (id === 0) return
+
+      state.tacklesOwned[type] = state.tacklesOwned[type].filter(i => i !== id)
+
+      if (state.tackles[type.slice(0, -1)] === id) {
+        state.tackles[type.slice(0, -1)] = 0
+      }
+    },
+    [MUTATIONS.USE_TACKLE]: (state, item) => {
+      const {type, id} = item
+      state.tackles[type.slice(0, -1)] = id
     }
   },
   actions: {
@@ -223,6 +244,34 @@ export default {
       if (store.state.balance - price >= 0) {
         store.commit('BUY_BAIT', type)
         store.commit('CHANGE_BALANCE', -price)
+        store.dispatch('save')
+      }
+    },
+    buyTackle: (store, payload) => {
+      const {type, item} = payload
+      if (store.state.balance < item.price) return
+
+      if (!store.state.tacklesOwned[type].includes(item.id)) {
+        store.commit('BUY_TACKLE', {type: type, id: item.id})
+        store.commit('CHANGE_BALANCE', -item.price)
+        store.dispatch('save')
+      }
+    },
+    sellTackle: (store, payload) => {
+      const {type, item} = payload
+      if (item.id === 0) return
+
+      if (store.state.tacklesOwned[type].includes(item.id)) {
+        store.commit('SELL_TACKLE', {type: type, id: item.id})
+        store.commit('CHANGE_BALANCE', +Math.round(item.price / 2))
+        store.dispatch('save')
+      }
+    },
+    useTackle: (store, payload) => {
+      const {type, item} = payload
+      
+      if (store.state.tacklesOwned[type].includes(item.id)) {
+        store.commit('USE_TACKLE', {type: type, id: item.id})
         store.dispatch('save')
       }
     }

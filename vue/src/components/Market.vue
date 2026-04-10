@@ -26,29 +26,129 @@
   <div class="market__list">
     <span class="market__title">Купить/Продать снасти</span>
 
-    <div class="market__item">
-      <span class="market__label">Удилище</span>
-      <span class="market__value"></span>
+    <span class="market__title">Удилища</span>
+    <div class="market__item" v-for="rod in rods">
+      <span class="market__label">Удилище {{ rod.name }} ({{ rod.power }})</span>
+
+      <button 
+        class="market__btn"
+        v-if="!tacklesOwned.rods.includes(rod.id)" 
+        @click="() => buyTackle('rods', rod)">
+        Купить за {{ rod.price }}₽ 
+      </button>
+      <button 
+        class="market__btn"
+        v-else-if="tacklesOwned.rods.includes(rod.id) && rod.id !== 0" 
+        @click="() => sellTackle('rods', rod)">
+        Продать за {{ rod.price / 2 }}₽ 
+      </button>
+
+      <button 
+        class="market__btn"
+        v-if="tacklesOwned.rods.includes(rod.id)" 
+        @click="() => useTackle('rods', rod)">
+        Надеть
+      </button>
     </div>
 
-    <div class="market__item">
-      <span class="market__label">Катушка</span>
-      <span class="market__value"></span>
+    <span class="market__title">Катушки</span>
+    <div class="market__item" v-for="reel in reels">
+      <span class="market__label">Катушка {{ reel.name }} ({{ reel.power }})</span>
+
+      <button 
+        class="market__btn"
+        v-if="!tacklesOwned.reels.includes(reel.id)" 
+        @click="() => buyTackle('reels', reel)">
+        Купить за {{ reel.price }}₽ 
+      </button>
+      <button 
+        class="market__btn"
+        v-else-if="tacklesOwned.reels.includes(reel.id) && reel.id !== 0" 
+        @click="() => sellTackle('reels', reel)">
+        Продать за {{ reel.price / 2 }}₽ 
+      </button>
+
+      <button 
+        class="market__btn"
+        v-if="tacklesOwned.reels.includes(reel.id)" 
+        @click="() => useTackle('reels', reel)">
+        Надеть
+      </button>
     </div>
 
-    <div class="market__item">
-      <span class="market__label">Поплавок</span>
-      <span class="market__value"></span>
+    <span class="market__title">Поплавки</span>
+    <div class="market__item" v-for="bobber in bobbers">
+      <span class="market__label">Поплавок {{ bobber.name }} ({{ bobber.power }})</span>
+
+      <button 
+        class="market__btn"
+        v-if="!tacklesOwned.bobbers.includes(bobber.id)" 
+        @click="() => buyTackle('bobbers', bobber)">
+        Купить за {{ bobber.price }}₽ 
+      </button>
+      <button 
+        class="market__btn"
+        v-else-if="tacklesOwned.bobbers.includes(bobber.id) && bobber.id !== 0" 
+        @click="() => sellTackle('bobbers', rod)">
+        Продать за {{ bobber.price / 2 }}₽ 
+      </button>
+
+      <button 
+        class="market__btn"
+        v-if="tacklesOwned.bobbers.includes(bobber.id)" 
+        @click="() => useTackle('bobbers', bobber)">
+        Надеть
+      </button>
     </div>
 
-    <div class="market__item">
-      <span class="market__label">Крючок</span>
-      <span class="market__value"></span>
+    <span class="market__title">Крючки</span>
+    <div class="market__item" v-for="hook in hooks">
+      <span class="market__label">Крючок {{ hook.name }} ({{ hook.power }})</span>
+
+      <button 
+        class="market__btn"
+        v-if="!tacklesOwned.hooks.includes(hook.id)" 
+        @click="() => buyTackle('hooks', hook)">
+        Купить за {{ hook.price }}₽ 
+      </button>
+      <button 
+        class="market__btn"
+        v-if="tacklesOwned.hooks.includes(hook.id) && hook.id !== 0" 
+        @click="() => sellTackle('hooks', hook)">
+        Продать за {{ hook.price / 2 }}₽ 
+      </button>
+
+      <button 
+        class="market__btn"
+        v-if="tacklesOwned.hooks.includes(hook.id)" 
+        @click="() => useTackle('hooks', hook)">
+        Надеть
+      </button>
     </div>
 
-    <div class="market__item">
-      <span class="market__label">Леска</span>
-      <span class="market__value"></span>
+    <span class="market__title">Лески</span>
+    <div class="market__item" v-for="line in lines">
+      <span class="market__label">Леска {{ line.name }} ({{ line.power }})</span>
+
+      <button 
+        class="market__btn"
+        v-if="!tacklesOwned.lines.includes(line.id)" 
+        @click="() => buyTackle('lines', line)">
+        Купить за {{ line.price }}₽ 
+      </button>
+      <button 
+        class="market__btn"
+        v-else-if="tacklesOwned.lines.includes(line.id) && line.id !== 0" 
+        @click="() => sellTackle('lines', line)">
+        Продать за {{ line.price / 2 }}₽ 
+      </button>
+
+      <button 
+        class="market__btn"
+        v-if="tacklesOwned.lines.includes(line.id)" 
+        @click="() => useTackle('lines', line)">
+        Надеть
+      </button>
     </div>
   </div>
 
@@ -111,6 +211,15 @@ const islands = computed(() => store.getters['game/getIslands'])
 
 const boat = computed(() => store.getters['game/getBoat'])
 
+const tacklesOwned = computed(() => store.getters['game/getTacklesOwned'])
+
+const rods = computed(() => store.getters['game/tacklesList/getRodsList'])
+const reels = computed(() => store.getters['game/tacklesList/getReelsList'])
+const bobbers = computed(() => store.getters['game/tacklesList/getBobbersList'])
+const hooks = computed(() => store.getters['game/tacklesList/getHooksList'])
+const lines = computed(() => store.getters['game/tacklesList/getLinesList'])
+
+
 const sellFish = (type, price) => {
   if (inventory.value[type] > 0) {
     store.dispatch('game/sellFish', {type: type, price: price})
@@ -121,6 +230,18 @@ const buyBait = (type, price) => {
   if (balance.value - price >= 0) {
     store.dispatch('game/buyBait', {type: type, price: price})
   }
+}
+
+const buyTackle = (type, item) => {
+  store.dispatch('game/buyTackle', {type: type, item: item})
+}
+
+const sellTackle = (type, item) => {
+  store.dispatch('game/sellTackle', {type: type, item: item})
+}
+
+const useTackle = (type, item) => {
+  store.dispatch('game/useTackle', {type: type, item: item})
 }
 
 const isIslandsNearly = computed(() => {
@@ -153,12 +274,15 @@ onUnmounted(() => {
   transform: translate(-50%, -50%);
   z-index: 3;
 
-  width: 600px;
+  width: 800px;
+  max-height: 800px;
 
   padding: 8px;
   background-color: rgb(200, 200, 200);
   border: 8px dashed rgb(10, 10, 100);
   box-shadow: 0 4px 10px rgb(0, 0, 0);
+
+  overflow-y: auto;
 
   &__title {
     color: rgb(10, 10, 100);
@@ -174,6 +298,17 @@ onUnmounted(() => {
     border: 4px dashed rgb(10, 10, 100);
     padding: 4px;
     margin: 4px;
+
+    max-height: 400px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 12px;
+    }
+      
+    &::-webkit-scrollbar-thumb {
+      background: rgb(10, 10, 100);
+    }
   }
 
   &__item {
@@ -196,9 +331,10 @@ onUnmounted(() => {
   }
 
   &__btn {
-    width: 156px;
     font-family: 'Tiny5';
     font-size: 18px;
+
+    width: 180px;
 
     color: rgb(10, 10, 100);
     background-color: rgb(200, 200, 200);
@@ -207,6 +343,14 @@ onUnmounted(() => {
 
   &__btn:hover {
     background-color: rgb(190, 190, 190);
+  }
+
+  &::-webkit-scrollbar {
+    width: 12px;
+  }
+    
+  &::-webkit-scrollbar-thumb {
+    background: rgb(10, 10, 100);
   }
 }
 
