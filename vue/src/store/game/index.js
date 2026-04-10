@@ -165,6 +165,7 @@ export default {
       const {type, id} = item
       if (!state.tacklesOwned[type].includes(id)) {
         state.tacklesOwned[type].push(id)
+        state.tackles[type.slice(0, -1)] = id
       }
     },
     [MUTATIONS.SELL_TACKLE]: (state, item) => {
