@@ -26,20 +26,20 @@ const move = (e) => {
   const fishing = computed(() => store.getters['game/getIsFishing'])
   if (fishing.value) return
 
-  if (e.key === 'ArrowUp' || e.key === 'w') {
+  if (e.key === 'ArrowUp' || e.code === 'KeyW') {
     store.dispatch('game/moveBoat', {x: 0, y: -speed})
     store.dispatch('game/setRowing', true)
   }
-  if (e.key === 'ArrowLeft' || e.key === 'a') {
+  if (e.key === 'ArrowLeft' || e.code === 'KeyA') {
     store.dispatch('game/moveBoat', {x: -speed, y: 0})
     store.dispatch('game/setDirection', -1)
     store.dispatch('game/setRowing', true)
   }
-  if (e.key === 'ArrowDown' || e.key === 's') {
+  if (e.key === 'ArrowDown' || e.code === 'KeyS') {
     store.dispatch('game/moveBoat', {x: 0, y: speed})
     store.dispatch('game/setRowing', true)
   }
-  if (e.key === 'ArrowRight' || e.key === 'd') {
+  if (e.key === 'ArrowRight' || e.code === 'KeyD') {
     store.dispatch('game/moveBoat', {x: speed, y: 0})
     store.dispatch('game/setDirection', 1)
     store.dispatch('game/setRowing', true)
@@ -47,17 +47,23 @@ const move = (e) => {
 }
 
 const stopMove = (e) => {
-  if (e.key === 'ArrowUp' || e.key === 'w') {
+  if (e.key === 'ArrowUp' || e.code === 'KeyW') {
     store.dispatch('game/setRowing', false)
   }
-  if (e.key === 'ArrowLeft' || e.key === 'a') {
+  if (e.key === 'ArrowLeft' || e.code === 'KeyA') {
     store.dispatch('game/setRowing', false)
   }
-  if (e.key === 'ArrowDown' || e.key === 's') {
+  if (e.key === 'ArrowDown' || e.code === 'KeyS') {
     store.dispatch('game/setRowing', false)
   }
-  if (e.key === 'ArrowRight' || e.key === 'd') {
+  if (e.key === 'ArrowRight' || e.code === 'KeyD') {
     store.dispatch('game/setRowing', false)
+  }
+}
+
+const useGroundbait = (e) => {
+  if (e.code === 'KeyZ') {
+    store.dispatch('game/useGroundbait')
   }
 }
 
@@ -66,11 +72,13 @@ onMounted(() => {
 
   window.addEventListener('keydown', move)
   window.addEventListener('keyup', stopMove)
+  window.addEventListener('keydown', useGroundbait)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', move)
   window.removeEventListener('keyup', stopMove)
+  window.removeEventListener('keydown', useGroundbait)
 })
 
 </script>

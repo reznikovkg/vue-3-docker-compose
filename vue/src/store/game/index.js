@@ -14,7 +14,8 @@ const MUTATIONS = {
   SELL_FISH: 'SELL_FISH',
   CHANGE_BALANCE: 'CHANGE_BALANCE',
   BUY_BAIT: 'BUY_BAIT',
-  USE_TACKLE: 'USE_TACKLE'
+  USE_TACKLE: 'USE_TACKLE',
+  USE_GROUNDBAIT: 'USE_GROUNDBAIT'
 }
 
 const defaultState = {
@@ -175,6 +176,34 @@ export default {
     [MUTATIONS.USE_TACKLE]: (state, item) => {
       const {type, id} = item
       state.tackles[type.slice(0, -1)] = id
+    },
+    [MUTATIONS.USE_GROUNDBAIT]: (state) => {
+      const {x, y} = state.boat
+      const radius = 80
+
+      let zones = state.zones.filter(z => {
+        const dx = x - z.x
+        const dy = y - z.y
+        return Math.max(Math.abs(dx), Math.abs(dy)) < radius
+      })
+
+      if (zones.length > 0) {
+        zones.forEach(zone => {
+          zone.level = zone.level + 1
+
+          if (zone.level >= 3) {
+            zone.type = 'high'
+          }
+        })
+      } else {
+        state.zones.push({
+          type: 'medium',
+          level: 1,
+          x: x, y: y
+        })
+      }
+
+      state.baits.groundbait--
     }
   },
   actions: {
@@ -208,7 +237,8 @@ export default {
         const y = Math.round(Math.random() * 500 - 250) * 10 + by
         zones.push({
           type: 'medium',
-          x, y
+          level: 1,
+          x: x, y: y
         })
       }
 
@@ -217,7 +247,8 @@ export default {
         const y = Math.round(Math.random() * 500 - 250) * 10 + by
         zones.push({
           type: 'high',
-          x, y
+          level: 3,
+          x: x, y: y
         })
       }
 
@@ -274,6 +305,12 @@ export default {
         store.commit('USE_TACKLE', {type: type, id: item.id})
         store.dispatch('save')
       }
+    },
+    useGroundbait: (store) => {
+      if (store.state.baits.groundbait <= 0) return
+
+      store.commit('USE_GROUNDBAIT')
+      store.dispatch('save')
     }
   },
   modules: {
