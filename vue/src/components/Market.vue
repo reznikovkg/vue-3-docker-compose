@@ -9,17 +9,29 @@
 
     <div class="market__item" v-if="inventory.common != 0">
       <span class="market__label">Окунь</span>
-      <button class="market__btn" @click="() => sellFish('common', fishPrices['common'])">Продать за {{ fishPrices['common'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => sellFish('common', fishPrices['common'])">
+        Продать за {{ fishPrices['common'] }}₽
+      </button>
     </div>
 
     <div class="market__item" v-if="inventory.rare != 0">
       <span class="market__label">Карп</span>
-      <button class="market__btn" @click="() => sellFish('rare', fishPrices['rare'])">Продать за {{ fishPrices['rare'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => sellFish('rare', fishPrices['rare'])">
+        Продать за {{ fishPrices['rare'] }}₽
+      </button>
     </div>
 
     <div class="market__item" v-if="inventory.legendary != 0">
       <span class="market__label">Язь <br>(здоровенный)</span>
-      <button class="market__btn" @click="() => sellFish('legendary', fishPrices['legendary'])">Продать за {{ fishPrices['legendary'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => sellFish('legendary', fishPrices['legendary'])">
+        Продать за {{ fishPrices['legendary'] }}₽
+      </button>
     </div>
   </div>
 
@@ -157,17 +169,29 @@
 
     <div class="market__item">
       <span class="market__label">Черви</span>
-      <button class="market__btn" @click="() => buyBait('worms', baitsPrices['worms'])">Купить за {{ baitsPrices['worms'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => buyBait('worms', baitsPrices['worms'])">
+        Купить за {{ baitsPrices['worms'] }}₽
+      </button>
     </div>
 
     <div class="market__item">
       <span class="market__label">Кукуруза</span>
-      <button class="market__btn" @click="() => buyBait('corn', baitsPrices['corn'])">Купить за {{ baitsPrices['corn'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => buyBait('corn', baitsPrices['corn'])">
+        Купить за {{ baitsPrices['corn'] }}₽
+      </button>
     </div>
 
     <div class="market__item">
       <span class="market__label">Опарыши</span>
-      <button class="market__btn" @click="() => buyBait('maggots', baitsPrices['maggots'])">Купить за {{ baitsPrices['maggots'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => buyBait('maggots', baitsPrices['maggots'])">
+        Купить за {{ baitsPrices['maggots'] }}₽
+      </button>
     </div>
   </div>
 
@@ -176,7 +200,11 @@
 
     <div class="market__item">
       <span class="market__label">Прикормка</span>
-      <button class="market__btn" @click="() => buyBait('groundbait', baitsPrices['groundbait'])">Купить за {{ baitsPrices['groundbait'] }}₽</button>
+      <button 
+        class="market__btn" 
+        @click="() => buyBait('groundbait', baitsPrices['groundbait'])">
+        Купить за {{ baitsPrices['groundbait'] }}₽
+      </button>
     </div>
   </div>
 </div>

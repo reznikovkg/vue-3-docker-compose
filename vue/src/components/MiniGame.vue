@@ -10,9 +10,14 @@
     </div>
 
     <div class="minigame__info" v-if="!fishing">
-      <span class="minigame__label">[Z] чтобы сбросить прикормку за борт</span><br>
-      <span class="minigame__label">Выбранная наживка: {{ activeBaitText }} ({{ baitCount }})<br> ([1], [2], [3] чтобы сменить наживку)</span><br>
-      <span class="minigame__label" v-if="baitCount > 0">Нажмите [ПРОБЕЛ] чтобы ловить</span>
+      <span class="minigame__label">[Z] чтобы сбросить прикормку за борт</span>
+      <span class="minigame__label">
+        Выбранная наживка: {{ activeBaitText }} ({{ baitCount }})<br> 
+        ([1], [2], [3] чтобы сменить наживку)
+      </span>
+      <span class="minigame__label" v-if="baitCount > 0">
+        Нажмите [ПРОБЕЛ] чтобы ловить
+      </span>
       <span class="minigame__label" v-else>Недостаточно выбранной наживки</span>
     </div>
 
