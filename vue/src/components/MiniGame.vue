@@ -117,7 +117,7 @@ const startMiniGame = (zone) => {
 
   intervalID.value = setInterval(() => {
     barPosition.value += direction.value * speed.value
-    if (barPosition.value >= 90) direction.value = -1
+    if (barPosition.value >= 95) direction.value = -1
     if (barPosition.value <= 0) direction.value = 1
   }, 10)
 }
