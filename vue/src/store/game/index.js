@@ -15,7 +15,9 @@ const MUTATIONS = {
   CHANGE_BALANCE: 'CHANGE_BALANCE',
   BUY_BAIT: 'BUY_BAIT',
   USE_TACKLE: 'USE_TACKLE',
-  USE_GROUNDBAIT: 'USE_GROUNDBAIT'
+  USE_GROUNDBAIT: 'USE_GROUNDBAIT',
+  USE_BAIT: 'USE_BAIT',
+  SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT'
 }
 
 const defaultState = {
@@ -51,6 +53,7 @@ const defaultState = {
     maggots: 0,
     groundbait: 0
   },
+  activeBait: 'worms',
   isFishing: false,
   zones: [],
   islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }]
@@ -69,6 +72,7 @@ export default {
     getTackles: (state) => state.tackles,
     getTacklesOwned: (state) => state.tacklesOwned,
     getBaits: (state) => state.baits,
+    getActiveBait: (state) => state.activeBait,
     getPower: (state, getters, rootState) => {
       const t = state.tackles
       const list = rootState.game.tacklesList
@@ -204,6 +208,14 @@ export default {
       }
 
       state.baits.groundbait--
+    },
+    [MUTATIONS.USE_BAIT]: (state) => {
+      if (state.baits[state.activeBait] > 0) {
+        state.baits[state.activeBait]--
+      }
+    },
+    [MUTATIONS.SET_ACTIVE_BAIT]: (state, bait) => {
+      state.activeBait = bait
     }
   },
   actions: {
@@ -310,6 +322,14 @@ export default {
       if (store.state.baits.groundbait <= 0) return
 
       store.commit('USE_GROUNDBAIT')
+      store.dispatch('save')
+    },
+    setActiveBait: (store, bait) => {
+      store.commit('SET_ACTIVE_BAIT', bait)
+      store.dispatch('save')
+    },
+    useBait: (store, bait) => {
+      store.commit('USE_BAIT', bait)
       store.dispatch('save')
     }
   },

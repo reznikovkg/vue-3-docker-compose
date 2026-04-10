@@ -9,8 +9,14 @@
       <div class="minigame__bar__target"></div>
     </div>
 
-    <span class="minigame__invite" v-if="!fishing">Нажмите ПРОБЕЛ чтобы ловить</span>
-    <span class="minigame__invite" v-if="!active && fishing">Ждем клёва...</span>
+    <div class="minigame__info" v-if="!fishing">
+      <span class="minigame__label">[Z] чтобы сбросить прикормку за борт</span><br>
+      <span class="minigame__label">Выбранная наживка: {{ activeBaitText }} ({{ baitCount }})<br> ([1], [2], [3] чтобы сменить)</span><br>
+      <span class="minigame__label" v-if="baitCount > 0">Нажмите [ПРОБЕЛ] чтобы ловить</span>
+      <span class="minigame__label" v-else>Недостаточно выбранной наживки</span>
+    </div>
+
+    <span class="minigame__label" v-if="!active && fishing">Ждем клёва...</span>
   </div>
 </template>
 
@@ -29,33 +35,65 @@ const direction = ref(1)
 
 const intervalID = ref(null)
 
-const speed = 0.8
+const targetStart = 45
+const targetEnd = 55
 
-const targetStart = 40
-const targetEnd = 60
+const activeBait = computed(() => store.getters['game/getActiveBait'])
+
+const baits = computed(() => store.getters['game/getBaits'])
+
+const zone = computed(() => store.getters['game/getCurrentZone'])
+
+const baitsNames = {
+  worms: 'Черви',
+  corn: 'Кукуруза',
+  maggots: 'Опарыши'
+}
+
+const baitDifficulty = {
+  worms: 1,
+  corn: 5,
+  maggots: 10
+}
+
+const power = computed(() => store.getters['game/getPower'])
+const speed = computed(() => { return 1.0 / (1 + Math.log(power.value / 0.05)) * baitDifficulty[activeBait.value] })
+
+const activeBaitText = computed(() => baitsNames[activeBait.value])
+const baitCount = computed(() => baits.value[activeBait.value])
+
+const handleNum = (e) => {
+  if (fishing.value) return
+  if (e.code === 'Digit1') {
+    store.dispatch('game/setActiveBait', 'worms')
+  } else if (e.code === 'Digit2') {
+    store.dispatch('game/setActiveBait', 'corn')
+  } else if (e.code === 'Digit3') {
+    store.dispatch('game/setActiveBait', 'maggots')
+  }
+}
 
 const handleSpace = (e) => {
   if (e.key !== ' ') return
 
-  const zone = computed(() => store.getters['game/getCurrentZone'])
-
   if (!active.value) {
-    startMiniGame(zone.value)
-    return
+    if (baitCount.value > 0) {
+      startMiniGame(zone.value)
+      return
+    }
   } else {
     const success = barPosition.value >= targetStart && barPosition.value <= targetEnd
     if (success) {
-      let randomVal = Math.floor(Math.random() * 100)
-
-      let fishType = 'common'
-      if (randomVal >= 75 && randomVal < 95) fishType = 'rare'
-      else if (randomVal >= 95) fishType = 'legendary'
-
-      console.log(randomVal)
+      const baitToFish = {
+        worms: 'common',
+        corn: 'rare',
+        maggots: 'legendary'
+      }
 
       store.dispatch('game/removeZone')
-      store.dispatch('game/addFish', fishType)
+      store.dispatch('game/addFish', baitToFish[activeBait.value])
     }
+    store.dispatch('game/useBait', activeBait.value)
     stopMiniGame()
   }
 }
@@ -72,7 +110,7 @@ const startMiniGame = (zone) => {
   }, delay)
 
   intervalID.value = setInterval(() => {
-    barPosition.value += direction.value * speed
+    barPosition.value += direction.value * speed.value
     if (barPosition.value >= 90) direction.value = -1
     if (barPosition.value <= 0) direction.value = 1
   }, 10)
@@ -86,10 +124,12 @@ const stopMiniGame = () => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleSpace)
+  window.addEventListener('keydown', handleNum)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleSpace)
+  window.removeEventListener('keydown', handleNum)
   clearInterval(intervalID.value)
 })
 </script>
@@ -101,7 +141,7 @@ onUnmounted(() => {
   transform: translateY(-50%);
   z-index: 3;
 
-  width: 300px;
+  width: 400px;
 
   padding: 18px;
   background-color: rgb(200, 200, 200);
@@ -115,9 +155,9 @@ onUnmounted(() => {
     font-style: bold;
   }
 
-  &__invite {
+  &__label {
     color: rgb(10, 10, 100);
-    font-size: 16px;
+    font-size: 18px;
     font-style: italic;
   }
 
@@ -130,7 +170,7 @@ onUnmounted(() => {
 
     &__bar {
       position: absolute;
-      width: 10%;
+      width: 5%;
       height: 100%;
       background-color: rgb(10, 10, 100);
 
@@ -145,7 +185,7 @@ onUnmounted(() => {
       left: 50%;
       transform: translateX(-50%);
 
-      width: 20%;
+      width: 10%;
       height: 100%;
 
       background-color: rgb(100, 10, 10);
