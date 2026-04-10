@@ -9,17 +9,17 @@
 
     <div class="market__item" v-if="inventory.common != 0">
       <span class="market__label">Окунь</span>
-      <button class="market__btn" @click="() => sellFish('common', commonFishPrice)">Продать за {{ commonFishPrice }}₽</button>
+      <button class="market__btn" @click="() => sellFish('common', fishPrices['common'])">Продать за {{ fishPrices['common'] }}₽</button>
     </div>
 
     <div class="market__item" v-if="inventory.rare != 0">
       <span class="market__label">Карп</span>
-      <button class="market__btn" @click="() => sellFish('rare', rareFishPrice)">Продать за {{ rareFishPrice }}₽</button>
+      <button class="market__btn" @click="() => sellFish('rare', fishPrices['rare'])">Продать за {{ fishPrices['rare'] }}₽</button>
     </div>
 
     <div class="market__item" v-if="inventory.legendary != 0">
       <span class="market__label">Язь <br>(здоровенный)</span>
-      <button class="market__btn" @click="() => sellFish('legendary', legendaryFishPrice)">Продать за {{ legendaryFishPrice }}₽</button>
+      <button class="market__btn" @click="() => sellFish('legendary', fishPrices['legendary'])">Продать за {{ fishPrices['legendary'] }}₽</button>
     </div>
   </div>
 
@@ -157,17 +157,17 @@
 
     <div class="market__item">
       <span class="market__label">Черви</span>
-      <button class="market__btn" @click="() => buyBait('worms', wormsPrice)">Купить за {{ wormsPrice }}₽</button>
+      <button class="market__btn" @click="() => buyBait('worms', baitsPrices['worms'])">Купить за {{ baitsPrices['worms'] }}₽</button>
     </div>
 
     <div class="market__item">
       <span class="market__label">Кукуруза</span>
-      <button class="market__btn" @click="() => buyBait('corn', cornPrice)">Купить за {{ cornPrice }}₽</button>
+      <button class="market__btn" @click="() => buyBait('corn', baitsPrices['corn'])">Купить за {{ baitsPrices['corn'] }}₽</button>
     </div>
 
     <div class="market__item">
       <span class="market__label">Опарыши</span>
-      <button class="market__btn" @click="() => buyBait('maggots', maggotsPrice)">Купить за {{ maggotsPrice }}₽</button>
+      <button class="market__btn" @click="() => buyBait('maggots', baitsPrices['maggots'])">Купить за {{ baitsPrices['maggots'] }}₽</button>
     </div>
   </div>
 
@@ -176,13 +176,13 @@
 
     <div class="market__item">
       <span class="market__label">Прикормка</span>
-      <button class="market__btn" @click="() => buyBait('groundbait', groundbaitPrice)">Купить за {{ groundbaitPrice }}₽</button>
+      <button class="market__btn" @click="() => buyBait('groundbait', baitsPrices['groundbait'])">Купить за {{ baitsPrices['groundbait'] }}₽</button>
     </div>
   </div>
 </div>
 <div class="market-invite" v-if="isIslandsNearly">
-  <div class="market__title" v-if="!opened">Нажмите Е чтобы открыть</div>
-  <div class="market__title" v-else>Нажмите Е чтобы закрыть</div>
+  <div class="market__title" v-if="!opened">Нажмите [Е] чтобы открыть</div>
+  <div class="market__title" v-else>Нажмите [Е] чтобы закрыть</div>
 </div>
 </template>
 
@@ -192,14 +192,18 @@ import { useStore } from 'vuex'
 
 const store = useStore()
 
-const commonFishPrice = 5
-const rareFishPrice = 20
-const legendaryFishPrice = 50
+const fishPrices = {
+  common: 5,
+  rare: 20,
+  legendary: 50
+}
 
-const wormsPrice = 3
-const cornPrice = 10
-const maggotsPrice = 25
-const groundbaitPrice = 30
+const baitsPrices = {
+  worms: 1,
+  corn: 10,
+  maggots: 25,
+  groundbait: 5
+}
 
 const opened = ref(false)
 
@@ -299,7 +303,7 @@ onUnmounted(() => {
     padding: 4px;
     margin: 4px;
 
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
 
     &::-webkit-scrollbar {

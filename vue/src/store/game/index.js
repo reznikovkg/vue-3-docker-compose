@@ -27,7 +27,7 @@ const defaultState = {
     direction: 1,
     rowing: false
   },
-  balance: 1000,
+  balance: 5000,
   inventory: {
     common: 0,
     rare: 0, 
@@ -48,10 +48,10 @@ const defaultState = {
     lines: [0]
   },
   baits: {
-    worms: 0,
-    corn: 0,
-    maggots: 0,
-    groundbait: 0
+    worms: 5,
+    corn: 3,
+    maggots: 1,
+    groundbait: 3
   },
   activeBait: 'worms',
   isFishing: false,
