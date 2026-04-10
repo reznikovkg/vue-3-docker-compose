@@ -75,6 +75,7 @@ const handleNum = (e) => {
 
 const handleSpace = (e) => {
   if (e.key !== ' ') return
+  if (!active.value && fishing.value) return
 
   if (!active.value) {
     if (baitCount.value > 0) {
