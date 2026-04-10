@@ -1,16 +1,21 @@
 <template>
   <div
-      class="grid__tile"
       :style="style"
       :class="classes"
       @click="handleClick"
-      @mouseover="handleHover"
-  />
+      @mouseenter="handleHover"
+  >
+    <div v-if="corners.tl" class="grid-cell__corner grid-cell__corner--tl"></div>
+    <div v-if="corners.tr" class="grid-cell__corner grid-cell__corner--tr"></div>
+    <div v-if="corners.bl" class="grid-cell__corner grid-cell__corner--bl"></div>
+    <div v-if="corners.br" class="grid-cell__corner grid-cell__corner--br"></div>
+  </div>
 </template>
 
 <script setup>
 import {computed} from 'vue'
 import {useStore} from 'vuex'
+import {DARK_COLORS} from "@/constants/colors.js";
 
 const props = defineProps({
   x: Number,
@@ -24,8 +29,8 @@ const previewMap = computed(() => store.getters.previewMap)
 
 const emit = defineEmits(['hoverCell'])
 
-const selectedShape = computed(() => store.state.grid.selectedShape)
-const mode = computed(() => store.state.grid.mode)
+const selectedShape = computed(() => store.getters.selectedShape)
+const mode = computed(() => store.getters.mode)
 
 const key = computed(() => `${props.x}-${props.y}`)
 
@@ -35,28 +40,103 @@ const color = computed(() => {
   }
 
   if (occupiedMap.value?.has(key.value)) {
-    return occupiedMap.value.get(key.value)
+    return occupiedMap.value.get(key.value).shape.color
   }
 
-  return 'white'
+  return '#c0ea96'
+})
+
+const obj = computed(() => occupiedMap.value?.get(key.value))
+
+const isConnected = (x, y) => {
+  const neighbor = occupiedMap.value?.get(`${x}-${y}`)
+
+  if (!neighbor || !obj.value) return false
+
+  if (obj.value.shape.id === 'road') {
+    return neighbor.shape.id === 'road'
+  }
+
+  return neighbor === obj.value
+}
+
+const hasTop = computed(() => {
+  return obj.value && isConnected(props.x, props.y - 1);
+})
+
+const hasBottom = computed(() => {
+  return obj.value && isConnected(props.x, props.y + 1);
+})
+
+const hasLeft = computed(() => {
+  return obj.value && isConnected(props.x - 1, props.y);
+})
+
+const hasRight = computed(() => {
+  return obj.value && isConnected(props.x + 1, props.y);
+})
+
+const hasTopLeft = computed(() => {
+  return obj.value && isConnected(props.x - 1, props.y - 1);
+})
+
+const hasTopRight = computed(() => {
+  return obj.value && isConnected(props.x + 1, props.y - 1);
+})
+
+const hasBottomLeft = computed(() => {
+  return obj.value && isConnected(props.x - 1, props.y + 1);
+})
+
+const hasBottomRight = computed(() => {
+  return obj.value && isConnected(props.x + 1, props.y + 1);
 })
 
 const style = computed(() => {
-  const offset = store.state.grid.width * 30
+  const wallColor = DARK_COLORS[color.value] || '#000'
+  let shadow = ''
+
+  if (obj.value) {
+    if (!hasTop.value) {
+      shadow += `inset 0 8px 0 0 ${wallColor},`
+    }
+    if (!hasBottom.value) {
+      shadow += `inset 0 -8px 0 0 ${wallColor},`
+    }
+    if (!hasLeft.value) {
+      shadow += `inset 8px 0 0 0 ${wallColor},`
+    }
+    if (!hasRight.value) {
+      shadow += `inset -8px 0 0 0 ${wallColor},`
+    }
+  }
 
   return {
-    transform: `translate(${props.x * 60 - offset}px, ${props.y * 60 - offset}px)`,
-    backgroundColor: color.value
+    backgroundColor: color.value,
+    color: DARK_COLORS[color.value],
+    boxShadow: shadow ? shadow.slice(0, -1) : undefined
+  }
+})
+
+const corners = computed(() => {
+  if (!obj.value) {
+    return {}
+  }
+
+  return {
+    tl: (!hasTop.value && !hasLeft.value) || !hasTopLeft.value,
+    tr: (!hasTop.value && !hasRight.value) || !hasTopRight.value,
+    bl: (!hasBottom.value && !hasLeft.value) || !hasBottomLeft.value,
+    br: (!hasBottom.value && !hasRight.value) || !hasBottomRight.value,
   }
 })
 
 const handleHover = () => {
-  emit('hoverCell', { x: props.x, y: props.y })
+  emit('hoverCell', {x: props.x, y: props.y})
 }
 
 const handleClick = () => {
-  const shape = store.state.grid.selectedShape
-  const origin = { x: props.x, y: props.y }
+  const origin = {x: props.x, y: props.y}
 
   if (mode.value === 'delete') {
     store.dispatch('removeObject', {
@@ -65,13 +145,17 @@ const handleClick = () => {
     })
   }
 
-  if (!shape) return
+  if (!selectedShape.value) {
+    return
+  }
 
   if (mode.value === 'build' && selectedShape.value) {
-    store.dispatch('placeObject', {
-      shape,
-      origin
-    })
+    store.dispatch('placeObject', {origin})
+        .then(result => {
+          if (!result?.ok) {
+            alert(result?.message || 'Нельзя поставить')
+          }
+        })
   }
 }
 
@@ -84,7 +168,12 @@ const classes = computed(() => ({
 
 <style lang="less" scoped>
 .grid-cell {
+  position: relative;
+  width: 60px;
+  height: 60px;
   opacity: 1;
+  box-sizing: border-box;
+  border: solid 1px #222222;
 
   &--preview {
     opacity: 0.6;
@@ -92,6 +181,18 @@ const classes = computed(() => ({
 
   &--invalid {
     opacity: 1;
+  }
+
+  &__corner {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+
+    &--tl { top: 0; left: 0; }
+    &--tr { top: 0; right: 0; }
+    &--bl { bottom: 0; left: 0; }
+    &--br { bottom: 0; right: 0; }
   }
 }
 </style>

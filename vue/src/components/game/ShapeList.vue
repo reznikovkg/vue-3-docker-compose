@@ -26,7 +26,7 @@ import {computed} from "vue";
 
 const store = useStore()
 
-const shapes = computed(() => store.state.shapes)
+const shapes = computed(() => store.getters.shapes)
 
 const getWidth = (shape) => {
   const xs = shape.cells.map(c => c.x)
@@ -38,7 +38,7 @@ const getHeight = (shape) => {
   return Math.max(...ys) - Math.min(...ys) + 1
 }
 
-const selectedShape = computed(() => store.state.grid.selectedShape)
+const selectedShape = computed(() => store.getters.selectedShape)
 
 const handleSelect = (shape) => {
   store.dispatch('setPreviewOrigin', null)

@@ -1,5 +1,5 @@
 import {createStore} from 'vuex'
-import {canPlaceShape} from '@/utils/canPlace'
+import {canPlaceShape} from '@/utils/utils.js'
 
 export const MUTATIONS = {
     SET_SHAPE: 'SET_SHAPE',
@@ -13,6 +13,8 @@ export const MUTATIONS = {
     SET_OFFSET: 'SET_OFFSET',
     MOVE_OFFSET: 'MOVE_OFFSET',
     SET_SCALE: 'SET_SCALE',
+    DECREASE_BALANCE: 'DECREASE_BALANCE',
+    INCREASE_BALANCE: 'INCREASE_BALANCE'
 }
 
 export default createStore({
@@ -40,8 +42,9 @@ export default createStore({
 
             return {ok: true}
         },
-        placeObject({state, getters, commit}, {shape, origin}) {
+        placeObject({state, getters, commit}, {origin}) {
             const occupiedMap = getters.occupiedMap
+            const shape = state.grid.selectedShape
 
             const canPlace = canPlaceShape({
                 shape,
@@ -52,6 +55,14 @@ export default createStore({
             })
 
             if (!canPlace) return {ok: false}
+
+            if (state.park.balance < shape.cost) {
+                commit(MUTATIONS.SET_SHAPE, null)
+                commit(MUTATIONS.SET_PREVIEW_ORIGIN, null)
+                return { ok: false, message: 'Недостаточно средств' }
+            }
+
+            commit(MUTATIONS.DECREASE_BALANCE, shape.cost)
 
             commit(MUTATIONS.ADD_OBJECT, {
                 id: crypto.randomUUID(),
@@ -98,7 +109,14 @@ export default createStore({
             commit(MUTATIONS.ADD_OBJECT, obj)
         },
 
-        removeObject({commit}, payload) {
+        removeObject({commit, getters}, payload) {
+            const occupiedMap = getters.occupiedMap
+            const obj = occupiedMap.get(`${payload.x}-${payload.y}`)
+
+            const refund = Math.floor(obj.shape.cost * 0.5)
+
+            commit(MUTATIONS.INCREASE_BALANCE, refund)
+
             commit(MUTATIONS.REMOVE_OBJECT, payload)
         },
 
@@ -107,19 +125,49 @@ export default createStore({
         }
     },
     getters: {
-        occupiedMap: (state) => {
-            const map = new Map()
-
-            for (const obj of state.grid.objects) {
-                for (const cell of obj.shape.cells) {
-                    const x = obj.origin.x + cell.x
-                    const y = obj.origin.y + cell.y
-
-                    map.set(`${x}-${y}`, obj.shape.color)
-                }
+        viewport(state) {
+            return state.viewport
+        },
+        scale(state) {
+            return state.viewport.scale
+        },
+        isPanning(state) {
+            return state.viewport.isPanning
+        },
+        width(state) {
+            return state.grid.width
+        },
+        height(state) {
+            return state.grid.height
+        },
+        mode(state) {
+            return state.grid.mode
+        },
+        shapes(state) {
+            return state.shapes
+        },
+        shapesOnGrid(state) {
+            return state.grid.shapes
+        },
+        selectedShape(state) {
+            return state.grid.selectedShape
+        },
+        buildings: (state) => {
+            return state.grid.objects.filter(obj => obj.shape.id !== 'road')
+        },
+        roads: (state) => {
+            return state.grid.objects.filter(obj => obj.shape.id === 'road')
+        },
+        stats: (state, getters) => {
+            return {
+                balance: state.park.balance,
+                buildingsCount: getters.buildings.length,
+                roadsCount: getters.roads.length,
+                visitorsCount: state.visitors.length
             }
-
-            return map
+        },
+        occupiedMap: (state) => {
+            return state.grid.occupiedMap
         },
         previewMap: (state, getters) => {
             const map = new Map()
@@ -169,16 +217,28 @@ export default createStore({
         },
         ADD_OBJECT(state, obj) {
             state.grid.objects.push(obj)
+
+            for (const cell of obj.shape.cells) {
+                const x = obj.origin.x + cell.x
+                const y = obj.origin.y + cell.y
+
+                state.grid.occupiedMap.set(`${x}-${y}`, obj)
+            }
         },
         REMOVE_OBJECT(state, {x, y}) {
-            state.grid.objects = state.grid.objects.filter(obj => {
-                return !obj.shape.cells.some(cell => {
-                    return (
-                        obj.origin.x + cell.x === x &&
-                        obj.origin.y + cell.y === y
-                    )
-                })
-            })
+            const obj = state.grid.occupiedMap.get(`${x}-${y}`)
+            if (!obj) {
+                return
+            }
+
+            for (const cell of obj.shape.cells) {
+                const cx = obj.origin.x + cell.x
+                const cy = obj.origin.y + cell.y
+
+                state.grid.occupiedMap.delete(`${cx}-${cy}`)
+            }
+
+            state.grid.objects = state.grid.objects.filter(o => o !== obj)
         },
         SET_MODE(state, mode) {
             state.grid.mode = mode
@@ -186,15 +246,19 @@ export default createStore({
         SET_PANNING(state, value) {
             state.viewport.isPanning = value
         },
-
         SET_OFFSET(state, {x, y}) {
             state.viewport.offsetX = x
             state.viewport.offsetY = y
         },
-
         MOVE_OFFSET(state, {dx, dy}) {
             state.viewport.offsetX += dx
             state.viewport.offsetY += dy
+        },
+        DECREASE_BALANCE(state, amount) {
+            state.park.balance -= amount
+        },
+        INCREASE_BALANCE(state, amount) {
+            state.park.balance += amount
         }
     },
     state: {
@@ -205,25 +269,32 @@ export default createStore({
             selectedShape: null,
             draggingShape: null,
             previewOrigin: null,
+            occupiedMap: new Map(),
             mode: 'build'
         },
         viewport: {
-            offsetX: 320,
-            offsetY: 450,
+            offsetX: 103,
+            offsetY: 61,
             scale: 1,
             isPanning: false
         },
+        park: {
+            balance: 1000
+        },
+        visitors: [],
         shapes: [
             {
                 id: 'road',
                 name: 'Road',
                 color: 'gray',
+                cost: 10,
                 cells: [{x: 0, y: 0}]
             },
             {
                 id: 'feed_zone',
                 name: 'Feeding Zone',
                 color: 'green',
+                cost: 150,
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -234,6 +305,7 @@ export default createStore({
                 id: 'visitor_center',
                 name: 'Visitor Center',
                 color: 'yellow',
+                cost: 200,
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -245,6 +317,7 @@ export default createStore({
                 id: 'dino_arena',
                 name: 'Raptor Arena',
                 color: 'pink',
+                cost: 400,
                 cells: [
                     {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0},
                     {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1},
@@ -255,6 +328,7 @@ export default createStore({
                 id: 'jungle_ride',
                 name: 'Jungle Ride',
                 color: 'orange',
+                cost: 400,
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -266,6 +340,7 @@ export default createStore({
                 id: 'observation_tower',
                 name: 'Observation Tower',
                 color: 'purple',
+                cost: 300,
                 cells: [
                     {x: 0, y: 0},
                     {x: 0, y: 1},
@@ -277,6 +352,7 @@ export default createStore({
                 id: 'jungle_maze',
                 name: 'Jungle Maze',
                 color: 'cyan',
+                cost: 500,
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -290,6 +366,7 @@ export default createStore({
                 id: 'rex_enclosure',
                 name: 'T-Rex Enclosure',
                 color: 'blue',
+                cost: 250,
                 cells: [
                     {x: 0, y: 0},
                     {x: 0, y: 1},

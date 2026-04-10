@@ -55,15 +55,15 @@ import {MUTATIONS} from "@/store/index.js";
 
 const store = useStore()
 
-const mode = computed(() => store.state.grid.mode)
+const mode = computed(() => store.getters.mode)
 
 const setMode = mode => store.commit(MUTATIONS.SET_MODE, mode)
 
-const localWidth = ref(store.state.grid.width)
-const localHeight = ref(store.state.grid.height)
+const localWidth = ref(store.getters.width)
+const localHeight = ref(store.getters.height)
 
-watch(() => store.state.grid.width, v => localWidth.value = v)
-watch(() => store.state.grid.height, v => localHeight.value = v)
+watch(() => store.getters.width, v => localWidth.value = v)
+watch(() => store.getters.height, v => localHeight.value = v)
 
 const applyResize = async () => {
   const res = await store.dispatch('resizeGrid', {
@@ -74,8 +74,8 @@ const applyResize = async () => {
   if (!res.ok) {
     alert(res.message)
 
-    localWidth.value = store.state.grid.width
-    localHeight.value = store.state.grid.height
+    localWidth.value = store.getters.width
+    localHeight.value = store.getters.height
   }
 }
 </script>

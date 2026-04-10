@@ -1,14 +1,13 @@
-<>
 <template>
   <div class="game-page">
+    <StatsPanel/>
     <div class="game-page__container">
-
       <div class="game-page__grid-panel"
            @mousedown="onMouseDown"
            @mousemove="onMouseMove"
            @mouseup="onMouseUp"
            @mouseleave="onMouseUp"
-           @wheel="onWheel">>
+           @wheel="onWheel">
 
         <div class="game-page__grid"
              :style="gridStyle">
@@ -30,6 +29,7 @@ import Toolbar from '../game/Toolbar.vue'
 import GameGrid from '../game/GameGrid.vue'
 import {useStore} from "vuex";
 import {computed} from "vue";
+import StatsPanel from "@/components/game/StatsPanel.vue";
 
 const store = useStore()
 
@@ -44,7 +44,7 @@ const onMouseDown = (e) => {
 }
 
 const onMouseMove = (e) => {
-  if (!store.state.viewport.isPanning) return
+  if (!store.getters.isPanning) return
 
   const dx = e.clientX - startX
   const dy = e.clientY - startY
@@ -64,7 +64,7 @@ const onWheel = (e) => {
 
   const zoomSpeed = 0.001
 
-  let newScale = store.state.viewport.scale - e.deltaY * zoomSpeed
+  let newScale = store.getters.scale - e.deltaY * zoomSpeed
 
   newScale = Math.min(Math.max(newScale, 0.5), 2)
 
@@ -72,7 +72,7 @@ const onWheel = (e) => {
 }
 
 const gridStyle = computed(() => {
-  const {offsetX, offsetY, scale} = store.state.viewport
+  const {offsetX, offsetY, scale} = store.getters.viewport
 
   return {
     transform: `
@@ -89,9 +89,13 @@ const gridStyle = computed(() => {
 .game-page {
   min-height: 100vh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+
   background: #f2f2f2;
+  padding-top: 20px;
+  gap: 20px;
 
   &__container {
     display: flex;

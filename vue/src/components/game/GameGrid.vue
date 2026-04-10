@@ -1,51 +1,39 @@
 <template>
-  <div class="grid">
-    <div
-        v-for="y in height"
-        :key="y"
-        class="grid__row"
-    >
-      <GridCell
-          v-for="x in width"
-          :key="`${x}-${y}`"
-          :x="x - 1"
-          :y="y - 1"
-          @hoverCell="onHoverCell"
-      />
-    </div>
+  <div class="grid"
+       :style="gridStyle">
+    <GridCell
+        v-for="index in width * height"
+        :key="index"
+        :x="(index - 1) % width"
+        :y="Math.floor((index - 1) / width)"
+        @hoverCell="onHoverCell"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useStore } from 'vuex'
+import {computed} from 'vue'
+import {useStore} from 'vuex'
 import GridCell from "@/components/game/GridCell.vue";
 
 const store = useStore()
 
-const width = computed(() => store.state.grid.width)
-const height = computed(() => store.state.grid.height)
+const width = computed(() => store.getters.width)
+const height = computed(() => store.getters.height)
 
-const onHoverCell = ({ x, y }) => {
-  store.dispatch('setPreviewOrigin', { x, y })
+const onHoverCell = ({x, y}) => {
+  store.dispatch('setPreviewOrigin', {x, y})
 }
+
+const gridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${width.value}, 60px)`,
+  gridTemplateRows: `repeat(${height.value}, 60px)`
+}))
 </script>
 
 <style lang="less" scoped>
 .grid {
-  position: absolute;
-  left: 0;
-  top: 0;
-
-  transform-style: preserve-3d;
-  will-change: transform;
-
-  &__tile {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: white;
-    border: 1px solid #ddd;
-  }
+  display: grid;
+  background-size: 60px 60px;
 }
 </style>
