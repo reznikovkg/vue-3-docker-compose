@@ -89,7 +89,7 @@
       <button 
         class="market__btn"
         v-else-if="tacklesOwned.bobbers.includes(bobber.id) && bobber.id !== 0" 
-        @click="() => sellTackle('bobbers', rod)">
+        @click="() => sellTackle('bobbers', bobber)">
         Продать за {{ bobber.price / 2 }}₽ 
       </button>
 
