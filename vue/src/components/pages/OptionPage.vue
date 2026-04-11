@@ -53,7 +53,7 @@
                 
               <div class="options__page__grid__item__color__dropdown" v-if="showColorDropdown">
                 <div 
-                    v-for="color in colorOptions" 
+                    v-for="color in bubbleColors" 
                     class="options__page__grid__item__color__dropdown__option" 
                     :key="color.value" 
                     :class="{ active: color.value === localSettings.targetColor }" 
@@ -181,18 +181,11 @@
 
 
 <script lang="ts">
-import { mapGetters, mapActions } from 'vuex';
-import blueBubble from './../../assets/bubbles/bubble_blue.png'
-import greenBubble from './../../assets/bubbles/bubble_green.png'
-import orangeBubble from './../../assets/bubbles/bubble_orange.png'
-import pinkBubble from './../../assets/bubbles/bubble_pink.png'
-import purpleBubble from './../../assets/bubbles/bubble_purple.png'
-import redBubble from './../../assets/bubbles/bubble_red.png'
-import whiteBubble from './../../assets/bubbles/bubble_white.png'
-import yellowBubble from './../../assets/bubbles/bubble_yellow.png'
+import { mapGetters, mapActions } from 'vuex'
 import bgVideo from './../../assets/videos/background.mp4'
 import soundManager from './../../utils/soundManager'
-import BackgroundVideo from './../ui/BackgroundVideo.vue';
+import BackgroundVideo from './../ui/BackgroundVideo.vue'
+import { BUBBLE_COLORS, getBubbleImage, getBubbleName } from './../../config/bubbles'
 
 export default {
   name: 'OptionPage',
@@ -227,18 +220,6 @@ export default {
       'getFPS',
       'getGameModeName'
     ]),
-    colorOptions() {
-      return [
-        { value: 'red', name: 'Красный', image: redBubble },
-        { value: 'blue', name: 'Синий', image: blueBubble },
-        { value: 'green', name: 'Зелёный', image: greenBubble },
-        { value: 'yellow', name: 'Жёлтый', image: yellowBubble },
-        { value: 'purple', name: 'Фиолетовый', image: purpleBubble },
-        { value: 'pink', name: 'Розовый', image: pinkBubble },
-        { value: 'orange', name: 'Оранжевый', image: orangeBubble },
-        { value: 'white', name: 'Белый', image: whiteBubble }
-      ]
-    },
     getLocalSpawnInterval(): string {
       return (1 / this.localSettings.spawnRate).toFixed(2)
     },
@@ -270,6 +251,9 @@ export default {
     },
     bgVideoUrl() {
       return bgVideo
+    },
+    bubbleColors() {
+      return BUBBLE_COLORS
     }
   },
   mounted() {
@@ -283,8 +267,7 @@ export default {
       'resetAll'
     ]),
     getColorImage(colorValue: string): string {
-      const color = this.colorOptions.find(c => c.value === colorValue)
-      return color ? color.image : whiteBubble
+      return getBubbleImage(colorValue)
     },
     loadSettingsFromStore() {
       const saved = this.getSettings
@@ -292,8 +275,7 @@ export default {
       this.localGameMode = this.getGameMode
     },
     getColorName(colorValue: string): string {
-      const color = this.colorOptions.find(c => c.value === colorValue)
-      return color ? color.name : colorValue
+      return getBubbleName(colorValue)
     },
     selectColor(colorValue: string) {
       this.playClickSound()

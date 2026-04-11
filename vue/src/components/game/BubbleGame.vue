@@ -3,7 +3,7 @@
     <div class="bubble-game__score">Счёт {{ score.toFixed(1) }}</div>
     <div class="bubble-game__timer" :class="{'bubble-game__timer--warning': timeLeft <= 15}">{{ formattedTime }}</div>
     <div class="bubble-game__multiplier">
-      <div class="bubble-game__multiplier--current">
+      <div :class="['bubble-game__multiplier--current', multiplierClass]">
         {{ currentMultiplier.toFixed(1) }}x
       </div>
     </div>
@@ -65,20 +65,12 @@
 </template>
 
 <script>
-import blueBubble from './../../assets/bubbles/bubble_blue.png'
-import greenBubble from './../../assets/bubbles/bubble_green.png'
-import orangeBubble from './../../assets/bubbles/bubble_orange.png'
-import pinkBubble from './../../assets/bubbles/bubble_pink.png'
-import purpleBubble from './../../assets/bubbles/bubble_purple.png'
-import redBubble from './../../assets/bubbles/bubble_red.png'
-import whiteBubble from './../../assets/bubbles/bubble_white.png'
-import yellowBubble from './../../assets/bubbles/bubble_yellow.png'
 import soundManager from './../../utils/soundManager'
 import CursorManager from './../../utils/cursor/CursorManager'
 import GameModeManager from './../../utils/game/GameModeManager'
 import { mapGetters } from 'vuex'
 import BombExplosion from './BombExplosion.vue'
-
+import { BUBBLE_IMAGES, ALL_COLORS, getBubbleName } from './../../config/bubbles'
 
 export default {
   name: 'Bubblegame',
@@ -153,33 +145,11 @@ export default {
       const seconds = this.timeLeft % 60
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
     },
-    imageFiles() {
-      return {
-        blue: blueBubble,
-        green: greenBubble,
-        orange: orangeBubble,
-        pink: pinkBubble,
-        purple: purpleBubble,
-        red: redBubble,
-        white: whiteBubble,
-        yellow: yellowBubble
-      }
-    },
     getTargetColorImage() {
-      return this.imageFiles[this.targetColor]
+      return BUBBLE_IMAGES[this.targetColor]
     },
     getTargetColorName() {
-      const names = {
-        blue: 'Синий', 
-        green: 'Зелёный', 
-        orange: 'Оранжевый',
-        pink: 'Розовый', 
-        purple: 'Фиолетовый', 
-        red: 'Красный',
-        white: 'Белый', 
-        yellow: 'Жёлтый'
-      }
-      return names[this.targetColor] || this.targetColor
+      return getBubbleName(this.targetColor)
     },
     bubbleConfig() {
       return [
@@ -207,11 +177,8 @@ export default {
         }
       }
     },
-    allColors() {
-      return ['white', 'blue', 'red', 'green', 'yellow', 'purple', 'pink', 'orange']
-    },
     gameColors() {
-      let colors = this.allColors.slice(0, this.totalColors)
+      let colors = ALL_COLORS.slice(0, this.totalColors)
       if (!colors.includes(this.targetColor)) {
         colors = colors.slice(0, -1)
         colors.push(this.targetColor)
@@ -221,6 +188,9 @@ export default {
     },
     targetFPS() {
       return this.getFPS || 60
+    },
+    multiplierClass() {
+      return this.lastHitWasWrong ? 'bubble-game__multiplier--wrong' : 'bubble-game__multiplier--correct'
     }
   },
   mounted() {
@@ -326,9 +296,9 @@ export default {
         if (isCorrect) {
           points = this.pointsForCorrect * this.currentMultiplier
 
-          if (this.lastHitWasWorng) {
+          if (this.lastHitWasWrong) {
             this.currentMultiplier = 1
-            this.lastHitWasWorng = false
+            this.lastHitWasWrong = false
           } else {
             this.currentMultiplier = Math.min(5, this.currentMultiplier * 1.2)
           }
@@ -337,9 +307,9 @@ export default {
           const config = this.bubbleConfig.find(c => c.name === bubble.sizeName)
           points = config.sizePenalties * this.currentMultiplier
 
-          if (!this.lastHitWasWorng) {
+          if (!this.lastHitWasWrong) {
             this.currentMultiplier = 1
-            this.lastHitWasWorng = true
+            this.lastHitWasWrong = true
           } else {
             this.currentMultiplier = Math.min(7, this.currentMultiplier * 1.3)
           }
@@ -402,9 +372,9 @@ export default {
     },
     loadImages() {   
       let loadedCount = 0
-      const totalImages = Object.keys(this.imageFiles).length
+      const totalImages = Object.keys(BUBBLE_IMAGES).length
       
-      Object.entries(this.imageFiles).forEach(([color, src]) => {
+      Object.entries(BUBBLE_IMAGES).forEach(([color, src]) => {
         const img = new Image()
         img.onload = () => {
           loadedCount++
@@ -1243,10 +1213,21 @@ html, body {
     pointer-events: none;
     text-align: center;
     min-width: 120px;
+    transition: all 0.2s ease;
+  }
+
+  &__multiplier--correct {
     color: #00d389;
     text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
     border-left: 3px solid #00d389;
     animation: pulseCorrect 1.2s ease-in-out infinite;
+  }
+
+  &__multiplier--wrong {
+    color: #ff6b6b;
+    text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+    border-left: 3px solid #ff6b6b;
+    animation: pulseWrong 1.2s ease-in-out infinite;
   }
 
   &__target {
@@ -1407,6 +1388,21 @@ html, body {
   100% { 
     transform: scale(1);
     text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
+  }
+}
+
+@keyframes pulseWrong {
+  0% { 
+    transform: scale(1);
+    text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+  }
+  50% { 
+    transform: scale(1.05);
+    text-shadow: 0 0 25px rgba(255, 107, 107, 0.9);
+  }
+  100% { 
+    transform: scale(1);
+    text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
   }
 }
 
