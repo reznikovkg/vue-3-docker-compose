@@ -1,7 +1,7 @@
 <template>
   <div class="visitor" :style="style">
     <div class="visitor__label">
-      {{ money }}
+     {{ visitor.money }}
     </div>
   </div>
 </template>
@@ -10,29 +10,31 @@
 import {computed} from 'vue'
 
 const props = defineProps({
-  money: Number,
-  node: String,
+  visitor: {
+    type: Object,
+    required: true
+  }
 })
 
 const CELL_SIZE = 60
 
 const style = computed(() => {
-  const node = props.node
+  const node = props.visitor.node
 
   const [x, y] = node.split(':').map(Number)
-  const size = 20 + props.money * 0.1
+  const size = 20 + props.visitor.money * 0.1
 
   return {
     left: `${x * CELL_SIZE + CELL_SIZE / 2 - size / 2}px`,
     top: `${y * CELL_SIZE + CELL_SIZE / 2 - size / 2}px`,
     width: `${size}px`,
     height: `${size}px`,
-    background: props.money > 70
+    background: props.visitor.money > 70
         ? 'green'
-        : props.money > 40
+        : props.visitor.money > 40
             ? 'orange'
             : 'red',
-    transition: 'left 0.8s linear, top 0.8s linear'
+    transition: 'left 0.9s linear, top 0.9s linear'
   }
 })
 </script>

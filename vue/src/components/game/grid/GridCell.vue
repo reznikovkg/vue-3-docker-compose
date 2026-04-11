@@ -190,8 +190,8 @@ const classes = computed(() => ({
   border: solid 1px #222222;
 
   &--entry {
-    outline: 3px dashed #000;
-    outline-offset: -3px;
+    outline: 8px dashed #ffffff;
+    outline-offset: -8px;
   }
 
   &--preview {

@@ -1,6 +1,6 @@
 <template>
-  <div class="game-page__grid-wrapper">
-    <div class="game-page__grid"
+  <div class="game-grid__grid-wrapper">
+    <div class="game-grid__grid"
          :style="gridStyle">
       <GridCell
           v-for="index in width * height"
@@ -11,13 +11,13 @@
       />
     </div>
 
-    <div class="game-page__entrance" :style="entranceStyle"/>
+    <div class="game-grid__entrance" :style="entranceStyle"/>
 
-    <div class="game-page__visitors-layer">
+    <div class="game-grid__visitors-layer">
       <Visitor
           v-for="v in visitors"
-          :money="v.money"
-          :node="v.node"
+          :key="v.id"
+          :visitor="v"
       />
     </div>
   </div>
@@ -66,7 +66,7 @@ onMounted(() => {
 </script>
 
 <style lang="less" scoped>
-.game-page {
+.game-grid {
   &__grid-wrapper {
     position: relative;
     width: fit-content;
@@ -75,6 +75,8 @@ onMounted(() => {
 
   &__grid {
     display: grid;
+    width: 2000px;
+    height: 2000px;
   }
 
   &__entrance {

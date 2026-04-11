@@ -1,5 +1,5 @@
 <template>
-  <div class="toolbar" >
+  <div class="toolbar">
     <div class="toolbar__modes">
       <button
           class="toolbar__button toolbar__button--build"
@@ -19,7 +19,7 @@
 
     </div>
 
-    <div class="toolbar__grid-size"  :class="{ 'is-disabled': mode === 'delete' }">
+    <div class="toolbar__grid-size" :class="{ 'is-disabled': mode === 'delete' }">
       <label>
         Width:
         <input
@@ -64,18 +64,19 @@ const localHeight = ref(store.getters.height)
 watch(() => store.getters.width, v => localWidth.value = v)
 watch(() => store.getters.height, v => localHeight.value = v)
 
-const applyResize = async () => {
-  const res = await store.dispatch('resizeGrid', {
+const applyResize = () => {
+  store.dispatch('resizeGrid', {
     width: localWidth.value,
     height: localHeight.value
   })
+      .then(res => {
+        if (!res.ok) {
+          alert(res.message)
 
-  if (!res.ok) {
-    alert(res.message)
-
-    localWidth.value = store.getters.width
-    localHeight.value = store.getters.height
-  }
+          localWidth.value = store.getters.width
+          localHeight.value = store.getters.height
+        }
+      })
 }
 </script>
 

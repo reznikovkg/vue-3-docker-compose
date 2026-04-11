@@ -429,8 +429,8 @@ export default createStore({
             mode: 'build'
         },
         viewport: {
-            offsetX: 103,
-            offsetY: 61,
+            offsetX: -384,
+            offsetY: -373,
             scale: 1,
             isPanning: false
         },
