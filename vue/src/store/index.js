@@ -14,11 +14,56 @@ export const MUTATIONS = {
     MOVE_OFFSET: 'MOVE_OFFSET',
     SET_SCALE: 'SET_SCALE',
     DECREASE_BALANCE: 'DECREASE_BALANCE',
-    INCREASE_BALANCE: 'INCREASE_BALANCE'
+    INCREASE_BALANCE: 'INCREASE_BALANCE',
+    ADD_VISITOR: 'ADD_VISITOR'
 }
 
 export default createStore({
     actions: {
+        tickVisitors({state, getters}) {
+            const graph = getters.roadGraph
+
+            for (const v of state.visitors) {
+
+                const neighbors = graph.get(v.node) || []
+
+                if (!neighbors.length) continue
+
+                let options = neighbors
+
+                if (v.prevNode) {
+                    options = neighbors.filter(n => n !== v.prevNode)
+                }
+
+                const next = options.length
+                    ? options[Math.floor(Math.random() * options.length)]
+                    : neighbors[0]
+
+                v.prevNode = v.node
+                v.node = next
+            }
+        },
+
+        spawnVisitor({commit, state, getters}) {
+            const max = getters.buildings.length
+
+            if (state.visitors.length >= max) {
+                return
+            }
+
+            const entry = state.park.entrance
+
+            const startNode = `${entry.x}-${entry.y}`
+
+            commit(MUTATIONS.ADD_VISITOR, {
+                id: crypto.randomUUID(),
+                node: startNode,
+                prevNode: null,
+                state: 'walking',
+                money: Math.floor(20 + Math.random() * 81)
+            })
+        },
+
         resizeGrid({state, commit}, {width, height}) {
             const objects = state.grid.objects
 
@@ -42,6 +87,7 @@ export default createStore({
 
             return {ok: true}
         },
+
         placeObject({state, getters, commit}, {origin}) {
             const occupiedMap = getters.occupiedMap
             const shape = state.grid.selectedShape
@@ -59,7 +105,7 @@ export default createStore({
             if (state.park.balance < shape.cost) {
                 commit(MUTATIONS.SET_SHAPE, null)
                 commit(MUTATIONS.SET_PREVIEW_ORIGIN, null)
-                return { ok: false, message: 'Недостаточно средств' }
+                return {ok: false, message: 'Недостаточно средств'}
             }
 
             commit(MUTATIONS.DECREASE_BALANCE, shape.cost)
@@ -77,6 +123,7 @@ export default createStore({
 
             return {ok: true}
         },
+
         setScale({commit}, scale) {
             commit(MUTATIONS.SET_SCALE, scale)
         },
@@ -125,39 +172,93 @@ export default createStore({
         }
     },
     getters: {
+        roadGraph: (state, getters) => {
+            const graph = new Map()
+            const occupiedMap = getters.occupiedMap
+
+            const dirs = [
+                [1, 0], [-1, 0], [0, 1], [0, -1]
+            ]
+
+            const isRoad = (x, y) => {
+                const obj = occupiedMap.get(`${x}-${y}`)
+                return obj && obj.shape.id === 'road'
+            }
+
+            for (const [key, obj] of occupiedMap) {
+                if (obj.shape.id !== 'road') continue
+
+                const [x, y] = key.split('-').map(Number)
+
+                const neighbors = []
+
+                for (const [dx, dy] of dirs) {
+                    const nx = x + dx
+                    const ny = y + dy
+
+                    if (isRoad(nx, ny)) {
+                        neighbors.push(`${nx}-${ny}`)
+                    }
+                }
+
+                graph.set(key, neighbors)
+            }
+
+            const entry = state.park.entrance
+
+            const startNode = `${entry.x}-${entry.y}`
+            const nextNode = `${entry.x + 1}-${entry.y}`
+
+            graph.set(startNode, [nextNode])
+            graph.set(nextNode, [startNode])
+
+            return graph
+        },
+
+        visitors(state) {
+            return state.visitors
+        },
+
         viewport(state) {
             return state.viewport
         },
+
         scale(state) {
             return state.viewport.scale
         },
+
         isPanning(state) {
             return state.viewport.isPanning
         },
+
         width(state) {
             return state.grid.width
         },
+
         height(state) {
             return state.grid.height
         },
+
         mode(state) {
             return state.grid.mode
         },
+
         shapes(state) {
             return state.shapes
         },
-        shapesOnGrid(state) {
-            return state.grid.shapes
-        },
+
         selectedShape(state) {
             return state.grid.selectedShape
         },
+
         buildings: (state) => {
             return state.grid.objects.filter(obj => obj.shape.id !== 'road')
         },
+
         roads: (state) => {
             return state.grid.objects.filter(obj => obj.shape.id === 'road')
         },
+
         stats: (state, getters) => {
             return {
                 balance: state.park.balance,
@@ -166,9 +267,11 @@ export default createStore({
                 visitorsCount: state.visitors.length
             }
         },
+
         occupiedMap: (state) => {
             return state.grid.occupiedMap
         },
+
         previewMap: (state, getters) => {
             const map = new Map()
 
@@ -199,22 +302,31 @@ export default createStore({
         }
     },
     mutations: {
+        ADD_VISITOR(state, visitor) {
+            state.visitors.push(visitor)
+        },
+
         SET_SCALE(state, scale) {
             state.viewport.scale = scale
         },
+
         SET_GRID_SIZE(state, {width, height}) {
             state.grid.width = Math.min(20, Math.max(8, width))
             state.grid.height = Math.min(20, Math.max(8, height))
         },
+
         SET_DRAGGING(state, shape) {
             state.grid.draggingShape = shape
         },
+
         SET_PREVIEW_ORIGIN(state, origin) {
             state.grid.previewOrigin = origin
         },
+
         SET_SHAPE(state, shape) {
             state.grid.selectedShape = shape
         },
+
         ADD_OBJECT(state, obj) {
             state.grid.objects.push(obj)
 
@@ -225,6 +337,7 @@ export default createStore({
                 state.grid.occupiedMap.set(`${x}-${y}`, obj)
             }
         },
+
         REMOVE_OBJECT(state, {x, y}) {
             const obj = state.grid.occupiedMap.get(`${x}-${y}`)
             if (!obj) {
@@ -240,23 +353,29 @@ export default createStore({
 
             state.grid.objects = state.grid.objects.filter(o => o !== obj)
         },
+
         SET_MODE(state, mode) {
             state.grid.mode = mode
         },
+
         SET_PANNING(state, value) {
             state.viewport.isPanning = value
         },
+
         SET_OFFSET(state, {x, y}) {
             state.viewport.offsetX = x
             state.viewport.offsetY = y
         },
+
         MOVE_OFFSET(state, {dx, dy}) {
             state.viewport.offsetX += dx
             state.viewport.offsetY += dy
         },
+
         DECREASE_BALANCE(state, amount) {
             state.park.balance -= amount
         },
+
         INCREASE_BALANCE(state, amount) {
             state.park.balance += amount
         }
@@ -279,7 +398,8 @@ export default createStore({
             isPanning: false
         },
         park: {
-            balance: 1000
+            balance: 1000,
+            entrance: {x: -1, y: 4}
         },
         visitors: [],
         shapes: [
@@ -288,6 +408,8 @@ export default createStore({
                 name: 'Road',
                 color: 'gray',
                 cost: 10,
+                capacity: 10,
+                visitorsIn: [],
                 cells: [{x: 0, y: 0}]
             },
             {
@@ -295,6 +417,8 @@ export default createStore({
                 name: 'Feeding Zone',
                 color: 'green',
                 cost: 150,
+                capacity: 3,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -306,6 +430,8 @@ export default createStore({
                 name: 'Visitor Center',
                 color: 'yellow',
                 cost: 200,
+                capacity: 4,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -318,6 +444,8 @@ export default createStore({
                 name: 'Raptor Arena',
                 color: 'pink',
                 cost: 400,
+                capacity: 9,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0},
                     {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1},
@@ -329,6 +457,8 @@ export default createStore({
                 name: 'Jungle Ride',
                 color: 'orange',
                 cost: 400,
+                capacity: 4,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -341,6 +471,8 @@ export default createStore({
                 name: 'Observation Tower',
                 color: 'purple',
                 cost: 300,
+                capacity: 4,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0},
                     {x: 0, y: 1},
@@ -353,6 +485,8 @@ export default createStore({
                 name: 'Jungle Maze',
                 color: 'cyan',
                 cost: 500,
+                capacity: 6,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -367,6 +501,8 @@ export default createStore({
                 name: 'T-Rex Enclosure',
                 color: 'blue',
                 cost: 250,
+                capacity: 5,
+                visitorsIn: [],
                 cells: [
                     {x: 0, y: 0},
                     {x: 0, y: 1},

@@ -25,11 +25,11 @@
 </template>
 
 <script setup>
-import Toolbar from '../game/Toolbar.vue'
-import GameGrid from '../game/GameGrid.vue'
+import Toolbar from '../game/tools/Toolbar.vue'
+import GameGrid from '../game/grid/GameGrid.vue'
 import {useStore} from "vuex";
 import {computed} from "vue";
-import StatsPanel from "@/components/game/StatsPanel.vue";
+import StatsPanel from "@/components/game/tools/StatsPanel.vue";
 
 const store = useStore()
 
