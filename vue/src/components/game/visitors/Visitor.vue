@@ -1,28 +1,38 @@
 <template>
-  <div class="visitor" :style="style"></div>
+  <div class="visitor" :style="style">
+    <div class="visitor__label">
+      {{ money }}
+    </div>
+  </div>
 </template>
 
 <script setup>
 import {computed} from 'vue'
 
 const props = defineProps({
-  visitor: {
-    type: Object,
-    required: true
-  }
+  money: Number,
+  node: String,
 })
 
 const CELL_SIZE = 60
 
 const style = computed(() => {
-  const node = props.visitor.node
+  const node = props.node
 
-  const [x, y] = node.split('-').map(Number)
+  const [x, y] = node.split(':').map(Number)
+  const size = 20 + props.money * 0.1
 
   return {
-    left: `${x * CELL_SIZE + CELL_SIZE / 2 - 5}px`,
-    top: `${y * CELL_SIZE + CELL_SIZE / 2 - 5}px`,
-    transition: 'left 0.5s linear, top 0.5s linear'
+    left: `${x * CELL_SIZE + CELL_SIZE / 2 - size / 2}px`,
+    top: `${y * CELL_SIZE + CELL_SIZE / 2 - size / 2}px`,
+    width: `${size}px`,
+    height: `${size}px`,
+    background: props.money > 70
+        ? 'green'
+        : props.money > 40
+            ? 'orange'
+            : 'red',
+    transition: 'left 0.8s linear, top 0.8s linear'
   }
 })
 </script>
@@ -30,10 +40,20 @@ const style = computed(() => {
 <style scoped lang="less">
 .visitor {
   position: absolute;
-  width: 10px;
-  height: 10px;
   border-radius: 50%;
-  background: black;
   pointer-events: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &__label {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    color: #000;
+    white-space: nowrap;
+  }
 }
 </style>

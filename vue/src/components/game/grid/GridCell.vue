@@ -48,6 +48,19 @@ const color = computed(() => {
 
 const obj = computed(() => occupiedMap.value?.get(key.value))
 
+const getObjectEntry = obj => ({
+  x: obj.origin.x + obj.shape.entryOffset.x,
+  y: obj.origin.y + obj.shape.entryOffset.y
+});
+
+const isEntry = computed(() => {
+  if (!obj.value || !obj.value.shape.entryOffset) return false
+
+  const entry = getObjectEntry(obj.value)
+
+  return props.x === entry.x && props.y === entry.y
+})
+
 const isConnected = (x, y) => {
   const neighbor = occupiedMap.value?.get(`${x}-${y}`)
 
@@ -163,6 +176,7 @@ const classes = computed(() => ({
   'grid-cell': true,
   'grid-cell--preview': previewMap.value?.has(key.value),
   'grid-cell--invalid': previewMap.value?.get(key.value) === 'red',
+  'grid-cell--entry': isEntry.value
 }))
 </script>
 
@@ -174,6 +188,11 @@ const classes = computed(() => ({
   opacity: 1;
   box-sizing: border-box;
   border: solid 1px #222222;
+
+  &--entry {
+    outline: 3px dashed #000;
+    outline-offset: -3px;
+  }
 
   &--preview {
     opacity: 0.6;

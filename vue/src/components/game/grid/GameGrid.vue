@@ -16,8 +16,8 @@
     <div class="game-page__visitors-layer">
       <Visitor
           v-for="v in visitors"
-          :key="v.id"
-          :visitor="v"
+          :money="v.money"
+          :node="v.node"
       />
     </div>
   </div>
@@ -55,6 +55,11 @@ const entranceStyle = computed(() => ({
 onMounted(() => {
   setInterval(() => {
     store.dispatch('spawnVisitor')
+  }, 5000)
+})
+
+onMounted(() => {
+  setInterval(() => {
     store.dispatch('tickVisitors')
   }, 1000)
 })
@@ -77,7 +82,6 @@ onMounted(() => {
     width: 60px;
     height: 60px;
     background: #456824;
-    z-index: 10;
     pointer-events: none;
   }
 

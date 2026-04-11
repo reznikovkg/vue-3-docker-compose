@@ -1,7 +1,7 @@
 import {createStore} from 'vuex'
 import {canPlaceShape} from '@/utils/utils.js'
 
-export const MUTATIONS = {
+const MUTATIONS = {
     SET_SHAPE: 'SET_SHAPE',
     ADD_OBJECT: 'ADD_OBJECT',
     REMOVE_OBJECT: 'REMOVE_OBJECT',
@@ -18,16 +18,34 @@ export const MUTATIONS = {
     ADD_VISITOR: 'ADD_VISITOR'
 }
 
+const VISITOR_STATES = {
+    WALKING: 'walking',
+    LEAVING: 'leaving',
+    TO_REMOVE: 'to_remove',
+    INSIDE: 'inside',
+}
+
 export default createStore({
     actions: {
         tickVisitors({state, getters}) {
             const graph = getters.roadGraph
+            const entrance = state.park.entrance
 
             for (const v of state.visitors) {
+                if (v.state === VISITOR_STATES.TO_REMOVE) {
+                    continue
+                }
+
+                if (v.state === VISITOR_STATES.LEAVING) {
+                    v.state = VISITOR_STATES.TO_REMOVE
+                    continue
+                }
 
                 const neighbors = graph.get(v.node) || []
 
-                if (!neighbors.length) continue
+                if (!neighbors.length) {
+                    continue
+                }
 
                 let options = neighbors
 
@@ -41,11 +59,17 @@ export default createStore({
 
                 v.prevNode = v.node
                 v.node = next
+
+                if (v.prevNode && v.node === `${entrance.x}:${entrance.y}`) {
+                    v.state = VISITOR_STATES.LEAVING
+                }
             }
+
+            state.visitors = state.visitors.filter(v => v.state !== VISITOR_STATES.TO_REMOVE)
         },
 
         spawnVisitor({commit, state, getters}) {
-            const max = getters.buildings.length
+            const max = getters.buildings.length * 5
 
             if (state.visitors.length >= max) {
                 return
@@ -53,13 +77,14 @@ export default createStore({
 
             const entry = state.park.entrance
 
-            const startNode = `${entry.x}-${entry.y}`
+            const startNode = `${entry.x}:${entry.y}`
 
             commit(MUTATIONS.ADD_VISITOR, {
                 id: crypto.randomUUID(),
+                number: state.visitorCounter++,
                 node: startNode,
                 prevNode: null,
-                state: 'walking',
+                state: VISITOR_STATES.WALKING,
                 money: Math.floor(20 + Math.random() * 81)
             })
         },
@@ -197,20 +222,32 @@ export default createStore({
                     const ny = y + dy
 
                     if (isRoad(nx, ny)) {
-                        neighbors.push(`${nx}-${ny}`)
+                        neighbors.push(`${nx}:${ny}`)
                     }
                 }
 
-                graph.set(key, neighbors)
+                graph.set(`${x}:${y}`, neighbors)
             }
 
             const entry = state.park.entrance
 
-            const startNode = `${entry.x}-${entry.y}`
-            const nextNode = `${entry.x + 1}-${entry.y}`
+            const startNode = `${entry.x}:${entry.y}`
+            const nextNode = `${entry.x + 1}:${entry.y}`
 
             graph.set(startNode, [nextNode])
-            graph.set(nextNode, [startNode])
+
+            const neighbors = [startNode]
+
+            for (const [dx, dy] of dirs) {
+                const nx = entry.x + 1 + dx
+                const ny = entry.y + dy
+
+                if (isRoad(nx, ny)) {
+                    neighbors.push(`${nx}:${ny}`)
+                }
+            }
+
+            graph.set(nextNode, neighbors)
 
             return graph
         },
@@ -402,6 +439,7 @@ export default createStore({
             entrance: {x: -1, y: 4}
         },
         visitors: [],
+        visitorCounter: 1,
         shapes: [
             {
                 id: 'road',
@@ -410,6 +448,7 @@ export default createStore({
                 cost: 10,
                 capacity: 10,
                 visitorsIn: [],
+                entryOffset: null,
                 cells: [{x: 0, y: 0}]
             },
             {
@@ -419,6 +458,7 @@ export default createStore({
                 cost: 150,
                 capacity: 3,
                 visitorsIn: [],
+                entryOffset: {x: 0, y: 1},
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -432,6 +472,7 @@ export default createStore({
                 cost: 200,
                 capacity: 4,
                 visitorsIn: [],
+                entryOffset: {x: 1, y: 1},
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -446,6 +487,7 @@ export default createStore({
                 cost: 400,
                 capacity: 9,
                 visitorsIn: [],
+                entryOffset: {x: 2, y: 2},
                 cells: [
                     {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0},
                     {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1},
@@ -459,6 +501,7 @@ export default createStore({
                 cost: 400,
                 capacity: 4,
                 visitorsIn: [],
+                entryOffset: {x: 3, y: 0},
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -473,6 +516,7 @@ export default createStore({
                 cost: 300,
                 capacity: 4,
                 visitorsIn: [],
+                entryOffset: {x: 0, y: 3},
                 cells: [
                     {x: 0, y: 0},
                     {x: 0, y: 1},
@@ -487,6 +531,7 @@ export default createStore({
                 cost: 500,
                 capacity: 6,
                 visitorsIn: [],
+                entryOffset: {x: 0, y: 2},
                 cells: [
                     {x: 0, y: 0},
                     {x: 1, y: 0},
@@ -503,6 +548,7 @@ export default createStore({
                 cost: 250,
                 capacity: 5,
                 visitorsIn: [],
+                entryOffset: {x: 2, y: 2},
                 cells: [
                     {x: 0, y: 0},
                     {x: 0, y: 1},

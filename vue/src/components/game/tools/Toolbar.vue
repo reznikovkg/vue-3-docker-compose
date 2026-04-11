@@ -51,13 +51,12 @@
 import {computed, ref, watch} from 'vue'
 import {useStore} from 'vuex'
 import ShapeList from "@/components/game/tools/ShapeList.vue";
-import {MUTATIONS} from "@/store/index.js";
 
 const store = useStore()
 
 const mode = computed(() => store.getters.mode)
 
-const setMode = mode => store.commit(MUTATIONS.SET_MODE, mode)
+const setMode = mode => store.dispatch('setMode', mode)
 
 const localWidth = ref(store.getters.width)
 const localHeight = ref(store.getters.height)
