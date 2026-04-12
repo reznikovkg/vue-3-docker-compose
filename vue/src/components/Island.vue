@@ -11,8 +11,7 @@ import { useStore } from 'vuex'
 const store = useStore()
 
 const props = defineProps({
-  islandX: Number,
-  islandY: Number
+  island: Object
 })
 
 const boat = computed(() => store.getters['game/getBoat'])
@@ -23,8 +22,8 @@ const centerX = window.innerWidth / 2
 const centerY = window.innerHeight / 2
 
 const islandStyle = computed(() => {
-  const dx = (props.islandX - boat.value.x)
-  const dy = (props.islandY - boat.value.y)
+  const dx = (props.island.x - boat.value.x)
+  const dy = (props.island.y - boat.value.y)
 
   return {
     position: `absolute`,

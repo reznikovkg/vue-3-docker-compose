@@ -11,7 +11,7 @@
       <span class="market__label">Окунь</span>
       <button 
         class="market__btn" 
-        @click="() => sellFish('common', fishPrices['common'])">
+        @click="() => sellFish('common')">
         Продать за {{ fishPrices['common'] }}₽
       </button>
     </div>
@@ -20,7 +20,7 @@
       <span class="market__label">Карп</span>
       <button 
         class="market__btn" 
-        @click="() => sellFish('rare', fishPrices['rare'])">
+        @click="() => sellFish('rare')">
         Продать за {{ fishPrices['rare'] }}₽
       </button>
     </div>
@@ -29,7 +29,7 @@
       <span class="market__label">Язь <br>(здоровенный)</span>
       <button 
         class="market__btn" 
-        @click="() => sellFish('legendary', fishPrices['legendary'])">
+        @click="() => sellFish('legendary')">
         Продать за {{ fishPrices['legendary'] }}₽
       </button>
     </div>
@@ -171,7 +171,7 @@
       <span class="market__label">Черви</span>
       <button 
         class="market__btn" 
-        @click="() => buyBait('worms', baitsPrices['worms'])">
+        @click="() => buyBait('worms')">
         Купить за {{ baitsPrices['worms'] }}₽
       </button>
     </div>
@@ -180,7 +180,7 @@
       <span class="market__label">Кукуруза</span>
       <button 
         class="market__btn" 
-        @click="() => buyBait('corn', baitsPrices['corn'])">
+        @click="() => buyBait('corn')">
         Купить за {{ baitsPrices['corn'] }}₽
       </button>
     </div>
@@ -189,7 +189,7 @@
       <span class="market__label">Опарыши</span>
       <button 
         class="market__btn" 
-        @click="() => buyBait('maggots', baitsPrices['maggots'])">
+        @click="() => buyBait('maggots')">
         Купить за {{ baitsPrices['maggots'] }}₽
       </button>
     </div>
@@ -202,7 +202,7 @@
       <span class="market__label">Прикормка</span>
       <button 
         class="market__btn" 
-        @click="() => buyBait('groundbait', baitsPrices['groundbait'])">
+        @click="() => buyBait('groundbait')">
         Купить за {{ baitsPrices['groundbait'] }}₽
       </button>
     </div>
@@ -252,13 +252,14 @@ const hooks = computed(() => store.getters['game/tacklesList/getHooksList'])
 const lines = computed(() => store.getters['game/tacklesList/getLinesList'])
 
 
-const sellFish = (type, price) => {
+const sellFish = (type) => {
   if (inventory.value[type] > 0) {
-    store.dispatch('game/sellFish', {type: type, price: price})
+    store.dispatch('game/sellFish', {type: type, price: fishPrices[type]})
   }
 }
 
-const buyBait = (type, price) => {
+const buyBait = (type) => {
+  const price = baitsPrices[type]
   if (balance.value - price >= 0) {
     store.dispatch('game/buyBait', {type: type, price: price})
   }

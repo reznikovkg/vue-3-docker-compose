@@ -3,7 +3,7 @@
     <div class="game-map__world"/>
   </div>
 
-  <Island v-for="island in islands" :islandX="island.x" :islandY="island.y"/>
+  <Island v-for="island in islands" :island="island"/>
   <Boat/>
 </template>
 
