@@ -30,16 +30,12 @@ class SoundManager {
 
     this.activeSounds = []
     this.preloadedSounds = {}
-    this.isPreloaded = false
   }
   
   preloadAll() {
-    if (this.isPreloaded) return
-    
     Object.keys(this.soundPaths).forEach(soundName => {
       this.preload(soundName)
     })
-    this.isPreloaded = true
   }
 
   preload(soundName) {

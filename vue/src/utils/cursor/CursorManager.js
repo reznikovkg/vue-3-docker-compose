@@ -10,6 +10,15 @@ import laserCursor from './../../assets/cursors/laser.png'
 import bombCursor from './../../assets/cursors/bomb.png'
 
 class CursorManager {
+  static preloadImages() {
+    const cursorPaths = [defaultCursor, autoCursor, laserCursor, bombCursor]
+    
+    cursorPaths.forEach(path => {
+      const img = new Image()
+      img.src = path
+    })
+  }
+
   constructor(canvas) {
     this.canvas = canvas
     this.currentMode = 'click'

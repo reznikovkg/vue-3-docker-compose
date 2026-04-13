@@ -10,28 +10,25 @@
 
 <script lang="ts">
 import soundManager from './../../utils/soundManager'
+import { BOMB_CONFIG } from './../../config/bombConfig'
 
 export default {
   name: 'BombExplosion',
   props: {
     x: { type: Number, required: true },
     y: { type: Number, required: true },
-    detonateFrame: { type: Number, default: 76 }
+    detonateFrame: { type: Number, default: BOMB_CONFIG.defaultDetonateFrame }
   },
   emits: ['complete', 'detonate'],
   data() {
     return {
       active: true,
-      totalFrames: 105,
-      frameWidth: 90,
-      animationDuration: 1500,
+      totalFrames: BOMB_CONFIG.totalFrames,
+      frameWidth: BOMB_CONFIG.frameWidth,
+      spriteWidth: BOMB_CONFIG.spriteWidth,
+      animationDuration: BOMB_CONFIG.defaultDuration,
       detonationTriggered: false,
       detonationTimer: null as number | null
-    }
-  },
-  computed: {
-    spriteWidth(): number {
-      return this.totalFrames * this.frameWidth
     }
   },
   mounted() {

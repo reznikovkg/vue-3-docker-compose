@@ -44,3 +44,10 @@ export function getBubbleName(value: string): string {
 export function getBubbleImage(value: string): string {
   return BUBBLE_BY_VALUE[value]?.image || BUBBLE_BY_VALUE['white']?.image || ''
 }
+
+export function preloadBubbleImages(): void {
+  Object.values(BUBBLE_IMAGES).forEach(src => {
+    const img = new Image()
+    img.src = src
+  })
+}

@@ -48,6 +48,7 @@
 import BackgroundVideo from './../ui/BackgroundVideo.vue';
 import bgVideo from './../../assets/videos/background.mp4'
 import soundManager from './../../utils/soundManager'
+import PreloadService from './../../services/PreloadService'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -87,7 +88,7 @@ export default {
     }    
   },
   mounted() {
-    soundManager.preloadAll()
+    PreloadService.preloadAll()
   },
   methods: {
     ...mapActions(['setGameMode']),
