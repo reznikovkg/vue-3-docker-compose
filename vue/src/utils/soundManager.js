@@ -29,6 +29,30 @@ class SoundManager {
     }
 
     this.activeSounds = []
+    this.preloadedSounds = {}
+    this.isPreloaded = false
+  }
+  
+  preloadAll() {
+    if (this.isPreloaded) return
+    
+    Object.keys(this.soundPaths).forEach(soundName => {
+      this.preload(soundName)
+    })
+    this.isPreloaded = true
+  }
+
+  preload(soundName) {
+    if (this.preloadedSounds[soundName]) return
+    
+    const soundPath = this.soundPaths[soundName]
+    if (!soundPath) return
+    
+    const audio = new Audio(soundPath)
+    audio.volume = this.volumes[soundName] || 0.5
+    audio.preload = 'auto'
+    audio.load()
+    this.preloadedSounds[soundName] = audio
   }
   
   play(soundName) {
@@ -38,8 +62,14 @@ class SoundManager {
       return
     }
     
-    const audio = new Audio(soundPath)
-    audio.volume = this.volumes[soundName] || 0.5
+    let audio
+    if (this.preloadedSounds[soundName]) {
+      audio = this.preloadedSounds[soundName].cloneNode()
+      audio.volume = this.volumes[soundName] || 0.5
+    } else {
+      audio = new Audio(soundPath)
+      audio.volume = this.volumes[soundName] || 0.5
+    }
 
     this.activeSounds.push({ audio, soundName })
 

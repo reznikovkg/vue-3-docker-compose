@@ -86,6 +86,9 @@ export default {
       return bgVideo
     }    
   },
+  mounted() {
+    soundManager.preloadAll()
+  },
   methods: {
     ...mapActions(['setGameMode']),
     playClickSound() {
