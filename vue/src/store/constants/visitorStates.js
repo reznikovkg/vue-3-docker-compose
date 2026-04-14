@@ -1,0 +1,6 @@
+export const VISITOR_STATES = {
+    WALKING: 'WALKING',
+    IN_BUILDING: 'IN_BUILDING',
+    LEAVING: 'LEAVING',
+    TO_REMOVE: 'TO_REMOVE'
+}
