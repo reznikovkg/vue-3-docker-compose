@@ -15,6 +15,10 @@
         <div class="shape-list__size">
           {{ getWidth(shape) }} × {{ getHeight(shape) }}
         </div>
+
+        <div class="shape-list__cost">
+          {{ shape.cost }}$
+        </div>
       </div>
     </div>
   </div>
@@ -81,11 +85,17 @@ const handleSelect = (shape) => {
     flex-shrink: 0;
   }
 
+  &__cost {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2e7d32;
+    margin-left: auto;
+  }
+
   &__info {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     flex: 1;
   }
 

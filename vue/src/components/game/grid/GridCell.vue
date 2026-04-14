@@ -5,6 +5,13 @@
       @click="handleClick"
       @mouseenter="handleHover"
   >
+    <BuildingOverlay
+        v-if="obj && isOrigin && !isRoad"
+        :obj="obj"
+        :x="x"
+        :y="y"
+    />
+
     <div v-if="corners.tl" class="grid-cell__corner grid-cell__corner--tl"></div>
     <div v-if="corners.tr" class="grid-cell__corner grid-cell__corner--tr"></div>
     <div v-if="corners.bl" class="grid-cell__corner grid-cell__corner--bl"></div>
@@ -15,7 +22,8 @@
 <script setup>
 import {computed} from 'vue'
 import {useStore} from 'vuex'
-import {DARK_COLORS} from "@/constants/colors.js";
+import {DARK_COLORS} from "@/components/game/constants/colors.js";
+import BuildingOverlay from "@/components/game/grid/BuildingOverlay.vue";
 
 const props = defineProps({
   x: Number,
@@ -48,13 +56,28 @@ const color = computed(() => {
 
 const obj = computed(() => occupiedMap.value?.get(key.value))
 
+const isOrigin = computed(() => {
+  if (!obj.value) {
+    return false
+  }
+
+  return obj.value.origin.x === props.x &&
+      obj.value.origin.y === props.y
+})
+
+const isRoad = computed(() => {
+  return obj.value?.shape?.id === 'road'
+})
+
 const getObjectEntry = obj => ({
   x: obj.origin.x + obj.shape.entryOffset.x,
   y: obj.origin.y + obj.shape.entryOffset.y
 });
 
 const isEntry = computed(() => {
-  if (!obj.value || !obj.value.shape.entryOffset) return false
+  if (!obj.value || !obj.value.shape.entryOffset) {
+    return false
+  }
 
   const entry = getObjectEntry(obj.value)
 
@@ -64,7 +87,9 @@ const isEntry = computed(() => {
 const isConnected = (x, y) => {
   const neighbor = occupiedMap.value?.get(`${x}-${y}`)
 
-  if (!neighbor || !obj.value) return false
+  if (!neighbor || !obj.value) {
+    return false
+  }
 
   if (obj.value.shape.id === 'road') {
     return neighbor.shape.id === 'road'
@@ -155,6 +180,10 @@ const handleClick = () => {
     store.dispatch('removeObject', {
       x: props.x,
       y: props.y
+    }).then(result => {
+      if (!result?.ok) {
+        alert(result.message || 'Нельзя удалить')
+      }
     })
   }
 
@@ -190,7 +219,7 @@ const classes = computed(() => ({
   border: solid 1px #222222;
 
   &--entry {
-    outline: 8px dashed #ffffff;
+    outline: 8px dashed #040000;
     outline-offset: -8px;
   }
 
@@ -208,10 +237,25 @@ const classes = computed(() => ({
     height: 8px;
     background: currentColor;
 
-    &--tl { top: 0; left: 0; }
-    &--tr { top: 0; right: 0; }
-    &--bl { bottom: 0; left: 0; }
-    &--br { bottom: 0; right: 0; }
+    &--tl {
+      top: 0;
+      left: 0;
+    }
+
+    &--tr {
+      top: 0;
+      right: 0;
+    }
+
+    &--bl {
+      bottom: 0;
+      left: 0;
+    }
+
+    &--br {
+      bottom: 0;
+      right: 0;
+    }
   }
 }
 </style>

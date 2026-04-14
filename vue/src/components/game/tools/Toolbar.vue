@@ -19,32 +19,40 @@
 
     </div>
 
-    <div class="toolbar__grid-size" :class="{ 'is-disabled': mode === 'delete' }">
-      <label>
-        Width:
-        <input
-            type="number"
-            v-model.number="localWidth"
-            @change="applyResize"
-            min="8"
-            max="20"
-        />
-      </label>
+    <div class="toolbar__grid-size"
+         :class="{ 'toolbar__is-disabled': mode === 'delete' }"
+    >
 
-      <label>
-        Height:
-        <input
-            type="number"
-            v-model.number="localHeight"
-            @change="applyResize"
-            min="8"
-            max="20"
-        />
-      </label>
+      <div class="toolbar__row">
+        <span>Width:</span>
+
+        <div class="toolbar__stepper">
+          <button @click="decWidth">-</button>
+          <span>
+            {{ localWidth }}
+            <small class="toolbar__cost">(+{{ widthIncreaseCost }}$)</small>
+          </span>
+          <button @click="incWidth">+</button>
+        </div>
+      </div>
+
+      <div class="toolbar__row">
+        <span>Height:</span>
+
+        <div class="toolbar__stepper">
+          <button @click="decHeight">-</button>
+          <span>
+            {{ localHeight }}
+            <small class="toolbar__cost">(+{{ heightIncreaseCost }}$)</small>
+          </span>
+          <button @click="incHeight">+</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <ShapeList :class="{ 'is-disabled': mode === 'delete' }"/>
+  <ShapeList :class="{ 'toolbar__is-disabled': mode === 'delete' }"/>
 </template>
 
 <script setup>
@@ -54,9 +62,72 @@ import ShapeList from "@/components/game/tools/ShapeList.vue";
 
 const store = useStore()
 
+const balance = computed(() => store.getters.stats.balance)
+
+const CELL_COST = 5
+
+const canAfford = (cost) => balance.value >= cost
+
 const mode = computed(() => store.getters.mode)
 
 const setMode = mode => store.dispatch('setMode', mode)
+
+const widthIncreaseCost = computed(() => localHeight.value * CELL_COST)
+const heightIncreaseCost = computed(() => localWidth.value * CELL_COST)
+
+const incWidth = () => {
+  const cost = localHeight.value * CELL_COST
+
+  if (!canAfford(cost)) {
+    alert('Недостаточно средств, чтобы увеличить сетку')
+    return
+  }
+
+  localWidth.value++
+  store.dispatch('decreaseBalance', cost)
+
+  applyResize()
+}
+
+const decWidth = () => {
+  if (localWidth.value <= 8) {
+    return
+  }
+
+  const refund = localHeight.value * CELL_COST * 0.5
+
+  localWidth.value--
+  store.dispatch('increaseBalance', refund)
+
+  applyResize()
+}
+
+const incHeight = () => {
+  const cost = localWidth.value * CELL_COST
+
+  if (!canAfford(cost)) {
+    alert('Недостаточно средств, чтобы увеличить сетку')
+    return
+  }
+
+  localHeight.value++
+  store.dispatch('decreaseBalance', cost)
+
+  applyResize()
+}
+
+const decHeight = () => {
+  if (localHeight.value <= 8) {
+    return
+  }
+
+  const refund = localWidth.value * CELL_COST * 0.5
+
+  localHeight.value--
+  store.dispatch('increaseBalance', refund)
+
+  applyResize()
+}
 
 const localWidth = ref(store.getters.width)
 const localHeight = ref(store.getters.height)
@@ -90,17 +161,11 @@ const applyResize = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  color: #000;
 
-  label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    color: #000;
-  }
-
-  input {
-    width: 70px;
+  &__is-disabled {
+    opacity: 0.4;
+    pointer-events: none;
   }
 
   &__modes {
@@ -138,6 +203,34 @@ const applyResize = () => {
 
     &--delete {
       background: #ff4d4f;
+    }
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    button {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #eee;
+      font-weight: bold;
+    }
+
+    span {
+      min-width: 24px;
+      text-align: center;
+      color: #000000;
     }
   }
 }

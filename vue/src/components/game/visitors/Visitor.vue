@@ -44,6 +44,7 @@ const style = computed(() => {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
+  border: #222222 1px solid;
 
   display: flex;
   align-items: center;

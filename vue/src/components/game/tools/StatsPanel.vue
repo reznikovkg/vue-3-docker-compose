@@ -1,6 +1,6 @@
 <template>
   <div class="stats">
-    <div class="stats__item">Balance {{ stats.balance }}</div>
+    <div class="stats__item">Balance {{ stats.balance }}$</div>
     <div class="stats__item">Buildings {{ stats.buildingsCount }}</div>
     <div class="stats__item">Roads {{ stats.roadsCount }}</div>
     <div class="stats__item">Visitors {{ stats.visitorsCount }}</div>

@@ -1,71 +1,31 @@
 import {createStore} from 'vuex'
-import {canPlaceShape} from '@/utils/utils.js'
-
-const MUTATIONS = {
-    SET_SHAPE: 'SET_SHAPE',
-    ADD_OBJECT: 'ADD_OBJECT',
-    REMOVE_OBJECT: 'REMOVE_OBJECT',
-    SET_MODE: 'SET_MODE',
-    SET_DRAGGING: 'SET_DRAGGING',
-    SET_PREVIEW_ORIGIN: 'SET_PREVIEW_ORIGIN',
-    SET_GRID_SIZE: 'SET_GRID_SIZE',
-    SET_PANNING: 'SET_PANNING',
-    SET_OFFSET: 'SET_OFFSET',
-    MOVE_OFFSET: 'MOVE_OFFSET',
-    SET_SCALE: 'SET_SCALE',
-    DECREASE_BALANCE: 'DECREASE_BALANCE',
-    INCREASE_BALANCE: 'INCREASE_BALANCE',
-    ADD_VISITOR: 'ADD_VISITOR'
-}
-
-const VISITOR_STATES = {
-    WALKING: 'walking',
-    LEAVING: 'leaving',
-    TO_REMOVE: 'to_remove',
-    INSIDE: 'inside',
-}
+import {canPlaceShape} from '@/store/logic/utils.js'
+import {updateVisitor} from "@/store/logic/visitorLogic.js";
+import {VISITOR_STATES} from "@/store/constants/visitorStates.js";
+import {MUTATIONS} from "@/store/constants/mutation.js";
+import {SHAPES} from "@/store/constants/gameShapes.js";
 
 export default createStore({
     actions: {
-        tickVisitors({state, getters}) {
-            const graph = getters.roadGraph
-            const entrance = state.park.entrance
+        tickVisitors({commit, state, getters }) {
+            const ctx = {
+                graph: getters.roadGraph,
+                entryMap: getters.entryMap,
+                entrance: state.park.entrance,
+                state,
+                commit
+            }
 
             for (const v of state.visitors) {
                 if (v.state === VISITOR_STATES.TO_REMOVE) {
                     continue
                 }
-
-                if (v.state === VISITOR_STATES.LEAVING) {
-                    v.state = VISITOR_STATES.TO_REMOVE
-                    continue
-                }
-
-                const neighbors = graph.get(v.node) || []
-
-                if (!neighbors.length) {
-                    continue
-                }
-
-                let options = neighbors
-
-                if (v.prevNode) {
-                    options = neighbors.filter(n => n !== v.prevNode)
-                }
-
-                const next = options.length
-                    ? options[Math.floor(Math.random() * options.length)]
-                    : neighbors[0]
-
-                v.prevNode = v.node
-                v.node = next
-
-                if (v.prevNode && v.node === `${entrance.x}:${entrance.y}`) {
-                    v.state = VISITOR_STATES.LEAVING
-                }
+                updateVisitor(v, ctx)
             }
 
-            state.visitors = state.visitors.filter(v => v.state !== VISITOR_STATES.TO_REMOVE)
+            state.visitors = state.visitors.filter(
+                v => v.state !== VISITOR_STATES.TO_REMOVE
+            )
         },
 
         spawnVisitor({commit, state, getters}) {
@@ -85,7 +45,10 @@ export default createStore({
                 node: startNode,
                 prevNode: null,
                 state: VISITOR_STATES.WALKING,
-                money: Math.floor(20 + Math.random() * 81)
+                money: Math.floor(20 + Math.random() * 81),
+                targetBuilding: null,
+                timeInBuilding: 0,
+                lastBuildingId: null
             })
         },
 
@@ -125,7 +88,9 @@ export default createStore({
                 height: state.grid.height
             })
 
-            if (!canPlace) return {ok: false}
+            if (!canPlace) {
+                return {ok: false}
+            }
 
             if (state.park.balance < shape.cost) {
                 commit(MUTATIONS.SET_SHAPE, null)
@@ -138,7 +103,8 @@ export default createStore({
             commit(MUTATIONS.ADD_OBJECT, {
                 id: crypto.randomUUID(),
                 shape,
-                origin
+                origin,
+                visitorsIn: []
             })
 
             if (shape.id !== 'road') {
@@ -177,13 +143,17 @@ export default createStore({
             commit(MUTATIONS.SET_SHAPE, shape)
         },
 
-        addObject({commit}, obj) {
-            commit(MUTATIONS.ADD_OBJECT, obj)
-        },
-
         removeObject({commit, getters}, payload) {
             const occupiedMap = getters.occupiedMap
             const obj = occupiedMap.get(`${payload.x}-${payload.y}`)
+
+            if (!obj) {
+                return { ok: false, message: 'Объект не найден' }
+            }
+
+            if (obj.visitorsIn?.length > 0 || obj.shape.id === 'road') {
+                return { ok: false, message: 'В здании есть посетители' }
+            }
 
             const refund = Math.floor(obj.shape.cost * 0.5)
 
@@ -194,9 +164,29 @@ export default createStore({
 
         setMode({commit}, mode) {
             commit(MUTATIONS.SET_MODE, mode)
+        },
+
+        decreaseBalance({ commit }, amount) {
+            commit('DECREASE_BALANCE', amount)
+        },
+
+        increaseBalance({ commit }, amount) {
+            commit('INCREASE_BALANCE', amount)
         }
     },
     getters: {
+        entryMap: (state) => {
+            const map = new Map()
+
+            for (const obj of state.grid.objects) {
+                if (obj.shape.id !== 'road' && obj.entry) {
+                    map.set(obj.entry, obj)
+                }
+            }
+
+            return map
+        },
+
         roadGraph: (state, getters) => {
             const graph = new Map()
             const occupiedMap = getters.occupiedMap
@@ -211,7 +201,9 @@ export default createStore({
             }
 
             for (const [key, obj] of occupiedMap) {
-                if (obj.shape.id !== 'road') continue
+                if (obj.shape.id !== 'road') {
+                    continue
+                }
 
                 const [x, y] = key.split('-').map(Number)
 
@@ -315,7 +307,9 @@ export default createStore({
             const shape = state.grid.selectedShape
             const origin = state.grid.previewOrigin
 
-            if (!shape || !origin) return map
+            if (!shape || !origin) {
+                return map
+            }
 
             const occupiedMap = getters.occupiedMap
 
@@ -365,6 +359,15 @@ export default createStore({
         },
 
         ADD_OBJECT(state, obj) {
+            const shape = obj.shape
+
+            if (shape.entryOffset) {
+                const entryX = obj.origin.x + shape.entryOffset.x
+                const entryY = obj.origin.y + shape.entryOffset.y
+
+                obj.entry = `${entryX}:${entryY}`
+            }
+
             state.grid.objects.push(obj)
 
             for (const cell of obj.shape.cells) {
@@ -377,6 +380,7 @@ export default createStore({
 
         REMOVE_OBJECT(state, {x, y}) {
             const obj = state.grid.occupiedMap.get(`${x}-${y}`)
+
             if (!obj) {
                 return
             }
@@ -440,124 +444,7 @@ export default createStore({
         },
         visitors: [],
         visitorCounter: 1,
-        shapes: [
-            {
-                id: 'road',
-                name: 'Road',
-                color: 'gray',
-                cost: 10,
-                capacity: 10,
-                visitorsIn: [],
-                entryOffset: null,
-                cells: [{x: 0, y: 0}]
-            },
-            {
-                id: 'feed_zone',
-                name: 'Feeding Zone',
-                color: 'green',
-                cost: 150,
-                capacity: 3,
-                visitorsIn: [],
-                entryOffset: {x: 0, y: 1},
-                cells: [
-                    {x: 0, y: 0},
-                    {x: 1, y: 0},
-                    {x: 0, y: 1}
-                ]
-            },
-            {
-                id: 'visitor_center',
-                name: 'Visitor Center',
-                color: 'yellow',
-                cost: 200,
-                capacity: 4,
-                visitorsIn: [],
-                entryOffset: {x: 1, y: 1},
-                cells: [
-                    {x: 0, y: 0},
-                    {x: 1, y: 0},
-                    {x: 0, y: 1},
-                    {x: 1, y: 1}
-                ]
-            },
-            {
-                id: 'dino_arena',
-                name: 'Raptor Arena',
-                color: 'pink',
-                cost: 400,
-                capacity: 9,
-                visitorsIn: [],
-                entryOffset: {x: 2, y: 2},
-                cells: [
-                    {x: 0, y: 0}, {x: 1, y: 0}, {x: 2, y: 0},
-                    {x: 0, y: 1}, {x: 1, y: 1}, {x: 2, y: 1},
-                    {x: 0, y: 2}, {x: 1, y: 2}, {x: 2, y: 2}
-                ]
-            },
-            {
-                id: 'jungle_ride',
-                name: 'Jungle Ride',
-                color: 'orange',
-                cost: 400,
-                capacity: 4,
-                visitorsIn: [],
-                entryOffset: {x: 3, y: 0},
-                cells: [
-                    {x: 0, y: 0},
-                    {x: 1, y: 0},
-                    {x: 2, y: 0},
-                    {x: 3, y: 0}
-                ]
-            },
-            {
-                id: 'observation_tower',
-                name: 'Observation Tower',
-                color: 'purple',
-                cost: 300,
-                capacity: 4,
-                visitorsIn: [],
-                entryOffset: {x: 0, y: 3},
-                cells: [
-                    {x: 0, y: 0},
-                    {x: 0, y: 1},
-                    {x: 0, y: 2},
-                    {x: 0, y: 3}
-                ]
-            },
-            {
-                id: 'jungle_maze',
-                name: 'Jungle Maze',
-                color: 'cyan',
-                cost: 500,
-                capacity: 6,
-                visitorsIn: [],
-                entryOffset: {x: 0, y: 2},
-                cells: [
-                    {x: 0, y: 0},
-                    {x: 1, y: 0},
-                    {x: 2, y: 0},
-                    {x: 0, y: 1},
-                    {x: 1, y: 1},
-                    {x: 0, y: 2}
-                ]
-            },
-            {
-                id: 'rex_enclosure',
-                name: 'T-Rex Enclosure',
-                color: 'blue',
-                cost: 250,
-                capacity: 5,
-                visitorsIn: [],
-                entryOffset: {x: 2, y: 2},
-                cells: [
-                    {x: 0, y: 0},
-                    {x: 0, y: 1},
-                    {x: 0, y: 2},
-                    {x: 1, y: 2},
-                    {x: 2, y: 2}
-                ]
-            }
-        ]
+        shapes: SHAPES
     }
 })
 

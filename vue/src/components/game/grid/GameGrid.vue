@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted} from 'vue'
+import {computed, onMounted, onUnmounted} from 'vue'
 import {useStore} from 'vuex'
 import GridCell from "@/components/game/grid/GridCell.vue";
 import Visitor from "@/components/game/visitors/Visitor.vue";
@@ -52,16 +52,26 @@ const entranceStyle = computed(() => ({
   top: `${entrance.value.y * 60}px`
 }))
 
-onMounted(() => {
-  setInterval(() => {
-    store.dispatch('spawnVisitor')
-  }, 5000)
-})
+let spawnInterval
+let tickInterval
 
 onMounted(() => {
-  setInterval(() => {
-    store.dispatch('tickVisitors')
+  spawnInterval = setInterval(() => {
+    if (store.getters.roads.length > 0) {
+      store.dispatch('spawnVisitor')
+    }
+  }, 5000)
+
+  tickInterval = setInterval(() => {
+    requestAnimationFrame(() => {
+      store.dispatch('tickVisitors')
+    })
   }, 1000)
+})
+
+onUnmounted(() => {
+  clearInterval(spawnInterval)
+  clearInterval(tickInterval)
 })
 </script>
 
