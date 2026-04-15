@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div ref = "gameArea" class = "game-page__game-area" @click = "() => handleGameAreaClick($event)">
+    <div ref = "gameArea" class = "game-page__game-area" @click = "handleGameAreaClick">
     <svg class = "game-page__route-svg" viewBox = "0 0 900 600">
       <path
         v-for = "route in getLevel.routes"
@@ -62,7 +62,7 @@
         :key = "enemy.id"
         :enemy = "enemy"
         @select = "() => selectEnemy(enemy)"
-        @move = "() => handleEnemyDrag(enemy, $event)"
+        @move = "(e) => handleEnemyDrag(enemy, e)"
       />
     </div>
 
@@ -182,7 +182,6 @@ export default {
     return {
       currentLevel: 1,
       enemyMoveInterval: null,
-      towerShootInterval: null,
       selectedEnemy: null,
     }
   },
@@ -266,33 +265,29 @@ export default {
       this.moveEnemy({ enemyId: enemy.id, x, y })
     },
     towerShooting() {
-      if (!this.towerShootInterval) {
-        this.towerShootInterval = setInterval(() => {
-          this.getTowers.forEach((tower) => {
-            const enemyInRange = this.getEnemies.find((enemy) => {
-              const dx = enemy.x - tower.x
-              const dy = enemy.y - tower.y
-              const distance = Math.sqrt(dx * dx + dy * dy)
-              return distance <= tower.range
-            })
-
-            if (enemyInRange) {
-              const updatedEnemies = this.getEnemies.map((e) => {
-                if (e.id === enemyInRange.id) {
-                  return { ...e, health: e.health - tower.damage }
-                }
-                return e
-              })
-              const aliveEnemies = updatedEnemies.filter((e) => e.health > 0)
-              const wasDead = updatedEnemies.length !== aliveEnemies.length
-              this.$store.commit('game/SET_ENEMIES', aliveEnemies)
-              if (wasDead) {
-                this.$store.commit('game/SET_GAME_COINS', this.getCoins + 10)
-              }
+      this.towerShootInterval = setInterval(() => {
+        const currentEnemies = [...this.getEnemies];
+        let coinsEarned = 0;
+        this.getTowers.forEach(tower => {
+          const target = currentEnemies.find(enemy => {
+            const dx = enemy.x - tower.x;
+            const dy = enemy.y - tower.y;
+            return Math.sqrt(dx * dx + dy * dy) <= tower.range;
+          });
+          
+          if (target) {
+            target.health -= tower.damage;
+            if (target.health <= 0) {
+              coinsEarned += 10;
             }
-          })
-        }, 1000)
-      }
+          }
+        });
+        const aliveEnemies = currentEnemies.filter(e => e.health > 0);
+        this.setEnemies(aliveEnemies);
+        if (coinsEarned > 0) {
+          this.addCoins(coinsEarned);
+        }
+      }, 1000);
     },
     addTestEnemy() {
       const startX = this.getLevel.routes[0]?.points[0]?.x || 0
@@ -300,7 +295,7 @@ export default {
       this.addEnemy({ x: startX, y: startY, health: 50 + this.currentLevel * 10 })
     },
     clearEnemies() {
-      this.$store.commit('game/SET_ENEMIES', [])
+     this.setEnemies([]);
     }, 
     handleKeyPress(event) {
       if (!this.selectedEnemy) return
