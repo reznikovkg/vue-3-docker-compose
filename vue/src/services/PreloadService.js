@@ -37,7 +37,6 @@ class PreloadService {
 
   static reset() {
     PreloadService.preloaded = false
-    console.log('🔄 Флаг предзагрузки сброшен')
   }
 }
 

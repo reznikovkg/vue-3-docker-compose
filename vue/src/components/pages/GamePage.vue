@@ -59,7 +59,6 @@ export default {
     ])
   },
   beforeRouteLeave(to, from, next) {
-    console.log('GamePage: уходим со страницы', from.name, '->', to.name)
     
     if (this.$refs.bubbleGame) {
       this.$refs.bubbleGame.cleanupGame()
