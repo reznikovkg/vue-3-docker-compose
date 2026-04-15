@@ -1,5 +1,5 @@
 <template>
-  <div class ="map"></div>
+  <div class="map"/>
   <Boat/>
   <Inventory/>
   <Location/>
@@ -12,6 +12,7 @@ import Inventory from './../ui/Inventory.vue'
 import Location from './../ui/Location.vue'
 import MiniGame from './../ui/MiniGame.vue'
 import { mapGetters, mapActions } from 'vuex'
+
 export default {
   name: 'IndexPage',
   components: {
@@ -30,6 +31,15 @@ export default {
       }
     }
   },
+  mounted() {
+    window.addEventListener('keydown', this.movingKeyDown)
+    window.addEventListener('keyup', this.movingKeyUp)
+    this.updateMoving()
+  },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.movingKeyDown)
+    window.removeEventListener('keyup', this.movingKeyUp)
+  },
   computed: {
     ...mapGetters([
       'getIsFishing'
@@ -38,8 +48,7 @@ export default {
   methods: {
     ...mapActions([
       'move',
-      'setMoving',
-      'setFishing'
+      'setMoving'
     ]),
     updateMoving() {
       let updMoving = false
@@ -70,24 +79,12 @@ export default {
       if (this.pressed.hasOwnProperty(event.key)) {
         this.pressed[event.key] = true
       }
-      if (event.key === ' ') {
-        this.setFishing()
-      }
     },
     movingKeyUp (event) {
       if (this.pressed.hasOwnProperty(event.key)) {
         this.pressed[event.key] = false
       }
     }
-  },
-  mounted() {
-    window.addEventListener('keydown', this.movingKeyDown)
-    window.addEventListener('keyup', this.movingKeyUp)
-    this.updateMoving()
-  },
-  beforeUnmount() {
-    window.removeEventListener('keydown', this.movingKeyDown)
-    window.removeEventListener('keyup', this.movingKeyUp)
   }
 }
 </script>
@@ -98,5 +95,6 @@ export default {
   width: 100%;
   height: 100%;
   background-color: rgb(25 120 120);
+  z-index: 1;
 }
 </style>

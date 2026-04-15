@@ -6,8 +6,9 @@
 
 <script>
 import { mapGetters } from 'vuex'
+
 export default {
-  name: "Location",
+  name: 'Location',
   computed: {
     ...mapGetters([
       'getBoat'
@@ -19,5 +20,6 @@ export default {
 <style scoped lang="scss">
 .info {
   position: absolute;
+  z-index: 2;
 }
 </style>
