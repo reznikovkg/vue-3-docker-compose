@@ -106,10 +106,6 @@ export default {
           playerY: this.getCoords.y
         })
       }, 1600)
-      this.pushEnemy({
-        playerX: this.getCoords.x,
-        playerY: this.getCoords.y
-      })
       setInterval(() => {
         this.moveEnemies({
           playerX: this.getCoords.x,
