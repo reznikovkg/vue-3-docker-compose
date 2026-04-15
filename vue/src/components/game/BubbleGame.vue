@@ -28,6 +28,37 @@ import purpleImg from '@/assets/bubbles/purple.png'
 import redImg from '@/assets/bubbles/red.png'
 import yellowImg from '@/assets/bubbles/yellow.png'
 
+const RADIUS_SMALL = 25
+const RADIUS_MEDIUM = 40
+const RADIUS_LARGE = 60
+const WRONG_PENALTIES = {
+  small: -1,
+  medium: -3,
+  large: -5
+}
+const ESCAPE_PENALTIES = {
+  small: -3,
+  medium: -6,
+  large: -10
+}
+const PUSH_FACTORS = {
+  large: {
+    large: 1,
+    medium: 1.5,
+    small: 2
+  },
+  medium: {
+    large: 0.5,
+    medium: 1,
+    small: 1.5
+  },
+  small: {
+    large: 0.25,
+    medium: 0.5,
+    small: 1
+  }
+}
+
 export default {
   name: 'BubblePlayground',
   props: {
@@ -56,7 +87,8 @@ export default {
       countdownId: null,
       tutorialVisible: false,
       tutorialTimer: null,
-      tutorialBlocking: false
+      tutorialBlocking: false,
+      animatedPushes: [],
     }
   },
 
@@ -161,8 +193,23 @@ export default {
         this.addItem()
         this.lastCreation = now
       }
+      for (let i = this.animatedPushes.length - 1; i >= 0; i--) {
+        const anim = this.animatedPushes[i]
+        anim.currentStep++
+        const t = anim.currentStep / anim.steps
+        if (t >= 1) {
+          anim.item.x = anim.targetX
+          anim.item.y = anim.targetY
+          anim.item.speedX = 0
+          this.animatedPushes.splice(i, 1)
+        } else {
+          anim.item.x = anim.startX + (anim.targetX - anim.startX) * t
+          anim.item.y = anim.startY + (anim.targetY - anim.startY) * t
+        }
+      }
       for (let i = this.items.length - 1; i >= 0; i--) {
         const item = this.items[i]
+        if (this.animatedPushes.some(a => a.item === item)) continue
         item.x += item.speedX
         item.y += item.speedY
         item.wobble += item.wobbleSpeed
@@ -170,6 +217,11 @@ export default {
         if (item.y - item.radius > this.canvasHeight + 100 ||
             item.x + item.radius < -100 ||
             item.x - item.radius > this.canvasWidth + 100) {
+          if (item.color === this.targetColor) {
+            const penalty = ESCAPE_PENALTIES[item.size]
+            this.points += penalty
+            this.$emit('score', { points: penalty, count: 1, reason: 'escaped' })
+          }
           this.items.splice(i, 1)
         }
       }
@@ -193,8 +245,18 @@ export default {
         colors.push(this.targetColor)
       }
       const randomColor = colors[Math.floor(Math.random() * colors.length)]
-      const sizes = [15, 30, 45]
-      const radius = sizes[Math.floor(Math.random() * sizes.length)]
+      const rand = Math.random()
+      let size, radius
+      if (rand < 0.2) {
+        size = 'large'
+        radius = RADIUS_LARGE
+      } else if (rand < 0.7) {
+        size = 'medium'
+        radius = RADIUS_MEDIUM
+      } else {
+        size = 'small'
+        radius = RADIUS_SMALL
+      }
       const spawnWidth = this.canvasWidth * 0.6
       const startX = (this.canvasWidth - spawnWidth) / 2
       const x = startX + Math.random() * spawnWidth
@@ -206,6 +268,7 @@ export default {
         x: x,
         y: -radius,
         radius: radius,
+        size: size,
         speedX: speedX,
         speedY: speedY,
         wobble: Math.random() * Math.PI * 2,
@@ -225,19 +288,113 @@ export default {
         const item = this.items[i]
         const dx = clickX - item.x
         const dy = clickY - item.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
+        const dist = Math.hypot(dx, dy)
         if (dist <= item.radius) hit.push(item)
       }
       if (hit.length === 0) return
       let totalPoints = 0
+      let newChildren = []
       for (const item of hit) {
         const isCorrect = item.color === this.targetColor
-        totalPoints += isCorrect ? this.pointsForCorrect : this.pointsForWrong
+        if (isCorrect) {
+          totalPoints += this.pointsForCorrect
+        } else {
+          totalPoints += WRONG_PENALTIES[item.size]
+        }
+        this.schedulePush(item.x, item.y, item.size)
+        const children = this.spawnChildren(item)
+        if (children.length) {
+          newChildren.push(...children)
+        }
         const idx = this.items.indexOf(item)
         if (idx !== -1) this.items.splice(idx, 1)
       }
+      if (newChildren.length) {
+        this.items.push(...newChildren)
+      }
       this.points += totalPoints
       this.$emit('score', { points: totalPoints, count: hit.length })
+    },
+    schedulePush(centerX, centerY, sourceSize) {
+      const PUSH_DISTANCE = 170
+      const ANIMATION_STEPS = 70
+      for (const item of this.items) {
+        const dx = item.x - centerX
+        const dy = item.y - centerY
+        const dist = Math.hypot(dx, dy)
+        if (dist > 0 && dist < PUSH_DISTANCE) {
+          const factor = PUSH_FACTORS[sourceSize][item.size]
+          const pushStrength = factor * (sourceSize === 'large' ? RADIUS_LARGE :
+              sourceSize === 'medium' ? RADIUS_MEDIUM : RADIUS_SMALL)
+          const angle = Math.atan2(dy, dx)
+          const moveX = Math.cos(angle) * pushStrength
+          const moveY = Math.sin(angle) * pushStrength
+          this.animatedPushes.push({
+            item: item,
+            startX: item.x,
+            startY: item.y,
+            targetX: item.x + moveX,
+            targetY: item.y + moveY,
+            steps: ANIMATION_STEPS,
+            currentStep: 0
+          })
+        }
+      }
+    },
+    spawnChildren(parent) {
+      const children = []
+      const parentSize = parent.size
+      const parentColor = parent.color
+      const parentX = parent.x
+      const parentY = parent.y
+
+      let childSize, childRadius, count
+      if (parentSize === 'large') {
+        childSize = 'medium'
+        childRadius = RADIUS_MEDIUM
+        count = 3
+      } else if (parentSize === 'medium') {
+        childSize = 'small'
+        childRadius = RADIUS_SMALL
+        count = 5
+      } else {
+        return []
+      }
+      const orbitRadius = parent.radius + childRadius + 5
+      const angleStep = (Math.PI * 2) / count
+      const colors = []
+      for (let i = 0; i < count; i++) {
+        if (i === 0) {
+          colors.push(parentColor)
+        } else {
+          let randomColor
+          do {
+            randomColor = this.activeColors[Math.floor(Math.random() * this.activeColors.length)]
+          } while (randomColor === parentColor && this.activeColors.length > 1)
+          colors.push(randomColor)
+        }
+      }
+      for (let i = 0; i < count; i++) {
+        const angle = i * angleStep
+        const x = parentX + Math.cos(angle) * orbitRadius
+        const y = parentY + Math.sin(angle) * orbitRadius
+        const speedX = (Math.random() - 0.5) * 1.5
+        const speedY = 1 + Math.random() * 2.5
+        children.push({
+          id: Date.now() + Math.random() + i,
+          color: colors[i],
+          x: x,
+          y: y,
+          radius: childRadius,
+          size: childSize,
+          speedX: speedX,
+          speedY: speedY,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.02 + Math.random() * 0.03,
+          active: true
+        })
+      }
+      return children
     },
     restartGame() {
       this.resetSession()
@@ -248,6 +405,7 @@ export default {
       this.remaining = this.gameDuration
       this.sessionEnded = false
       this.items = []
+      this.animatedPushes = []
       if (this.frameId) cancelAnimationFrame(this.frameId)
       if (this.countdownId) clearInterval(this.countdownId)
       if (this.tutorialTimer) clearTimeout(this.tutorialTimer)
@@ -265,6 +423,7 @@ export default {
     finishSession() {
       this.sessionEnded = true
       this.items = []
+      this.animatedPushes = []
       if (this.countdownId) clearInterval(this.countdownId)
       if (this.tutorialTimer) clearTimeout(this.tutorialTimer)
       this.tutorialVisible = false
@@ -335,11 +494,11 @@ $timerWarning: #f3b3a1;
     color: $textLight;
     text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
     transition: all 0.3s ease;
-  }
 
-  &__timer--urgent {
-    color: $timerWarning;
-    text-shadow: 0 0 5px $timerWarning;
+    &--urgent {
+      color: $timerWarning;
+      text-shadow: 0 0 5px $timerWarning;
+    }
   }
 
   &__hint {
