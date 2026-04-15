@@ -28,20 +28,20 @@ import purpleImg from '@/assets/bubbles/purple.png'
 import redImg from '@/assets/bubbles/red.png'
 import yellowImg from '@/assets/bubbles/yellow.png'
 
-const RADIUS_SMALL = 25
-const RADIUS_MEDIUM = 40
-const RADIUS_LARGE = 60
-const WRONG_PENALTIES = {
+const radiusSmall = 25
+const radiusMedium = 40
+const radiusLarge = 60
+const wrongPen = {
   small: -1,
   medium: -3,
   large: -5
 }
-const ESCAPE_PENALTIES = {
+const escapPen = {
   small: -3,
   medium: -6,
   large: -10
 }
-const PUSH_FACTORS = {
+const pushFactor = {
   large: {
     large: 1,
     medium: 1.5,
@@ -218,7 +218,7 @@ export default {
             item.x + item.radius < -100 ||
             item.x - item.radius > this.canvasWidth + 100) {
           if (item.color === this.targetColor) {
-            const penalty = ESCAPE_PENALTIES[item.size]
+            const penalty = escapPen[item.size]
             this.points += penalty
             this.$emit('score', { points: penalty, count: 1, reason: 'escaped' })
           }
@@ -249,13 +249,13 @@ export default {
       let size, radius
       if (rand < 0.2) {
         size = 'large'
-        radius = RADIUS_LARGE
+        radius = radiusLarge
       } else if (rand < 0.7) {
         size = 'medium'
-        radius = RADIUS_MEDIUM
+        radius = radiusMedium
       } else {
         size = 'small'
-        radius = RADIUS_SMALL
+        radius = radiusSmall
       }
       const spawnWidth = this.canvasWidth * 0.6
       const startX = (this.canvasWidth - spawnWidth) / 2
@@ -299,7 +299,7 @@ export default {
         if (isCorrect) {
           totalPoints += this.pointsForCorrect
         } else {
-          totalPoints += WRONG_PENALTIES[item.size]
+          totalPoints += wrongPen[item.size]
         }
         this.schedulePush(item.x, item.y, item.size)
         const children = this.spawnChildren(item)
@@ -316,16 +316,16 @@ export default {
       this.$emit('score', { points: totalPoints, count: hit.length })
     },
     schedulePush(centerX, centerY, sourceSize) {
-      const PUSH_DISTANCE = 170
-      const ANIMATION_STEPS = 70
+      const pushDistance = 170
+      const animationSteps = 70
       for (const item of this.items) {
         const dx = item.x - centerX
         const dy = item.y - centerY
         const dist = Math.hypot(dx, dy)
-        if (dist > 0 && dist < PUSH_DISTANCE) {
-          const factor = PUSH_FACTORS[sourceSize][item.size]
-          const pushStrength = factor * (sourceSize === 'large' ? RADIUS_LARGE :
-              sourceSize === 'medium' ? RADIUS_MEDIUM : RADIUS_SMALL)
+        if (dist > 0 && dist < pushDistance) {
+          const factor = pushFactor[sourceSize][item.size]
+          const pushStrength = factor * (sourceSize === 'large' ? radiusLarge :
+              sourceSize === 'medium' ? radiusMedium : radiusSmall)
           const angle = Math.atan2(dy, dx)
           const moveX = Math.cos(angle) * pushStrength
           const moveY = Math.sin(angle) * pushStrength
@@ -335,7 +335,7 @@ export default {
             startY: item.y,
             targetX: item.x + moveX,
             targetY: item.y + moveY,
-            steps: ANIMATION_STEPS,
+            steps: animationSteps,
             currentStep: 0
           })
         }
@@ -351,11 +351,11 @@ export default {
       let childSize, childRadius, count
       if (parentSize === 'large') {
         childSize = 'medium'
-        childRadius = RADIUS_MEDIUM
+        childRadius = radiusMedium
         count = 3
       } else if (parentSize === 'medium') {
         childSize = 'small'
-        childRadius = RADIUS_SMALL
+        childRadius = radiusSmall
         count = 5
       } else {
         return []
