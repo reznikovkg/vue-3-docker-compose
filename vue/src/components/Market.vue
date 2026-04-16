@@ -3,34 +3,17 @@
   <div class="market__title">
     Рынок
   </div>
-
+  
   <div class="market__list">
     <span class="market__title">Продать рыбу</span>
 
-    <div class="market__item" v-if="inventory.common != 0">
-      <span class="market__label">Окунь</span>
-      <button 
-        class="market__btn" 
-        @click="() => sellFish('common')">
-        Продать за {{ fishPrices['common'] }}₽
-      </button>
-    </div>
+    <div class="market__item" v-for="fish in inventory">
+      <span class="market__label">{{ fishNames[fish.type] }} ({{ fish.weight }} кг)</span>
 
-    <div class="market__item" v-if="inventory.rare != 0">
-      <span class="market__label">Карп</span>
       <button 
         class="market__btn" 
-        @click="() => sellFish('rare')">
-        Продать за {{ fishPrices['rare'] }}₽
-      </button>
-    </div>
-
-    <div class="market__item" v-if="inventory.legendary != 0">
-      <span class="market__label">Язь <br>(здоровенный)</span>
-      <button 
-        class="market__btn" 
-        @click="() => sellFish('legendary')">
-        Продать за {{ fishPrices['legendary'] }}₽
+        @click="() => sellFish(fish)">
+        Продать за {{  Math.round(fishPrices[fish.type] * fish.weight * 100) / 100 }}₽
       </button>
     </div>
   </div>
@@ -220,24 +203,13 @@ import { useStore } from 'vuex'
 
 const store = useStore()
 
-const fishPrices = {
-  common: 5,
-  rare: 20,
-  legendary: 50
-}
-
-const baitsPrices = {
-  worms: 1,
-  corn: 10,
-  maggots: 25,
-  groundbait: 5
-}
+const fishNames = computed(() => store.getters['game/constants/getFishNames'])
+const fishPrices = computed(() => store.getters['game/constants/getFishPrices'])
+const baitsPrices = computed(() => store.getters['game/constants/getBaitsPrices'])
 
 const opened = ref(false)
 
 const inventory = computed(() => store.getters['game/getInventory'])
-
-const balance = computed(() => store.getters['game/getBalance'])
 
 const islands = computed(() => store.getters['game/getIslands'])
 
@@ -252,17 +224,13 @@ const hooks = computed(() => store.getters['game/tacklesList/getHooksList'])
 const lines = computed(() => store.getters['game/tacklesList/getLinesList'])
 
 
-const sellFish = (type) => {
-  if (inventory.value[type] > 0) {
-    store.dispatch('game/sellFish', {type: type, price: fishPrices[type]})
-  }
+const sellFish = (fish) => {
+  store.dispatch('game/sellFish', {item: fish, price: Math.round(fishPrices[fish.type] * fish.weight * 100) / 100})
 }
 
 const buyBait = (type) => {
-  const price = baitsPrices[type]
-  if (balance.value - price >= 0) {
-    store.dispatch('game/buyBait', {type: type, price: price})
-  }
+  const price = baitsPrices.value[type]
+  store.dispatch('game/buyBait', {type: type, price: price})
 }
 
 const buyTackle = (type, item) => {

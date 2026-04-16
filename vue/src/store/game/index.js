@@ -1,3 +1,4 @@
+import constants from './constants'
 import tacklesList from './tacklesList'
 
 const MUTATIONS = {
@@ -28,11 +29,7 @@ const defaultState = {
     rowing: false
   },
   balance: 5000,
-  inventory: {
-    common: 0,
-    rare: 0, 
-    legendary: 0
-  },
+  inventory: [],
   tackles: {
     rod: 0,
     reel: 0,
@@ -135,9 +132,8 @@ export default {
     [MUTATIONS.FISHING]: (state) => {
       state.isFishing = !state.isFishing
     },
-    [MUTATIONS.ADD_FISH]: (state, type) => {
-      if (state.inventory[type] !== undefined)
-        state.inventory[type] += 1
+    [MUTATIONS.ADD_FISH]: (state, item) => {
+      state.inventory.push(item)
     },
     [MUTATIONS.SET_ROWING]: (state, value) => {
       state.boat.rowing = value
@@ -149,9 +145,10 @@ export default {
       const boat = state.boat
       state.zones = state.zones.filter(zone => !(zone.x - 80 <= boat.x && zone.x + 80 >= boat.x && zone.y - 80 <= boat.y && zone.y + 80 >= boat.y))
     },
-    [MUTATIONS.SELL_FISH]: (state, type) => {
-      if (state.inventory[type] > 0) {
-        state.inventory[type]--
+    [MUTATIONS.SELL_FISH]: (state, item) => {
+      const index = state.inventory.findIndex(i => i.id === item.id)
+      if (index !== -1) {
+        state.inventory.splice(index, 1)
       }
     },
     [MUTATIONS.BUY_BAIT]: (state, type) => {
@@ -236,8 +233,10 @@ export default {
       store.commit(MUTATIONS.FISHING)
       store.dispatch('save')
     },
-    addFish: (store, type) => {
-      store.commit(MUTATIONS.ADD_FISH, type)
+    addFish: (store, payload) => {
+      const {type, weight} = payload
+      const item = {id: Date.now(), type: type, weight: weight}
+      store.commit(MUTATIONS.ADD_FISH, item)
       store.dispatch('save')
     },
     generateZones: (store) => {
@@ -276,12 +275,11 @@ export default {
       store.dispatch('save')
     },
     sellFish: (store, payload) => {
-      const {type, price} = payload
-      if (store.state.inventory[type] > 0) {
-        store.commit(MUTATIONS.SELL_FISH, type)
-        store.commit(MUTATIONS.CHANGE_BALANCE, price)
-        store.dispatch('save')
-      }
+      const {item, price} = payload
+      console.log(item)
+      store.commit(MUTATIONS.SELL_FISH, item)
+      store.commit(MUTATIONS.CHANGE_BALANCE, price)
+      store.dispatch('save')
     },
     buyBait: (store, payload) => {
       const {type, price} = payload
@@ -335,6 +333,6 @@ export default {
     }
   },
   modules: {
-    tacklesList
+    tacklesList, constants
   }
 }

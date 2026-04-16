@@ -7,19 +7,9 @@
     <div class="inventory__list">
       <span class="inventory__title">Улов</span>
 
-      <div class="inventory__item">
-        <span class="inventory__label">Окунь</span>
-        <span class="inventory__value">{{ inventory.common }} шт.</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Карп</span>
-        <span class="inventory__value">{{ inventory.rare }} шт.</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Язь <br>(здоровенный)</span>
-        <span class="inventory__value">{{ inventory.legendary }} шт.</span>
+      <div class="inventory__item" v-for="fish in inventory">
+        <span class="inventory__label">{{ fishNames[fish.type] }}</span>
+        <span class="inventory__value">{{ fish.weight }} кг</span>
       </div>
     </div>
 
@@ -91,6 +81,7 @@ import { useStore } from 'vuex'
 const store = useStore()
 
 const inventory = computed(() => store.getters['game/getInventory'])
+const fishNames = computed(() => store.getters['game/constants/getFishNames'])
 
 const tackles = computed(() => store.getters['game/getTackles'])
 
@@ -153,6 +144,17 @@ const power = computed(() => store.getters['game/getPower'])
     border: 4px dashed rgb(10, 10, 100);
     padding: 4px;
     margin: 4px;
+
+    max-height: 200px;
+    overflow-y: auto;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+      
+    &::-webkit-scrollbar-thumb {
+      background: rgb(10, 10, 100);
+    }
   }
 
   &__item {

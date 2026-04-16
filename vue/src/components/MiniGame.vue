@@ -97,7 +97,7 @@ const handleSpace = (e) => {
       }
 
       store.dispatch('game/removeZone')
-      store.dispatch('game/addFish', baitToFish[activeBait.value])
+      store.dispatch('game/addFish', {type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10})
     }
     store.dispatch('game/useBait', activeBait.value)
     stopMiniGame()
