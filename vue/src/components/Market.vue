@@ -110,7 +110,8 @@ const baitsList = computed(() => [
 ])
 
 const sellFish = (fish) => {
-  store.dispatch('game/sellFish', {item: fish, price: Math.round(fishPrices[fish.type] * fish.weight * 100) / 100})
+  console.log(Math.round(fishPrices.value[fish.type] * fish.weight * 100) / 100)
+  store.dispatch('game/sellFish', {item: fish, price: Math.round(fishPrices.value[fish.type] * fish.weight * 100) / 100})
 }
 
 const buyBait = (type) => {
