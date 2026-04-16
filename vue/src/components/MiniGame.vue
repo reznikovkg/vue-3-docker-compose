@@ -61,8 +61,13 @@ const baitDifficulty = {
   maggots: 10
 }
 
+const lastFish = ref(null)
 const power = computed(() => store.getters['game/getPower'])
-const speed = computed(() => { return 1.0 / (1 + Math.log(power.value / 0.05)) * baitDifficulty[activeBait.value] })
+const speed = computed(() => {
+  const baseSpeed = 1.0 / (1.0 + Math.log(power.value / 0.05))
+  const weightDifficulty = (lastFish.value) ? (lastFish.value.weight / 2.0) : 1.0 
+  return baseSpeed * weightDifficulty * baitDifficulty[activeBait.value]
+})
 
 const activeBaitText = computed(() => baitsNames[activeBait.value])
 const baitCount = computed(() => baits.value[activeBait.value])
@@ -84,22 +89,23 @@ const handleSpace = (e) => {
 
   if (!active.value) {
     if (baitCount.value > 0) {
-      startMiniGame(zone.value)
-      return
-    }
-  } else {
-    const success = barPosition.value >= targetStart && barPosition.value <= targetEnd
-    if (success) {
       const baitToFish = {
         worms: 'common',
         corn: 'rare',
         maggots: 'legendary'
       }
 
-      store.dispatch('game/removeZone')
-      store.dispatch('game/addFish', {type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10})
+      lastFish.value = {type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10}
+      store.dispatch('game/useBait', activeBait.value)
+      startMiniGame(zone.value)
+      return
     }
-    store.dispatch('game/useBait', activeBait.value)
+  } else {
+    const success = barPosition.value >= targetStart && barPosition.value <= targetEnd
+    if (success) {
+      store.dispatch('game/removeZone')
+      store.dispatch('game/addFish', lastFish.value)
+    }
     stopMiniGame()
   }
 }
@@ -124,6 +130,8 @@ const startMiniGame = (zone) => {
 
 const stopMiniGame = () => {
   active.value = false
+  lastFish.value = null
+
   clearInterval(intervalID.value)
   store.dispatch('game/fishing')
 } 
