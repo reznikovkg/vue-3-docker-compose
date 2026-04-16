@@ -21,172 +21,43 @@
   <div class="market__list">
     <span class="market__title">Купить/Продать снасти</span>
 
-    <span class="market__title">Удилища</span>
-    <div class="market__item" v-for="rod in rods">
-      <span class="market__label">Удилище {{ rod.name }} ({{ rod.power }})</span>
+    <div v-for="tackle in tacklesList">
+      <span class="market__title">{{ tackle.name }}</span>
+      <div class="market__item" v-for="item in tackle.items">
+        <span class="market__label">{{ item.label }} {{ item.name }} ({{ item.power }})</span>
 
-      <button 
-        class="market__btn"
-        v-if="!tacklesOwned.rods.includes(rod.id)" 
-        @click="() => buyTackle('rods', rod)">
-        Купить за {{ rod.price }}₽ 
-      </button>
-      <button 
-        class="market__btn"
-        v-else-if="tacklesOwned.rods.includes(rod.id) && rod.id !== 0" 
-        @click="() => sellTackle('rods', rod)">
-        Продать за {{ rod.price / 2 }}₽ 
-      </button>
+        <button 
+          class="market__btn"
+          v-if="!tacklesOwned[tackle.id].includes(item.id)" 
+          @click="() => buyTackle(tackle.id, item)">
+          Купить за {{ item.price }}₽ 
+        </button>
+        <button 
+          class="market__btn"
+          v-else-if="tacklesOwned[tackle.id].includes(item.id) && item.id !== 0" 
+          @click="() => sellTackle(tackle.id, item)">
+          Продать за {{ item.price / 2 }}₽ 
+        </button>
 
-      <button 
-        class="market__btn"
-        v-if="tacklesOwned.rods.includes(rod.id)" 
-        @click="() => useTackle('rods', rod)">
-        Надеть
-      </button>
-    </div>
-
-    <span class="market__title">Катушки</span>
-    <div class="market__item" v-for="reel in reels">
-      <span class="market__label">Катушка {{ reel.name }} ({{ reel.power }})</span>
-
-      <button 
-        class="market__btn"
-        v-if="!tacklesOwned.reels.includes(reel.id)" 
-        @click="() => buyTackle('reels', reel)">
-        Купить за {{ reel.price }}₽ 
-      </button>
-      <button 
-        class="market__btn"
-        v-else-if="tacklesOwned.reels.includes(reel.id) && reel.id !== 0" 
-        @click="() => sellTackle('reels', reel)">
-        Продать за {{ reel.price / 2 }}₽ 
-      </button>
-
-      <button 
-        class="market__btn"
-        v-if="tacklesOwned.reels.includes(reel.id)" 
-        @click="() => useTackle('reels', reel)">
-        Надеть
-      </button>
-    </div>
-
-    <span class="market__title">Поплавки</span>
-    <div class="market__item" v-for="bobber in bobbers">
-      <span class="market__label">Поплавок {{ bobber.name }} ({{ bobber.power }})</span>
-
-      <button 
-        class="market__btn"
-        v-if="!tacklesOwned.bobbers.includes(bobber.id)" 
-        @click="() => buyTackle('bobbers', bobber)">
-        Купить за {{ bobber.price }}₽ 
-      </button>
-      <button 
-        class="market__btn"
-        v-else-if="tacklesOwned.bobbers.includes(bobber.id) && bobber.id !== 0" 
-        @click="() => sellTackle('bobbers', bobber)">
-        Продать за {{ bobber.price / 2 }}₽ 
-      </button>
-
-      <button 
-        class="market__btn"
-        v-if="tacklesOwned.bobbers.includes(bobber.id)" 
-        @click="() => useTackle('bobbers', bobber)">
-        Надеть
-      </button>
-    </div>
-
-    <span class="market__title">Крючки</span>
-    <div class="market__item" v-for="hook in hooks">
-      <span class="market__label">Крючок {{ hook.name }} ({{ hook.power }})</span>
-
-      <button 
-        class="market__btn"
-        v-if="!tacklesOwned.hooks.includes(hook.id)" 
-        @click="() => buyTackle('hooks', hook)">
-        Купить за {{ hook.price }}₽ 
-      </button>
-      <button 
-        class="market__btn"
-        v-if="tacklesOwned.hooks.includes(hook.id) && hook.id !== 0" 
-        @click="() => sellTackle('hooks', hook)">
-        Продать за {{ hook.price / 2 }}₽ 
-      </button>
-
-      <button 
-        class="market__btn"
-        v-if="tacklesOwned.hooks.includes(hook.id)" 
-        @click="() => useTackle('hooks', hook)">
-        Надеть
-      </button>
-    </div>
-
-    <span class="market__title">Лески</span>
-    <div class="market__item" v-for="line in lines">
-      <span class="market__label">Леска {{ line.name }} ({{ line.power }})</span>
-
-      <button 
-        class="market__btn"
-        v-if="!tacklesOwned.lines.includes(line.id)" 
-        @click="() => buyTackle('lines', line)">
-        Купить за {{ line.price }}₽ 
-      </button>
-      <button 
-        class="market__btn"
-        v-else-if="tacklesOwned.lines.includes(line.id) && line.id !== 0" 
-        @click="() => sellTackle('lines', line)">
-        Продать за {{ line.price / 2 }}₽ 
-      </button>
-
-      <button 
-        class="market__btn"
-        v-if="tacklesOwned.lines.includes(line.id)" 
-        @click="() => useTackle('lines', line)">
-        Надеть
-      </button>
+        <button 
+          class="market__btn"
+          v-if="tacklesOwned[tackle.id].includes(item.id)" 
+          @click="() => useTackle(tackle.id, item)">
+          Надеть
+        </button>
+      </div>
     </div>
   </div>
 
   <div class="market__list">
     <span class="market__title">Купить наживку</span>
 
-    <div class="market__item">
-      <span class="market__label">Черви</span>
+    <div class="market__item" v-for="bait in baitsList">
+      <span class="market__label">{{ bait.name }}</span>
       <button 
         class="market__btn" 
-        @click="() => buyBait('worms')">
-        Купить за {{ baitsPrices['worms'] }}₽
-      </button>
-    </div>
-
-    <div class="market__item">
-      <span class="market__label">Кукуруза</span>
-      <button 
-        class="market__btn" 
-        @click="() => buyBait('corn')">
-        Купить за {{ baitsPrices['corn'] }}₽
-      </button>
-    </div>
-
-    <div class="market__item">
-      <span class="market__label">Опарыши</span>
-      <button 
-        class="market__btn" 
-        @click="() => buyBait('maggots')">
-        Купить за {{ baitsPrices['maggots'] }}₽
-      </button>
-    </div>
-  </div>
-
-  <div class="market__list">
-    <span class="market__title">Купить прикормку</span>
-
-    <div class="market__item">
-      <span class="market__label">Прикормка</span>
-      <button 
-        class="market__btn" 
-        @click="() => buyBait('groundbait')">
-        Купить за {{ baitsPrices['groundbait'] }}₽
+        @click="() => buyBait(bait.id)">
+        Купить за {{ baitsPrices[bait.id] }}₽
       </button>
     </div>
   </div>
@@ -223,6 +94,20 @@ const bobbers = computed(() => store.getters['game/tacklesList/getBobbersList'])
 const hooks = computed(() => store.getters['game/tacklesList/getHooksList'])
 const lines = computed(() => store.getters['game/tacklesList/getLinesList'])
 
+const tacklesList = computed(() => [
+  { id: 'rods', name: 'Удилища', items: rods.value},
+  { id: 'reels', name: 'Катушки', items: reels.value},
+  { id: 'bobbers', name: 'Поплавки', items: bobbers.value},
+  { id: 'hooks', name: 'Крючки', items: hooks.value},
+  { id: 'lines', name: 'Лески', items: lines.value}
+])
+
+const baitsList = computed(() => [
+  { id: 'worms', name: 'Черви' },
+  { id: 'corn', name: 'Кукуруза' },
+  { id: 'maggots', name: 'Опарыши' },
+  { id: 'groundbait', name: 'Прикормка' }
+])
 
 const sellFish = (fish) => {
   store.dispatch('game/sellFish', {item: fish, price: Math.round(fishPrices[fish.type] * fish.weight * 100) / 100})
