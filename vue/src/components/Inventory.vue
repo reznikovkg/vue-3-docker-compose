@@ -16,57 +16,18 @@
     <div class="inventory__list">
       <span class="inventory__title">Снасти</span>
 
-      <div class="inventory__item">
-        <span class="inventory__label">Удилище</span>
-        <span class="inventory__value">{{ rod.name }} (x{{ rod.power }})</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Катушка</span>
-        <span class="inventory__value">{{ reel.name }} (x{{ reel.power }})</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Поплавок</span>
-        <span class="inventory__value">{{ bobber.name }} (x{{ bobber.power }})</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Крючок</span>
-        <span class="inventory__value">{{ hook.name }} (x{{ hook.power }})</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Леска</span>
-        <span class="inventory__value">{{ line.name }} (x{{ line.power }})</span>
+      <div class="inventory__item" v-for="tackle in tacklesList">
+        <span class="inventory__label">{{ tackle.name }}</span>
+        <span class="inventory__value">{{ tackle.data.name }} (x{{ tackle.data.power }})</span>
       </div>
     </div>
 
     <div class="inventory__list">
       <span class="inventory__title">Наживка</span>
 
-      <div class="inventory__item">
-        <span class="inventory__label">Черви</span>
-        <span class="inventory__value">{{ baits.worms }} шт.</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Кукуруза</span>
-        <span class="inventory__value">{{ baits.corn }} шт.</span>
-      </div>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Опарыши</span>
-        <span class="inventory__value">{{ baits.maggots }} шт.</span>
-      </div>
-    </div>
-
-    <div class="inventory__list">
-      <span class="inventory__title">Прикормка</span>
-
-      <div class="inventory__item">
-        <span class="inventory__label">Прикормка</span>
-        <span class="inventory__value">{{ baits.groundbait }} шт.</span>
+      <div class="inventory__item" v-for="bait in baitsList">
+        <span class="inventory__label">{{ bait.name }}</span>
+        <span class="inventory__value">{{ bait.count }} шт.</span>
       </div>
     </div>
 
@@ -110,7 +71,22 @@ const line = computed(() => {
   return list[tackles.value.line]
 })
 
+const tacklesList = computed(() => [
+  { name: 'Удилище', data: rod.value },
+  { name: 'Катушка', data: reel.value },
+  { name: 'Поплавок', data: bobber.value },
+  { name: 'Крючок', data: hook.value },
+  { name: 'Леска', data: line.value }
+])
+
 const baits = computed(() => store.getters['game/getBaits'])
+
+const baitsList = computed(() => [
+  { name: 'Черви', count: baits.value.worms },
+  { name: 'Кукуруза', count: baits.value.corn },
+  { name: 'Опарыши', count: baits.value.maggots },
+  { name: 'Прикормка', count: baits.value.groundbait }
+])
 
 const power = computed(() => store.getters['game/getPower'])
 </script>
