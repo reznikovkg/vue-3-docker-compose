@@ -480,14 +480,14 @@ $accentGreen: #00d389;
           color: $textLight;
           background: rgba($accentGreen, 0.1);
         }
-      }
 
-      &__tab--active {
-        color: $accentGreen;
-        border-bottom: 2px solid $accentGreen;
-        
-        &:hover {
-          background: transparent;
+        &--active {
+          color: $accentGreen;
+          border-bottom: 2px solid $accentGreen;
+          
+          &:hover {
+            background: transparent;
+          }
         }
       }
     }

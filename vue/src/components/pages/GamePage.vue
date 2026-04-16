@@ -163,13 +163,13 @@ export default {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         background: darken(#00d389, 10%);
       }
-    }
 
-    &__button--menu {
-      background: #3a3f44;
+      &--menu {
+        background: #3a3f44;
 
-      &:hover {
-        background: #4a4f54;
+        &:hover {
+          background: #4a4f54;
+        }
       }
     }
   }

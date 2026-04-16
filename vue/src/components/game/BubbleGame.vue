@@ -1180,13 +1180,13 @@ html, body {
     cursor: default;
     pointer-events: none;
     transition: all 0.3s ease;
-  }
 
-  &__timer--warning {
-    color: #ff6b6b;
-    border-color: #ff6b6b;
-    background: rgba(0, 0, 0, 0.6);
-    animation: warningPulse 1s ease-in-out infinite;
+    &--warning {
+      color: #ff6b6b;
+      border-color: #ff6b6b;
+      background: rgba(0, 0, 0, 0.6);
+      animation: warningPulse 1s ease-in-out infinite;
+    }
   }
 
   &__multiplier {
@@ -1197,34 +1197,34 @@ html, body {
     flex-direction: column;
     gap: 10px;
     z-index: 20;
-  }
 
-  &__multiplier--current {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 8px 20px;
-    border-radius: 12px;
-    backdrop-filter: blur(5px);
-    font-size: 2rem;
-    font-weight: bold;
-    cursor: default;
-    pointer-events: none;
-    text-align: center;
-    min-width: 120px;
-    transition: all 0.2s ease;
-  }
+    &--current {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(5px);
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: default;
+      pointer-events: none;
+      text-align: center;
+      min-width: 120px;
+      transition: all 0.2s ease;
+    }
 
-  &__multiplier--correct {
-    color: #00d389;
-    text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
-    border-left: 3px solid #00d389;
-    animation: pulseCorrect 1.2s ease-in-out infinite;
-  }
+    &--correct {
+      color: #00d389;
+      text-shadow: 0 0 15px rgba(0, 211, 137, 0.6);
+      border-left: 3px solid #00d389;
+      animation: pulseCorrect 1.2s ease-in-out infinite;
+    }
 
-  &__multiplier--wrong {
-    color: #ff6b6b;
-    text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
-    border-left: 3px solid #ff6b6b;
-    animation: pulseWrong 1.2s ease-in-out infinite;
+    &--wrong {
+      color: #ff6b6b;
+      text-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+      border-left: 3px solid #ff6b6b;
+      animation: pulseWrong 1.2s ease-in-out infinite;
+    }
   }
 
   &__target {
@@ -1358,16 +1358,16 @@ html, body {
       &:active {
         transform: translateY(0);
       }
-    }
 
-    &__button--link {
-      background: #3a3f44;
-      color: white;
-      text-decoration: none;
-      display: block;
+      &--link {
+        background: #3a3f44;
+        color: white;
+        text-decoration: none;
+        display: block;
 
-      &:hover {
-        background: #4a4f54;
+        &:hover {
+          background: #4a4f54;
+        }
       }
     }
   } 

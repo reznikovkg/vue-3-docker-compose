@@ -175,27 +175,27 @@ $accentGreen: #00d389;
         display: flex;
         flex-direction: column;
         gap: 8px;
-      }
 
-      &__item--game, &__item--options {
-        @include button-base;
-      }
-
-      &__item--game {
-        background: $accentGreen;
-        color: white;
-
-        &:hover {
-          background: darken($accentGreen, 10%);
+        &--game, &--options {
+          @include button-base;
         }
-      }
 
-      &__item--options {
-        background: $bgElement;
-        color: $textLight;
+        &--game {
+          background: $accentGreen;
+          color: white;
 
-        &:hover {
-          background: $bgElementHover;
+          &:hover {
+            background: darken($accentGreen, 10%);
+          }
+        }
+
+        &--options {
+          background: $bgElement;
+          color: $textLight;
+
+          &:hover {
+            background: $bgElementHover;
+          }
         }
       }
     }
@@ -284,14 +284,14 @@ $accentGreen: #00d389;
             border-color: $bgDark transparent transparent transparent;
           }
         }
-      }
 
-      &__option--active {
-        background: $accentGreen;
-        color: white;
+        &--active {
+          background: $accentGreen;
+          color: white;
 
-        &:hover {
-          background: darken($accentGreen, 10%);
+          &:hover {
+            background: darken($accentGreen, 10%);
+          }
         }
       }
     }
