@@ -278,16 +278,16 @@ export default {
     sellFish: (store, payload) => {
       const {type, price} = payload
       if (store.state.inventory[type] > 0) {
-        store.commit('SELL_FISH', type)
-        store.commit('CHANGE_BALANCE', price)
+        store.commit(MUTATIONS.SELL_FISH, type)
+        store.commit(MUTATIONS.CHANGE_BALANCE, price)
         store.dispatch('save')
       }
     },
     buyBait: (store, payload) => {
       const {type, price} = payload
       if (store.state.balance - price >= 0) {
-        store.commit('BUY_BAIT', type)
-        store.commit('CHANGE_BALANCE', -price)
+        store.commit(MUTATIONS.BUY_BAIT, type)
+        store.commit(MUTATIONS.CHANGE_BALANCE, -price)
         store.dispatch('save')
       }
     },
@@ -296,8 +296,8 @@ export default {
       if (store.state.balance < item.price) return
 
       if (!store.state.tacklesOwned[type].includes(item.id)) {
-        store.commit('BUY_TACKLE', {type: type, id: item.id})
-        store.commit('CHANGE_BALANCE', -item.price)
+        store.commit(MUTATIONS.BUY_TACKLE, {type: type, id: item.id})
+        store.commit(MUTATIONS.CHANGE_BALANCE, -item.price)
         store.dispatch('save')
       }
     },
@@ -306,8 +306,8 @@ export default {
       if (item.id === 0) return
 
       if (store.state.tacklesOwned[type].includes(item.id)) {
-        store.commit('SELL_TACKLE', {type: type, id: item.id})
-        store.commit('CHANGE_BALANCE', +Math.round(item.price / 2))
+        store.commit(MUTATIONS.SELL_TACKLE, {type: type, id: item.id})
+        store.commit(MUTATIONS.CHANGE_BALANCE, +Math.round(item.price / 2))
         store.dispatch('save')
       }
     },
@@ -315,22 +315,22 @@ export default {
       const {type, item} = payload
       
       if (store.state.tacklesOwned[type].includes(item.id)) {
-        store.commit('USE_TACKLE', {type: type, id: item.id})
+        store.commit(MUTATIONS.USE_TACKLE, {type: type, id: item.id})
         store.dispatch('save')
       }
     },
     useGroundbait: (store) => {
       if (store.state.baits.groundbait <= 0) return
 
-      store.commit('USE_GROUNDBAIT')
+      store.commit(MUTATIONS.USE_GROUNDBAIT)
       store.dispatch('save')
     },
     setActiveBait: (store, bait) => {
-      store.commit('SET_ACTIVE_BAIT', bait)
+      store.commit(MUTATIONS.SET_ACTIVE_BAIT, bait)
       store.dispatch('save')
     },
     useBait: (store, bait) => {
-      store.commit('USE_BAIT', bait)
+      store.commit(MUTATIONS.USE_BAIT, bait)
       store.dispatch('save')
     }
   },

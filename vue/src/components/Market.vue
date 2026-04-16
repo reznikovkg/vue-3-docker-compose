@@ -372,10 +372,10 @@ onUnmounted(() => {
     color: rgb(10, 10, 100);
     background-color: rgb(200, 200, 200);
     border: 4px dashed rgb(10, 10, 100);
-  }
 
-  &__btn:hover {
-    background-color: rgb(190, 190, 190);
+    &:hover {
+      background-color: rgb(190, 190, 190);
+    }
   }
 
   &::-webkit-scrollbar {
