@@ -13,29 +13,35 @@ export interface BubbleColor {
   image: string
 }
 
+export const BUBBLE_NAMES = {
+  RED: 'red',
+  BLUE: 'blue',
+  GREEN: 'green',
+  YELLOW: 'yellow',
+  PURPLE: 'purple',
+  PINK: 'pink',
+  ORANGE: 'orange',
+  WHITE: 'white'
+} as const
 
-export const BUBBLE_COLORS: BubbleColor[] = [
-  { value: 'red', name: 'Красный', image: redBubble },
-  { value: 'blue', name: 'Синий', image: blueBubble },
-  { value: 'green', name: 'Зелёный', image: greenBubble },
-  { value: 'yellow', name: 'Жёлтый', image: yellowBubble },
-  { value: 'purple', name: 'Фиолетовый', image: purpleBubble },
-  { value: 'pink', name: 'Розовый', image: pinkBubble },
-  { value: 'orange', name: 'Оранжевый', image: orangeBubble },
-  { value: 'white', name: 'Белый', image: whiteBubble }
-]
+export const BUBBLE_BY_VALUE: Record<string, BubbleColor> = {
+  [BUBBLE_NAMES.RED]: { value: BUBBLE_NAMES.RED, name: 'Красный', image: redBubble },
+  [BUBBLE_NAMES.BLUE]: { value: BUBBLE_NAMES.BLUE, name: 'Синий', image: blueBubble },
+  [BUBBLE_NAMES.GREEN]: { value: BUBBLE_NAMES.GREEN, name: 'Зелёный', image: greenBubble },
+  [BUBBLE_NAMES.YELLOW]: { value: BUBBLE_NAMES.YELLOW, name: 'Жёлтый', image: yellowBubble },
+  [BUBBLE_NAMES.PURPLE]: { value: BUBBLE_NAMES.PURPLE, name: 'Фиолетовый', image: purpleBubble },
+  [BUBBLE_NAMES.PINK]: { value: BUBBLE_NAMES.PINK, name: 'Розовый', image: pinkBubble },
+  [BUBBLE_NAMES.ORANGE]: { value: BUBBLE_NAMES.ORANGE, name: 'Оранжевый', image: orangeBubble },
+  [BUBBLE_NAMES.WHITE]: { value: BUBBLE_NAMES.WHITE, name: 'Белый', image: whiteBubble }
+}
 
-export const BUBBLE_BY_VALUE: Record<string, BubbleColor> = BUBBLE_COLORS.reduce((acc, color) => {
-  acc[color.value] = color
-  return acc
-}, {} as Record<string, BubbleColor>)
+export const BUBBLE_COLORS = Object.values(BUBBLE_BY_VALUE)
 
-export const ALL_COLORS: string[] = BUBBLE_COLORS.map(c => c.value)
+export const ALL_COLORS = Object.keys(BUBBLE_BY_VALUE)
 
-export const BUBBLE_IMAGES: Record<string, string> = BUBBLE_COLORS.reduce((acc, color) => {
-  acc[color.value] = color.image
-  return acc
-}, {} as Record<string, string>)
+export const BUBBLE_IMAGES = Object.fromEntries(
+  Object.entries(BUBBLE_BY_VALUE).map(([key, color]) => [key, color.image])
+)
 
 export const getBubbleName = (value: string): string => {
   return BUBBLE_BY_VALUE[value]?.name || value
