@@ -42,7 +42,9 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'getIsFishing'
+      'getIsFishing',
+      'getIsHooked',
+      'getIsBroken'
     ])
   },
   methods: {
@@ -52,7 +54,7 @@ export default {
     ]),
     updateMoving() {
       let updMoving = false
-      if(!this.getIsFishing) {
+      if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken) {
         let x = 0
         let y = 0
         if (this.pressed.ArrowUp) {
@@ -94,7 +96,7 @@ export default {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: rgb(25 120 120);
+  background-color: rgb(25, 120, 120);
   z-index: 1;
 }
 </style>

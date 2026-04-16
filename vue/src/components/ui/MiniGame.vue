@@ -32,13 +32,18 @@ export default {
   computed: {
     ...mapGetters([
       'getIsFishing',
-      'getIsGaming'
+      'getIsGaming',
+      'getIsHooked',
+      'getIsBroken'
     ])
   },
   methods: {
     ...mapActions([
       'setFishing',
-      'setGaming'
+      'setGaming',
+      'setHooked',
+      'setBroken',
+      'addFish'
     ]),
     startFishing() {
       this.timeout = setTimeout(() => {
@@ -59,15 +64,25 @@ export default {
       clearInterval(this.interval)
     },
     fishingKeyDown(event) {
-      if (event.key === ' ') {
+      if (event.key === ' ' && !this.getIsHooked && !this.getIsBroken) {
         this.setFishing()
         if(this.getIsFishing)
           this.startFishing()
-        else if(this.getIsGaming) {
+        else if(this.getIsGaming && Math.abs(this.targetPosition - this.playerPosition) <= 5) {
           this.stopFishing()
+          this.setHooked()
+          setTimeout(() => {
+            this.addFish()
+            this.setHooked()
+          }, 1000)
         }
-        else
+        else {
           this.stopFishing()
+          this.setBroken()
+          setTimeout(() => {
+            this.setBroken()
+          }, 800)
+        }
       }
     }
   }

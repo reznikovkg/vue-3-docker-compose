@@ -1,6 +1,6 @@
 <template>
   <div class="info">
-    Координаты (X: {{ getBoat.x }}, Y: {{ getBoat.y }})
+    Coordinates (X: {{ getBoat.x }}, Y: {{ getBoat.y }})
   </div>
 </template>
 
@@ -20,6 +20,8 @@ export default {
 <style scoped lang="scss">
 .info {
   position: absolute;
+  left:50%;
+  transform: translateX(-50%);
   z-index: 2;
 }
 </style>
