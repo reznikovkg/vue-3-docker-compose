@@ -20,7 +20,7 @@ export const BOMB_CONFIG: BombConfig = {
   defaultDetonateFrame: 76
 }
 
-export function preloadBombSprite(): void {
+export const preloadBombSprite = (): void => {
   const img = new Image()
   img.src = BOMB_CONFIG.spritePath
 }

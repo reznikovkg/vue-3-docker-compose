@@ -37,15 +37,15 @@ export const BUBBLE_IMAGES: Record<string, string> = BUBBLE_COLORS.reduce((acc, 
   return acc
 }, {} as Record<string, string>)
 
-export function getBubbleName(value: string): string {
+export const getBubbleName = (value: string): string => {
   return BUBBLE_BY_VALUE[value]?.name || value
 }
 
-export function getBubbleImage(value: string): string {
+export const getBubbleImage = (value: string): string => {
   return BUBBLE_BY_VALUE[value]?.image || BUBBLE_BY_VALUE['white']?.image || ''
 }
 
-export function preloadBubbleImages(): void {
+export const preloadBubbleImages = (): void => {
   Object.values(BUBBLE_IMAGES).forEach(src => {
     const img = new Image()
     img.src = src
