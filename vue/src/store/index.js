@@ -29,7 +29,7 @@ const offsets = (minDist, maxDist) => {
 }
 
 export default createStore({
-  state() {
+  state () {
     return {
       boat: {
         x: 0,
