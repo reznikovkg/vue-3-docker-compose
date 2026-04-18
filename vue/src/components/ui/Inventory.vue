@@ -37,8 +37,8 @@ export default {
   border-radius: 20px;
   padding: 10px;
   box-shadow:
-      4px 4px rgba(0, 0, 0, 0.4),
-      6px 6px rgba(0, 0, 0, 0.2);
+    4px 4px rgba(0, 0, 0, 0.4),
+    6px 6px rgba(0, 0, 0, 0.2);
   transform: translateY(-50%);
   z-index: 2;
 
