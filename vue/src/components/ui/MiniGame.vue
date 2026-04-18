@@ -34,7 +34,8 @@ export default {
       'getIsFishing',
       'getIsGaming',
       'getIsHooked',
-      'getIsBroken'
+      'getIsBroken',
+      'getCurrentAreaInfo'
     ])
   },
   methods: {
@@ -43,14 +44,16 @@ export default {
       'setGaming',
       'setHooked',
       'setBroken',
-      'addFish'
+      'addFish',
+      'relocateCurrentArea'
     ]),
     startFishing() {
+      this.playerDelay = (!this.getCurrentAreaInfo ? 2500 : (this.getCurrentAreaInfo.area.type === 'medium' ? 1000 : 0))
       this.timeout = setTimeout(() => {
         this.setGaming(true)
         this.direction = 1
         this.playerPosition = 0
-        this.targetPosition = Math.floor(Math.random() * (90 - 10 + 1)) + 10
+        this.targetPosition = Math.floor(Math.random() * 81) + 10
       }, this.playerDelay)
       this.interval = setInterval(() => {
         this.playerPosition += this.direction * this.playerSpeed
@@ -64,7 +67,7 @@ export default {
       clearInterval(this.interval)
     },
     fishingKeyDown(event) {
-      if (event.key === ' ' && !this.getIsHooked && !this.getIsBroken) {
+      if(event.key === ' ' && !this.getIsHooked && !this.getIsBroken) {
         this.setFishing()
         if(this.getIsFishing)
           this.startFishing()
@@ -72,6 +75,7 @@ export default {
           this.stopFishing()
           this.setHooked()
           setTimeout(() => {
+            this.relocateCurrentArea()
             this.addFish()
             this.setHooked()
           }, 1000)

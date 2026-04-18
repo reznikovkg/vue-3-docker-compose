@@ -20,7 +20,7 @@ export default {
   computed: {
     ...mapGetters([
       'getInventory'
-    ]),
+    ])
   }
 }
 </script>
@@ -58,8 +58,8 @@ export default {
   &__list {
     display: flex;
     flex-direction: column;
-    width: 110%;
     gap: 13px;
+    width: 110%;
     transform: translateX(-5%);
 
     &__item {

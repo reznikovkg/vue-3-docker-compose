@@ -10,7 +10,22 @@ const MUTATIONS = {
   SET_GAMING: 'SET_GAMING',
   SET_HOOKED: 'SET_HOOKED',
   SET_BROKEN: 'SET_BROKEN',
-  ADD_FISH: 'ADD_FISH'
+  ADD_FISH: 'ADD_FISH',
+  START_AREA: 'START_AREA',
+  RELOCATE_AREA: 'RELOCATE_AREA'
+}
+
+const randomInt = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
+
+const offsets = (minDist, maxDist) => {
+  let x, y
+  do {
+    x = randomInt(-maxDist, maxDist)
+    y = randomInt(-maxDist, maxDist)
+  } while(Math.abs(x) < minDist && Math.abs(y) < minDist)
+  return {x: x, y: y}
 }
 
 export default createStore({
@@ -19,7 +34,7 @@ export default createStore({
       boat: {
         x: 0,
         y: 0,
-        speed: 1,
+        speed: 4,
         direction: 1
       },
       inventory: [
@@ -27,6 +42,7 @@ export default createStore({
         { count: 0, image: fish2, name: 'fish2' },
         { count: 0, image: fish3, name: 'fish3' }
       ],
+      areas: [],
       isMoving: false,
       isFishing: false,
       isGaming: false,
@@ -41,7 +57,33 @@ export default createStore({
     getIsGaming: (state) => state.isGaming,
     getIsHooked: (state) => state.isHooked,
     getIsBroken: (state) => state.isBroken,
-    getInventory: (state) => state.inventory
+    getInventory: (state) => state.inventory,
+    getAreas: (state) => state.areas,
+    getCurrentAreaInfo: (state) => {
+      let index = state.areas.findIndex(area => {
+        if(area.type === 'high') {
+          const dx = state.boat.x - area.x, dy = state.boat.y - area.y
+          return (dx * dx + dy * dy <= area.radius * area.radius)
+        }
+        return false
+      })
+      if(index === -1) {
+        index = state.areas.findIndex(area => {
+          if(area.type !== 'high') {
+            const dx = state.boat.x - area.x, dy = state.boat.y - area.y
+            return (dx * dx + dy * dy <= area.radius * area.radius)
+          }
+          return false
+        })
+      }
+      if(index !== -1) {
+        return {
+          area: state.areas[index],
+          index: index
+        }
+      }
+      return null
+    }
   },
   mutations: {
     [MUTATIONS.MOVE]: (state, payload) => {
@@ -69,19 +111,24 @@ export default createStore({
       state.isBroken = !state.isBroken
     },
     [MUTATIONS.ADD_FISH]: (state) => {
-      state.inventory[Math.floor(Math.random() * state.inventory.length)].count += 1
+      state.inventory[randomInt(0, state.inventory.length - 1)].count += 1
+    },
+    [MUTATIONS.START_AREA]: (state, areas) => {
+      state.areas = areas
+    },
+    [MUTATIONS.RELOCATE_AREA]: (state, payload) => {
+      const {index, px, py} = payload
+      state.areas[index].x = px
+      state.areas[index].y = py
     }
   },
   actions: {
     move: (store, payload) => {
       store.commit(MUTATIONS.MOVE, payload)
     },
-    setMoving: (store, value) => new Promise((resolve) => {
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_MOVING, value)
-        resolve()
-      }, 10)
-    }),
+    setMoving: (store, value) => {
+      store.commit(MUTATIONS.SET_MOVING, value)
+    },
     setFishing: (store) => {
       store.commit(MUTATIONS.SET_FISHING)
     },
@@ -96,6 +143,48 @@ export default createStore({
     },
     addFish: (store) => {
       store.commit(MUTATIONS.ADD_FISH)
+    },
+    startArea: (store) => {
+      let areas = []
+      for(let i = 0; i < 25; ++i) {
+        areas.push({
+          x: randomInt(-2500, 2500),
+          y: randomInt(-2500, 2500),
+          type: 'medium',
+          radius: 250
+        })
+      }
+      for(let i = 0; i < 50; ++i) {
+        areas.push({
+          x: randomInt(-2500, 2500),
+          y: randomInt(-2500, 2500),
+          type: 'high',
+          radius: 100
+        })
+      }
+      store.commit(MUTATIONS.START_AREA, areas)
+    },
+    relocateCurrentArea: (store) => {
+      if(store.getters.getCurrentAreaInfo) {
+        const offset = offsets(1000, 2500)
+        store.commit(MUTATIONS.RELOCATE_AREA, {
+          index: store.getters.getCurrentAreaInfo.index,
+          px: store.state.boat.x + offset.x,
+          py: store.state.boat.y + offset.y
+        })
+      }
+    },
+    relocateDistantAreas: (store) => {
+      store.state.areas.forEach((area, index) => {
+        if(Math.abs(area.x - store.state.boat.x) > 2500 || Math.abs(area.y - store.state.boat.y) > 2500) {
+          const offset = offsets(1000, 2500)
+          store.commit(MUTATIONS.RELOCATE_AREA, {
+            index: index,
+            px: store.state.boat.x + offset.x,
+            py: store.state.boat.y + offset.y
+          })
+        }
+      })
     }
   }
 })

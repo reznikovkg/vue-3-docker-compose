@@ -1,5 +1,8 @@
 <template>
-  <div class="map"/>
+  <div class="map" :style="mapStyle">
+    <div v-for="area in getAreas" class="map__area" :style="areaStyle(area)"></div>
+  </div>
+  <div class="water"/>
   <Boat/>
   <Inventory/>
   <Location/>
@@ -28,64 +31,96 @@ export default {
         ArrowDown: false,
         ArrowRight: false,
         ArrowLeft: false
+      },
+      center: {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      },
+      lastCheck: {
+        x: 0,
+        y: 0
       }
     }
   },
   mounted() {
     window.addEventListener('keydown', this.movingKeyDown)
     window.addEventListener('keyup', this.movingKeyUp)
+    window.addEventListener('resize', this.updateCenter)
     this.updateMoving()
+    this.updateCenter()
+    this.startArea()
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.movingKeyDown)
     window.removeEventListener('keyup', this.movingKeyUp)
+    window.removeEventListener('resize', this.updateCenter)
   },
   computed: {
     ...mapGetters([
       'getIsFishing',
       'getIsHooked',
-      'getIsBroken'
-    ])
+      'getIsBroken',
+      'getBoat',
+      'getAreas'
+    ]),
+    mapStyle() {
+      return {
+        transform: 'translate(' + (this.center.x - this.getBoat.x) + 'px, ' + (this.center.y - this.getBoat.y) + 'px)'
+      }
+    }
   },
   methods: {
     ...mapActions([
       'move',
-      'setMoving'
+      'setMoving',
+      'startArea',
+      'relocateDistantAreas'
     ]),
+    areaStyle(area) {
+      return {
+        left: (area.x - area.radius) + 'px',
+        top: (area.y - area.radius) + 'px',
+        width: (area.radius * 2) + 'px',
+        height: (area.radius * 2) + 'px',
+        backgroundColor: area.type === 'high' ? 'rgba(25, 10, 10, 0.5)' : 'rgba(25, 80, 80, 0.5)'
+      }
+    },
     updateMoving() {
       let updMoving = false
       if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken) {
-        let x = 0
-        let y = 0
-        if (this.pressed.ArrowUp) {
+        let x = 0, y = 0
+        if(this.pressed.ArrowDown)
           y += 1
-        }
-        if (this.pressed.ArrowDown) {
+        if(this.pressed.ArrowUp)
           y -= 1
-        }
-        if (this.pressed.ArrowRight) {
+        if(this.pressed.ArrowRight)
           x += 1
-        }
-        if (this.pressed.ArrowLeft) {
+        if(this.pressed.ArrowLeft)
           x -= 1
-        }
-        if (x !== 0 || y !== 0) {
+        if(x !== 0 || y !== 0) {
+          if(Math.abs(this.getBoat.x - this.lastCheck.x) > 500 || Math.abs(this.getBoat.y - this.lastCheck.y) > 500) {
+            this.relocateDistantAreas()
+            this.lastCheck.x = this.getBoat.x
+            this.lastCheck.y = this.getBoat.y
+          }
           updMoving = true
           this.move({px: x, py: y})
         }
       }
       this.setMoving(updMoving)
-        .then(() => this.updateMoving())
+      requestAnimationFrame(this.updateMoving)
     },
-    movingKeyDown (event) {
-      if (this.pressed.hasOwnProperty(event.key)) {
+    updateCenter() {
+      this.center.x = window.innerWidth / 2
+      this.center.y = window.innerHeight / 2
+    },
+    movingKeyDown(event) {
+      if(this.pressed.hasOwnProperty(event.key))
         this.pressed[event.key] = true
-      }
     },
-    movingKeyUp (event) {
-      if (this.pressed.hasOwnProperty(event.key)) {
+    movingKeyUp(event) {
+      if(this.pressed.hasOwnProperty(event.key))
         this.pressed[event.key] = false
-      }
     }
   }
 }
@@ -96,7 +131,19 @@ export default {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: rgb(25, 120, 120);
   z-index: 1;
+
+  &__area {
+    position: absolute;
+    border-radius: 50%;
+  }
+}
+
+.water {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(25, 120, 120);
+  z-index: 0;
 }
 </style>
