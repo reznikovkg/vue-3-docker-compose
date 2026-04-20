@@ -12,7 +12,7 @@
       </div>
     </div>
 
-    <div ref = "gameArea" class = "game-page__game-area" @click = "handleGameAreaClick">
+    <div ref = "gameArea" class = "game-page__game-area" @click = "() => handleGameAreaClick($event)">
     <svg class = "game-page__route-svg" viewBox = "0 0 900 600">
       <path
         v-for = "route in getLevel.routes"

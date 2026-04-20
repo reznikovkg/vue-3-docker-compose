@@ -1,5 +1,5 @@
 <template>
-  <div  ref = "enemyRef" class = "enemy" :style = "enemyStyle" @click.stop="handleSelect" @mousedown="handleDragStart">
+  <div  ref = "enemyRef" class = "enemy" :style = "enemyStyle" @click.stop= "() => handleSelect()" @mousedown="() => handleDragStart($event)">
     <div class = "enemy__body"></div>
     <div class = "enemy__health">
       <div class = "enemy__health-bar" :style = "healthBarStyle"></div>
