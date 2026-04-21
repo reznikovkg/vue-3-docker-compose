@@ -3,6 +3,7 @@
     <div class="game-map__world"/>
   </div>
 
+  <Island v-for="island in islands" :island="island"/>
   <Boat/>
 </template>
 
@@ -10,8 +11,11 @@
 import { onMounted, onUnmounted, computed } from 'vue'
 import { useStore } from 'vuex'
 import Boat from './Boat.vue'
+import Island from './Island.vue'
 
 const store = useStore()
+
+const islands = computed(() => store.getters['game/getIslands'])
 
 const speed = 1
 
@@ -54,16 +58,24 @@ const stopMove = (e) => {
   }
 }
 
+const useGroundbait = (e) => {
+  if (e.key === 'z') {
+    store.dispatch('game/useGroundbait')
+  }
+}
+
 onMounted(() => {
   store.dispatch('game/generateZones')
 
   window.addEventListener('keydown', move)
   window.addEventListener('keyup', stopMove)
+  window.addEventListener('keydown', useGroundbait)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', move)
   window.removeEventListener('keyup', stopMove)
+  window.removeEventListener('keydown', useGroundbait)
 })
 
 </script>

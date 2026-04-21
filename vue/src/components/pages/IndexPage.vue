@@ -4,6 +4,7 @@
     <InfoBar/>
     <MiniGame/>
     <Inventory/>
+    <Market/>
   </div>
 </template>
 
@@ -11,6 +12,7 @@
 import GameMap from '../GameMap.vue';
 import InfoBar from '../InfoBar.vue';
 import Inventory from '../Inventory.vue';
+import Market from '../Market.vue';
 import MiniGame from '../MiniGame.vue';
 </script>
 
