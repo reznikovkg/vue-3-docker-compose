@@ -34,8 +34,8 @@ export default {
 .btn {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   background-color: rgb(242, 241, 205);
   border-radius: 20%;
   border: 3px solid rgb(103, 83, 16);
@@ -45,7 +45,7 @@ export default {
     color: rgb(67, 159, 39);
     font-size: 100px;
     text-align: center;
-    line-height: 100px;
+    line-height: 80px;
   }
 }
 </style>

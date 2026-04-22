@@ -1,15 +1,8 @@
 <template>
   <div class="tower" :style="styles" @click="() => menuClick()">
-    <div class="tower__level"> level: {{ level }} </div>
-    <div class="tower__stats"> 
-      <div> hp: {{ stats.hp }}</div>
-      <div> damage: {{ stats.damage }}</div>
-      <div> speed: {{ stats.speed }}</div>
-      <div> radius: {{ stats.radius }}</div>
-    </div>
     <div class="tower__menu" v-if="isOpenMenu">
-      <button class="tower__menu__up" v-if="!isMaxLevel" @click.stop="() => upClick()">Улучшить</button>  
-      <button class="tower__menu__del" @click.stop="() => delClick()">Удалить</button>  
+      <button class="tower__menu__up" v-if="!isMaxLevel" @click.stop="() => upClick()">⇧</button>  
+      <button class="tower__menu__del" @click.stop="() => delClick()">✖</button>  
     </div>
   </div>
 </template>
@@ -38,7 +31,11 @@ export default {
     stats: {
       type: Object,
       default: {hp: 0, damage: 0, speed: 0, radius: 0}
-    }
+    },
+    color: {
+      type: String,
+      default: 'rgb(171, 17, 17)'
+    },
   },
   emits: ['upgrade', 'delete'],
   data () {
@@ -50,7 +47,8 @@ export default {
     styles () {
       return {
         left: `${this.x}%`,
-        top: `${this.y}%`
+        top: `${this.y}%`,
+        backgroundColor: this.stats.color
       }
     },
     isMaxLevel () {
@@ -77,37 +75,9 @@ export default {
 .tower {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 90px;
-  height: 90px;
-  background-color: rgb(51, 25, 4);
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-
-  &__level {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    left: 50%;
-    bottom: 90%;
-    background-color: rgb(242, 241, 205);
-    color: black;
-    width: 55px;
-    height: 20px;
-    text-align: center;
-    border-radius: 10%;
-    line-height: 20px;
-  }
-
-  &__stats {
-    position: absolute;
-    transform: translate(-50%, -50%);
-    left: 155%;
-    width: 100px;
-    height: 100px;
-    top: 50%;
-    background-color: rgb(242, 241, 205);
-    color: black;
-    text-align: center;
-    border-radius: 5%;
-  }
 
   &__menu {
     position: absolute;
@@ -117,22 +87,23 @@ export default {
     height: 100%;
 
      &__up {
+        transform: translate(-50%, -50%);
         position: absolute;
         background-color: rgb(44, 183, 60);
-        color: rgb(255, 255, 255);
-        top: 35%;
-        left: 10%;
+        top: 50%;
+        left: 50%;
         border: none; 
-        border-radius: 5%;
+        border-radius: 10%;
+        font-size: 20px;
       }
 
       &__del {
         position: absolute;
-        background-color: rgb(196, 13, 13);
-        color: rgb(255, 255, 255);
-        left: 215%;
+        background-color: rgb(222, 35, 35);
+        left: 110%;
         border: none;
-        border-radius: 5%;
+        border-radius: 10%;
+        font-size: 20px;
       }
     }
 }
