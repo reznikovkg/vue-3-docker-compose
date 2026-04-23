@@ -29,30 +29,30 @@
       ></polyline>
     </svg>
     <div>
-      <addTowerBtn v-for="slot in slotTower" :x="slot.x" :y="slot.y" 
+      <AddTowerBtn v-for="slot in slotTower" :x="slot.x" :y="slot.y" 
         @click="() => plusClick(slot)">
-      </addTowerBtn>
-      <tower v-for="tower in getActiveTowers" :id="tower.id" :x="tower.x" :y="tower.y" :color="tower.color"
+      </AddTowerBtn>
+      <Tower v-for="tower in getActiveTowers" :id="tower.id" :x="tower.x" :y="tower.y" :color="tower.color"
         :level="tower.levelId" :stats="tower" @upgrade="(id) => upgradeTower(id)" @delete="(id) => deleteTower(id)">
-      </tower>
-      <enemy v-for="enemy in getActiveEnemies" :x="enemy.x" :y="enemy.y" :color="enemy.color"></enemy>
+      </Tower>
+      <Enemy v-for="enemy in getActiveEnemies" :x="enemy.x" :y="enemy.y" :color="enemy.color"></Enemy>
       <div class="map__bullets" v-for="bullet in getActiveBullets" :style="{left: bullet.x + '%',top: bullet.y + '%'}"></div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import addTowerBtn from '../ui/addTowerBtn.vue';
-import tower from '../ui/tower.vue';
-import enemy from '../ui/enemy.vue';
+import AddTowerBtn from '../ui/AddTowerBtn.vue';
+import Tower from '../ui/Tower.vue';
+import Enemy from '../ui/Enemy.vue';
 import {levels} from '../../data/levels'
 import { mapGetters, mapActions } from 'vuex';
 export default {
   name: 'GamePage',
   components: {
-    addTowerBtn,
-    tower,
-    enemy
+    AddTowerBtn,
+    Tower,
+    Enemy
   },
   data () {
     return {
@@ -168,10 +168,10 @@ export default {
     width: 100%;
     margin-bottom: 8px;
     cursor: pointer;
-  }
 
-  &__level-item--active {
+    &__level-item--active {
     background-color: rgb(106, 178, 237);
+    }
   }
 
   &__points {
