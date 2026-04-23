@@ -3,11 +3,11 @@
     <div class="leaderBoard__header">Лучшие игры</div>
     <div class="leaderBoard__body">
       <div  class="leaderBoard__list">
-        <p class="leaderBoard__field--short">Имя</p>
-        <p class="leaderBoard__field--short">Рейтинг</p>
-        <p class="leaderBoard__field--short">Время</p>
-        <p class="leaderBoard__field--long">Кол-во цветов</p>
-        <p class="leaderBoard__field--long">Сложный режим</p>
+        <p class="leaderBoard__field-header-short">Имя</p>
+        <p class="leaderBoard__field-header-short">Рейтинг</p>
+        <p class="leaderBoard__field-header-short">Время</p>
+        <p class="leaderBoard__field-header-long">Кол-во цветов</p>
+        <p class="leaderBoard__field-header-long">Сложный режим</p>
       </div>
       <div v-for="line in getTop" class="leaderBoard__list">
         <p class="leaderBoard__field">{{line.name}}</p>
@@ -88,7 +88,6 @@ export default {
   }
 
   &__field {
-    font-size: 15px;
     text-align: center;
     white-space: nowrap;
     overflow-x: auto;
@@ -98,137 +97,128 @@ export default {
       display: none;
     }
 
-    &--short {
-      text-align: center;
+    @media (min-width: 1800px) {
+      font-size: 17px;
+    }
+
+    @media (min-width: 1600px) and (max-width: 1800px) {
+      font-size: 15px;
+    }
+
+    @media (min-width: 1300px) and (max-width: 1600px) {
+      font-size: 16px;
+    }
+
+    @media (min-width: 1000px) and (max-width: 1300px) {
       font-size: 14px;
     }
 
-    &--long {
-      text-align: center;
-      font-size: 11px;
+    @media (min-width: 800px) and (max-width: 1000px) {
+      font-size: 13px;
     }
 
+    @media (min-width: 550px) and (max-width: 800px) {
+      font-size: 20px;
+    }
+
+    @media (max-width: 550px)  {
+      font-size: 15px;
+    }
+  }
+
+  &__field-header-short {
+    text-align: center;
+
+    @media (min-width: 1800px) {
+      font-size: 17px;
+    }
+
+    @media (min-width: 1600px) and (max-width: 1800px) {
+      font-size: 14px;
+    }
+
+    @media (min-width: 1300px) and (max-width: 1600px) {
+      font-size: 16px;
+    }
+
+    @media (min-width: 1000px) and (max-width: 1300px) {
+      font-size: 14px;
+    }
+
+    @media (min-width: 800px) and (max-width: 1000px) {
+      font-size: 13px;
+    }
+
+    @media (min-width: 550px) and (max-width: 800px) {
+      font-size: 20px;
+    }
+
+    @media (max-width: 550px)  {
+      font-size: 15px;
+    }
+  }
+
+  &__field-header-long {
+    text-align: center;
+
+    @media (min-width: 1800px) {
+      font-size: 16px;
+    }
+
+    @media (min-width: 1600px) and (max-width: 1800px) {
+      font-size: 12px;
+    }
+
+    @media (min-width: 1300px) and (max-width: 1600px) {
+      font-size: 14px;
+    }
+
+    @media (min-width: 800px) and (max-width: 1300px) {
+      font-size: 12px;
+    }
+
+    @media (min-width: 550px) and (max-width: 800px) {
+      font-size: 20px;
+    }
+
+    @media (max-width: 550px)  {
+      font-size: 13px;
+    }
   }
 
   @media (min-width: 1800px) {
     width: 23vw;
     height: 70vh;
-
-    &__field {
-      font-size: 17px;
-
-      &--short {
-        font-size: 17px;
-      }
-
-      &--long {
-        font-size: 16px;
-      }
-    }
   }
 
   @media (min-width: 1600px) and (max-width: 1800px) {
     width: 23vw;
     height: 70vh;
-
-    &__field {
-      font-size: 15px;
-
-      &--short {
-        font-size: 14px;
-      }
-
-      &--long {
-        font-size: 12px;
-      }
-    }
   }
 
   @media (min-width: 1300px) and (max-width: 1600px) {
     width: 30vw;
     height: 70vh;
-
-    &__field {
-      font-size: 16px;
-
-      &--short {
-        font-size: 16px;
-      }
-
-      &--long {
-        font-size: 14px;
-      }
-    }
   }
 
   @media (min-width: 1000px) and (max-width: 1300px) {
     width: 35vw;
     height: 70vh;
-
-    &__field {
-      font-size: 14px;
-
-      &--short {
-        font-size: 14px;
-      }
-
-      &--long {
-        font-size: 12px;
-      }
-    }
   }
 
   @media (min-width: 800px) and (max-width: 1000px) {
     width: 40vw;
     height: 70vh;
-
-    &__field {
-      font-size: 13px;
-
-      &--short {
-        font-size: 13px;
-      }
-
-      &--long {
-        font-size: 12px;
-      }
-    }
   }
 
   @media (min-width: 550px) and (max-width: 800px) {
     width: 90vw;
     height: 90vh;
-
-    &__field {
-      font-size: 20px;
-
-      &--short {
-        font-size: 20px;
-      }
-
-      &--long {
-        font-size: 20px;
-      }
-
-    }
   }
 
   @media (max-width: 550px)  {
     width: 90vw;
     height: 90vh;
-
-    &__field {
-      font-size: 15px;
-
-      &--short {
-        font-size: 15px;
-      }
-
-      &--long {
-        font-size: 13px;
-      }
-
-    }
   }
 }
 </style>
