@@ -18,32 +18,68 @@
         <span v-else class = "cell-coords"></span>
       </div>
     </div>
-    
-    <Figure 
-      v-if = "figureRow !== -1 && figureCol !== -1"
-      :row = "figureRow"
-      :col = "figureCol"
-    />
+
+    <div v-for = "(cell, index) in figureCells" :key = "index">
+      <Figure 
+        :row="cell.row" 
+        :col="cell.col" 
+        :cellSize="cellSize"
+      />
+    </div>
+  
+    <div v-for = "(bomb, index) in bombs.black" :key = "'bomb-black-' + index">
+      <Bomb 
+        :row="bomb.row" 
+        :col="bomb.col" 
+        :cellSize="cellSize"
+        type="black"
+      />
+    </div>
+
+    <div v-for = "(bomb, index) in bombs.red" :key = "'bomb-red-' + index">
+      <Bomb 
+        :row="bomb.row" 
+        :col="bomb.col" 
+        :cellSize="cellSize"
+        type="red"
+      />
+    </div>
+
+    <div v-for = "(bomb, index) in bombs.green" :key = "'bomb-green-' + index">
+      <Bomb 
+        :row="bomb.row" 
+        :col="bomb.col" 
+        :cellSize="cellSize"
+        type="green"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import Figure from './Figure.vue'
+import Bomb from './Bomb.vue'
 
 export default {
   name: 'GameField',
-  components: { Figure },
+  components: { Figure, Bomb },
   props: {
     gridSize: Number, //размер поля
     islandCells: Array, //массив координат клеток острова
     baseRow: Number, //ряд базовой клетки
     baseCol: Number, //столбец базовой клетки
-    figureRow: Number, //ряд летящей фигуры
-    figureCol: Number //столбец летящей фигуры
+    currentFigure: {
+      type: Object,
+      default: null
+    },
+    bombs: {
+      type: Object,
+      default: () => ({ black: [], red: [], green: [] })
+    }
   },
   data() {
     return {
-      cellSize: 50
+      cellSize: 30
     }
   },
   computed: {
@@ -63,7 +99,14 @@ export default {
         position: 'relative',
         width: 'fit-content'
       }
-    }
+    },
+    figureCells() {
+    if (!this.currentFigure || this.currentFigure.position.row === -1) return []
+    return this.currentFigure.cells.map(offset => ({
+      row: this.currentFigure.position.row + offset[0],
+      col: this.currentFigure.position.col + offset[1]
+    }))
+  }
   },
   methods: {
     //является ли клетка частью острова?
@@ -88,9 +131,8 @@ export default {
     justify-content: center;
     font-size: 10px;
     color: #666;
-
     &--base {
-      background: #4caf50;
+      background: #1bf0f8;
       color: white;
       font-weight: bold;
     }

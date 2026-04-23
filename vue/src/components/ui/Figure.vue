@@ -3,7 +3,7 @@
     class="figure"
     :style="figureStyle"
   >
-    █
+   ◼
   </div>
 </template>
 
@@ -11,16 +11,19 @@
 export default {
   name: 'Figure',
   props: {
-    row: Number, //текущий ряд
-    col: Number //текущий столбец
+    row: Number,
+    col: Number, 
+    cellSize: {      
+    type: Number,
+    default: 35
+  }
   },
   computed: {
     //вычисление позиции фигуры
     figureStyle() {
-      const cellSize = 50
       const gap = 2
       const padding = 2
-      const offset = cellSize + gap
+      const offset = this.cellSize + gap
 
       return {
         left: this.col*offset + padding + 'px',
@@ -34,9 +37,9 @@ export default {
 <style scoped lang="scss">  
 .figure {
   position: absolute;
-  width: 50px;
-  height: 50px;
-  background: red;
+  width: v-bind('cellSize + "px"');    
+  height: v-bind('cellSize + "px"');    
+  background: rgb(174, 0, 255);
   color: white;
   display: flex;
   align-items: center;

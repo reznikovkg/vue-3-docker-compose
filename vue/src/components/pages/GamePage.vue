@@ -1,37 +1,43 @@
 <template>
   <div class = "game">
-    <div class = "game__score">
-      Очки: {{ score }}
-    </div>
-    
-    <div class = "game__timer">
-      ⏱️ {{ timeLeft }}с
-    </div>
-    
-    <h1 class = "game__title">Островная игра</h1>
-    
-    <div class = "game__arena">
-      <GameField 
-        :gridSize = "gridSize"
-        :islandCells = "islandCells"
-        :baseRow = "baseRow"
-        :baseCol = "baseCol"
-        :figureRow = "figureRow"
-        :figureCol = "figureCol"
-      />
-      
-      <div class = "game__controls">
-        <ControlButtons 
-          @moveUp = "() => move('up')"
-          @moveDown = "() => move('down')"
-          @moveLeft = "() => move('left')"
-          @moveRight = "() => move('right')"
-          @rotateLeft = "() => rotate('counterclockwise')"
-          @rotateRight = "() => rotate('clockwise')"
-        />
-        <SpeedButton />
+    <ModeSelector 
+      :show = "showModeSelector" 
+      @selectMode = "startGame"
+    />
+    <template v-if = "!showModeSelector">
+      <div class = "game__score">
+        Очки: {{ score }}
       </div>
-    </div>
+    
+      <div class = "game__timer">
+        ⏱️ {{ timeLeft }}с
+      </div>
+    
+      <h1 class = "game__title">Островная игра</h1>
+    
+      <div class = "game__arena">
+        <GameField 
+          :gridSize = "gridSize"
+          :islandCells = "islandCells"
+          :baseRow = "baseRow"
+          :baseCol = "baseCol"
+          :currentFigure = "currentFigure"
+          :bombs = "bombs"
+        />
+      
+        <div class = "game__controls">
+          <ControlButtons 
+            @moveUp = "() => move('up')"
+            @moveDown = "() => move('down')"
+            @moveLeft = "() => move('left')"
+            @moveRight = "() => move('right')"
+            @rotateLeft = "() => rotate('counterclockwise')"
+            @rotateRight = "() => rotate('clockwise')"
+          />
+          <SpeedButton />
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -40,13 +46,24 @@ import { mapGetters, mapActions } from 'vuex'
 import GameField from './../ui/GameField.vue'
 import ControlButtons from './../ui/ControlButtons.vue'
 import SpeedButton from './../ui/SpeedButton.vue'
+import ModeSelector from './../ui/ModeSelector.vue'
 
 export default {
   name: 'GamePage',
   components: { 
     GameField, 
     ControlButtons,
-    SpeedButton
+    SpeedButton,
+    ModeSelector
+  },
+  data()
+  {
+    return {
+      showModeSelector: true,
+      figureInterval: null,   
+      bombInterval: null,
+      timerInterval: null
+    }
   },
   computed: {
     ...mapGetters('game', [
@@ -54,11 +71,11 @@ export default {
       'islandCells',
       'baseRow',
       'baseCol',
-      'figureRow',
-      'figureCol',
       'score',
       'figureSpeed',
-      'timeLeft'  
+      'timeLeft',
+      'currentFigure',
+      'bombs'
     ])
   },
   methods: {
@@ -66,29 +83,38 @@ export default {
       'moveIsland',
       'moveFigure',
       'rotateIsland',
-      'updateTime'  
+      'updateTime',
+      'setGameMode',
+      'moveBombs'
     ]),
     move(direction) {
       this.moveIsland(direction)
     },
     rotate(direction) {
       this.rotateIsland(direction)
+    },
+    startGame(mode) {
+      this.setGameMode(mode)
+      this.showModeSelector = false
+      this.figureInterval = setInterval(() => this.moveFigure(), this.figureSpeed)
+      this.bombInterval = setInterval(() => this.moveBombs(), 1000)
+      this.timerInterval = setInterval(() => this.updateTime(), 1000)
     }
   },
   mounted() {
-    this.intervalId = setInterval(() => this.moveFigure(), this.figureSpeed)
-    this.timerInterval = setInterval(() => {
-      this.updateTime()
-    }, 1000)
   },
   beforeUnmount() {
-    clearInterval(this.intervalId)
+    clearInterval(this.figureInterval)
+    clearInterval(this.bombInterval)
     clearInterval(this.timerInterval)  
   },
   watch: {
-    figureSpeed(newSpeed) {
-      clearInterval(this.intervalId)
-      this.intervalId = setInterval(() => this.moveFigure(), newSpeed)
+    figureSpeed: {
+      handler(newSpeed,oldSpeed) {
+        if (newSpeed === oldSpeed) return
+        clearInterval(this.figureInterval)
+        this.figureInterval = setInterval(() => this.moveFigure(), newSpeed)
+      },
     }
   }
 }

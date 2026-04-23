@@ -41,11 +41,9 @@ export default {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-  
     &:hover {
       background: #8370e4;
     }
-
     &:disabled {
       background: #ccc;
       cursor: not-allowed;
