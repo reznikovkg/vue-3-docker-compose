@@ -9,55 +9,33 @@
         {{ timeDisplay }}
       </div>
     </div>
+
     <div v-if = "tutorialVisible" class = "bubble-playground__hint">
       <div class = "bubble-playground__hint__content">
         <p>Лопай шарики нужного цвета!</p>
         <img :src = "targetIcon" :alt = "targetLabel" class = "bubble-playground__hint__image" />
       </div>
     </div>
-    <canvas ref = "stage" class = "bubble-playground__canvas" @mousedown = "(event) => handleClick(event)"></canvas>
+
+    <div ref = "stageRef" class = "bubble-playground__stage" @mousedown = "(event) => handleClick(event)">
+      <div
+          v-for = "item in items"
+          :key = "item.id"
+          class = "bubble-playground__bubble"
+          :class = "`bubble-playground__bubble--${item.size}`"
+          :style = "{
+          width: (item.radius * 2) + 'px',
+          height: (item.radius * 2) + 'px',
+          backgroundImage: `url(${COLOR_IMAGES[item.color]})`,
+          transform: `translate(${item.x}px, ${item.y}px)`
+        }"
+      ></div>
+    </div>
   </div>
 </template>
 
 <script>
-import blueImg from '@/assets/bubbles/blue.png'
-import greenImg from '@/assets/bubbles/green.png'
-import orangeImg from '@/assets/bubbles/orange.png'
-import pinkImg from '@/assets/bubbles/pink.png'
-import purpleImg from '@/assets/bubbles/purple.png'
-import redImg from '@/assets/bubbles/red.png'
-import yellowImg from '@/assets/bubbles/yellow.png'
-
-const radiusSmall = 25
-const radiusMedium = 40
-const radiusLarge = 60
-const wrongPen = {
-  small: -1,
-  medium: -3,
-  large: -5
-}
-const escapPen = {
-  small: -3,
-  medium: -6,
-  large: -10
-}
-const pushFactor = {
-  large: {
-    large: 1,
-    medium: 1.5,
-    small: 2
-  },
-  medium: {
-    large: 0.5,
-    medium: 1,
-    small: 1.5
-  },
-  small: {
-    large: 0.25,
-    medium: 0.5,
-    small: 1
-  }
-}
+import { RADIUS, WRONG_PENALTIES, ESCAPE_PENALTIES, PUSH_FACTORS, COLOR_IMAGES, COLOR_NAMES, COLOR_LIST } from '@/config/gameConfig'
 
 export default {
   name: 'BubblePlayground',
@@ -78,83 +56,64 @@ export default {
       remaining: this.gameDuration,
       sessionEnded: false,
       items: [],
-      ctx: null,
-      canvasWidth: 0,
-      canvasHeight: 0,
+      stageWidth: 0,
+      stageHeight: 0,
       frameId: null,
       lastCreation: 0,
-      images: {},
       countdownId: null,
       tutorialVisible: false,
       tutorialTimer: null,
       tutorialBlocking: false,
-      animatedPushes: [],
+      animatedPushes: []
     }
   },
 
   computed: {
+    COLOR_IMAGES() {
+      return COLOR_IMAGES
+    },
     timeDisplay() {
       const minutes = Math.floor(this.remaining / 60)
       const seconds = this.remaining % 60
       return `${minutes}:${seconds.toString().padStart(2, '0')}`
     },
-    imageMap() {
-      return {
-        blue: blueImg,
-        green: greenImg,
-        orange: orangeImg,
-        pink: pinkImg,
-        purple: purpleImg,
-        red: redImg,
-        yellow: yellowImg,
-      }
-    },
     targetIcon() {
-      return this.imageMap[this.targetColor] || ''
+      return COLOR_IMAGES[this.targetColor] || ''
     },
     targetLabel() {
-      const names = {
-        blue: 'Синий', green: 'Зелёный', orange: 'Оранжевый',
-        pink: 'Розовый', purple: 'Фиолетовый', red: 'Красный', yellow: 'Жёлтый'
-      }
-      return names[this.targetColor] || this.targetColor
+      return COLOR_NAMES[this.targetColor] || this.targetColor
     },
     activeColors() {
-      const all = Object.keys(this.imageMap)
-      return all.slice(0, this.totalColors)
+      return COLOR_LIST.slice(0, this.totalColors)
     }
   },
+
   mounted() {
-    this.adjustCanvas()
-    window.addEventListener('resize', this.adjustCanvas)
-    this.ctx = this.$refs.stage.getContext('2d')
+    this.updateStageSize()
+    window.addEventListener('resize', this.updateStageSize)
     this.fetchResources()
   },
+
   beforeDestroy() {
     if (this.frameId) cancelAnimationFrame(this.frameId)
     if (this.countdownId) clearInterval(this.countdownId)
     if (this.tutorialTimer) clearTimeout(this.tutorialTimer)
-    window.removeEventListener('resize', this.adjustCanvas)
+    window.removeEventListener('resize', this.updateStageSize)
   },
 
   methods: {
-    fetchResources() {
-      let loaded = 0
-      const total = Object.keys(this.imageMap).length
-      Object.entries(this.imageMap).forEach(([color, src]) => {
-        const img = new Image()
-        img.onload = () => {
-          loaded++
-          this.images[color] = img
-          if (loaded === total) this.beginSession()
-        }
-        img.onerror = () => {
-          loaded++
-          if (loaded === total) this.beginSession()
-        }
-        img.src = src
-      })
+    updateStageSize() {
+      const container = this.$refs.stageRef
+      if (container) {
+        this.stageWidth = container.clientWidth
+        this.stageHeight = container.clientHeight
+      }
     },
+
+    fetchResources() {
+      this.beginSession()
+    },
+
     beginSession() {
       this.onStart()
       this.lastCreation = performance.now()
@@ -169,6 +128,7 @@ export default {
         this.lastCreation = performance.now()
       }, 3000)
     },
+
     startCountdown() {
       this.countdownId = setInterval(() => {
         if (!this.sessionEnded && this.remaining > 0) {
@@ -178,15 +138,16 @@ export default {
         }
       }, 1000)
     },
+
     animationStep(now) {
       if (!this.sessionEnded) {
         if (!this.tutorialBlocking) {
           this.moveElements(now)
         }
-        this.draw()
       }
       this.frameId = requestAnimationFrame(this.animationStep)
     },
+
     moveElements(now) {
       const interval = 1000 / this.spawnRate
       if (now - this.lastCreation > interval) {
@@ -214,11 +175,11 @@ export default {
         item.y += item.speedY
         item.wobble += item.wobbleSpeed
         item.x += Math.sin(item.wobble) * 0.3
-        if (item.y - item.radius > this.canvasHeight + 100 ||
+        if (item.y - item.radius > this.stageHeight + 100 ||
             item.x + item.radius < -100 ||
-            item.x - item.radius > this.canvasWidth + 100) {
+            item.x - item.radius > this.stageWidth + 100) {
           if (item.color === this.targetColor) {
-            const penalty = escapPen[item.size]
+            const penalty = ESCAPE_PENALTIES[item.size]
             this.points += penalty
             this.$emit('score', { points: penalty, count: 1, reason: 'escaped' })
           }
@@ -226,18 +187,7 @@ export default {
         }
       }
     },
-    draw() {
-      if (!this.ctx) return
-      this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
-      for (const item of this.items) {
-        const img = this.images[item.color]
-        if (!img) continue
-        this.ctx.save()
-        this.ctx.translate(item.x, item.y)
-        this.ctx.drawImage(img, -item.radius, -item.radius, item.radius * 2, item.radius * 2)
-        this.ctx.restore()
-      }
-    },
+
     addItem() {
       let colors = [...this.activeColors]
       if (!colors.includes(this.targetColor)) {
@@ -249,16 +199,16 @@ export default {
       let size, radius
       if (rand < 0.2) {
         size = 'large'
-        radius = radiusLarge
+        radius = RADIUS.large
       } else if (rand < 0.7) {
         size = 'medium'
-        radius = radiusMedium
+        radius = RADIUS.medium
       } else {
         size = 'small'
-        radius = radiusSmall
+        radius = RADIUS.small
       }
-      const spawnWidth = this.canvasWidth * 0.6
-      const startX = (this.canvasWidth - spawnWidth) / 2
+      const spawnWidth = this.stageWidth * 0.6
+      const startX = (this.stageWidth - spawnWidth) / 2
       const x = startX + Math.random() * spawnWidth
       const speedX = (Math.random() - 0.5) * 1.5
       const speedY = 1 + Math.random() * 2.5
@@ -276,56 +226,18 @@ export default {
         active: true
       })
     },
-    handleClick(event) {
-      if (this.sessionEnded) return
-      const rect = this.$refs.stage.getBoundingClientRect()
-      const scaleX = this.canvasWidth / rect.width
-      const scaleY = this.canvasHeight / rect.height
-      const clickX = (event.clientX - rect.left) * scaleX
-      const clickY = (event.clientY - rect.top) * scaleY
-      const hit = []
-      for (let i = 0; i < this.items.length; i++) {
-        const item = this.items[i]
-        const dx = clickX - item.x
-        const dy = clickY - item.y
-        const dist = Math.hypot(dx, dy)
-        if (dist <= item.radius) hit.push(item)
-      }
-      if (hit.length === 0) return
-      let totalPoints = 0
-      let newChildren = []
-      for (const item of hit) {
-        const isCorrect = item.color === this.targetColor
-        if (isCorrect) {
-          totalPoints += this.pointsForCorrect
-        } else {
-          totalPoints += wrongPen[item.size]
-        }
-        this.schedulePush(item.x, item.y, item.size)
-        const children = this.spawnChildren(item)
-        if (children.length) {
-          newChildren.push(...children)
-        }
-        const idx = this.items.indexOf(item)
-        if (idx !== -1) this.items.splice(idx, 1)
-      }
-      if (newChildren.length) {
-        this.items.push(...newChildren)
-      }
-      this.points += totalPoints
-      this.$emit('score', { points: totalPoints, count: hit.length })
-    },
+
     schedulePush(centerX, centerY, sourceSize) {
-      const pushDistance = 170
-      const animationSteps = 70
+      const PUSH_DISTANCE = 170
+      const ANIMATION_STEPS = 70
       for (const item of this.items) {
         const dx = item.x - centerX
         const dy = item.y - centerY
         const dist = Math.hypot(dx, dy)
-        if (dist > 0 && dist < pushDistance) {
-          const factor = pushFactor[sourceSize][item.size]
-          const pushStrength = factor * (sourceSize === 'large' ? radiusLarge :
-              sourceSize === 'medium' ? radiusMedium : radiusSmall)
+        if (dist > 0 && dist < PUSH_DISTANCE) {
+          const factor = PUSH_FACTORS[sourceSize][item.size]
+          const pushStrength = factor * (sourceSize === 'large' ? RADIUS.large :
+              sourceSize === 'medium' ? RADIUS.medium : RADIUS.small)
           const angle = Math.atan2(dy, dx)
           const moveX = Math.cos(angle) * pushStrength
           const moveY = Math.sin(angle) * pushStrength
@@ -335,27 +247,27 @@ export default {
             startY: item.y,
             targetX: item.x + moveX,
             targetY: item.y + moveY,
-            steps: animationSteps,
+            steps: ANIMATION_STEPS,
             currentStep: 0
           })
         }
       }
     },
+
     spawnChildren(parent) {
       const children = []
       const parentSize = parent.size
       const parentColor = parent.color
       const parentX = parent.x
       const parentY = parent.y
-
       let childSize, childRadius, count
       if (parentSize === 'large') {
         childSize = 'medium'
-        childRadius = radiusMedium
+        childRadius = RADIUS.medium
         count = 3
       } else if (parentSize === 'medium') {
         childSize = 'small'
-        childRadius = radiusSmall
+        childRadius = RADIUS.small
         count = 5
       } else {
         return []
@@ -396,9 +308,48 @@ export default {
       }
       return children
     },
+
+    handleClick(event) {
+      if (this.sessionEnded) return;
+      const stage = this.$refs.stageRef;
+      if (!stage) return;
+      const rect = stage.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const clickX = event.clientX - rect.left;
+      const clickY = event.clientY - rect.top;
+      const hit = [];
+      for (let i = 0; i < this.items.length; i++) {
+        const item = this.items[i];
+        const centerX = item.x + item.radius;
+        const centerY = item.y + item.radius;
+        const dx = clickX - centerX;
+        const dy = clickY - centerY;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= item.radius) {
+          hit.push(item);
+        }
+      }
+      if (hit.length === 0) return;
+      let totalPoints = 0;
+      let newChildren = [];
+      for (const item of hit) {
+        const isCorrect = item.color === this.targetColor;
+        totalPoints += isCorrect ? this.pointsForCorrect : WRONG_PENALTIES[item.size];
+        this.schedulePush(item.x, item.y, item.size);
+        const children = this.spawnChildren(item);
+        if (children.length) newChildren.push(...children);
+        const idx = this.items.indexOf(item);
+        if (idx !== -1) this.items.splice(idx, 1);
+      }
+      if (newChildren.length) this.items.push(...newChildren);
+      this.points += totalPoints;
+      this.$emit('score', { points: totalPoints, count: hit.length });
+    },
+
     restartGame() {
       this.resetSession()
     },
+
     resetSession() {
       this.onStart()
       this.points = 0
@@ -420,6 +371,7 @@ export default {
         this.lastCreation = performance.now()
       }, 3000)
     },
+
     finishSession() {
       this.sessionEnded = true
       this.items = []
@@ -429,14 +381,6 @@ export default {
       this.tutorialVisible = false
       this.tutorialBlocking = false
       this.$emit('finish', { score: this.points, timeElapsed: this.gameDuration })
-    },
-    adjustCanvas() {
-      const canvas = this.$refs.stage
-      if (!canvas) return
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      this.canvasWidth = canvas.width
-      this.canvasHeight = canvas.height
     }
   }
 }
@@ -541,13 +485,24 @@ $timerWarning: #f3b3a1;
     }
   }
 
-  &__canvas {
+  &__stage {
+    position: relative;
     width: 100%;
     height: 100%;
-    display: block;
+    overflow: hidden;
+  }
+
+  &__bubble {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
     cursor: pointer;
-    position: relative;
-    z-index: 1;
+    transition: transform 0.05s linear;
+    will-change: transform;
   }
 }
 

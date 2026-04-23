@@ -71,13 +71,7 @@
 
 <script lang="ts">
 import { mapGetters, mapActions } from 'vuex'
-import redBubble from '@/assets/bubbles/red.png'
-import orangeBubble from '@/assets/bubbles/orange.png'
-import yellowBubble from '@/assets/bubbles/yellow.png'
-import greenBubble from '@/assets/bubbles/green.png'
-import blueBubble from '@/assets/bubbles/blue.png'
-import purpleBubble from '@/assets/bubbles/purple.png'
-import pinkBubble from '@/assets/bubbles/pink.png'
+import { COLOR_IMAGES, COLOR_NAMES, COLOR_LIST } from '@/config/gameConfig'
 
 export default {
   name: 'OptionPage',
@@ -97,15 +91,11 @@ export default {
       storedSettings: 'appConfig'
     }),
     colorVariants() {
-      return [
-        { value: 'red', name: 'Красный', image: redBubble },
-        { value: 'orange', name: 'Оранжевый', image: orangeBubble },
-        { value: 'yellow', name: 'Жёлтый', image: yellowBubble },
-        { value: 'green', name: 'Зелёный', image: greenBubble },
-        { value: 'blue', name: 'Синий', image: blueBubble },
-        { value: 'purple', name: 'Фиолетовый', image: purpleBubble },
-        { value: 'pink', name: 'Розовый', image: pinkBubble }
-      ]
+      return COLOR_LIST.map(color => ({
+        value: color,
+        name: COLOR_NAMES[color],
+        image: COLOR_IMAGES[color]
+      }))
     },
     formattedSpawnInterval(): string {
       return (1 / this.userSettings.spawnSpeed).toFixed(2)
