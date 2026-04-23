@@ -4,7 +4,9 @@ const MUTATIONS = {
     MOVE_LIQUID: 'MOVE_LIQUID',
     SET_GAME_WON: 'SET_GAME_WON',
     SET_TIME: 'SET_TIME',
-    SET_BEST_TIMES: 'SET_BEST_TIMES'
+    SET_BEST_TIMES: 'SET_BEST_TIMES',
+    SET_HARD_MODE: 'SET_HARD_MODE',
+    SET_BLOCKED_FLASK: 'SET_BLOCKED_FLASK'
 }
 
 export default {
@@ -17,7 +19,9 @@ export default {
             maxLayers: 4,
             time: 0,
             timerId: null,
-            bestTimes: []
+            bestTimes: [],
+            hardMode: false,
+            blockedFlask: null
         }
     },
     getters: {
@@ -26,7 +30,9 @@ export default {
         getGameWon: (state) => state.gameWon,
         getMaxLayers: (state) => state.maxLayers,
         getTime: (state) => state.time,
-        getBestTimes: (state) => state.bestTimes
+        getBestTimes: (state) => state.bestTimes,
+        getHardMode: (state) => state.hardMode,
+        getBlockedFlask: (state) => state.blockedFlask
     },
     mutations: {
         [MUTATIONS.SET_FLASKS]: (state, flasks) => {
@@ -71,6 +77,12 @@ export default {
         [MUTATIONS.SET_BEST_TIMES]: (state, times) => {
             state.bestTimes = times
             localStorage.setItem('bestTimes', JSON.stringify(times))
+        },
+        [MUTATIONS.SET_HARD_MODE]: (state, mode) => {
+            state.hardMode = mode
+        },
+        [MUTATIONS.SET_BLOCKED_FLASK]: (state, index) => {
+            state.blockedFlask = index
         }
     },
     actions: {
