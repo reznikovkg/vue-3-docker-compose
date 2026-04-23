@@ -60,14 +60,35 @@ export default {
             'getFlasks',
             'getCurrentFlask',
             'getGameWon',
-            'getMaxLayers'
-        ])
+            'getMaxLayers',
+            'getTime',
+            'getBestTimes',
+            'getHardMode',
+            'getBlockedFlask'
+        ]),
+        formattedTime() {
+            return this.formatTime(this.getTime)
+        }
     },
     methods: {
         ...mapActions('game', [
             'initGame',
-            'tryMove'
+            'tryMove',
+            'stopTimer'
         ]),
+        formatTime(seconds){
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return minutes + ':' + secs.toString().padStart(2, '0');
+        },
+        toggleHardMode(event) {
+            this.$store.commit('game/SET_HARD_MODE', event.target.checked)
+            if (event.target.checked) {
+                this.$store.dispatch('game/blockRandomFlask')
+            } else {
+                this.$store.commit('game/SET_BLOCKED_FLASK', null)
+            }
+        },
         setCurrentFlask(index) {
             this.$store.commit('game/SET_CURRENT_FLASK', index)
         },
@@ -82,11 +103,20 @@ export default {
             }
         },
         restartGame() {
+            this.stopTimer()
+            this.$store.commit('game/SET_TIME', 0)
             this.initGame()
         }
     },
     mounted() {
+        const saved = localStorage.getItem('bestTimes')
+        if (saved) {
+            this.$store.commit('game/SET_BEST_TIMES', JSON.parse(saved))
+        }
         this.restartGame()
+    },
+    beforeUnmount() {
+        this.stopTimer()
     }
 }
 </script>
