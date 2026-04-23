@@ -6,7 +6,8 @@ const MUTATIONS = {
     SET_TIME: 'SET_TIME',
     SET_BEST_TIMES: 'SET_BEST_TIMES',
     SET_HARD_MODE: 'SET_HARD_MODE',
-    SET_BLOCKED_FLASK: 'SET_BLOCKED_FLASK'
+    SET_BLOCKED_FLASK: 'SET_BLOCKED_FLASK',
+    SET_GAME_STARTED: 'SET_GAME_STARTED'
 }
 
 export default {
@@ -21,7 +22,8 @@ export default {
             timerId: null,
             bestTimes: [],
             hardMode: false,
-            blockedFlask: null
+            blockedFlask: null,
+            gameStarted: false
         }
     },
     getters: {
@@ -32,7 +34,8 @@ export default {
         getTime: (state) => state.time,
         getBestTimes: (state) => state.bestTimes,
         getHardMode: (state) => state.hardMode,
-        getBlockedFlask: (state) => state.blockedFlask
+        getBlockedFlask: (state) => state.blockedFlask,
+        getGameStarted: (state) => state.gameStarted
     },
     mutations: {
         [MUTATIONS.SET_FLASKS]: (state, flasks) => {
@@ -83,6 +86,9 @@ export default {
         },
         [MUTATIONS.SET_BLOCKED_FLASK]: (state, index) => {
             state.blockedFlask = index
+        },
+        [MUTATIONS.SET_GAME_STARTED]: (state, started) => {
+            state.gameStarted = started
         }
     },
     actions: {
@@ -113,9 +119,18 @@ export default {
             commit(MUTATIONS.SET_GAME_WON, false)
             commit(MUTATIONS.SET_TIME, 0)
             dispatch('stopTimer') //останавливаем таймер, если он был запущен
-            dispatch('startTimer')
+            commit(MUTATIONS.SET_GAME_STARTED, false)
             if (state.hardMode) {
                 dispatch('blockRandomFlask')
+            }
+        },
+        startGame({ commit, state, dispatch }) {
+            if (!state.gameStarted) {
+                commit(MUTATIONS.SET_GAME_STARTED, true)
+                dispatch('startTimer')
+                if (state.hardMode) {
+                    dispatch('blockRandomFlask')
+                }
             }
         },
         startTimer({ commit, state }) {

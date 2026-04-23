@@ -2,11 +2,19 @@
     <div class="game">
         <h1 class="game__title"> Переливатор</h1>
         <div class="game__header">
+            <button
+                v-if="!getGameStarted"
+                class="game__start-button"
+                @click="() => startGame()"
+            >
+            Начать игру
+            </button>
             <div class="game__timer">{{ formattedTime }}</div>
             <label class="game__mode-toggle">
                 <input
                     type="checkbox"
                     :checked="getHardMode"
+                    :disabled="getGameStarted"
                     @change="toggleHardMode"
                 >
                 Сложный режим
@@ -64,7 +72,8 @@ export default {
             'getTime',
             'getBestTimes',
             'getHardMode',
-            'getBlockedFlask'
+            'getBlockedFlask',
+            'getGameStarted'
         ]),
         formattedTime() {
             return this.formatTime(this.getTime)
@@ -74,7 +83,8 @@ export default {
         ...mapActions('game', [
             'initGame',
             'tryMove',
-            'stopTimer'
+            'stopTimer',
+            'startGame'
         ]),
         formatTime(seconds){
             const minutes = Math.floor(seconds / 60);
@@ -93,6 +103,9 @@ export default {
             this.$store.commit('game/SET_CURRENT_FLASK', index)
         },
         handleFlaskClick(index) {
+            if (!this.getGameStarted) {
+                return
+            }
             if (this.getCurrentFlask === null) {
                 this.setCurrentFlask(index)
             } else {
@@ -201,6 +214,10 @@ export default {
         gap: 5px;
         input {
             cursor: pointer;
+            &:disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+            }
         }
     }
 
@@ -217,6 +234,21 @@ export default {
             li {
                 padding: 4px 0;
             }
+        }
+    }
+
+    &__start-button {
+        padding: 12px 24px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        background: #2ECC71;
+        color: white;
+        cursor: pointer;
+        transition: background 0.3s;
+        margin-bottom: 20px;
+        &:hover {
+            background: #27AE60;
         }
     }
 }
