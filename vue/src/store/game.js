@@ -67,7 +67,7 @@ export default {
         }
     },
     actions: {
-        initGame({ commit, state }) {
+        initGame({ commit, state, dispatch }) {
             const colours = []
             for (let i = 1; i <= 4; i++) {
                 colours.push(i)
@@ -92,6 +92,23 @@ export default {
             commit(MUTATIONS.SET_FLASKS, flasks)
             commit(MUTATIONS.SET_CURRENT_FLASK, null)
             commit(MUTATIONS.SET_GAME_WON, false)
+            commit(MUTATIONS.SET_TIME, 0)
+            dispatch('stopTimer') //останавливаем таймер, если он был запущен
+            dispatch('startTimer')
+        },
+        startTimer({ commit, state }) {
+            if (state.timerId) {
+                return
+            }
+            state.timerId = setInterval(() => {
+                commit(MUTATIONS.SET_TIME, state.time + 1)
+            }, 1000)
+        },
+        stopTimer({ commit, state }) {
+            if (state.timerId) {
+                clearInterval(state.timerId)
+                state.timerId = null
+            }
         },
         tryMove({ commit, state }, { fromFlask, toFlask }) {
             const fromLayers = state.flasks[fromFlask]
