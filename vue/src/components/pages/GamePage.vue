@@ -1,6 +1,17 @@
 <template>
     <div class="game">
         <h1 class="game__title"> Переливатор</h1>
+        <div class="game__header">
+            <div class="game__timer">{{ formattedTime }}</div>
+            <label class="game__mode-toggle">
+                <input
+                    type="checkbox"
+                    :checked="getHardMode"
+                    @change="toggleHardMode"
+                >
+                Сложный режим
+            </label>
+        </div>
         <div v-if="getGameWon" class="game__win-message">
             Поздравляем! Вы победили! 
         </div>
@@ -10,6 +21,7 @@
                 :key = "index"
                 :layers = "flask"
                 :active = "getCurrentFlask === index"
+                :blocked = "getHardMode && getBlockedFlask === index"
                 :label = "'Колба ' + (index + 1)"
                 :max-layers = "getMaxLayers"
                 @click = "() => handleFlaskClick(index)"
@@ -22,6 +34,14 @@
             >
             Новая игра
             </button>
+        </div>
+        <div v-if="getBestTimes.length" class="game__records">
+            <h3>Топ-10 результатов</h3>
+            <ol>
+                <li v-for="(time, idx) in getBestTimes" :key="idx">
+                    {{ formatTime(time) }}
+                </li>
+            </ol>
         </div>
     </div>
 </template>
