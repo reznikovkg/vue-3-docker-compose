@@ -2,7 +2,8 @@ const MUTATIONS = {
     SET_FLASKS: 'SET_FLASKS',
     SET_CURRENT_FLASK: 'SET_CURRENT_FLASK',
     MOVE_LIQUID: 'MOVE_LIQUID',
-    SET_GAME_WON: 'SET_GAME_WON'
+    SET_GAME_WON: 'SET_GAME_WON',
+    SET_TIME: 'SET_TIME'
 }
 
 export default {
@@ -12,14 +13,17 @@ export default {
             flasks: [],
             currentFlask: null,
             gameWon: false,
-            maxLayers: 4
+            maxLayers: 4,
+            time: 0,
+            timerId: null
         }
     },
     getters: {
         getFlasks: (state) => state.flasks,
         getCurrentFlask: (state) => state.currentFlask,
         getGameWon: (state) => state.gameWon,
-        getMaxLayers: (state) => state.maxLayers
+        getMaxLayers: (state) => state.maxLayers,
+        getTime: (state) => state.time
     },
     mutations: {
         [MUTATIONS.SET_FLASKS]: (state, flasks) => {
@@ -57,6 +61,9 @@ export default {
         },
         [MUTATIONS.SET_GAME_WON]: (state, won) => {
             state.gameWon = won
+        },
+        [MUTATIONS.SET_TIME]: (state, time) => {
+            state.time = time
         }
     },
     actions: {
