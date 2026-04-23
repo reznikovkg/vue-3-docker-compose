@@ -12,8 +12,8 @@
         <line class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" x1="50%" y1="0" x2="50%" y2="100%" stroke="#ffffff" stroke-width="2%" />
         <line class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" x1="75.5%" y1="0" x2="75.5%" y2="100%" stroke="#ffffff" stroke-width="2%" />
       </svg>
-      <Car :image="player.image" :lane="player.lane" :y="65"/>
-      <Car v-for="obstacle in obstacles" :key="obstacle.id" :image="obstacle.image" :lane="obstacle.lane" :direction="obstacle.direction" :y="obstacle.y"/>
+      <Car :image="player.image" :x="player.x" :y="playerY"/>
+      <Car v-for="obstacle in obstacles" :key="obstacle.id" :image="obstacle.image" :x="obstacle.x" :direction="obstacle.direction" :y="obstacle.y"/>
     </div>
   </div>
 </template>
@@ -38,11 +38,10 @@ export default {
       carId: 0,
       player: {
         image: violetCar,
-        lane: 2,
+        x: 55,
         lives: 3,
       },
       obstacles: [] as any[],
-      isMoving: false,
       isOver: false,
       gameInterval: null as any,
       spawnInterval: null as any,
@@ -62,6 +61,9 @@ export default {
     colors() {
       return [blueCar, greenCar, redCar, yellowCar]
     },
+    playerY() {
+      return 65;
+    },
   },
   mounted() {
     window.addEventListener('keydown', this.arrow)
@@ -75,16 +77,17 @@ export default {
   },
   methods: {
     arrow(event: KeyboardEvent) {
-      if(this.isMoving || this.isOver) return;
-      let newLane = this.player.lane
+      if(this.isOver) return;
+      let newX = this.player.x
+      const step = 10
       if (event.key === 'ArrowLeft') {
-        if (this.player.lane > 1) {
-          newLane = this.player.lane - 1
+        if (newX > 1 + step) {
+          newX -= step
         }
       }
       if (event.key === 'ArrowRight') {
-        if (this.player.lane < 4) {
-          newLane = this.player.lane + 1
+        if (newX < 83.5 - step) {
+          newX += step
         }
       }
       if (this.player.lives <= 0)
@@ -92,30 +95,17 @@ export default {
         this.gameOver()
         return
       }
-      const accident = this.isAccident(newLane)
-      if (accident) {
-        if (this.player.lives <= 0)
-        {
-          this.gameOver()
-          return
-        }
-      }
-      if (newLane !== this.player.lane) {
-        this.player.lane = newLane
-        this.isMoving = true
-        setTimeout(() => {
-          this.isMoving = false
-        }, 500)
-      }
+      this.player.x = newX
     },
     newObstacle() {
       const color = this.colors[Math.floor(Math.random() * 4)]
-      const lane = Math.floor(Math.random() * 4) + 1
+      const centers = [4.25, 29.25, 54.75, 79.75]
+      const x = centers[Math.floor(Math.random() * centers.length)]
       const id = this.carId++
       this.obstacles.push({
         id: id,
         image: color,
-        lane: lane,
+        x: x,
         direction: 1,
         y: -50,
         hit: false,
@@ -124,16 +114,28 @@ export default {
     spawn() {
       this.spawnInterval = setInterval(() => {
         this.newObstacle()
-      }, 1500)
+      }, 2000)
     },
     gameOver() {
       this.isOver = true
       clearInterval(this.gameInterval)
       clearInterval(this.spawnInterval)
     },
-    isAccident(lane: number) {
+    isIntersection(x1: number, x2: number, y1: number, y2: number) {
+      const left_car1 = x1
+      const left_car2 = x2
+      const right_car1 = x1 + 13
+      const right_car2 = x2 + 13
+      const top_car1 = y1
+      const top_car2 = y2
+      const bottom_car1 = y1 + 5
+      const bottom_car2 = y2 + 5
+      return left_car1 < right_car2 && right_car1 > left_car2
+      && bottom_car1 > top_car2 && top_car1 < bottom_car2
+    },
+    isAccident(x: number) {
       for (let obstacle of this.obstacles) {
-        if (!obstacle.hit && obstacle.lane === lane && obstacle.y > 55 && obstacle.y < 110) {
+        if (!obstacle.hit && this.isIntersection(obstacle.x, this.player.x, obstacle.y, this.playerY)) {
           this.player.lives -= 1
           obstacle.hit = true
           return true
@@ -153,8 +155,8 @@ export default {
           this.gameOver()
           return
         }
-        let newLane = this.player.lane
-        const accident = this.isAccident(newLane)
+        let newX = this.player.x
+        const accident = this.isAccident(newX)
         if (accident){
           if (this.player.lives <= 0)
           {
@@ -163,7 +165,7 @@ export default {
           }
         }
         this.obstacles = this.obstacles.filter(obstacle => obstacle.y < 120)
-      }, 50)
+      }, 45)
     },
   },
 }
@@ -177,7 +179,7 @@ export default {
   top: 0;
   left: 0;
   overflow: hidden;
-  background-color: cadetblue;
+  background: linear-gradient(145deg, #2b5876 0%, #4e4376 100%);
 
   &__header {
     position: absolute;
@@ -214,6 +216,9 @@ export default {
     height: 95%;
     top: 5%;
     left: 20%;
+    transform-style: preserve-3d;
+    transform: perspective(900px) rotateX(30deg);
+    transform-origin: center top;
   }
 
   &__line {
