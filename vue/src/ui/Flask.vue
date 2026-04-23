@@ -81,6 +81,7 @@ export default {
     cursor: pointer;
     padding: 10px;
     transition: transform 0.2s;
+    position: relative;
 
     &:hover {
         transform: translateY(-5px);
