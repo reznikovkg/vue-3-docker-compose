@@ -1,7 +1,7 @@
 <template>
     <div 
     class = "flask"
-    :class = "{ 'flask--active': active }"
+    :class = "{ 'flask--active': active, 'flask--blocked': blocked }"
     @click = "() => handleClick()"
     >
         <div class = "flask__liquid">
@@ -18,6 +18,7 @@
         <div class = "flask__label">
             {{ label }}
         </div>
+        <div v-if="blocked" class = "flask__blocked-icon">X</div>
     </div>
 </template>
 
@@ -43,12 +44,18 @@ export default {
         maxLayers: {
             type: Number,
             default: 4
+        },
+        blocked: {
+            type: Boolean,
+            default: false
         }
     },
 
     methods: {
         handleClick() {
-            this.$emit('click')
+            if (!this.blocked) {
+                this.$emit('click')
+            }
         },
         getColour(layer) {
             const colours = {
@@ -105,6 +112,25 @@ export default {
         margin-top: 10px;
         font-size: 14px;
         color: #2C3E50;
+        font-weight: bold;
+    }
+
+    &--blocked {
+        opacity: 0.6;
+        cursor: not-allowed;
+        &:hover {
+            transform: none;
+        }
+    }
+
+    &__blocked-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        pointer-events: none;
+        color: #E74C3C;
         font-weight: bold;
     }
 }
