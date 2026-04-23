@@ -176,6 +176,49 @@ export default {
             background: #2980B9;
         }
     }
+
+    &__header {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    &__timer {
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 8px 16px;
+        border-radius: 8px;
+    }
+
+    &__mode-toggle {
+        color: white;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        input {
+            cursor: pointer;
+        }
+    }
+
+    &__records {
+        margin-top: 30px;
+        color: white;
+        text-align: center;
+        h3 {
+            margin-bottom: 10px;
+        }
+        ol {
+            list-style-position: inside;
+            padding: 0;
+            li {
+                padding: 4px 0;
+            }
+        }
+    }
 }
 
 @keyframes pulse {
