@@ -5,6 +5,7 @@ const MUTATIONS = {
     SET_GAME_WON: 'SET_GAME_WON',
     SET_TIME: 'SET_TIME',
     SET_BEST_TIMES: 'SET_BEST_TIMES',
+    SET_HARD_MODE_BEST_TIMES: 'SET_HARD_MODE_BEST_TIMES',
     SET_HARD_MODE: 'SET_HARD_MODE',
     SET_BLOCKED_FLASK: 'SET_BLOCKED_FLASK',
     SET_GAME_STARTED: 'SET_GAME_STARTED'
@@ -21,6 +22,7 @@ export default {
             time: 0,
             timerId: null,
             bestTimes: [],
+            hardModeBestTimes: [],
             hardMode: false,
             blockedFlask: null,
             gameStarted: false
@@ -33,6 +35,7 @@ export default {
         getMaxLayers: (state) => state.maxLayers,
         getTime: (state) => state.time,
         getBestTimes: (state) => state.bestTimes,
+        getHardModeBestTimes: (state) => state.hardModeBestTimes,
         getHardMode: (state) => state.hardMode,
         getBlockedFlask: (state) => state.blockedFlask,
         getGameStarted: (state) => state.gameStarted
@@ -80,6 +83,10 @@ export default {
         [MUTATIONS.SET_BEST_TIMES]: (state, times) => {
             state.bestTimes = times
             localStorage.setItem('bestTimes', JSON.stringify(times))
+        },
+        [MUTATIONS.SET_HARD_MODE_BEST_TIMES]: (state, times) => {
+            state.hardModeBestTimes = times
+            localStorage.setItem('hardModeBestTimes', JSON.stringify(times))
         },
         [MUTATIONS.SET_HARD_MODE]: (state, mode) => {
             state.hardMode = mode
@@ -149,8 +156,13 @@ export default {
         },
         saveRecord({ commit, state }) {
             const newTime = state.time
-            const times = [...state.bestTimes, newTime].sort((a, b) => a - b).slice(0, 10)
-            commit(MUTATIONS.SET_BEST_TIMES, times)
+            const baseTimes = state.hardMode ? state.hardModeBestTimes : state.bestTimes
+            const times = [...baseTimes, newTime].sort((a, b) => a - b).slice(0, 10)
+            if (state.hardMode) {
+                commit(MUTATIONS.SET_HARD_MODE_BEST_TIMES, times)
+            } else {
+                commit(MUTATIONS.SET_BEST_TIMES, times)
+            }
         },
         blockRandomFlask({ commit, state }) {
             if (!state.hardMode) {

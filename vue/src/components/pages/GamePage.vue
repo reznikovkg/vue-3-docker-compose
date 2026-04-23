@@ -43,13 +43,31 @@
             Новая игра
             </button>
         </div>
-        <div v-if="getBestTimes.length" class="game__records">
-            <h3>Топ-10 результатов</h3>
-            <ol>
-                <li v-for="(time, idx) in getBestTimes" :key="idx">
-                    {{ formatTime(time) }}
-                </li>
-            </ol>
+        <div v-if="getBestTimes.length || getHardModeBestTimes.length" class="game__records">
+            <div 
+                v-if="!getHardMode && getBestTimes.length"
+                :key="'normal-' + getBestTimes.length"
+                class="game__records-section"
+            >
+                <h3>Топ-10 результатов (обычный режим)</h3>
+                <ol>
+                    <li v-for="(time, idx) in getBestTimes" :key="idx">
+                        {{ formatTime(time) }}
+                    </li>
+                </ol>
+            </div>
+            <div 
+                v-if="getHardMode && getHardModeBestTimes.length"
+                :key="'hard-' + getHardModeBestTimes.length"
+                class="game__records-section"
+            >
+                <h3>Топ-10 результатов (сложный режим)</h3>
+                <ol>
+                    <li v-for="(time, idx) in getHardModeBestTimes" :key="idx">
+                        {{ formatTime(time) }}
+                    </li>
+                </ol>
+            </div>
         </div>
     </div>
 </template>
@@ -71,6 +89,7 @@ export default {
             'getMaxLayers',
             'getTime',
             'getBestTimes',
+            'getHardModeBestTimes',
             'getHardMode',
             'getBlockedFlask',
             'getGameStarted'
@@ -118,6 +137,8 @@ export default {
         restartGame() {
             this.stopTimer()
             this.$store.commit('game/SET_TIME', 0)
+            this.$store.commit('game/SET_HARD_MODE', false)
+            this.$store.commit('game/SET_BLOCKED_FLASK', null)
             this.initGame()
         }
     },
@@ -125,6 +146,10 @@ export default {
         const saved = localStorage.getItem('bestTimes')
         if (saved) {
             this.$store.commit('game/SET_BEST_TIMES', JSON.parse(saved))
+        }
+        const savedHardMode = localStorage.getItem('hardModeBestTimes')
+        if (savedHardMode) {
+            this.$store.commit('game/SET_HARD_MODE_BEST_TIMES', JSON.parse(savedHardMode))
         }
         this.restartGame()
     },
@@ -225,14 +250,22 @@ export default {
         margin-top: 30px;
         color: white;
         text-align: center;
-        h3 {
-            margin-bottom: 10px;
-        }
-        ol {
-            list-style-position: inside;
-            padding: 0;
-            li {
-                padding: 4px 0;
+        display: flex;
+        gap: 40px;
+        flex-wrap: wrap;
+        justify-content: center;
+        &-section {
+            h3 {
+                margin-bottom: 10px;
+                font-size: 18px;
+            }
+            ol {
+                list-style-position: inside;
+                padding: 0;
+                li {
+                    padding: 4px 0;
+                    font-size: 16px;
+                }
             }
         }
     }
