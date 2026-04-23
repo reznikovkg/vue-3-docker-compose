@@ -1,10 +1,14 @@
 @import './base.css';
 
 #project {
-  max-width: 1280px;
+  max-width: min-content;
   margin: 0 auto;
   padding: 2rem;
   font-weight: normal;
+
+  @media (max-width: 800px) {
+    padding: 2rem 0;
+  }
 }
 
 a,

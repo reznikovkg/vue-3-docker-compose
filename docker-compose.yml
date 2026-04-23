@@ -8,3 +8,5 @@ services:
         volumes:
             - ./vue/src:/vue/src
             - ./vue/package.json:/vue/package.json
+            - ./vue/index.html:/vue/index.html
+            - ./vue/dist:/vue/dist

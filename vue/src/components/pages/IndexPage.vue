@@ -3,10 +3,10 @@
 </template>
 
 <script>
-import Settings from "@/components/ui/Settings.vue";
+import Settings from '@/components/ui/Settings.vue'
 
 export default {
-  name: "IndexPage",
+  name: 'IndexPage',
   components: {Settings},
 }
 </script>

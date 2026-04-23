@@ -3,10 +3,10 @@
 </template>
 
 <script>
-import EndGame from "@/components/ui/EndGame.vue";
+import EndGame from '@/components/ui/EndGame.vue'
 
 export default {
-  name: "EndPage",
+  name: 'EndPage',
   components: {EndGame}
 }
 </script>

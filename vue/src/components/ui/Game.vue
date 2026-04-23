@@ -1,9 +1,10 @@
 <template>
   <div class="game" :style="gameStyle">
     <Flask
-        v-for="i in qtyFlasks"
+        v-for="i in getQtyFlasks"
         :ref="flask => flaskRefs[i] = flask"
-        :style="flaskStyle" :index="i"
+        :style="flaskStyle"
+        :index="i"
         @click="() => handleClick(i)"
         @flaskUpdated="(activeIndex) => handleFlaskUpdate(activeIndex)">
     </Flask>
@@ -12,10 +13,10 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import Flask from "@/components/ui/Flask.vue";
+import Flask from '@/components/ui/Flask.vue'
 
 export default {
-  name: "Game",
+  name: 'Game',
   components: {Flask},
   data() {
     return {
@@ -24,12 +25,15 @@ export default {
     }
   },
   computed: {
-    ...mapGetters({
-      qtyFlasks: 'getQtyFlasks',
-      clicks: "getClicks"
-    }),
+    ...mapGetters([
+      'getQtyFlasks',
+      'getClicks',
+      'getIsReadyFlasks',
+      'getHardMode',
+      'getNumberBlockedFlask',
+    ]),
     rowsCount() {
-      return Math.ceil(this.qtyFlasks / this.columnCount)
+      return Math.ceil(this.getQtyFlasks / this.columnCount)
     },
     gameStyle() {
       return {
@@ -55,7 +59,8 @@ export default {
     ...mapActions([
       'pickActiveFlask',
       'pickTargetFlask',
-      'resetFlasks'
+      'resetFlasks',
+      'setNumberBlockedFlask'
     ]),
     updateColumnCount() {
       this.$nextTick(() => {
@@ -68,12 +73,22 @@ export default {
       })
     },
     handleClick(index) {
-      if (this.clicks === 0) {
-        console.log(`active ${index}`, this.clicks)
+      if (this.getClicks === 0) {
+        console.log(`active ${index}`, this.getClicks)
+        if (this.getHardMode) {
+          this.blockFlask(index)
+        }
         this.pickActiveFlask({isActiveFlask: index})
       } else {
-        console.log(`target ${index}`, this.clicks)
-        this.pickTargetFlask({isTargetFlask: index})
+        console.log(`target ${index}`, this.getClicks)
+        if (this.getHardMode) {
+          if (index !== this.getNumberBlockedFlask) {
+            this.pickTargetFlask({isTargetFlask: index})
+            this.setNumberBlockedFlask({numberBlockedFlask: 0})
+          }
+        } else {
+          this.pickTargetFlask({isTargetFlask: index})
+        }
       }
     },
     handleFlaskUpdate(activeIndex) {
@@ -82,44 +97,76 @@ export default {
       if (activeFlask) {
         activeFlask.layers = activeFlask.layersActiveFlask.map(l => ({...l}))
       }
+    },
+    blockFlask(activeIndex) {
+      let isReadyFlasks = this.getIsReadyFlasks
+      console.log("blockFlask: ", activeIndex, isReadyFlasks[0].length)
+      let isCorrect = false
+      while (!isCorrect) {
+        let randomIndex = Math.ceil(Math.random() * this.getQtyFlasks)
+        if (isReadyFlasks[randomIndex - 1].length !== 0 && randomIndex !== activeIndex) {
+          this.setNumberBlockedFlask({numberBlockedFlask: randomIndex})
+          isCorrect = true
+        }
+      }
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-  @use '@/assets/rk4.scss' as *;
+ .game {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10vw, 1fr));
+  justify-items: center;
+  align-items: center;
+  padding: 3vh;
+  width: 70vw;
+  height: 70vh;
+  background-color: #fffaee;
+  border-radius: 30px;
+  border: 3px solid #194d6c;
+  box-shadow: 0 9px 18px 0 #194d6c;
+  position: relative;
 
-  .game {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10vw, 1fr));
-    justify-items: center;
-    align-items: center;
-    //gap: 3vw;
-    padding: 3vh;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 40px;
+  }
+
+  @media (min-width: 1600px) {
     width: 70vw;
     height: 70vh;
-    background-color: #fffaee;
-    border-radius: 30px;
-    border: 3px solid #194d6c;
-    box-shadow: 0 9px 18px 0 #194d6c;
-    position: relative;
-
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-repeat: no-repeat;
-      background-size: 100% 100%;
-      pointer-events: none;
-      //mix-blend-mode: overlay;
-      background-image: RK4(1000, 0, 10, 10, 200, 10, 2, "game");
-      z-index: 0;
-      border-radius: 40px;
-    }
   }
+
+  @media (min-width: 1300px) and (max-width: 1600px) {
+    width: 60vw;
+    height: 70vh;
+  }
+
+  @media (min-width: 1000px) and (max-width: 1300px) {
+    width: 55vw;
+    height: 70vh;
+  }
+
+  @media (min-width: 800px) and (max-width: 1000px) {
+    width: 48vw;
+    height: 70vh;
+  }
+
+  @media (max-width: 800px) {
+    width: 90vw;
+    height: 80vh;
+  }
+}
 
 </style>
