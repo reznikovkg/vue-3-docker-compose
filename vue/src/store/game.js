@@ -3,7 +3,8 @@ const MUTATIONS = {
     SET_CURRENT_FLASK: 'SET_CURRENT_FLASK',
     MOVE_LIQUID: 'MOVE_LIQUID',
     SET_GAME_WON: 'SET_GAME_WON',
-    SET_TIME: 'SET_TIME'
+    SET_TIME: 'SET_TIME',
+    SET_BEST_TIMES: 'SET_BEST_TIMES'
 }
 
 export default {
@@ -15,7 +16,8 @@ export default {
             gameWon: false,
             maxLayers: 4,
             time: 0,
-            timerId: null
+            timerId: null,
+            bestTimes: []
         }
     },
     getters: {
@@ -23,7 +25,8 @@ export default {
         getCurrentFlask: (state) => state.currentFlask,
         getGameWon: (state) => state.gameWon,
         getMaxLayers: (state) => state.maxLayers,
-        getTime: (state) => state.time
+        getTime: (state) => state.time,
+        getBestTimes: (state) => state.bestTimes
     },
     mutations: {
         [MUTATIONS.SET_FLASKS]: (state, flasks) => {
@@ -64,6 +67,10 @@ export default {
         },
         [MUTATIONS.SET_TIME]: (state, time) => {
             state.time = time
+        },
+        [MUTATIONS.SET_BEST_TIMES]: (state, times) => {
+            state.bestTimes = times
+            localStorage.setItem('bestTimes', JSON.stringify(times))
         }
     },
     actions: {
@@ -110,7 +117,12 @@ export default {
                 state.timerId = null
             }
         },
-        tryMove({ commit, state }, { fromFlask, toFlask }) {
+        saveRecord({ commit, state }) {
+            const newTime = state.time
+            const times = [...state.bestTimes, newTime].sort((a, b) => a - b).slice(0, 10)
+            commit(MUTATIONS.SET_BEST_TIMES, times)
+        },
+        tryMove({ commit, state, dispatch }, { fromFlask, toFlask }) {
             const fromLayers = state.flasks[fromFlask]
             const toLayers = state.flasks[toFlask]
             if (fromFlask === toFlask || fromLayers.length === 0 || toLayers.length === state.maxLayers) {
@@ -126,6 +138,10 @@ export default {
                     (flask.every(layer => layer === flask[0]) && flask.length === state.maxLayers)
                 })
                 commit(MUTATIONS.SET_GAME_WON, gameWon)
+                if (gameWon) {
+                    dispatch('stopTimer')
+                    dispatch('saveRecord')
+                }
             }
             commit(MUTATIONS.SET_CURRENT_FLASK, null)
         }
