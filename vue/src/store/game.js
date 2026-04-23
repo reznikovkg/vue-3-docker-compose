@@ -114,6 +114,9 @@ export default {
             commit(MUTATIONS.SET_TIME, 0)
             dispatch('stopTimer') //останавливаем таймер, если он был запущен
             dispatch('startTimer')
+            if (state.hardMode) {
+                dispatch('blockRandomFlask')
+            }
         },
         startTimer({ commit, state }) {
             if (state.timerId) {
@@ -134,7 +137,23 @@ export default {
             const times = [...state.bestTimes, newTime].sort((a, b) => a - b).slice(0, 10)
             commit(MUTATIONS.SET_BEST_TIMES, times)
         },
+        blockRandomFlask({ commit, state }) {
+            if (!state.hardMode) {
+                return
+            }
+            const options = state.flasks.map((_, index) => index).filter(index => index !== state.currentFlask)
+            if (options.length){
+                const blocked = options[Math.floor(Math.random() * options.length)]
+                commit(MUTATIONS.SET_BLOCKED_FLASK, blocked)
+            }
+        },
         tryMove({ commit, state, dispatch }, { fromFlask, toFlask }) {
+            if (state.hardMode && state.blockedFlask !== null){
+                if (fromFlask === state.blockedFlask || toFlask === state.blockedFlask) {
+                    commit(MUTATIONS.SET_CURRENT_FLASK, null)
+                    return
+                }
+            }
             const fromLayers = state.flasks[fromFlask]
             const toLayers = state.flasks[toFlask]
             if (fromFlask === toFlask || fromLayers.length === 0 || toLayers.length === state.maxLayers) {
@@ -156,6 +175,9 @@ export default {
                 }
             }
             commit(MUTATIONS.SET_CURRENT_FLASK, null)
+            if (state.hardMode && !state.gameWon) {
+                dispatch('blockRandomFlask')
+            }
         }
     }
 }
