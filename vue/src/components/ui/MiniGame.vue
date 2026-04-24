@@ -67,7 +67,7 @@ export default {
       clearInterval(this.interval)
     },
     fishingKeyDown(event) {
-      if(event.key === ' ' && !this.getIsHooked && !this.getIsBroken) {
+      if(event.key === ' ' && !this.getIsHooked && !this.getIsBroken && (!this.getCurrentAreaInfo || this.getCurrentAreaInfo.area.type !== 'shallow')) {
         this.setFishing()
         if(this.getIsFishing)
           this.startFishing()

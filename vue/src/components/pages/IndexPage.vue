@@ -1,6 +1,6 @@
 <template>
   <div class="map" :style="mapStyle">
-    <div v-for="area in getAreas" class="map__area" :style="areaStyle(area)"></div>
+    <div v-for="area in getReversedAreas" class="map__area" :style="areaStyle(area)"></div>
   </div>
   <div class="water"/>
   <Boat/>
@@ -67,6 +67,9 @@ export default {
       return {
         transform: 'translate(' + (this.center.x - this.getBoat.x) + 'px, ' + (this.center.y - this.getBoat.y) + 'px)'
       }
+    },
+    getReversedAreas() {
+      return this.getAreas.slice().reverse()
     }
   },
   methods: {
@@ -82,11 +85,10 @@ export default {
         top: (area.y - area.radius) + 'px',
         width: (area.radius * 2) + 'px',
         height: (area.radius * 2) + 'px',
-        backgroundColor: area.type === 'high' ? 'rgba(25, 10, 10, 0.5)' : 'rgba(25, 80, 80, 0.5)'
+        backgroundColor: area.type === 'high' ? 'rgba(25, 10, 10, 0.5)' : (area.type === 'medium' ? 'rgba(25, 80, 80, 0.5)' : (area.type === 'shallow' ? 'rgba(165, 165, 40, 0.5)' : 'rgb(165, 165, 40)'))
       }
     },
     updateMoving() {
-      let updMoving = false
       if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken) {
         let x = 0, y = 0
         if(this.pressed.ArrowDown)
@@ -103,11 +105,13 @@ export default {
             this.lastCheck.x = this.getBoat.x
             this.lastCheck.y = this.getBoat.y
           }
-          updMoving = true
           this.move({px: x, py: y})
         }
+        else
+          this.setMoving(false)
       }
-      this.setMoving(updMoving)
+      else
+        this.setMoving(false)
       requestAnimationFrame(this.updateMoving)
     },
     updateCenter() {

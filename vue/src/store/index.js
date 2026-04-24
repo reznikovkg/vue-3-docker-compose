@@ -28,6 +28,16 @@ const offsets = (minDist, maxDist) => {
   return {x: x, y: y}
 }
 
+const findAreaIndex = (x, y, areas, type, allTypes) => {
+  return areas.findIndex(area => {
+    if(area.type === type || allTypes) {
+      const dx = x - area.x, dy = y - area.y
+      return (dx * dx + dy * dy <= area.radius * area.radius)
+    }
+    return false
+  })
+}
+
 export default createStore({
   state () {
     return {
@@ -60,22 +70,7 @@ export default createStore({
     getInventory: (state) => state.inventory,
     getAreas: (state) => state.areas,
     getCurrentAreaInfo: (state) => {
-      let index = state.areas.findIndex(area => {
-        if(area.type === 'high') {
-          const dx = state.boat.x - area.x, dy = state.boat.y - area.y
-          return (dx * dx + dy * dy <= area.radius * area.radius)
-        }
-        return false
-      })
-      if(index === -1) {
-        index = state.areas.findIndex(area => {
-          if(area.type !== 'high') {
-            const dx = state.boat.x - area.x, dy = state.boat.y - area.y
-            return (dx * dx + dy * dy <= area.radius * area.radius)
-          }
-          return false
-        })
-      }
+      const index = findAreaIndex(state.boat.x, state.boat.y, state.areas, '', true)
       if(index !== -1) {
         return {
           area: state.areas[index],
@@ -92,7 +87,7 @@ export default createStore({
       state.boat.y += state.boat.speed * py
       if(px > 0)
         state.boat.direction = 1
-      if(px < 0)
+      else if(px < 0)
         state.boat.direction = -1
     },
     [MUTATIONS.SET_MOVING]: (state, value) => {
@@ -124,7 +119,33 @@ export default createStore({
   },
   actions: {
     move: (store, payload) => {
-      store.commit(MUTATIONS.MOVE, payload)
+      const {px, py} = payload, next = {
+        x: store.state.boat.x + store.state.boat.speed * px,
+        y: store.state.boat.y + store.state.boat.speed * py
+      }
+      let index = findAreaIndex(next.x, next.y, store.state.areas, 'island', false)
+      if(index === -1) {
+        store.commit(MUTATIONS.MOVE, payload)
+        store.commit(MUTATIONS.SET_MOVING, true)
+      }
+      else {
+        if(px !== 0)
+          index = findAreaIndex(next.x, store.state.boat.y, store.state.areas, 'island', false)
+        if(index === -1) {
+          store.commit(MUTATIONS.MOVE, {px: px, py: 0})
+          store.commit(MUTATIONS.SET_MOVING, true)
+        }
+        else {
+          if(py !== 0)
+            index = findAreaIndex(store.state.boat.x, next.y, store.state.areas, 'island', false)
+          if(index === -1) {
+            store.commit(MUTATIONS.MOVE, {px: 0, py: py})
+            store.commit(MUTATIONS.SET_MOVING, true)
+          }
+          else
+            store.commit(MUTATIONS.SET_MOVING, false)
+        }
+      }
     },
     setMoving: (store, value) => {
       store.commit(MUTATIONS.SET_MOVING, value)
@@ -145,13 +166,26 @@ export default createStore({
       store.commit(MUTATIONS.ADD_FISH)
     },
     startArea: (store) => {
-      let areas = []
-      for(let i = 0; i < 25; ++i) {
+      let areas = [], coords = []
+      for(let i = 0; i < 3; ++i) {
+        const c = offsets(750, 2500)
+        coords.push({
+          x: c.x,
+          y: c.y
+        })
         areas.push({
-          x: randomInt(-2500, 2500),
-          y: randomInt(-2500, 2500),
-          type: 'medium',
-          radius: 250
+          x: coords[i].x,
+          y: coords[i].y,
+          type: 'island',
+          radius: 350
+        })
+      }
+      for(let i = 0; i < 3; ++i) {
+        areas.push({
+          x: coords[i].x,
+          y: coords[i].y,
+          type: 'shallow',
+          radius: 500
         })
       }
       for(let i = 0; i < 50; ++i) {
@@ -160,6 +194,14 @@ export default createStore({
           y: randomInt(-2500, 2500),
           type: 'high',
           radius: 100
+        })
+      }
+      for(let i = 0; i < 25; ++i) {
+        areas.push({
+          x: randomInt(-2500, 2500),
+          y: randomInt(-2500, 2500),
+          type: 'medium',
+          radius: 250
         })
       }
       store.commit(MUTATIONS.START_AREA, areas)
@@ -183,6 +225,14 @@ export default createStore({
             px: store.state.boat.x + offset.x,
             py: store.state.boat.y + offset.y
           })
+          if(area.type === 'island' || area.type === 'shallow') {
+            const i = area.type === 'island' ? 3 : -3
+            store.commit(MUTATIONS.RELOCATE_AREA, {
+              index: index + i,
+              px: store.state.boat.x + offset.x,
+              py: store.state.boat.y + offset.y
+            })
+          }
         }
       })
     }

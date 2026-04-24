@@ -1,7 +1,7 @@
 <template>
   <div class="text">
     <div class="text__coords">Coordinates (X: {{ getBoat.x }}, Y: {{ getBoat.y }})</div>
-    <div class="text__area">Area type: {{ !getCurrentAreaInfo ? 'low' : getCurrentAreaInfo.area.type }}</div>
+    <div class="text__area">Area type: {{ getCurrentAreaType }}</div>
   </div>
 </template>
 
@@ -14,7 +14,10 @@ export default {
     ...mapGetters([
       'getBoat',
       'getCurrentAreaInfo'
-    ])
+    ]),
+    getCurrentAreaType() {
+      return !this.getCurrentAreaInfo ? 'low' : this.getCurrentAreaInfo.area.type
+    }
   }
 }
 </script>
