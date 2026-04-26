@@ -8,18 +8,18 @@
 </template>
 
 <script>
-import {mapGetters} from 'vuex'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'Boat',
   computed: {
     ...mapGetters([
+      'getBoat',
       'getIsMoving',
       'getIsFishing',
       'getIsGaming',
       'getIsHooked',
-      'getIsBroken',
-      'getBoat'
+      'getIsBroken'
     ]),
     manClass() {
       return {

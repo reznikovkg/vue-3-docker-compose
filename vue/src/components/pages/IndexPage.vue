@@ -1,12 +1,13 @@
 <template>
   <div class="map" :style="mapStyle">
-    <div v-for="area in getReversedAreas" class="map__area" :style="areaStyle(area)"></div>
+    <div v-for="area in getReversedAreas" class="map__area" :class="'map__area--' + area.type" :style="areaStyle(area)"/>
   </div>
   <div class="water"/>
   <Boat/>
   <Inventory/>
   <Location/>
   <MiniGame/>
+  <Shop v-if="getIsShopping"/>
 </template>
 
 <script>
@@ -14,6 +15,7 @@ import Boat from './../ui/Boat.vue'
 import Inventory from './../ui/Inventory.vue'
 import Location from './../ui/Location.vue'
 import MiniGame from './../ui/MiniGame.vue'
+import Shop from './../ui/Shop.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -22,7 +24,8 @@ export default {
     Boat,
     Inventory,
     Location,
-    MiniGame
+    MiniGame,
+    Shop
   },
   data() {
     return {
@@ -57,11 +60,12 @@ export default {
   },
   computed: {
     ...mapGetters([
+      'getBoat',
       'getIsFishing',
       'getIsHooked',
       'getIsBroken',
-      'getBoat',
-      'getAreas'
+      'getAreas',
+      'getIsShopping'
     ]),
     mapStyle() {
       return {
@@ -84,12 +88,11 @@ export default {
         left: (area.x - area.radius) + 'px',
         top: (area.y - area.radius) + 'px',
         width: (area.radius * 2) + 'px',
-        height: (area.radius * 2) + 'px',
-        backgroundColor: area.type === 'high' ? 'rgba(25, 10, 10, 0.5)' : (area.type === 'medium' ? 'rgba(25, 80, 80, 0.5)' : (area.type === 'shallow' ? 'rgba(165, 165, 40, 0.5)' : 'rgb(165, 165, 40)'))
+        height: (area.radius * 2) + 'px'
       }
     },
     updateMoving() {
-      if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken) {
+      if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken && !this.getIsShopping) {
         let x = 0, y = 0
         if(this.pressed.ArrowDown)
           y += 1
@@ -140,6 +143,22 @@ export default {
   &__area {
     position: absolute;
     border-radius: 50%;
+
+    &--medium {
+      background-color: rgba(25, 80, 80, 0.5);
+    }
+
+    &--high {
+      background-color: rgba(25, 10, 10, 0.5);
+    }
+
+    &--shallow {
+      background-color: rgba(165, 165, 40, 0.5);
+    }
+
+    &--island {
+      background-color: rgb(165, 165, 40);
+    }
   }
 }
 
