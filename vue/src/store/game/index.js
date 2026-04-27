@@ -60,7 +60,7 @@ export default {
   namespaced: true,
   state () {
     const savedState = localStorage.getItem('game_state')
-    return (savedState !== null) ? JSON.parse(savedState) : defaultState
+    return (savedState !== null) ? {...defaultState, ...JSON.parse(savedState)} : defaultState
   },
   getters: {
     getBoat: (state) => state.boat,
@@ -268,7 +268,13 @@ export default {
       store.dispatch('save')
     },
     save: (store) => {
-      localStorage.setItem('game_state', JSON.stringify(store.state))
+      const {
+        isFishing,
+        zones,
+        ...rest
+      } = store.state
+
+      localStorage.setItem('game_state', JSON.stringify(rest))
     },
     removeZone: (store) => {
       store.commit(MUTATIONS.REMOVE_ZONE);

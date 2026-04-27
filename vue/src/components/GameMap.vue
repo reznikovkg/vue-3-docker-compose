@@ -16,11 +16,11 @@ import Island from './Island.vue'
 const store = useStore()
 
 const islands = computed(() => store.getters['game/getIslands'])
+const fishing = computed(() => store.getters['game/getIsFishing'])
 
 const speed = 1
 
 const move = (e) => {
-  const fishing = computed(() => store.getters['game/getIsFishing'])
   if (fishing.value) return
 
   if (e.key === 'ArrowUp' || e.key === 'w') {
