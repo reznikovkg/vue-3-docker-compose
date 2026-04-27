@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import GameMap from './GameMap.vue'
 import FishingGame from './FishingGame.vue'
 import FishingZone from './FishingZone.vue'
@@ -26,14 +26,14 @@ const isFishing = ref(false)
 const miniGameActive = ref(false)
 let fishingTimer = null
 
-const fishingZones = [
+const fishingZones = ref([
     { name: '🌊 Мелководье', type: 'low', x: 15, y: -10, radius: 3, delay: 3000, color: '#4d9eff' },
     { name: '🐟 Глубокое место', type: 'medium', x: -5, y: 8, radius: 3, delay: 1200, color: '#e67e22' },
     { name: '⚡ Рыбное место!', type: 'high', x: -1, y: 3, radius: 3, delay: 0, color: '#f1c40f' }
-]
+])
 
 const currentZone = computed(() => {
-    for (const zone of fishingZones) {
+    for (const zone of fishingZones.value) {
         const dx = boatX.value - zone.x
         const dy = boatY.value - zone.y
         const distance = Math.sqrt(dx * dx + dy * dy)
@@ -89,18 +89,23 @@ function closeMiniGame() {
     }
     isFishing.value = false
 
-    randomizeZones()  // TODO сделать реактивным, чтобы компонент GameMap сразу обновил.
+    randomizeZones()
 
 }
 
 
 function randomizeZones() {
     const bounds = 12
+    const zones = fishingZones.value
 
-    fishingZones.forEach(zone => {
-        zone.x = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
-        zone.y = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
-    })
+    zones[0].x = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
+    zones[0].y = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
+
+    zones[1].x = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
+    zones[1].y = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
+
+    zones[2].x = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
+    zones[2].y = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
 }
 
 
