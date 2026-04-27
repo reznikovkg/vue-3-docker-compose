@@ -41,6 +41,7 @@ export default {
       'getIsHooked',
       'getIsBroken',
       'getCurrentFish',
+      'getActiveTacklesInfo',
       'getFeedInfo',
       'getActiveBaitInfo',
       'getCurrentAreaInfo'
@@ -64,7 +65,7 @@ export default {
       this.setCurrentFish()
       this.playerDelay = (!this.getCurrentAreaInfo ? 2500 : (this.getCurrentAreaInfo.area.type === 'medium' ? 1000 : 0))
       this.timeout = setTimeout(() => {
-        this.playerSpeed = Math.floor(this.getCurrentFish.weight / 4)
+        this.playerSpeed = Math.max(Math.min(Math.floor(this.getCurrentFish.weight / this.getActiveTacklesInfo.totalLevel), 17), 1)
         this.setGaming(true)
         this.direction = 1
         this.playerPosition = 0
@@ -72,8 +73,14 @@ export default {
       }, this.playerDelay)
       this.interval = setInterval(() => {
         this.playerPosition += this.direction * this.playerSpeed
-        if(this.playerPosition <= 0 || this.playerPosition >= 100)
-          this.direction *= -1
+        if(this.playerPosition <= 0) {
+          this.playerPosition = 0;
+          this.direction = 1;
+        }
+        else if(this.playerPosition >= 100) {
+          this.playerPosition = 100;
+          this.direction = -1;
+        }
       }, 10)
     },
     stopFishing() {
@@ -102,7 +109,7 @@ export default {
           else {
             this.setFishing()
             if(this.getIsFishing) {
-              if(this.getActiveBaitInfo.bait.count <= 0)
+              if(this.getActiveBaitInfo.bait.count <= 0 || this.getActiveTacklesInfo.totalLevel === 0)
                 this.setFishing()
               else
                 this.startFishing()

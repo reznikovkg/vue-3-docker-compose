@@ -1,6 +1,6 @@
 <template>
   <div class="map" :style="mapStyle">
-    <div v-for="area in getReversedAreas" class="map__area" :class="'map__area--' + area.type" :style="areaStyle(area)"/>
+    <div class="map__area" v-for="area in getReversedAreas" :class="'map__area--' + area.type" :style="areaStyle(area)"/>
   </div>
   <div class="water"/>
   <Boat/>

@@ -6,6 +6,15 @@ import worm from '../assets/images/bait/worm.png'
 import caterpillar from '../assets/images/bait/caterpillar.png'
 import crab from '../assets/images/bait/crab.png'
 import feed from '../assets/images/bait/feed.png'
+import bambooRod from '../assets/images/tackle/rod/bamboo.png'
+import woodRod from '../assets/images/tackle/rod/wood.png'
+import carbonRod from '../assets/images/tackle/rod/carbon.png'
+import basicReel from '../assets/images/tackle/reel/basic.png'
+import blueReel from '../assets/images/tackle/reel/blue.png'
+import redReel from '../assets/images/tackle/reel/red.png'
+import basicHook from '../assets/images/tackle/hook/basic.png'
+import blueHook from '../assets/images/tackle/hook/blue.png'
+import goldHook from '../assets/images/tackle/hook/gold.png'
 
 const MUTATIONS = {
   MOVE: 'MOVE',
@@ -16,6 +25,7 @@ const MUTATIONS = {
   SET_BROKEN: 'SET_BROKEN',
   SET_CURRENT_FISH: 'SET_CURRENT_FISH',
   ADD_CURRENT_FISH: 'ADD_CURRENT_FISH',
+  CHANGE_FISH_SKIPPED: 'CHANGE_FISH_SKIPPED',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
   CHANGE_BAIT_COUNT: 'CHANGE_BAIT_COUNT',
   CHANGE_BALANCE: 'CHANGE_BALANCE',
@@ -57,17 +67,29 @@ export default createStore({
         direction: 1
       },
       fishTypes: [
-        {name: 'green fish', image: greenFish, minWeight: 8, maxWeight: 12, pricePerKg: 1},
-        {name: 'blue fish', image: blueFish, minWeight: 15, maxWeight: 25, pricePerKg: 2},
-        {name: 'red fish', image: redFish, minWeight: 30, maxWeight: 50, pricePerKg: 3},
+        {name: 'green fish', image: greenFish, minWeight: 1, maxWeight: 6, pricePerKg: 2},
+        {name: 'blue fish', image: blueFish, minWeight: 8, maxWeight: 24, pricePerKg: 3},
+        {name: 'red fish', image: redFish, minWeight: 27, maxWeight: 81, pricePerKg: 4},
       ],
       currentFish: null,
+      fishSkipped: 0,
       inventory: {
         fishes: [],
+        tackles: [
+          {name: 'bamboo rod', image: bambooRod, isOwned: true, level: 1, price: 0, isActive: true, type: 'rod'},
+          {name: 'wood rod', image: woodRod, isOwned: false, level: 2, price: 250, isActive: false, type: 'rod'},
+          {name: 'carbon rod', image: carbonRod, isOwned: false, level: 3, price: 1000, isActive: false, type: 'rod'},
+          {name: 'basic reel', image: basicReel, isOwned: true, level: 1, price: 0, isActive: true, type: 'reel'},
+          {name: 'blue reel', image: blueReel, isOwned: false, level: 2, price: 100, isActive: false, type: 'reel'},
+          {name: 'red reel', image: redReel, isOwned: false, level: 3, price: 1000, isActive: false, type: 'reel'},
+          {name: 'basic hook', image: basicHook, isOwned: true, level: 1, price: 0, isActive: true, type: 'hook'},
+          {name: 'blue hook', image: blueHook, isOwned: false, level: 2, price: 50, isActive: false, type: 'hook'},
+          {name: 'gold hook', image: goldHook, isOwned: false, level: 3, price: 1000, isActive: false, type: 'hook'}
+        ],
         baits: [
-          {name: 'worm', image: worm, count: 1, level: 0, price: 10, isActive: true, type: 'fishing'},
-          {name: 'caterpillar', image: caterpillar, count: 0, level: 1, price: 20, isActive: false, type: 'fishing'},
-          {name: 'crab', image: crab, count: 0, level: 2, price: 40, isActive: false, type: 'fishing'},
+          {name: 'worm', image: worm, count: 1, level: 0, price: 3, isActive: true, type: 'fishing'},
+          {name: 'caterpillar', image: caterpillar, count: 0, level: 1, price: 6, isActive: false, type: 'fishing'},
+          {name: 'crab', image: crab, count: 0, level: 2, price: 12, isActive: false, type: 'fishing'},
           {name: 'feed', image: feed, count: 0, level: 0, price: 5, isActive: false, type: 'feeding'}
         ]
       },
@@ -89,7 +111,22 @@ export default createStore({
     getIsHooked: (state) => state.isHooked,
     getIsBroken: (state) => state.isBroken,
     getCurrentFish: (state) => state.currentFish,
+    getFishSkipped: (state) => state.fishSkipped,
     getInventoryFish: (state) => state.inventory.fishes,
+    getVisibleFish: (state) => state.inventory.fishes.slice(-state.fishSkipped - 3, -state.fishSkipped || undefined).reverse(),
+    getInventoryTackle: (state) => state.inventory.tackles,
+    getActiveTacklesInfo: (state) => {
+      const activeTackles = state.inventory.tackles.filter(tackle => tackle.isActive)
+      let totalLevel = 1
+      if(activeTackles.length === 3)
+        activeTackles.forEach(tackle => totalLevel *= tackle.level)
+      else
+        totalLevel = 0
+      return {
+        activeTackles: activeTackles,
+        totalLevel: totalLevel
+      }
+    },
     getFeedInfo: (state) => {
       const index = state.inventory.baits.findIndex(bait => bait.type === 'feeding')
       return {
@@ -150,6 +187,9 @@ export default createStore({
     [MUTATIONS.ADD_CURRENT_FISH]: (state) => {
       state.inventory.fishes.push(state.currentFish)
       state.currentFish = null
+    },
+    [MUTATIONS.CHANGE_FISH_SKIPPED]: (state, value) => {
+      state.fishSkipped += value
     },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, payload) => {
       const {oldIndex, newIndex} = payload
@@ -235,6 +275,9 @@ export default createStore({
     },
     addCurrentFish: (store) => {
       store.commit(MUTATIONS.ADD_CURRENT_FISH)
+    },
+    changeFishSkipped: (store, value) => {
+      store.commit(MUTATIONS.CHANGE_FISH_SKIPPED, value)
     },
     changeFeedCount: (store, count) => {
       store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {

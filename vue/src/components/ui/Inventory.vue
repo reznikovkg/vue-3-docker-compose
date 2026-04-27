@@ -1,18 +1,26 @@
 <template>
   <div class="inventory">
-    <div class="inventory__title">Inventory</div>
-    <div class="inventory__list">
-      <div v-for="fish in getVisibleFish" class="inventory__list__item">
+    <div class="inventory__title">{{isSwitched ? 'Tackle' : 'Fish'}}</div>
+    <div class="inventory__list" v-if="!isSwitched">
+      <div class="inventory__list__item" v-for="fish in getVisibleFish">
         <div class="inventory__list__item__cell">
           <img class="inventory__list__item__cell__image" :src="fish.image" width="75px" :alt="fish.name">
         </div>
         <div class="inventory__list__item__text">{{ fish.weight }} kg</div>
       </div>
     </div>
+    <div class="inventory__list" v-else>
+      <div class="inventory__list__item" v-for="tackle in getActiveTacklesInfo.activeTackles">
+        <div class="inventory__list__item__cell">
+          <img class="inventory__list__item__cell__image" :src="tackle.image" width="75px" :alt="tackle.name">
+        </div>
+        <div class="inventory__list__item__text">{{ tackle.level }} lvl</div>
+      </div>
+    </div>
   </div>
   <div class="bait-inventory">
     <div class="bait-inventory__list">
-      <div v-for="(bait, index) in getInventoryBait" class="bait-inventory__list__item" :class="{ 'bait-inventory__list__item--active': bait.isActive }">
+      <div class="bait-inventory__list__item" v-for="(bait, index) in getInventoryBait" :class="{ 'bait-inventory__list__item--active': bait.isActive }">
         <div class="bait-inventory__list__item__cell">
           <img class="bait-inventory__list__item__cell__image" :src="bait.image" width="50px" :alt="bait.name">
         </div>
@@ -24,13 +32,13 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Inventory',
   data() {
     return {
-      fishSkipIndex: 0
+      isSwitched: false
     }
   },
   mounted() {
@@ -41,19 +49,24 @@ export default {
   },
   computed: {
     ...mapGetters([
+      'getFishSkipped',
       'getInventoryFish',
+      'getVisibleFish',
+      'getActiveTacklesInfo',
       'getInventoryBait'
-    ]),
-    getVisibleFish() {
-      return this.getInventoryFish.slice(-this.fishSkipIndex - 3, -this.fishSkipIndex || undefined).reverse()
-    }
+    ])
   },
   methods: {
+    ...mapActions([
+      'changeFishSkipped'
+    ]),
     inventoryKeyDown(event) {
-      if(event.code === 'KeyW' && this.fishSkipIndex > 0)
-        this.fishSkipIndex--
-      else if(event.code === 'KeyS' && this.fishSkipIndex + 3 < this.getInventoryFish.length)
-        this.fishSkipIndex++
+      if(event.code === 'KeyW' && this.getFishSkipped > 0)
+        this.changeFishSkipped(-1)
+      else if(event.code === 'KeyS' && this.getFishSkipped + 3 < this.getInventoryFish.length)
+        this.changeFishSkipped(1)
+      else if(event.code === 'KeyA' || event.code === 'KeyD')
+        this.isSwitched = !this.isSwitched
     }
   }
 }
