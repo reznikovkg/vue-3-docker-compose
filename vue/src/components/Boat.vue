@@ -39,7 +39,6 @@ const boatStyle = computed(() => ({
 
   &__images {
     position: relative;
-    transition: transfrom 0.15s linear;
   }
 
   &__sailor {
