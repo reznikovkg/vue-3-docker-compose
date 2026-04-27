@@ -30,7 +30,7 @@ const getDescription = computed(() => {
 
 <style scoped>
 .fishing-zone {
-  background: #1e2a1c;
+  background: #075ee2;
   border-radius: 16px;
   padding: 16px;
   margin-bottom: 20px;
@@ -39,7 +39,7 @@ const getDescription = computed(() => {
 .zone-card {
   padding: 12px;
   border-radius: 12px;
-  background: #2b3b26;
+  background: #0db0d1;
   margin: 12px 0;
   border-left: 5px solid;
 }
@@ -47,7 +47,7 @@ const getDescription = computed(() => {
 .zone-name {
   font-size: 1.2rem;
   font-weight: bold;
-  color: #ffefb9;
+  color: #1c0edc;
 }
 
 .zone-desc {
@@ -58,7 +58,7 @@ const getDescription = computed(() => {
 .fish-button {
   width: 100%;
   padding: 12px;
-  background: #e0b354;
+  background: #6cf105;
   border: none;
   border-radius: 8px;
   cursor: pointer;

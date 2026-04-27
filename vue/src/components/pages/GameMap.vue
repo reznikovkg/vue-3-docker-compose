@@ -177,10 +177,10 @@ function moveToCell(row, col) {
 }
 
 .legend-color.medium {
-    background: #e67e22;
+    background: #f18204;
 }
 
 .legend-color.high {
-    background: #f1c40f;
+    background: #bdf006;
 }
 </style>

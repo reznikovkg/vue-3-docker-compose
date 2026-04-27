@@ -28,7 +28,7 @@ let fishingTimer = null
 
 const fishingZones = ref([
     { name: '🌊 Мелководье', type: 'low', x: 15, y: -10, radius: 3, delay: 3000, color: '#4d9eff' },
-    { name: '🐟 Глубокое место', type: 'medium', x: -5, y: 8, radius: 3, delay: 1200, color: '#e67e22' },
+    { name: '🐟 Среднее место', type: 'medium', x: -5, y: 8, radius: 3, delay: 1200, color: '#e67e22' },
     { name: '⚡ Рыбное место!', type: 'high', x: -1, y: 3, radius: 3, delay: 0, color: '#f1c40f' }
 ])
 
@@ -143,7 +143,7 @@ onMounted(() => {
 .game-container {
     max-width: 1200px;
     margin: 0 auto;
-    background: #0f2b1f;
+    background: #0a91cc;
     border-radius: 20px;
     padding: 20px;
 }

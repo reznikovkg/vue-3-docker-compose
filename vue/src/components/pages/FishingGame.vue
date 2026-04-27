@@ -147,7 +147,7 @@ onUnmounted(() => {
 .time {
   font-size: 24px;
   font-weight: bold;
-  color: #ffd966;
+  color: #f51d00;
   margin: 10px 0;
 }
 
