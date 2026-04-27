@@ -18,7 +18,8 @@ const MUTATIONS = {
   USE_TACKLE: 'USE_TACKLE',
   USE_GROUNDBAIT: 'USE_GROUNDBAIT',
   USE_BAIT: 'USE_BAIT',
-  SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT'
+  SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
+  ADD_PIRATE: 'ADD_PIRATE' 
 }
 
 const defaultState = {
@@ -53,6 +54,7 @@ const defaultState = {
   activeBait: 'worms',
   isFishing: false,
   zones: [],
+  pirates: [],
   islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }]
 }
 
@@ -84,6 +86,7 @@ export default {
     },
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 
+    getPirates: (state) => state.pirates,
     getIslands: (state) => state.islands,
     getCurrentZone: (state) => {
       const boat = state.boat
@@ -214,6 +217,9 @@ export default {
     },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, bait) => {
       state.activeBait = bait
+    },
+    [MUTATIONS.ADD_PIRATE]: (state, item) => {
+      state.pirates.push(item)
     }
   },
   actions: {
@@ -271,6 +277,8 @@ export default {
       const {
         isFishing,
         zones,
+        pirates,
+        islands,
         ...rest
       } = store.state
 
@@ -336,6 +344,15 @@ export default {
     useBait: (store, bait) => {
       store.commit(MUTATIONS.USE_BAIT, bait)
       store.dispatch('save')
+    },
+    spawnPirate: (store) => {
+      const boat = store.state.boat
+
+      const x = Math.round(Math.random() * 500 - 250) * 10 + boat.x
+      const y = Math.round(Math.random() * 500 - 250) * 10 + boat.y
+      const item = {id: Date.now(), x: x, y: y}
+
+      store.commit(MUTATIONS.ADD_PIRATE, item)
     }
   },
   modules: {
