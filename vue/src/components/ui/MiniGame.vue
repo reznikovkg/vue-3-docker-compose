@@ -54,7 +54,7 @@ export default {
       'setBroken',
       'setCurrentFish',
       'addCurrentFish',
-      'useFeed',
+      'changeFeedCount',
       'setActiveBait',
       'relocateCurrentArea',
       'relocateMaxDistanceAreaToBoat',
@@ -88,12 +88,12 @@ export default {
         else if(event.code === 'KeyV' && !this.getIsFishing) {
           if(this.getFeedInfo.feed.count > 0 && !this.getCurrentAreaInfo) {
             this.relocateMaxDistanceAreaToBoat('medium')
-            this.useFeed(1)
+            this.changeFeedCount(-1)
           }
           else if(this.getFeedInfo.feed.count > 2 && this.getCurrentAreaInfo.area.type === 'medium') {
             this.relocateCurrentArea()
             this.relocateMaxDistanceAreaToBoat('high')
-            this.useFeed(3)
+            this.changeFeedCount(-3)
           }
         }
         else if(event.key === ' ') {

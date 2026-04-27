@@ -16,9 +16,9 @@ const MUTATIONS = {
   SET_BROKEN: 'SET_BROKEN',
   SET_CURRENT_FISH: 'SET_CURRENT_FISH',
   ADD_CURRENT_FISH: 'ADD_CURRENT_FISH',
-  USE_FEED: 'USE_FEED',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
-  USE_ACTIVE_BAIT: 'USE_ACTIVE_BAIT',
+  CHANGE_BAIT_COUNT: 'CHANGE_BAIT_COUNT',
+  CHANGE_BALANCE: 'CHANGE_BALANCE',
   START_AREA: 'START_AREA',
   RELOCATE_AREA: 'RELOCATE_AREA',
   SET_SHOPPING: 'SET_SHOPPING'
@@ -71,6 +71,7 @@ export default createStore({
           {name: 'feed', image: feed, count: 0, level: 0, price: 5, isActive: false, type: 'feeding'}
         ]
       },
+      balance: 0,
       areas: [],
       isMoving: false,
       isFishing: false,
@@ -104,6 +105,7 @@ export default createStore({
         index: index
       }
     },
+    getBalance: (state) => state.balance,
     getAreas: (state) => state.areas,
     getCurrentAreaInfo: (state) => {
       const index = findAreaIndex(state.boat.x, state.boat.y, state.areas, '', true)
@@ -149,17 +151,17 @@ export default createStore({
       state.inventory.fishes.push(state.currentFish)
       state.currentFish = null
     },
-    [MUTATIONS.USE_FEED]: (state, payload) => {
-      const {index, count} = payload
-      state.inventory.baits[index].count -= count
-    },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, payload) => {
       const {oldIndex, newIndex} = payload
       state.inventory.baits[oldIndex].isActive = false
       state.inventory.baits[newIndex].isActive = true
     },
-    [MUTATIONS.USE_ACTIVE_BAIT]: (state, value) => {
-      state.inventory.baits[value].count--
+    [MUTATIONS.CHANGE_BAIT_COUNT]: (state, payload) => {
+      const {index, count} = payload
+      state.inventory.baits[index].count += count
+    },
+    [MUTATIONS.CHANGE_BALANCE]: (state, value) => {
+      state.balance += value
     },
     [MUTATIONS.START_AREA]: (state, areas) => {
       state.areas = areas
@@ -219,7 +221,10 @@ export default createStore({
       store.commit(MUTATIONS.SET_BROKEN)
     },
     setCurrentFish: (store) => {
-      store.commit(MUTATIONS.USE_ACTIVE_BAIT, store.getters.getActiveBaitInfo.index)
+      store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
+        index: store.getters.getActiveBaitInfo.index,
+        count: -1
+      })
       const type = store.state.fishTypes[randomInt(0, store.getters.getActiveBaitInfo.bait.level)], weight = randomInt(type.minWeight, type.maxWeight)
       store.commit(MUTATIONS.SET_CURRENT_FISH, {
         name: type.name,
@@ -231,8 +236,8 @@ export default createStore({
     addCurrentFish: (store) => {
       store.commit(MUTATIONS.ADD_CURRENT_FISH)
     },
-    useFeed: (store, count) => {
-      store.commit(MUTATIONS.USE_FEED, {
+    changeFeedCount: (store, count) => {
+      store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
         index: store.getters.getFeedInfo.index,
         count: count
       })
@@ -245,6 +250,9 @@ export default createStore({
           newIndex: index
         })
       }
+    },
+    changeBalance: (store, value) => {
+      store.commit(MUTATIONS.CHANGE_BALANCE, value)
     },
     startArea: (store) => {
       let areas = [], coords = []

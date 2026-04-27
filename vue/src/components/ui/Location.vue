@@ -1,5 +1,6 @@
 <template>
   <div class="text">
+    <div class="text__balance">Balance: {{ getBalance }}$</div>
     <div class="text__coords">Coordinates (X: {{ getBoat.x }}, Y: {{ getBoat.y }})</div>
     <div class="text__area">Area type: {{ getCurrentAreaType }}</div>
   </div>
@@ -13,6 +14,7 @@ export default {
   computed: {
     ...mapGetters([
       'getBoat',
+      'getBalance',
       'getCurrentAreaInfo'
     ]),
     getCurrentAreaType() {
@@ -48,6 +50,10 @@ export default {
     2px 2px 0 black;
   transform: translateX(-50%);
   z-index: 2;
+
+  &__balance {
+    font-weight: bold;
+  }
 
   &__coords {
     font-weight: bold;
