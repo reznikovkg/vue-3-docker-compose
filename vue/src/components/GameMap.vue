@@ -4,6 +4,7 @@
   </div>
 
   <Island v-for="island in islands" :island="island"/>
+  <Pirate v-for="pirate in pirates" :pirate="pirate"/>
   <Boat/>
 </template>
 
@@ -12,10 +13,12 @@ import { onMounted, onUnmounted, computed } from 'vue'
 import { useStore } from 'vuex'
 import Boat from './Boat.vue'
 import Island from './Island.vue'
+import Pirate from './Pirate.vue'
 
 const store = useStore()
 
 const islands = computed(() => store.getters['game/getIslands'])
+const pirates = computed(() => store.getters['game/getPirates'])
 const fishing = computed(() => store.getters['game/getIsFishing'])
 
 const speed = 1
@@ -66,6 +69,8 @@ const useGroundbait = (e) => {
 
 onMounted(() => {
   store.dispatch('game/generateZones')
+  store.dispatch('game/spawnPirates')
+  store.dispatch('game/startPirates')
 
   window.addEventListener('keydown', move)
   window.addEventListener('keyup', stopMove)

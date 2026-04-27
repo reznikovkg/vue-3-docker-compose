@@ -19,7 +19,8 @@ const MUTATIONS = {
   USE_GROUNDBAIT: 'USE_GROUNDBAIT',
   USE_BAIT: 'USE_BAIT',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
-  ADD_PIRATE: 'ADD_PIRATE' 
+  ADD_PIRATE: 'ADD_PIRATE',
+  UPDATE_PIRATES: 'UPDATE_PIRATES'
 }
 
 const defaultState = {
@@ -220,6 +221,12 @@ export default {
     },
     [MUTATIONS.ADD_PIRATE]: (state, item) => {
       state.pirates.push(item)
+    },
+    [MUTATIONS.UPDATE_PIRATES]: (state) => {
+      state.pirates.forEach(p => {
+        p.x += p.dirX * p.speed
+        p.y += p.dirY * p.speed
+      })
     }
   },
   actions: {
@@ -348,11 +355,29 @@ export default {
     spawnPirate: (store) => {
       const boat = store.state.boat
 
-      const x = Math.round(Math.random() * 500 - 250) * 10 + boat.x
-      const y = Math.round(Math.random() * 500 - 250) * 10 + boat.y
-      const item = {id: Date.now(), x: x, y: y}
+      const x = Math.round(Math.random() * 100 - 75) * 10 + boat.x
+      const y = Math.round(Math.random() * 100 - 75) * 10 + boat.y
+
+      const angle = Math.random() * 2 * Math.PI
+
+      const item = {
+        id: Date.now(), 
+        x: x, y: y, 
+        dirX: Math.cos(angle), dirY: Math.sin(angle), 
+        speed: 3, state: 'patrol'}
 
       store.commit(MUTATIONS.ADD_PIRATE, item)
+    },
+    spawnPirates: (store) => {
+      const count = Math.max(1, Math.floor(Math.random() * 3) + 1)
+      for (let i = 0; i < count; i++) {
+        store.dispatch('spawnPirate')
+      }
+    },
+    startPirates: (store) => {
+      setInterval(() => {
+        store.commit(MUTATIONS.UPDATE_PIRATES)
+      }, 50)
     }
   },
   modules: {
