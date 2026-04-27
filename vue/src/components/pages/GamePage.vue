@@ -4,6 +4,10 @@
 
         <div class="main-panel">
             <GameMap :boatX="boatX" :boatY="boatY" :zones="fishingZones" @move="moveBoat" />
+            <div style="flex: 1; min-width: 250px;">
+                <FishingZone :currentZone="currentZone" :isFishing="isFishing" @startFishing="startFishing" />
+            </div>
+        </div>
 
         <FishingGame v-if="miniGameActive" @close="closeMiniGame" @catch="catchFish" />
     </div>
@@ -13,6 +17,7 @@
 import { ref, computed, onMounted } from 'vue'
 import GameMap from './GameMap.vue'
 import FishingGame from './FishingGame.vue'
+import FishingZone from './FishingZone.vue'
 
 const boatX = ref(0)
 const boatY = ref(0)
@@ -96,7 +101,6 @@ function randomizeZones() {
         zone.x = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
         zone.y = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
     })
-
 }
 
 
