@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import GameMap from './GameMap.vue'
 import FishingGame from './FishingGame.vue'
 import FishingZone from './FishingZone.vue'
