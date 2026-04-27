@@ -4,20 +4,22 @@
 
         <div class="main-panel">
             <GameMap :boatX="boatX" :boatY="boatY" :zones="fishingZones" @move="moveBoat" />
-        </div>
 
+        <FishingGame v-if="miniGameActive" @close="closeMiniGame" @catch="catchFish" />
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import GameMap from './GameMap.vue'
-
+import FishingGame from './FishingGame.vue'
 
 const boatX = ref(0)
 const boatY = ref(0)
 const inventory = ref([])
-
+const isFishing = ref(false)
+const miniGameActive = ref(false)
+let fishingTimer = null
 
 const fishingZones = [
     { name: '🌊 Мелководье', type: 'low', x: 15, y: -10, radius: 3, delay: 3000, color: '#4d9eff' },
@@ -41,6 +43,50 @@ function moveBoat(dx, dy) {
     saveToLocalStorage()
 }
 
+function startFishing() {
+    if (isFishing.value) return
+    isFishing.value = true
+    const delay = currentZone.value.delay
+
+    if (delay === 0) {
+        miniGameActive.value = true
+        isFishing.value = false
+    } else {
+        fishingTimer = setTimeout(() => {
+            miniGameActive.value = true
+            isFishing.value = false
+        }, delay)
+    }
+}
+
+function catchFish(success) {
+    if (success) {
+        const fishNames = ['Окунь', 'Плотва', 'Щука', 'Карп', 'Лещ']
+        const fish = {
+            id: Date.now(),
+            name: fishNames[Math.floor(Math.random() * fishNames.length)],
+            weight: (Math.random() * 2 + 0.3).toFixed(1),
+            date: new Date().toLocaleTimeString()
+        }
+        inventory.value.push(fish)
+        saveToLocalStorage()
+        alert(`Поймали ${fish.name} (${fish.weight} кг)!`)
+    } else {
+        alert(' Рыба сорвалась! Попробуйте ещё раз')
+    }
+}
+
+function closeMiniGame() {
+    miniGameActive.value = false
+    if (fishingTimer) {
+        clearTimeout(fishingTimer)
+        fishingTimer = null
+    }
+    isFishing.value = false
+
+    randomizeZones()  // TODO сделать реактивным, чтобы компонент GameMap сразу обновил.
+
+}
 
 
 function randomizeZones() {
@@ -53,6 +99,13 @@ function randomizeZones() {
 
 }
 
+
+function clearInventory() {
+    if (confirm('Очистить весь инвентарь?')) {
+        inventory.value = []
+        saveToLocalStorage()
+    }
+}
 
 function saveToLocalStorage() {
     localStorage.setItem('fishingGame', JSON.stringify({
