@@ -244,7 +244,6 @@ export default {
 
         if (p.state === 'chase' && outAggroRadius)
           p.state = 'patrol'
-
         
         const dist = Math.sqrt(dx * dx + dy * dy)
 
@@ -255,8 +254,24 @@ export default {
 
         const speed = (dist > 10) ? state.speed * (p.state === 'patrol' ? 1 : 2) : 0
 
-        p.x += p.dirX * speed
-        p.y += p.dirY * speed
+        const nextX = p.x + p.dirX * speed
+        const nextY = p.y + p.dirY * speed
+
+        const islandHitbox = 90
+
+        const isCollision = state.islands.some(island => {
+          const dx = nextX - island.x
+          const dy = nextY - island.y
+          return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox 
+        })
+
+        if (!isCollision) {
+          p.x = nextX
+          p.y = nextY
+        } else {
+          p.x += -p.dirY * speed
+          p.y += p.dirX * speed
+        }
 
         return Math.abs(dx) < 5000 && Math.abs(dy) < 5000
       })
@@ -393,8 +408,8 @@ export default {
     spawnPirate: (store) => {
       const boat = store.state.boat
 
-      const x = Math.round(Math.random() * 250 - 175) * 10 + boat.x
-      const y = Math.round(Math.random() * 250 - 175) * 10 + boat.y
+      const x = Math.round(Math.random() * 250 - 175) * 10 + boat.x + 1000
+      const y = Math.round(Math.random() * 250 - 175) * 10 + boat.y + 1000
 
       const angle = Math.random() * 2 * Math.PI
 
@@ -415,6 +430,9 @@ export default {
     startPirates: (store) => {
       setInterval(() => {
         store.commit(MUTATIONS.UPDATE_PIRATES)
+
+        if (store.state.pirates.length < 1)
+          store.dispatch('spawnPirate')
       }, 25)
     },
     setIsNight: (store, val) => {
