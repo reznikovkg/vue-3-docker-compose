@@ -25,7 +25,8 @@ const MUTATIONS = {
   START_BOARDING: 'START_BOARDING',
   END_BOARDING: 'END_BOARDING',
   ADD_BOARDING_RESULT: 'ADD_BOARDING_RESULT',
-  APPLY_BOARDING_RESULTS: 'APPLY_BOARDING_RESULTS'
+  APPLY_BOARDING_RESULTS: 'APPLY_BOARDING_RESULTS',
+  GET_KIT: 'GET_KIT'
 }
 
 const defaultState = {
@@ -358,11 +359,25 @@ export default {
           hooks: [0],
           lines: [0]
         }
-        if (loseCount >= 3) {
-          state.inventory = []
+        state.baits = {
+          worms: 0,
+          corn: 0,
+          maggots: 0,
+          groundbait: 0
         }
       }
+      if (loseCount >= 3) {
+        state.inventory = []
+      }
     },
+    [MUTATIONS.GET_KIT]: (state) => {
+      state.baits = {
+        worms: 5,
+        corn: 3,
+        maggots: 1,
+        groundbait: 3
+      }      
+    }
   },
   actions: {
     moveBoat: (store, payload) => {
@@ -534,6 +549,10 @@ export default {
     },
     applyBoardingResults: (store) => {
       store.commit(MUTATIONS.APPLY_BOARDING_RESULTS)
+      store.dispatch('save')
+    },
+    getKit: (store) => {
+      store.commit(MUTATIONS.GET_KIT)
       store.dispatch('save')
     }
   },
