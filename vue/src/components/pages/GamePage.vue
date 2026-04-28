@@ -9,6 +9,9 @@
             </div>
         </div>
 
+        <div class="inventory-panel" style="margin-top: 20px;">
+            <Inventory :inventory="inventory" @clearInventory="clearInventory" @removeFish="removeFish" />
+        </div>
         <FishingGame v-if="miniGameActive" @close="closeMiniGame" @catch="catchFish" />
     </div>
 </template>
@@ -18,6 +21,7 @@ import { ref, computed, onMounted } from 'vue'
 import GameMap from './GameMap.vue'
 import FishingGame from './FishingGame.vue'
 import FishingZone from './FishingZone.vue'
+import Inventory from './Inventory.vue'
 
 const boatX = ref(0)
 const boatY = ref(0)
@@ -77,7 +81,7 @@ function catchFish(success) {
         saveToLocalStorage()
         alert(`Поймали ${fish.name} (${fish.weight} кг)!`)
     } else {
-        alert(' Рыба сорвалась! Попробуйте ещё раз')
+        alert('🐟 Рыба сорвалась! Попробуйте ещё раз')
     }
 }
 
@@ -90,9 +94,7 @@ function closeMiniGame() {
     isFishing.value = false
 
     randomizeZones()
-
 }
-
 
 function randomizeZones() {
     const bounds = 12
@@ -108,10 +110,16 @@ function randomizeZones() {
     zones[2].y = Math.floor(Math.random() * (bounds * 2 + 1)) - bounds
 }
 
-
 function clearInventory() {
     if (confirm('Очистить весь инвентарь?')) {
         inventory.value = []
+        saveToLocalStorage()
+    }
+}
+
+function removeFish(fishId) {
+    if (confirm('Удалить эту рыбу из инвентаря?')) {
+        inventory.value = inventory.value.filter(fish => fish.id !== fishId)
         saveToLocalStorage()
     }
 }
@@ -152,5 +160,9 @@ onMounted(() => {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+}
+
+.inventory-panel {
+    margin-top: 20px;
 }
 </style>
