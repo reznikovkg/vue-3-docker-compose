@@ -6,14 +6,14 @@
         </div>
 
         <div class="grid">
-            <div v-for="row in rows" :key="row" class="grid-row">
-                <div v-for="col in cols" :key="col" class="grid-cell" :class="getCellClass(row, col)"
+            <div v-for="row in visibleRows" :key="row" class="grid-row">
+                <div v-for="col in visibleCols" :key="col" class="grid-cell" :class="getCellClass(row, col)"
                     @click="moveToCell(row, col)">
-                    <span v-if="boatX === col && boatY === row">
+                    <span v-if="row === 0 && col === 0">
                         ⛵
                     </span>
-                    <span v-else-if="getZoneAt(col, row)">
-                        {{ getZoneAt(col, row) }}
+                    <span v-else-if="getZoneAt(col + boatX, row + boatY)">
+                        {{ getZoneAt(col + boatX, row + boatY) }}
                     </span>
                     <span v-else class="water">
                         💧
@@ -23,10 +23,10 @@
         </div>
 
         <div class="controls">
-            <button @click="$emit('move', 0, -1)">⬆️ Вверх</button>
-            <button @click="$emit('move', -1, 0)">⬅️ Влево</button>
-            <button @click="$emit('move', 1, 0)">➡️ Вправо</button>
-            <button @click="$emit('move', 0, 1)">⬇️ Вниз</button>
+            <button @click="moveRelative(0, -1)">⬆️ Вверх</button>
+            <button @click="moveRelative(-1, 0)">⬅️ Влево</button>
+            <button @click="moveRelative(1, 0)">➡️ Вправо</button>
+            <button @click="moveRelative(0, 1)">⬇️ Вниз</button>
         </div>
 
         <div class="legend">
@@ -40,21 +40,31 @@
 <script setup>
 
 const props = defineProps({
-    boatX: Number,     // Получаем данные от родительского компонента
+    boatX: Number,
     boatY: Number,
     zones: Array
 })
 
-const emit = defineEmits(['move'])  // событие, которое мы отправляем родительскому компоненту
+const emit = defineEmits(['move'])
 
-const rows = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
-const cols = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
+const viewRadius = 5
+const visibleRange = Array.from({ length: viewRadius * 2 + 1 }, (_, i) => i - viewRadius)
 
+const visibleRows = visibleRange
+const visibleCols = visibleRange
 
-function getZoneAt(x, y) {
+function getWorldCoordinates(relativeRow, relativeCol) {
+    // relativeRow и relativeCol относительно лодки (0,0 - позиция лодки)
+    return {
+        x: props.boatX + relativeCol,
+        y: props.boatY + relativeRow
+    }
+}
+
+function getZoneAt(worldX, worldY) {
     for (const zone of props.zones) {
-        const dx = x - zone.x
-        const dy = y - zone.y
+        const dx = worldX - zone.x
+        const dy = worldY - zone.y
         const distance = Math.sqrt(dx * dx + dy * dy)
         if (distance <= zone.radius) {
             return zone.type === 'low' ? '🌊' : (zone.type === 'medium' ? '🐟' : '⚡')
@@ -63,19 +73,22 @@ function getZoneAt(x, y) {
     return null
 }
 
-function getCellClass(row, col) {
-    const zone = getZoneAt(col, row)
+function getCellClass(relativeRow, relativeCol) {
+    const { x, y } = getWorldCoordinates(relativeRow, relativeCol)
+    const zone = getZoneAt(x, y)
     if (zone === '🌊') return 'cell-low'
     if (zone === '🐟') return 'cell-medium'
     if (zone === '⚡') return 'cell-high'
     return ''
 }
 
-function moveToCell(row, col) {
-    const targetX = col
-    const targetY = row
-    const dx = targetX - props.boatX
-    const dy = targetY - props.boatY
+function moveRelative(dx, dy) {
+    emit('move', dx, dy)
+}
+
+function moveToCell(relativeRow, relativeCol) {
+    const dx = relativeCol
+    const dy = relativeRow
     emit('move', dx, dy)
 }
 </script>
@@ -96,6 +109,12 @@ function moveToCell(row, col) {
     text-align: center;
     margin-bottom: 16px;
     color: #ffefb9;
+}
+
+.viewport-info {
+    font-size: 12px;
+    margin-top: 5px;
+    opacity: 0.9;
 }
 
 .grid {
