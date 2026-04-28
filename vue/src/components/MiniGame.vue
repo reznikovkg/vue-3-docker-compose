@@ -1,5 +1,5 @@
 <template>
-  <div class="minigame">
+  <div class="minigame" v-if="!boarding.active">
     <div class="minigame__title">
       Мини-игра
     </div>
@@ -34,6 +34,7 @@ const store = useStore()
 const active = ref(false)
 
 const fishing = computed(() => store.getters['game/getIsFishing'])
+const boarding = computed(() => store.getters['game/getBoarding'])
 
 const barPosition = ref(0)
 const direction = ref(1)
@@ -85,6 +86,7 @@ const handleNum = (e) => {
 
 const handleSpace = (e) => {
   if (e.key !== ' ') return
+  if (boarding.value.active) return
   if (!active.value && fishing.value) return
 
   if (!active.value) {
@@ -165,6 +167,7 @@ onUnmounted(() => {
 
   &__title {
     color: rgb(10, 10, 100);
+    text-align: center;
     font-size: 24px;
     font-style: bold;
   }

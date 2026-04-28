@@ -1,5 +1,5 @@
 <template>
-<div class="market" v-if="isIslandsNearly && opened">
+<div class="market" v-if="isIslandsNearly && opened && !boarding.active">
   <div class="market__title">
     Рынок
   </div>
@@ -62,7 +62,7 @@
     </div>
   </div>
 </div>
-<div class="market-invite" v-if="isIslandsNearly">
+<div class="market-invite" v-if="isIslandsNearly && !boarding.active">
   <div class="market__title" v-if="!opened">Нажмите [Е] чтобы открыть</div>
   <div class="market__title" v-else>Нажмите [Е] чтобы закрыть</div>
 </div>
@@ -79,6 +79,8 @@ const fishPrices = computed(() => store.getters['game/constants/getFishPrices'])
 const baitsPrices = computed(() => store.getters['game/constants/getBaitsPrices'])
 
 const opened = ref(false)
+
+const boarding = computed(() => store.getters['game/getBoarding'])
 
 const inventory = computed(() => store.getters['game/getInventory'])
 

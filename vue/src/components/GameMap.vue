@@ -20,6 +20,7 @@ const store = useStore()
 const islands = computed(() => store.getters['game/getIslands'])
 const pirates = computed(() => store.getters['game/getPirates'])
 const fishing = computed(() => store.getters['game/getIsFishing'])
+const boarding = computed(() => store.getters['game/getBoarding'])
 
 const keys = {
   up: false,
@@ -44,6 +45,7 @@ const handleMoveKeyUp = (e) => {
 
 const moving = () => {
   if (fishing.value) return
+  if (boarding.value.active) return
 
   let x = 0
   let y = 0

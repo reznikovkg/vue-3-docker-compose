@@ -21,7 +21,11 @@ const MUTATIONS = {
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
   ADD_PIRATE: 'ADD_PIRATE',
   UPDATE_PIRATES: 'UPDATE_PIRATES',
-  SET_IS_NIGHT: 'SET_IS_NIGHT'
+  SET_IS_NIGHT: 'SET_IS_NIGHT',
+  START_BOARDING: 'START_BOARDING',
+  END_BOARDING: 'END_BOARDING',
+  ADD_BOARDING_RESULT: 'ADD_BOARDING_RESULT',
+  APPLY_BOARDING_RESULTS: 'APPLY_BOARDING_RESULTS'
 }
 
 const defaultState = {
@@ -59,7 +63,13 @@ const defaultState = {
   pirates: [],
   islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }],
   speed: 3,
-  isNight: false
+  isNight: false,
+  boarding: {
+    active: false,
+    round: 0,
+    results: [],
+    pirates: []
+  }
 }
 
 export default {
@@ -112,7 +122,8 @@ export default {
       }
 
       return 'Обычный'
-    }
+    },
+    getBoarding: (state) => state.boarding
   },
   mutations: {
     [MUTATIONS.MOVE_BOAT]: (state, payload) => {
@@ -231,6 +242,7 @@ export default {
       const boat = state.boat
 
       const aggroRadius = 500
+      const boardingRadius = 10
 
       state.pirates = state.pirates.filter(p => {
         const dx = boat.x - p.x
@@ -238,12 +250,23 @@ export default {
 
         const inAggroRadius = Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius
         const outAggroRadius = Math.abs(dx) > 2 * aggroRadius || Math.abs(dy) > 2 * aggroRadius
+        const inBoardingRadius = Math.abs(dx) < boardingRadius && Math.abs(dy) < boardingRadius
 
         if (p.state === 'patrol' && inAggroRadius)
           p.state = 'chase'
 
         if (p.state === 'chase' && outAggroRadius)
           p.state = 'patrol'
+
+        if (p.state === 'chase' && inBoardingRadius) {
+          p.state = 'boarding'
+          if (!state.boarding.active)
+            state.boarding = {
+              active: true,
+              round: 0,
+              results: []
+            }
+        }
         
         const dist = Math.sqrt(dx * dx + dy * dy)
 
@@ -278,6 +301,67 @@ export default {
     },
     [MUTATIONS.SET_IS_NIGHT]: (state, val) => {
       state.isNight = val
+    },
+    [MUTATIONS.START_BOARDING]: (state) => {
+      if (state.boarding.active) return
+      state.boarding = {
+        active: true,
+        round: 0,
+        results: []
+      }
+    },
+    [MUTATIONS.END_BOARDING]: (state) => {
+      if (!state.boarding.active) return
+      state.boarding = {
+        active: false,
+        round: 0,
+        results: []
+      }
+
+      const boat = state.boat
+      
+      state.pirates = state.pirates.filter(p => {
+        const dx = boat.x - p.x
+        const dy = boat.y - p.y
+
+        const aggroRadius = 500
+
+        return !(Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius)
+      })
+    },
+    [MUTATIONS.ADD_BOARDING_RESULT]: (state, result) => {
+      if (!state.boarding.active) return
+      state.boarding.round += 1
+      state.boarding.results.push(result)
+    },
+    [MUTATIONS.APPLY_BOARDING_RESULTS]: (state) => {
+      const results = state.boarding.results 
+
+      let loseCount = 0 
+      for (let i = 0; i < 3; i++) if (!results[i]) loseCount++
+      
+      if (loseCount >= 1) {
+        state.balance = 0
+      }
+      if (loseCount >= 2) {
+        state.tackles = {
+          rod: 0,
+          reel: 0,
+          bobber: 0,
+          hook: 0,
+          line: 0
+        }
+        state.tacklesOwned = {
+          rods: [0],
+          reels: [0],
+          bobbers: [0],
+          hooks: [0],
+          lines: [0]
+        }
+        if (loseCount >= 3) {
+          state.inventory = []
+        }
+      }
     },
   },
   actions: {
@@ -339,6 +423,7 @@ export default {
         islands,
         isNight,
         speed,
+        boarding,
         ...rest
       } = store.state
 
@@ -437,6 +522,19 @@ export default {
     },
     setIsNight: (store, val) => {
       store.commit(MUTATIONS.SET_IS_NIGHT, val)
+    },
+    startBoarding: (store) => {
+      store.commit(MUTATIONS.START_BOARDING)
+    },
+    endBoarding: (store) => {
+      store.commit(MUTATIONS.END_BOARDING)
+    },
+    addBoardingResult: (store, result) => {
+      store.commit(MUTATIONS.ADD_BOARDING_RESULT, result)
+    },
+    applyBoardingResults: (store) => {
+      store.commit(MUTATIONS.APPLY_BOARDING_RESULTS)
+      store.dispatch('save')
     }
   },
   modules: {
