@@ -1,6 +1,6 @@
 <template>
   <div class="infobar">
-    <span class="infobar__text">(X: {{ boat.x / 10 }}, Y: {{ boat.y / 10 }})</span>
+    <span class="infobar__text">(X: {{ Math.round(boat.x / 10) }}, Y: {{ Math.round(boat.y / 10) }})</span>
     <span class="infobar__text">Тип области: {{ currentZone }}</span>
     <span class="infobar__text">Баланс: {{ balance }}₽</span>
   </div>

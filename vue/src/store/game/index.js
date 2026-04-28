@@ -20,7 +20,8 @@ const MUTATIONS = {
   USE_BAIT: 'USE_BAIT',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
   ADD_PIRATE: 'ADD_PIRATE',
-  UPDATE_PIRATES: 'UPDATE_PIRATES'
+  UPDATE_PIRATES: 'UPDATE_PIRATES',
+  SET_IS_NIGHT: 'SET_IS_NIGHT'
 }
 
 const defaultState = {
@@ -56,7 +57,9 @@ const defaultState = {
   isFishing: false,
   zones: [],
   pirates: [],
-  islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }]
+  islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }],
+  speed: 3,
+  isNight: false
 }
 
 export default {
@@ -85,6 +88,8 @@ export default {
       )
       return Math.round(power * 100) / 100
     },
+    getSpeed: (state) => state.speed,
+    getIsNight: (state) => state.isNight,
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 
     getPirates: (state) => state.pirates,
@@ -112,7 +117,7 @@ export default {
   mutations: {
     [MUTATIONS.MOVE_BOAT]: (state, payload) => {
       const {x, y} = payload
-      const speed = 10
+      const speed = state.speed * (!state.isNight ? 3 : 2)
 
       const nextX = state.boat.x + x * speed
       const nextY = state.boat.y + y * speed
@@ -224,10 +229,13 @@ export default {
     },
     [MUTATIONS.UPDATE_PIRATES]: (state) => {
       state.pirates.forEach(p => {
-        p.x += p.dirX * p.speed
-        p.y += p.dirY * p.speed
+        p.x += p.dirX * state.speed * (p.state === 'patrol' ? 1 : 2) 
+        p.y += p.dirY * state.speed * (p.state === 'patrol' ? 1 : 2)
       })
-    }
+    },
+    [MUTATIONS.SET_IS_NIGHT]: (state, val) => {
+      state.isNight = val
+    },
   },
   actions: {
     moveBoat: (store, payload) => {
@@ -286,6 +294,8 @@ export default {
         zones,
         pirates,
         islands,
+        isNight,
+        speed,
         ...rest
       } = store.state
 
@@ -364,12 +374,12 @@ export default {
         id: Date.now(), 
         x: x, y: y, 
         dirX: Math.cos(angle), dirY: Math.sin(angle), 
-        speed: 3, state: 'patrol'}
+        state: 'patrol'}
 
       store.commit(MUTATIONS.ADD_PIRATE, item)
     },
     spawnPirates: (store) => {
-      const count = Math.max(1, Math.floor(Math.random() * 3) + 1)
+      const count = Math.max(1, Math.floor(Math.random() * (store.state.isNight ? 5 : 3) + 1))
       for (let i = 0; i < count; i++) {
         store.dispatch('spawnPirate')
       }
@@ -377,7 +387,10 @@ export default {
     startPirates: (store) => {
       setInterval(() => {
         store.commit(MUTATIONS.UPDATE_PIRATES)
-      }, 50)
+      }, 25)
+    },
+    setIsNight: (store, val) => {
+      store.commit(MUTATIONS.SET_IS_NIGHT, val)
     }
   },
   modules: {
