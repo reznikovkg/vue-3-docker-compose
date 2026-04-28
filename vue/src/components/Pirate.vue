@@ -1,6 +1,6 @@
 <template>
   <div class="pirate" :style="pirateStyle">
-    <div class="pirate__images">
+    <div class="pirate__images" :style="{ '--dir': pirate.dirX >= 0 ? 1 : -1 }">
         <img class="pirate__boat" src="../assets/images/PirateBoat.png">
         <div class="pirate__sprite" :class="{ 'pirate__sprite--idle': true }" />
     </div>
@@ -29,9 +29,9 @@ const pirateStyle = computed(() => {
   const dirX = (props.pirate.dirX >= 0) ? 1 : -1
 
   return {
-    transform: `scaleX(${dirX})`,
     left: `${centerX + dx}px`,
-    top: `${centerY + dy}px`
+    top: `${centerY + dy}px`,
+    '--dir': dirX
   }
 })
 </script>
@@ -47,7 +47,7 @@ const pirateStyle = computed(() => {
 
   &__images {
     position: relative;
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: translate(-50%, -50%) scale(0.5) scaleX(var(--dir));
     transform-origin: center bottom;
   }
 

@@ -228,9 +228,37 @@ export default {
       state.pirates.push(item)
     },
     [MUTATIONS.UPDATE_PIRATES]: (state) => {
-      state.pirates.forEach(p => {
-        p.x += p.dirX * state.speed * (p.state === 'patrol' ? 1 : 2) 
-        p.y += p.dirY * state.speed * (p.state === 'patrol' ? 1 : 2)
+      const boat = state.boat
+
+      const aggroRadius = 500
+
+      state.pirates = state.pirates.filter(p => {
+        const dx = boat.x - p.x
+        const dy = boat.y - p.y
+
+        const inAggroRadius = Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius
+        const outAggroRadius = Math.abs(dx) > 2 * aggroRadius || Math.abs(dy) > 2 * aggroRadius
+
+        if (p.state === 'patrol' && inAggroRadius)
+          p.state = 'chase'
+
+        if (p.state === 'chase' && outAggroRadius)
+          p.state = 'patrol'
+
+        
+        const dist = Math.sqrt(dx * dx + dy * dy)
+
+        if (p.state === 'chase') {
+          p.dirX = dx / dist
+          p.dirY = dy / dist
+        }
+
+        const speed = (dist > 10) ? state.speed * (p.state === 'patrol' ? 1 : 2) : 0
+
+        p.x += p.dirX * speed
+        p.y += p.dirY * speed
+
+        return Math.abs(dx) < 5000 && Math.abs(dy) < 5000
       })
     },
     [MUTATIONS.SET_IS_NIGHT]: (state, val) => {
@@ -365,8 +393,8 @@ export default {
     spawnPirate: (store) => {
       const boat = store.state.boat
 
-      const x = Math.round(Math.random() * 100 - 75) * 10 + boat.x
-      const y = Math.round(Math.random() * 100 - 75) * 10 + boat.y
+      const x = Math.round(Math.random() * 250 - 175) * 10 + boat.x
+      const y = Math.round(Math.random() * 250 - 175) * 10 + boat.y
 
       const angle = Math.random() * 2 * Math.PI
 
