@@ -4,7 +4,7 @@
 
     <div class = "game__header">
       <div class = "game__timer">Время: {{ getFormattedTime }}</div>
-      <Btn @click = "() => toggleHardMode()">
+      <Btn @click = "() => onToggleMode()">
         {{ getIsHardMode ? 'Включить лёгкий режим' : 'Включить сложный режим' }}
       </Btn>
     </div>
@@ -20,12 +20,12 @@
           :is-selected = "getSelected === index"
           :is-blocked = "getBlockedBottle === index"
           :max-layers = "4"
-          @select = "() => handleBottleClick(index)"
+          @select = "() => onBottleClick(index)"
       />
     </div>
 
     <div class = "game__controls">
-      <Btn @click = "() => initGame()">
+      <Btn @click = "() => onRestart()">
         Начать заново
       </Btn>
     </div>
@@ -80,15 +80,6 @@ export default {
       'getIsTimerRunning'
     ])
   },
-  watch: {
-    getIsTimerRunning(newVal) {
-      if (newVal) {
-        this.startTimer()
-      } else {
-        this.stopTimer()
-      }
-    }
-  },
   mounted() {
     this.initGame()
   },
@@ -117,7 +108,23 @@ export default {
       const m = Math.floor(seconds / 60).toString().padStart(2, '0');
       const s = (seconds % 60).toString().padStart(2, '0');
       return `${m}:${s}`;
-    }
+    },
+    onRestart() {
+      this.initGame();
+      this.stopTimer();
+    },
+    onToggleMode() {
+      this.toggleHardMode();
+      this.stopTimer();
+    },
+    onBottleClick(index) {
+      this.handleBottleClick(index);
+      if (this.getIsTimerRunning && !this.timerInterval) {
+        this.startTimer();
+      } else if (!this.getIsTimerRunning && this.timerInterval) {
+        this.stopTimer();
+      }
+    },
   }
 }
 </script>
@@ -159,7 +166,6 @@ export default {
     text-align: left;
     padding-left: 20px;
     margin: 0;
-
     li {
       font-size: 18px;
       margin-bottom: 8px;
