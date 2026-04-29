@@ -5,26 +5,38 @@
       <div class="zone-name">{{ currentZone.name }}</div>
       <div class="zone-desc">{{ getDescription }}</div>
     </div>
-    <button @click="$emit('startFishing')" :disabled="isFishing" class="fish-button">
-      {{ isFishing ? ' Ловим...' : ' Начать ловить!' }}
-    </button>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   currentZone: Object,
   isFishing: Boolean
 })
 
-defineEmits(['startFishing'])
+const emit = defineEmits(['startFishing'])
 
 const getDescription = computed(() => {
-  if (props.currentZone?.delay === 0) return ' Клюёт мгновенно!'
-  if (props.currentZone?.delay < 1500) return ' Клюёт быстро'
+  if (props.currentZone?.delay === 0) return 'Клюёт мгновенно!'
+  if (props.currentZone?.delay < 1500) return 'Клюёт быстро'
   return 'Нужно подождать...'
+})
+
+const handleKeyPress = (event) => {
+  if (event.code === 'Space' && !props.isFishing) {
+    event.preventDefault()
+    emit('startFishing')
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyPress)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyPress)
 })
 </script>
 
@@ -55,22 +67,12 @@ const getDescription = computed(() => {
   color: #ccc;
 }
 
-.fish-button {
-  width: 100%;
+.fishing-status {
+  text-align: center;
   padding: 12px;
-  background: #6cf105;
-  border: none;
+  background: rgba(0, 0, 0, 0.5);
   border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.fish-button:active {
-  transform: scale(0.98);
-}
-
-.fish-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  font-size: 1.1rem;
+  color: white;
 }
 </style>

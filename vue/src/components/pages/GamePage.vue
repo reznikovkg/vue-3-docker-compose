@@ -1,23 +1,27 @@
 <template>
     <div class="game-container">
         <h1 style="text-align:center; color:yellow;">🎣 Рыболовная лодка</h1>
+        <div class="info-hint">
+            💡 Для рыбалки нажмите <kbd>Пробел</kbd>
+        </div>
 
-        <div class="main-panel">
-            <GameMap :boatX="boatX" :boatY="boatY" :zones="fishingZones" @move="moveBoat" />
-            <div style="flex: 1; min-width: 250px;">
+        <div class="main-layout">
+            <div class="left-panel">
+                <GameMap :boatX="boatX" :boatY="boatY" :zones="fishingZones" @move="moveBoat" />
+            </div>
+
+            <div class="right-panel">
                 <FishingZone :currentZone="currentZone" :isFishing="isFishing" @startFishing="startFishing" />
+                <Inventory :inventory="inventory" @clearInventory="clearInventory" @removeFish="removeFish" />
             </div>
         </div>
 
-        <div class="inventory-panel" style="margin-top: 20px;">
-            <Inventory :inventory="inventory" @clearInventory="clearInventory" @removeFish="removeFish" />
-        </div>
         <FishingGame v-if="miniGameActive" @close="closeMiniGame" @catch="catchFish" />
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import GameMap from './GameMap.vue'
 import FishingGame from './FishingGame.vue'
 import FishingZone from './FishingZone.vue'
@@ -149,20 +153,55 @@ onMounted(() => {
 
 <style scoped>
 .game-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     background: #0a91cc;
     border-radius: 20px;
     padding: 20px;
 }
 
-.main-panel {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
+.info-hint {
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    color: white;
 }
 
-.inventory-panel {
-    margin-top: 20px;
+kbd {
+    background: #333;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: bold;
+    color: yellow;
+}
+
+.main-layout {
+    display: flex;
+    gap: 20px;
+}
+
+.left-panel {
+    flex: 2;
+    min-width: 500px;
+}
+
+.right-panel {
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+    }
+    
+    .left-panel, .right-panel {
+        width: 100%;
+    }
 }
 </style>

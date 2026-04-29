@@ -7,8 +7,7 @@
 
         <div class="grid">
             <div v-for="row in visibleRows" :key="row" class="grid-row">
-                <div v-for="col in visibleCols" :key="col" class="grid-cell" :class="getCellClass(row, col)"
-                    @click="moveToCell(row, col)">
+                <div v-for="col in visibleCols" :key="col" class="grid-cell" :class="getCellClass(row, col)">
                     <span v-if="row === 0 && col === 0">
                         ⛵
                     </span>
@@ -22,13 +21,6 @@
             </div>
         </div>
 
-        <div class="controls">
-            <button @click="moveRelative(0, -1)">⬆️ Вверх</button>
-            <button @click="moveRelative(-1, 0)">⬅️ Влево</button>
-            <button @click="moveRelative(1, 0)">➡️ Вправо</button>
-            <button @click="moveRelative(0, 1)">⬇️ Вниз</button>
-        </div>
-
         <div class="legend">
             <div><span class="legend-color low"></span> Мелководье</div>
             <div><span class="legend-color medium"></span> Глубокое место</div>
@@ -38,6 +30,7 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
     boatX: Number,
@@ -54,7 +47,6 @@ const visibleRows = visibleRange
 const visibleCols = visibleRange
 
 function getWorldCoordinates(relativeRow, relativeCol) {
-    // relativeRow и relativeCol относительно лодки (0,0 - позиция лодки)
     return {
         x: props.boatX + relativeCol,
         y: props.boatY + relativeRow
@@ -86,11 +78,35 @@ function moveRelative(dx, dy) {
     emit('move', dx, dy)
 }
 
-function moveToCell(relativeRow, relativeCol) {
-    const dx = relativeCol
-    const dy = relativeRow
-    emit('move', dx, dy)
+function handleKeyDown(event) {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown' ||
+        event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault()
+    }
+
+    switch (event.key) {
+        case 'ArrowUp':
+            moveRelative(0, -1)
+            break
+        case 'ArrowDown':
+            moveRelative(0, 1)
+            break
+        case 'ArrowLeft':
+            moveRelative(-1, 0)
+            break
+        case 'ArrowRight':
+            moveRelative(1, 0)
+            break
+    }
 }
+
+onMounted(() => {
+    window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown)
+})
 </script>
 
 <style scoped>
@@ -109,12 +125,6 @@ function moveToCell(relativeRow, relativeCol) {
     text-align: center;
     margin-bottom: 16px;
     color: #ffefb9;
-}
-
-.viewport-info {
-    font-size: 12px;
-    margin-top: 5px;
-    opacity: 0.9;
 }
 
 .grid {
@@ -164,13 +174,6 @@ function moveToCell(relativeRow, relativeCol) {
 
 .water {
     opacity: 0.7;
-}
-
-.controls {
-    margin-top: 16px;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
 }
 
 .legend {
