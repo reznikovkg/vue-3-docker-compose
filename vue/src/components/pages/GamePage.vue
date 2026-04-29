@@ -15,7 +15,7 @@
                     type="checkbox"
                     :checked="getHardMode"
                     :disabled="getGameStarted"
-                    @change="toggleHardMode"
+                    @change="toggleHardMode($event.target.checked)"
                 >
                 Сложный режим
             </label>
@@ -103,20 +103,13 @@ export default {
             'initGame',
             'tryMove',
             'stopTimer',
-            'startGame'
+            'startGame',
+            'toggleHardMode'
         ]),
         formatTime(seconds){
             const minutes = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return minutes + ':' + secs.toString().padStart(2, '0');
-        },
-        toggleHardMode(event) {
-            this.$store.commit('game/SET_HARD_MODE', event.target.checked)
-            if (event.target.checked) {
-                this.$store.dispatch('game/blockRandomFlask')
-            } else {
-                this.$store.commit('game/SET_BLOCKED_FLASK', null)
-            }
         },
         setCurrentFlask(index) {
             this.$store.commit('game/SET_CURRENT_FLASK', index)

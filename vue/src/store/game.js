@@ -205,6 +205,14 @@ export default {
             if (state.hardMode && !state.gameWon) {
                 dispatch('blockRandomFlask')
             }
+        },
+        toggleHardMode({ commit, state, dispatch }, isEnabled) {
+            commit(MUTATIONS.SET_HARD_MODE, isEnabled)
+            if (isEnabled) {
+                dispatch('blockRandomFlask')
+            } else {
+                commit(MUTATIONS.SET_BLOCKED_FLASK, null)
+            }
         }
     }
 }
