@@ -9,6 +9,12 @@ const MUTATIONS = {
   DELETE_ENEMY: 'DELETE_ENEMY'
 }
 
+const HITBOXES= {
+  player: 40,
+  enemy: 26,
+  bullet: 14
+}
+
 export default {
   namespaced: true,
   state () {
@@ -85,7 +91,7 @@ export default {
           const dx = bullet.x - enemy.x
           const dy = bullet.y - enemy.y
           const length = Math.sqrt(dx * dx + dy * dy)
-          if (length < 14 + 26) {
+          if (length < HITBOXES.bullet + HITBOXES.enemy) {
             commit(MUTATIONS.DELETE_ENEMY, enemy.id)
             commit(MUTATIONS.DELETE_BULLET, bullet.id)
           }
@@ -132,7 +138,7 @@ export default {
         const dx = payload.playerX - enemy.x
         const dy = payload.playerY - enemy.y
         const length = Math.sqrt(dx * dx + dy * dy)
-        if (length < 26 + 40) {
+        if (length < HITBOXES.enemy + HITBOXES.player) {
           commit(MUTATIONS.DELETE_ENEMY, enemy.id)
           commit(MUTATIONS.SET_GAME_STATUS, false)
           state.enemies.forEach(deletedEnemy => {
