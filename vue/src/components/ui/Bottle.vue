@@ -3,12 +3,12 @@
     <div v-if = "isBlocked" class = "bottle__lock">Block</div>
     <div class = "bottle__inner">
       <div
-          v-for = "(color, index) in displayLayers" :key = "index"
-          class = "bottle__layer"
-          :style = "{
-            backgroundColor: color,
-            height: layerHeight + '%'
-          }"
+        v-for = "(color, index) in displayLayers" :key = "index"
+        class = "bottle__layer"
+        :style = "{
+          backgroundColor: color,
+          height: layerHeight + '%'
+        }"
       ></div>
     </div>
   </div>
