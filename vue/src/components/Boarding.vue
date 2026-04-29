@@ -1,7 +1,7 @@
 <template>
   <div class="boarding" v-if="boarding.active">
     <div class="boarding__title">
-      Абордаж <span v-if="active && boarding.round + 1 != 4">(Раунд {{ boarding.round + 1 }})</span>
+      Абордаж <span v-if="active">(Раунд {{ boarding.round + 1 }})</span>
     </div>
 
     <div class="boarding__bar" v-if="active">

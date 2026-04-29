@@ -68,8 +68,7 @@ const defaultState = {
   boarding: {
     active: false,
     round: 0,
-    results: [],
-    pirates: []
+    results: []
   }
 }
 
@@ -508,8 +507,8 @@ export default {
     spawnPirate: (store) => {
       const boat = store.state.boat
 
-      const x = Math.round(Math.random() * 250 - 175) * 10 + boat.x + 1000
-      const y = Math.round(Math.random() * 250 - 175) * 10 + boat.y + 1000
+      const x = Math.round(Math.random() * 500 - 250) * 10 + boat.x + 1000
+      const y = Math.round(Math.random() * 500 - 250) * 10 + boat.y + 1000
 
       const angle = Math.random() * 2 * Math.PI
 
@@ -522,7 +521,7 @@ export default {
       store.commit(MUTATIONS.ADD_PIRATE, item)
     },
     spawnPirates: (store) => {
-      const count = Math.max(1, Math.floor(Math.random() * (store.state.isNight ? 5 : 3) + 1))
+      const count = 1 + Math.max(0, Math.floor(Math.random() * (store.state.isNight ? 4 : 2)))
       for (let i = 0; i < count; i++) {
         store.dispatch('spawnPirate')
       }
@@ -531,8 +530,10 @@ export default {
       setInterval(() => {
         store.commit(MUTATIONS.UPDATE_PIRATES)
 
-        if (store.state.pirates.length < 1)
-          store.dispatch('spawnPirate')
+        if (store.state.pirates.length < (store.state.isNight ? 5 : 3)) {
+          if (Math.random() < 1 / 100) 
+            store.dispatch('spawnPirate')
+        }
       }, 25)
     },
     setIsNight: (store, val) => {

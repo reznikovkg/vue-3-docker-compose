@@ -1,5 +1,5 @@
 <template>
-  <div class="game-map">
+  <div class="game-map" :style="mapStyle">
     <div class="game-map__world"/>
   </div>
 
@@ -21,6 +21,15 @@ const islands = computed(() => store.getters['game/getIslands'])
 const pirates = computed(() => store.getters['game/getPirates'])
 const fishing = computed(() => store.getters['game/getIsFishing'])
 const boarding = computed(() => store.getters['game/getBoarding'])
+
+const isNight = computed(() => store.getters['game/getIsNight'])
+
+const mapStyle = computed(() => {
+  return {
+    backgroundColor: !isNight.value ? 'rgb(50, 50, 100)' : 'rgb(33, 33, 66)',
+    transition: 'background-color 2s ease'
+  }
+})
 
 const keys = {
   up: false,
@@ -71,6 +80,12 @@ const useGroundbait = (e) => {
   }
 }
 
+const changeTime = (e) => {
+  if (e.key === 't') {
+    store.dispatch('game/setIsNight', !isNight.value)
+  }
+}
+
 let interval = null
 
 onMounted(() => {
@@ -80,7 +95,9 @@ onMounted(() => {
 
   window.addEventListener('keydown', handleMoveKeyDown)
   window.addEventListener('keyup', handleMoveKeyUp)
+
   window.addEventListener('keydown', useGroundbait)
+  window.addEventListener('keydown', changeTime)
 
   interval = setInterval(moving, 25)
 })
@@ -88,7 +105,9 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', handleMoveKeyDown)
   window.removeEventListener('keyup', handleMoveKeyUp)
+
   window.removeEventListener('keydown', useGroundbait)
+  window.addEventListener('keydown', changeTime)
 
   clearInterval(interval)
 })
@@ -103,8 +122,6 @@ onUnmounted(() => {
   overflow: hidden;
   z-index: 1;
   
-  background-color: rgb(50, 50, 100);
-
   &__world {
     position: absolute;
     width: 2500px;
