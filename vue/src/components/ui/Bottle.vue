@@ -1,12 +1,13 @@
 <template>
   <div :class = "bottleClasses" @click = "() => onClick()">
+    <div v-if = "isBlocked" class = "bottle__lock">Block</div>
     <div class = "bottle__inner">
       <div
-        v-for = "(color, index) in displayLayers" :key = "index"
-        class = "bottle__layer"
-        :style = "{
-          backgroundColor: color,
-          height: layerHeight + '%'
+          v-for = "(color, index) in displayLayers" :key = "index"
+          class = "bottle__layer"
+          :style = "{
+            backgroundColor: color,
+            height: layerHeight + '%'
           }"
       ></div>
     </div>
@@ -14,7 +15,6 @@
 </template>
 
 <script>
-
 export default {
   name: "Bottle",
   props: {
@@ -29,18 +29,25 @@ export default {
     maxLayers: {
       type: Number,
       default: 4
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['select'],
   computed: {
     bottleClasses() {
-      return ['bottle', { 'bottle--selected': this.isSelected }]
+      return ['bottle', {
+        'bottle--selected': this.isSelected,
+        'bottle--blocked': this.isBlocked
+      }]
     },
     layerHeight() {
       return 100 / this.maxLayers
     },
     displayLayers() {
-      return [...this.layers].reverse()
+      return this.layers.slice().reverse()
     }
   },
   methods: {
@@ -53,6 +60,7 @@ export default {
 
 <style scoped lang = "scss">
 .bottle {
+  position: relative;
   width: 60px;
   height: 180px;
   border: 4px solid gray;
@@ -78,6 +86,22 @@ export default {
   &__layer {
     width: 100%;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  &__lock {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+    z-index: 10;
+    user-select: none;
+  }
+
+  &--blocked {
+    opacity: 0.2;
+    cursor: not-allowed;
+    filter: grayscale(1);
   }
 }
 </style>
