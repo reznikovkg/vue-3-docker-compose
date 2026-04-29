@@ -14,13 +14,13 @@
 
     <div class = "game__container">
       <Bottle
-          v-for = "(bottle, index) in getBottle"
-          :key = "index"
-          :layers = "bottle"
-          :is-selected = "getSelected === index"
-          :is-blocked = "getBlockedBottle === index"
-          :max-layers = "4"
-          @select = "() => onBottleClick(index)"
+        v-for = "(bottle, index) in getBottle"
+        :key = "index"
+        :layers = "bottle"
+        :is-selected = "getSelected === index"
+        :is-blocked = "getBlockedBottle === index"
+        :max-layers = "4"
+        @select = "() => onBottleClick(index)"
       />
     </div>
 
