@@ -1,6 +1,6 @@
 <template>
   <div class="text">
-    <div class="text__balance">Balance: {{ getBalance }}$</div>
+    <div class="text__balance">Balance: {{ getBalance < 10000 ? getBalance : '>9999' }}$</div>
     <div class="text__coords">Coordinates (X: {{ getBoat.x }}, Y: {{ getBoat.y }})</div>
     <div class="text__area">Area type: {{ getCurrentAreaType }}</div>
   </div>

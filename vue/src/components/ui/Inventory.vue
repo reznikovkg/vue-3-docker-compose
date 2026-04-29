@@ -1,5 +1,5 @@
 <template>
-  <div class="inventory">
+  <div class="inventory" :style="inventoryStyle">
     <div class="inventory__title">{{isSwitched ? 'Tackle' : 'Fish'}}</div>
     <div class="inventory__list" v-if="!isSwitched">
       <div class="inventory__list__item" v-for="fish in getVisibleFish">
@@ -50,11 +50,17 @@ export default {
   computed: {
     ...mapGetters([
       'getFishSkipped',
-      'getInventoryFish',
+      'getLengthInventoryFish',
       'getVisibleFish',
       'getActiveTacklesInfo',
-      'getInventoryBait'
-    ])
+      'getInventoryBait',
+      'getIsShopping'
+    ]),
+    inventoryStyle() {
+      return {
+        width: this.getIsShopping ? '285px' : '400px'
+      }
+    }
   },
   methods: {
     ...mapActions([
@@ -63,7 +69,7 @@ export default {
     inventoryKeyDown(event) {
       if(event.code === 'KeyW' && this.getFishSkipped > 0)
         this.changeFishSkipped(-1)
-      else if(event.code === 'KeyS' && this.getFishSkipped + 3 < this.getInventoryFish.length)
+      else if(event.code === 'KeyS' && this.getFishSkipped + 3 < this.getLengthInventoryFish)
         this.changeFishSkipped(1)
       else if(event.code === 'KeyA' || event.code === 'KeyD')
         this.isSwitched = !this.isSwitched
@@ -76,7 +82,6 @@ export default {
 .inventory {
   position: absolute;
   overflow: hidden;
-  width: 400px;
   height: 700px;
   top: 50%;
   right: 15px;
@@ -114,7 +119,7 @@ export default {
       align-items: center;
       justify-content: space-between;
       padding: 15px 35px;
-      background-color: rgba(25, 100, 100, 0.5);
+      background-color: rgba(0, 0, 0, 0.2);
 
       &__cell {
         display: flex;
@@ -169,7 +174,8 @@ export default {
       background-color: rgba(245, 222, 179, 0.65);
 
       &--active {
-        background-color: rgba(245, 222, 179, 1);
+        border: 4px solid rgb(120, 120, 0);
+        background-color: rgb(245, 222, 179);
       }
 
       &__cell {

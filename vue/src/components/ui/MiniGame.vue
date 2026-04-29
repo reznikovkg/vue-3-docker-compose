@@ -74,12 +74,12 @@ export default {
       this.interval = setInterval(() => {
         this.playerPosition += this.direction * this.playerSpeed
         if(this.playerPosition <= 0) {
-          this.playerPosition = 0;
-          this.direction = 1;
+          this.playerPosition = 0
+          this.direction = 1
         }
         else if(this.playerPosition >= 100) {
-          this.playerPosition = 100;
-          this.direction = -1;
+          this.playerPosition = 100
+          this.direction = -1
         }
       }, 10)
     },
@@ -103,7 +103,7 @@ export default {
             this.changeFeedCount(-3)
           }
         }
-        else if(event.key === ' ') {
+        else if(event.code === 'Space') {
           if(this.getCurrentAreaInfo && this.getCurrentAreaInfo.area.type === 'shallow')
             this.setShopping()
           else {

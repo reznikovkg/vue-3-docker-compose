@@ -122,12 +122,12 @@ export default {
       this.center.y = window.innerHeight / 2
     },
     movingKeyDown(event) {
-      if(this.pressed.hasOwnProperty(event.key))
-        this.pressed[event.key] = true
+      if(this.pressed.hasOwnProperty(event.code))
+        this.pressed[event.code] = true
     },
     movingKeyUp(event) {
-      if(this.pressed.hasOwnProperty(event.key))
-        this.pressed[event.key] = false
+      if(this.pressed.hasOwnProperty(event.code))
+        this.pressed[event.code] = false
     }
   }
 }

@@ -25,7 +25,11 @@ const MUTATIONS = {
   SET_BROKEN: 'SET_BROKEN',
   SET_CURRENT_FISH: 'SET_CURRENT_FISH',
   ADD_CURRENT_FISH: 'ADD_CURRENT_FISH',
+  SET_FISH_SKIPPED: 'SET_FISH_SKIPPED',
   CHANGE_FISH_SKIPPED: 'CHANGE_FISH_SKIPPED',
+  CLEAR_INVENTORY_FISH: 'CLEAR_INVENTORY_FISH',
+  SET_ACTIVE_TACKLE: 'SET_ACTIVE_TACKLE',
+  SET_TACKLE_OWNED: 'SET_TACKLE_OWNED',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
   CHANGE_BAIT_COUNT: 'CHANGE_BAIT_COUNT',
   CHANGE_BALANCE: 'CHANGE_BALANCE',
@@ -87,10 +91,10 @@ export default createStore({
           {name: 'gold hook', image: goldHook, isOwned: false, level: 3, price: 1000, isActive: false, type: 'hook'}
         ],
         baits: [
-          {name: 'worm', image: worm, count: 1, level: 0, price: 3, isActive: true, type: 'fishing'},
+          {name: 'worm', image: worm, count: 10, level: 0, price: 2, isActive: true, type: 'fishing'},
           {name: 'caterpillar', image: caterpillar, count: 0, level: 1, price: 6, isActive: false, type: 'fishing'},
           {name: 'crab', image: crab, count: 0, level: 2, price: 12, isActive: false, type: 'fishing'},
-          {name: 'feed', image: feed, count: 0, level: 0, price: 5, isActive: false, type: 'feeding'}
+          {name: 'feed', image: feed, count: 0, level: 0, price: 10, isActive: false, type: 'feeding'}
         ]
       },
       balance: 0,
@@ -112,8 +116,13 @@ export default createStore({
     getIsBroken: (state) => state.isBroken,
     getCurrentFish: (state) => state.currentFish,
     getFishSkipped: (state) => state.fishSkipped,
-    getInventoryFish: (state) => state.inventory.fishes,
+    getLengthInventoryFish: (state) => state.inventory.fishes.length,
     getVisibleFish: (state) => state.inventory.fishes.slice(-state.fishSkipped - 3, -state.fishSkipped || undefined).reverse(),
+    getTotalPriceFish: (state) => {
+      let totalPrice = 0
+      state.inventory.fishes.forEach(fish => totalPrice += fish.price)
+      return totalPrice
+    },
     getInventoryTackle: (state) => state.inventory.tackles,
     getActiveTacklesInfo: (state) => {
       const activeTackles = state.inventory.tackles.filter(tackle => tackle.isActive)
@@ -188,8 +197,26 @@ export default createStore({
       state.inventory.fishes.push(state.currentFish)
       state.currentFish = null
     },
+    [MUTATIONS.SET_FISH_SKIPPED]: (state, value) => {
+      state.fishSkipped = value
+    },
     [MUTATIONS.CHANGE_FISH_SKIPPED]: (state, value) => {
       state.fishSkipped += value
+    },
+    [MUTATIONS.CLEAR_INVENTORY_FISH]: (state) => {
+      state.inventory.fishes = []
+    },
+    [MUTATIONS.SET_ACTIVE_TACKLE]: (state, payload) => {
+      const {oldIndex, newIndex} = payload
+      if(oldIndex !== -1)
+        state.inventory.tackles[oldIndex].isActive = false
+      state.inventory.tackles[newIndex].isActive = true
+    },
+    [MUTATIONS.SET_TACKLE_OWNED]: (state, payload) => {
+      const {index, buy} = payload
+      if(!buy)
+        state.inventory.tackles[index].isActive = buy
+      state.inventory.tackles[index].isOwned = buy
     },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, payload) => {
       const {oldIndex, newIndex} = payload
@@ -279,6 +306,29 @@ export default createStore({
     changeFishSkipped: (store, value) => {
       store.commit(MUTATIONS.CHANGE_FISH_SKIPPED, value)
     },
+    sellAllFish: (store) => {
+      store.commit(MUTATIONS.CHANGE_BALANCE, store.getters.getTotalPriceFish)
+      store.commit(MUTATIONS.SET_FISH_SKIPPED, 0)
+      store.commit(MUTATIONS.CLEAR_INVENTORY_FISH)
+    },
+    equipTackle: (store, value) => {
+      const tackles = store.state.inventory.tackles
+      store.commit(MUTATIONS.SET_ACTIVE_TACKLE, {
+        oldIndex: tackles.findIndex(tackle => (tackle.type === tackles[value].type && tackle.isActive)),
+        newIndex: value
+      })
+    },
+    tradeTackle: (store, payload) => {
+      const {index, buy} = payload
+      if(buy)
+        store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.inventory.tackles[index].price)
+      else
+        store.commit(MUTATIONS.CHANGE_BALANCE, store.state.inventory.tackles[index].price / 2)
+      store.commit(MUTATIONS.SET_TACKLE_OWNED, {
+        index: index,
+        buy: buy
+      })
+    },
     changeFeedCount: (store, count) => {
       store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
         index: store.getters.getFeedInfo.index,
@@ -294,8 +344,16 @@ export default createStore({
         })
       }
     },
-    changeBalance: (store, value) => {
-      store.commit(MUTATIONS.CHANGE_BALANCE, value)
+    tradeBait: (store, payload) => {
+      const {index, count} = payload
+      if(count < 0)
+        store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.inventory.baits[index].price * count / 2)
+      else
+        store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.inventory.baits[index].price * count)
+      store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
+        index: index,
+        count: count
+      })
     },
     startArea: (store) => {
       let areas = [], coords = []
