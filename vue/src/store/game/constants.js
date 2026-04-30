@@ -23,6 +23,7 @@ export default {
   getters: {
     getFishNames: (state) => state.fishNames,
     getFishPrices: (state) => state.fishPrices,
-    getBaitsPrices: (state) => state.baitsPrices
+    getBaitsPrices: (state) => state.baitsPrices,
+    getBaitsKit: (state) => state.baitsKit
   }
 }

@@ -5,10 +5,12 @@
     <MiniGame/>
     <Inventory/>
     <Market/>
+    <Boarding/>
   </div>
 </template>
 
 <script setup>
+import Boarding from '../Boarding.vue';
 import GameMap from '../GameMap.vue';
 import InfoBar from '../InfoBar.vue';
 import Inventory from '../Inventory.vue';

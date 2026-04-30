@@ -18,7 +18,15 @@ const MUTATIONS = {
   USE_TACKLE: 'USE_TACKLE',
   USE_GROUNDBAIT: 'USE_GROUNDBAIT',
   USE_BAIT: 'USE_BAIT',
-  SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT'
+  SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
+  ADD_PIRATE: 'ADD_PIRATE',
+  UPDATE_PIRATES: 'UPDATE_PIRATES',
+  SET_IS_NIGHT: 'SET_IS_NIGHT',
+  START_BOARDING: 'START_BOARDING',
+  END_BOARDING: 'END_BOARDING',
+  ADD_BOARDING_RESULT: 'ADD_BOARDING_RESULT',
+  APPLY_BOARDING_RESULTS: 'APPLY_BOARDING_RESULTS',
+  GET_KIT: 'GET_KIT'
 }
 
 const defaultState = {
@@ -53,14 +61,22 @@ const defaultState = {
   activeBait: 'worms',
   isFishing: false,
   zones: [],
-  islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }]
+  pirates: [],
+  islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }],
+  speed: 3,
+  isNight: false,
+  boarding: {
+    active: false,
+    round: 0,
+    results: []
+  }
 }
 
 export default {
   namespaced: true,
   state () {
     const savedState = localStorage.getItem('game_state')
-    return (savedState !== null) ? JSON.parse(savedState) : defaultState
+    return (savedState !== null) ? {...defaultState, ...JSON.parse(savedState)} : defaultState
   },
   getters: {
     getBoat: (state) => state.boat,
@@ -82,8 +98,11 @@ export default {
       )
       return Math.round(power * 100) / 100
     },
+    getSpeed: (state) => state.speed,
+    getIsNight: (state) => state.isNight,
     getIsFishing: (state) => state.isFishing,
     getZones: (state) => state.zones, 
+    getPirates: (state) => state.pirates,
     getIslands: (state) => state.islands,
     getCurrentZone: (state) => {
       const boat = state.boat
@@ -103,12 +122,13 @@ export default {
       }
 
       return 'Обычный'
-    }
+    },
+    getBoarding: (state) => state.boarding
   },
   mutations: {
     [MUTATIONS.MOVE_BOAT]: (state, payload) => {
       const {x, y} = payload
-      const speed = 10
+      const speed = state.speed * (!state.isNight ? 3 : 2)
 
       const nextX = state.boat.x + x * speed
       const nextY = state.boat.y + y * speed
@@ -214,6 +234,148 @@ export default {
     },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, bait) => {
       state.activeBait = bait
+    },
+    [MUTATIONS.ADD_PIRATE]: (state, item) => {
+      state.pirates.push(item)
+    },
+    [MUTATIONS.UPDATE_PIRATES]: (state) => {
+      const boat = state.boat
+
+      const aggroRadius = 500
+      const boardingRadius = 10
+
+      state.pirates = state.pirates.filter(p => {
+        const dx = boat.x - p.x
+        const dy = boat.y - p.y
+
+        const inAggroRadius = Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius
+        const outAggroRadius = Math.abs(dx) > 2 * aggroRadius || Math.abs(dy) > 2 * aggroRadius
+        const inBoardingRadius = Math.abs(dx) < boardingRadius && Math.abs(dy) < boardingRadius
+
+        if (p.state === 'patrol' && inAggroRadius)
+          p.state = 'chase'
+
+        if (p.state === 'chase' && outAggroRadius)
+          p.state = 'patrol'
+
+        if (p.state === 'chase' && inBoardingRadius) {
+          p.state = 'boarding'
+          if (!state.boarding.active)
+            state.boarding = {
+              active: true,
+              round: 0,
+              results: []
+            }
+        }
+        
+        const dist = Math.sqrt(dx * dx + dy * dy)
+
+        if (p.state === 'chase') {
+          p.dirX = dx / dist
+          p.dirY = dy / dist
+        }
+
+        const speed = (dist > 10) ? state.speed * (p.state === 'patrol' ? 1 : 2) : 0
+
+        const nextX = p.x + p.dirX * speed
+        const nextY = p.y + p.dirY * speed
+
+        const islandHitbox = 90
+
+        const isCollision = state.islands.some(island => {
+          const dx = nextX - island.x
+          const dy = nextY - island.y
+          return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox 
+        })
+
+        if (!isCollision) {
+          p.x = nextX
+          p.y = nextY
+        } else {
+          p.x += -p.dirY * speed
+          p.y += p.dirX * speed
+        }
+
+        return Math.abs(dx) < 5000 && Math.abs(dy) < 5000
+      })
+    },
+    [MUTATIONS.SET_IS_NIGHT]: (state, val) => {
+      state.isNight = val
+    },
+    [MUTATIONS.START_BOARDING]: (state) => {
+      if (state.boarding.active) return
+      state.boarding = {
+        active: true,
+        round: 0,
+        results: []
+      }
+    },
+    [MUTATIONS.END_BOARDING]: (state) => {
+      if (!state.boarding.active) return
+      state.boarding = {
+        active: false,
+        round: 0,
+        results: []
+      }
+
+      const boat = state.boat
+      
+      state.pirates = state.pirates.filter(p => {
+        const dx = boat.x - p.x
+        const dy = boat.y - p.y
+
+        const aggroRadius = 500
+
+        return !(Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius)
+      })
+    },
+    [MUTATIONS.ADD_BOARDING_RESULT]: (state, result) => {
+      if (!state.boarding.active) return
+      state.boarding.round += 1
+      state.boarding.results.push(result)
+    },
+    [MUTATIONS.APPLY_BOARDING_RESULTS]: (state) => {
+      const results = state.boarding.results 
+
+      let loseCount = 0 
+      for (let i = 0; i < 3; i++) if (!results[i]) loseCount++
+      
+      if (loseCount >= 1) {
+        state.balance = 0
+      }
+      if (loseCount >= 2) {
+        state.tackles = {
+          rod: 0,
+          reel: 0,
+          bobber: 0,
+          hook: 0,
+          line: 0
+        }
+        state.tacklesOwned = {
+          rods: [0],
+          reels: [0],
+          bobbers: [0],
+          hooks: [0],
+          lines: [0]
+        }
+        state.baits = {
+          worms: 0,
+          corn: 0,
+          maggots: 0,
+          groundbait: 0
+        }
+      }
+      if (loseCount >= 3) {
+        state.inventory = []
+      }
+    },
+    [MUTATIONS.GET_KIT]: (state) => {
+      state.baits = {
+        worms: 5,
+        corn: 3,
+        maggots: 1,
+        groundbait: 3
+      }      
     }
   },
   actions: {
@@ -268,7 +430,18 @@ export default {
       store.dispatch('save')
     },
     save: (store) => {
-      localStorage.setItem('game_state', JSON.stringify(store.state))
+      const {
+        isFishing,
+        zones,
+        pirates,
+        islands,
+        isNight,
+        speed,
+        boarding,
+        ...rest
+      } = store.state
+
+      localStorage.setItem('game_state', JSON.stringify(rest))
     },
     removeZone: (store) => {
       store.commit(MUTATIONS.REMOVE_ZONE);
@@ -329,6 +502,58 @@ export default {
     },
     useBait: (store, bait) => {
       store.commit(MUTATIONS.USE_BAIT, bait)
+      store.dispatch('save')
+    },
+    spawnPirate: (store) => {
+      const boat = store.state.boat
+
+      const x = Math.round(Math.random() * 500 - 250) * 10 + boat.x + 1000
+      const y = Math.round(Math.random() * 500 - 250) * 10 + boat.y + 1000
+
+      const angle = Math.random() * 2 * Math.PI
+
+      const item = {
+        id: Date.now(), 
+        x: x, y: y, 
+        dirX: Math.cos(angle), dirY: Math.sin(angle), 
+        state: 'patrol'}
+
+      store.commit(MUTATIONS.ADD_PIRATE, item)
+    },
+    spawnPirates: (store) => {
+      const count = 1 + Math.max(0, Math.floor(Math.random() * (store.state.isNight ? 4 : 2)))
+      for (let i = 0; i < count; i++) {
+        store.dispatch('spawnPirate')
+      }
+    },
+    startPirates: (store) => {
+      setInterval(() => {
+        store.commit(MUTATIONS.UPDATE_PIRATES)
+
+        if (store.state.pirates.length < (store.state.isNight ? 5 : 3)) {
+          if (Math.random() < 1 / 100) 
+            store.dispatch('spawnPirate')
+        }
+      }, 25)
+    },
+    setIsNight: (store, val) => {
+      store.commit(MUTATIONS.SET_IS_NIGHT, val)
+    },
+    startBoarding: (store) => {
+      store.commit(MUTATIONS.START_BOARDING)
+    },
+    endBoarding: (store) => {
+      store.commit(MUTATIONS.END_BOARDING)
+    },
+    addBoardingResult: (store, result) => {
+      store.commit(MUTATIONS.ADD_BOARDING_RESULT, result)
+    },
+    applyBoardingResults: (store) => {
+      store.commit(MUTATIONS.APPLY_BOARDING_RESULTS)
+      store.dispatch('save')
+    },
+    getKit: (store) => {
+      store.commit(MUTATIONS.GET_KIT)
       store.dispatch('save')
     }
   },

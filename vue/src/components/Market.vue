@@ -1,5 +1,5 @@
 <template>
-<div class="market" v-if="isIslandsNearly && opened">
+<div class="market" v-if="isIslandsNearly && opened && !boarding.active">
   <div class="market__title">
     Рынок
   </div>
@@ -60,9 +60,18 @@
         Купить за {{ baitsPrices[bait.id] }}₽
       </button>
     </div>
+
+    <div class="market__item" v-if="balance < 1 && !IsHavingBaits">
+      <span class="market__label">Набор наживки</span>
+      <button 
+        class="market__btn" 
+        @click="() => getKit()">
+        Получить БЕСПЛАТНО
+      </button>
+    </div>
   </div>
 </div>
-<div class="market-invite" v-if="isIslandsNearly">
+<div class="market-invite" v-if="isIslandsNearly && !boarding.active">
   <div class="market__title" v-if="!opened">Нажмите [Е] чтобы открыть</div>
   <div class="market__title" v-else>Нажмите [Е] чтобы закрыть</div>
 </div>
@@ -78,7 +87,16 @@ const fishNames = computed(() => store.getters['game/constants/getFishNames'])
 const fishPrices = computed(() => store.getters['game/constants/getFishPrices'])
 const baitsPrices = computed(() => store.getters['game/constants/getBaitsPrices'])
 
+const balance = computed(() => store.getters['game/getBalance'])
+const baits = computed(() => store.getters['game/getBaits'])
+const IsHavingBaits = computed(() => {
+  const {worms, corn, maggots} = baits.value
+  return worms || corn || maggots
+})
+
 const opened = ref(false)
+
+const boarding = computed(() => store.getters['game/getBoarding'])
 
 const inventory = computed(() => store.getters['game/getInventory'])
 
@@ -110,7 +128,6 @@ const baitsList = computed(() => [
 ])
 
 const sellFish = (fish) => {
-  console.log(Math.round(fishPrices.value[fish.type] * fish.weight * 100) / 100)
   store.dispatch('game/sellFish', {item: fish, price: Math.round(fishPrices.value[fish.type] * fish.weight * 100) / 100})
 }
 
@@ -129,6 +146,10 @@ const sellTackle = (type, item) => {
 
 const useTackle = (type, item) => {
   store.dispatch('game/useTackle', {type: type, item: item})
+}
+
+const getKit = () => {
+  store.dispatch('game/getKit')
 }
 
 const isIslandsNearly = computed(() => {

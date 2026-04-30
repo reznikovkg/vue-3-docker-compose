@@ -1,5 +1,5 @@
 <template>
-  <div class="minigame">
+  <div class="minigame" v-if="!boarding.active">
     <div class="minigame__title">
       Мини-игра
     </div>
@@ -34,6 +34,9 @@ const store = useStore()
 const active = ref(false)
 
 const fishing = computed(() => store.getters['game/getIsFishing'])
+const boarding = computed(() => store.getters['game/getBoarding'])
+
+const isNight = computed(() => store.getters['game/getIsNight'])
 
 const barPosition = ref(0)
 const direction = ref(1)
@@ -85,6 +88,7 @@ const handleNum = (e) => {
 
 const handleSpace = (e) => {
   if (e.key !== ' ') return
+  if (boarding.value.active) return
   if (!active.value && fishing.value) return
 
   if (!active.value) {
@@ -95,7 +99,7 @@ const handleSpace = (e) => {
         maggots: 'legendary'
       }
 
-      lastFish.value = {type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10}
+      lastFish.value = {type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10 * (isNight.value ? 2 : 1)}
       store.dispatch('game/useBait', activeBait.value)
       startMiniGame(zone.value)
       return
@@ -119,7 +123,7 @@ const startMiniGame = (zone) => {
     active.value = true
     barPosition.value = 0
     direction.value = 1
-  }, delay)
+  }, delay * (isNight.value ? 2 : 1))
 
   intervalID.value = setInterval(() => {
     barPosition.value += direction.value * speed.value
@@ -165,6 +169,7 @@ onUnmounted(() => {
 
   &__title {
     color: rgb(10, 10, 100);
+    text-align: center;
     font-size: 24px;
     font-style: bold;
   }
@@ -181,6 +186,7 @@ onUnmounted(() => {
     height: 24px;
     background-color: rgb(200, 200, 200);
     border: 4px dashed rgb(10, 10, 100);
+    overflow: hidden;
 
     &__bar {
       position: absolute;
