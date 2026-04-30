@@ -125,6 +125,8 @@ export default {
     },
     restart () {
       this.setGameStatus(true)
+      this.cameraCoords.x = window.innerWidth / 2
+      this.cameraCoords.y = window.innerHeight / 2
     }
   }
 }
