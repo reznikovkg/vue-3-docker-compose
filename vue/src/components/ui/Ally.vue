@@ -1,11 +1,12 @@
 <template>
-  <div class="enemy" :style="styles">
+  <div class="ally" :style="styles">
+    <div class="ally__hp" :style="hpStyles"></div>
   </div>
 </template>
 
 <script lang="ts">
 export default {
-  name: 'Enemy',
+  name: 'Ally',
   props: {
     x: {
       type: Number,
@@ -27,6 +28,11 @@ export default {
         top: `${this.y}%`,
         backgroundColor: this.color
       }
+    },
+    hpStyles () {
+      return {
+
+      }
     }
   },
 }
@@ -34,11 +40,11 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.enemy {
+.ally {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
 }
 </style>

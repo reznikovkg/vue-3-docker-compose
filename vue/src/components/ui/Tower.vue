@@ -1,5 +1,6 @@
 <template>
   <div class="tower" :style="styles" @click="() => menuClick()">
+    <div class="tower__hp" :style="hpStyles"></div>
     <div class="tower__menu" v-if="isOpenMenu">
       <button class="tower__menu__up" v-if="!isMaxLevel" @click.stop="() => upClick()">⇧</button>  
       <button class="tower__menu__del" @click.stop="() => delClick()">✖</button>  
@@ -10,7 +11,7 @@
 <script lang="ts">
 import {characteristics} from '../../data/characteristics'
 export default {
-  name: 'tower',
+  name: 'Tower',
   props: {
     id: {
       type: [String, Number],
@@ -51,6 +52,15 @@ export default {
         backgroundColor: this.stats.color
       }
     },
+    hpPercent() {
+      return (this.stats.currentHp / this.stats.maxHp) * 100
+    },
+    hpStyles () {
+      return {
+        width: this.hpPercent + '%',
+        backgroundColor: this.hpPercent > 50 ? 'rgb(27, 224, 17)' : 'rgb(224, 33, 23)'
+      }
+    },
     isMaxLevel () {
       const levelExists = characteristics.some(c => c.id === this.level + 1)
       return !levelExists
@@ -79,17 +89,25 @@ export default {
   height: 80px;
   border-radius: 50%;
 
+  &__hp {
+    position: absolute;
+    left: 0;
+    top: -10px;
+    height: 6px;
+    transition: width 0.1s;
+  }
+
   &__menu {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-
-     &__up {
+    
+    &__up {
         transform: translate(-50%, -50%);
         position: absolute;
-        background-color: rgb(44, 183, 60);
+        background-color: rgb(54, 220, 46);
         top: 50%;
         left: 50%;
         border: none; 

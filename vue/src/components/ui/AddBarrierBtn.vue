@@ -1,14 +1,12 @@
 <template>
   <button class="btn" :style="styles">
-    <span class="btn__plus">
-      +
-    </span>
+    <span class="btn__plus">+</span>
   </button>
 </template>
 
 <script lang="ts">
 export default {
-  name: 'AddTowerBtn',
+  name: 'AddBarrierBtn',
   props: {
     x: {
       type: Number,
@@ -17,13 +15,18 @@ export default {
     y: {
       type: Number,
       default: 0,
-    }
+    },
+    angle: {
+      type: Number,
+      default: 0,
+    },
   },
   computed: {
     styles () {
       return{
         left: `${this.x}%`,
-        top: `${this.y}%`
+        top: `${this.y}%`,
+        transform: `translate(-50%, -50%) rotate(${this.angle}deg)`
       }
     }
   },
@@ -33,19 +36,21 @@ export default {
 <style scoped lang="scss">
 .btn {
   position: absolute;
-  transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  background-color: rgb(242, 241, 205);
+  width: 30px;
+  height: 70px;
+  background-color: rgb(225, 210, 159);
   border-radius: 20%;
   border: 3px solid rgb(103, 83, 16);
   cursor: pointer;
 
   &__plus {
-    color: rgb(67, 159, 39);
-    font-size: 100px;
-    text-align: center;
-    line-height: 80px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: rgb(43, 118, 20);
+    font-size: 25px;
+    line-height: 25px;
   }
 }
 </style>
