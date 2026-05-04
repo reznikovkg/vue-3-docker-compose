@@ -123,11 +123,11 @@ const power = computed(() => store.getters['game/getPower'])
 
     max-height: 200px;
     overflow-y: auto;
-    
+
     &::-webkit-scrollbar {
       width: 6px;
     }
-      
+
     &::-webkit-scrollbar-thumb {
       background: rgb(10, 10, 100);
     }

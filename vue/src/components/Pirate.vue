@@ -1,8 +1,8 @@
 <template>
   <div class="pirate" :style="pirateStyle">
     <div class="pirate__images" :style="{ '--dir': pirate.dirX >= 0 ? 1 : -1 }">
-        <img class="pirate__boat" src="../assets/images/PirateBoat.png">
-        <div class="pirate__sprite" :class="{ 'pirate__sprite--idle': true }" />
+      <img class="pirate__boat" src="../assets/images/PirateBoat.png">
+      <div class="pirate__sprite" :class="{ 'pirate__sprite--idle': true }" />
     </div>
   </div>
 </template>
@@ -71,7 +71,12 @@ const pirateStyle = computed(() => {
 }
 
 @keyframes pirate-idle {
-  from { background-position: 0 0; }
-  to { background-position: -600px 0; }
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: -600px 0;
+  }
 }
 </style>

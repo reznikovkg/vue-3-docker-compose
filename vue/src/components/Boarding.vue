@@ -5,7 +5,7 @@
     </div>
 
     <div class="boarding__bar" v-if="active">
-      <div class="boarding__bar__bar" :style="{ left: barPosition + '%'}"></div>
+      <div class="boarding__bar__bar" :style="{ left: barPosition + '%' }"></div>
       <div class="boarding__bar__target"></div>
     </div>
 
@@ -16,14 +16,10 @@
     </div>
 
     <div class="boarding__results">
-      <div 
-        class="boarding__results__result"
-        v-for="result in boarding.results"
-        :class="{ 
-          'boarding__results__result--win': result, 
-          'boarding__results__result--lose': !result
-          }" 
-        />
+      <div class="boarding__results__result" v-for="result in boarding.results" :class="{
+        'boarding__results__result--win': result,
+        'boarding__results__result--lose': !result
+      }" />
     </div>
   </div>
 </template>
@@ -59,7 +55,7 @@ const nextRound = () => {
     active.value = false
     setTimeout(() => stopBoarding(), 1000)
     return
-  } 
+  }
 
   setTimeout(() => startBoarding(), 200)
 }
@@ -95,7 +91,7 @@ const stopBoarding = () => {
   clearInterval(intervalID.value)
   store.dispatch('game/applyBoardingResults')
   store.dispatch('game/endBoarding')
-} 
+}
 
 onMounted(() => {
   window.addEventListener('keydown', handleSpace)

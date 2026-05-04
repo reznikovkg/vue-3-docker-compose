@@ -5,14 +5,14 @@
     </div>
 
     <div class="minigame__bar" v-if="active">
-      <div class="minigame__bar__bar" :style="{ left: barPosition + '%'}"></div>
+      <div class="minigame__bar__bar" :style="{ left: barPosition + '%' }"></div>
       <div class="minigame__bar__target"></div>
     </div>
 
     <div class="minigame__info" v-if="!fishing">
       <span class="minigame__label">[Z] чтобы сбросить прикормку за борт</span>
       <span class="minigame__label">
-        Выбранная наживка: {{ activeBaitText }} ({{ baitCount }})<br> 
+        Выбранная наживка: {{ activeBaitText }} ({{ baitCount }})<br>
         ([1], [2], [3] чтобы сменить наживку)
       </span>
       <span class="minigame__label" v-if="baitCount > 0">
@@ -68,7 +68,7 @@ const lastFish = ref(null)
 const power = computed(() => store.getters['game/getPower'])
 const speed = computed(() => {
   const baseSpeed = 1.0 / (1.0 + Math.log(power.value / 0.05))
-  const weightDifficulty = (lastFish.value) ? (lastFish.value.weight / 2.0) : 1.0 
+  const weightDifficulty = (lastFish.value) ? (lastFish.value.weight / 2.0) : 1.0
   return baseSpeed * weightDifficulty * baitDifficulty[activeBait.value]
 })
 
@@ -99,7 +99,7 @@ const handleSpace = (e) => {
         maggots: 'legendary'
       }
 
-      lastFish.value = {type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10 * (isNight.value ? 2 : 1)}
+      lastFish.value = { type: baitToFish[activeBait.value], weight: Math.round(10 + Math.random() * 100) / 10 * (isNight.value ? 2 : 1) }
       store.dispatch('game/useBait', activeBait.value)
       startMiniGame(zone.value)
       return
@@ -138,7 +138,7 @@ const stopMiniGame = () => {
 
   clearInterval(intervalID.value)
   store.dispatch('game/fishing')
-} 
+}
 
 onMounted(() => {
   window.addEventListener('keydown', handleSpace)

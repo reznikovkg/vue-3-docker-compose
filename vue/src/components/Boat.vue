@@ -1,8 +1,8 @@
 <template>
   <div class="boat">
     <div class="boat__images" :style="boatStyle">
-        <img class="boat__boat" src="../assets/images/Boat.png">
-        <div class="boat__sailor" :class="{ 'boat__sailor--rowing': rowing, 'boat__sailor--fishing': fishing }" />
+      <img class="boat__boat" src="../assets/images/Boat.png">
+      <div class="boat__sailor" :class="{ 'boat__sailor--rowing': rowing, 'boat__sailor--fishing': fishing }" />
     </div>
   </div>
 </template>
@@ -19,7 +19,7 @@ const rowing = computed(() => boat.value.rowing)
 const fishing = computed(() => store.getters['game/getIsFishing'])
 
 const boatStyle = computed(() => ({
-  transform: `scaleX(${boat.value.direction})` 
+  transform: `scaleX(${boat.value.direction})`
 }))
 </script>
 
@@ -63,7 +63,6 @@ const boatStyle = computed(() => ({
       background-image: url(../assets/images/SailorFishing.png);
       animation: sailor-row 0.6s steps(4) infinite;
 
-      
       top: -135px;
       left: -20px;
       transform: scaleX(-1);
@@ -72,13 +71,22 @@ const boatStyle = computed(() => ({
 }
 
 @keyframes sailor-row {
-  from { background-position: 0 0; }
-  to { background-position: -600px 0; }
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: -600px 0;
+  }
 }
 
 @keyframes sailor-fish {
-  from { background-position: 0 0; }
-  to { background-position: -600px 0; }
-}
+  from {
+    background-position: 0 0;
+  }
 
+  to {
+    background-position: -600px 0;
+  }
+}
 </style>

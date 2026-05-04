@@ -1,6 +1,6 @@
 <template>
   <div class="island" :style="islandStyle">
-    <img class="island__image" src="../assets/images/Island.png" width="200px" >
+    <img class="island__image" src="../assets/images/Island.png" width="200px">
   </div>
 </template>
 
