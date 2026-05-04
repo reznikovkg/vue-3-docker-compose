@@ -62,7 +62,12 @@ const defaultState = {
   isFishing: false,
   zones: [],
   pirates: [],
-  islands: [{ x: 500, y: 500 }, { x: -1500, y: -500 }, { x: 2500, y: -750 }, { x: -100, y: 1750 }],
+  islands: [
+    { x: 500, y: 500 },
+    { x: -1500, y: -500 },
+    { x: 2500, y: -750 },
+    { x: -100, y: 1750 }
+  ],
   speed: 3,
   isNight: false,
   boarding: {
@@ -74,9 +79,11 @@ const defaultState = {
 
 export default {
   namespaced: true,
-  state () {
+  state() {
     const savedState = localStorage.getItem('game_state')
-    return (savedState !== null) ? {...defaultState, ...JSON.parse(savedState)} : defaultState
+    return savedState !== null
+      ? { ...defaultState, ...JSON.parse(savedState) }
+      : defaultState
   },
   getters: {
     getBoat: (state) => state.boat,
@@ -89,19 +96,18 @@ export default {
     getPower: (state, getters, rootState) => {
       const t = state.tackles
       const list = rootState.game.tacklesList
-      const power = (
-        list.rods[t.rod].power * 
-        list.reels[t.reel].power * 
+      const power =
+        list.rods[t.rod].power *
+        list.reels[t.reel].power *
         list.bobbers[t.bobber].power *
         list.hooks[t.hook].power *
         list.lines[t.line].power
-      )
       return Math.round(power * 100) / 100
     },
     getSpeed: (state) => state.speed,
     getIsNight: (state) => state.isNight,
     getIsFishing: (state) => state.isFishing,
-    getZones: (state) => state.zones, 
+    getZones: (state) => state.zones,
     getPirates: (state) => state.pirates,
     getIslands: (state) => state.islands,
     getCurrentZone: (state) => {
@@ -109,14 +115,24 @@ export default {
 
       for (const zone of state.zones) {
         if (zone.type === 'high') {
-          if (boat.x >= zone.x - 60 && boat.x <= zone.x + 60 && boat.y >= zone.y - 60 && boat.y <= zone.y + 60) 
+          if (
+            boat.x >= zone.x - 60 &&
+            boat.x <= zone.x + 60 &&
+            boat.y >= zone.y - 60 &&
+            boat.y <= zone.y + 60
+          )
             return 'Высокий'
         }
       }
 
       for (const zone of state.zones) {
         if (zone.type === 'medium') {
-          if (boat.x >= zone.x - 80 && boat.x <= zone.x + 80 && boat.y >= zone.y - 80 && boat.y <= zone.y + 80) 
+          if (
+            boat.x >= zone.x - 80 &&
+            boat.x <= zone.x + 80 &&
+            boat.y >= zone.y - 80 &&
+            boat.y <= zone.y + 80
+          )
             return 'Средний'
         }
       }
@@ -127,7 +143,7 @@ export default {
   },
   mutations: {
     [MUTATIONS.MOVE_BOAT]: (state, payload) => {
-      const {x, y} = payload
+      const { x, y } = payload
       const speed = state.speed * (!state.isNight ? 3 : 2)
 
       const nextX = state.boat.x + x * speed
@@ -135,10 +151,10 @@ export default {
 
       const islandHitbox = 90
 
-      const isCollision = state.islands.some(island => {
+      const isCollision = state.islands.some((island) => {
         const dx = nextX - island.x
         const dy = nextY - island.y
-        return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox 
+        return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox
       })
 
       if (!isCollision) {
@@ -159,14 +175,22 @@ export default {
       state.boat.rowing = value
     },
     [MUTATIONS.GENERATE_ZONES]: (state, zones) => {
-      state.zones = zones 
+      state.zones = zones
     },
     [MUTATIONS.REMOVE_ZONE]: (state) => {
       const boat = state.boat
-      state.zones = state.zones.filter(zone => !(zone.x - 80 <= boat.x && zone.x + 80 >= boat.x && zone.y - 80 <= boat.y && zone.y + 80 >= boat.y))
+      state.zones = state.zones.filter(
+        (zone) =>
+          !(
+            zone.x - 80 <= boat.x &&
+            zone.x + 80 >= boat.x &&
+            zone.y - 80 <= boat.y &&
+            zone.y + 80 >= boat.y
+          )
+      )
     },
     [MUTATIONS.SELL_FISH]: (state, item) => {
-      const index = state.inventory.findIndex(i => i.id === item.id)
+      const index = state.inventory.findIndex((i) => i.id === item.id)
       if (index !== -1) {
         state.inventory.splice(index, 1)
       }
@@ -175,42 +199,43 @@ export default {
       state.baits[type]++
     },
     [MUTATIONS.CHANGE_BALANCE]: (state, diff) => {
-      if (state.balance + diff >= 0) 
-        state.balance += diff 
+      if (state.balance + diff >= 0) state.balance += diff
     },
     [MUTATIONS.BUY_TACKLE]: (state, item) => {
-      const {type, id} = item
+      const { type, id } = item
       if (!state.tacklesOwned[type].includes(id)) {
         state.tacklesOwned[type].push(id)
         state.tackles[type.slice(0, -1)] = id
       }
     },
     [MUTATIONS.SELL_TACKLE]: (state, item) => {
-      const {type, id} = item
+      const { type, id } = item
       if (id === 0) return
 
-      state.tacklesOwned[type] = state.tacklesOwned[type].filter(i => i !== id)
+      state.tacklesOwned[type] = state.tacklesOwned[type].filter(
+        (i) => i !== id
+      )
 
       if (state.tackles[type.slice(0, -1)] === id) {
         state.tackles[type.slice(0, -1)] = 0
       }
     },
     [MUTATIONS.USE_TACKLE]: (state, item) => {
-      const {type, id} = item
+      const { type, id } = item
       state.tackles[type.slice(0, -1)] = id
     },
     [MUTATIONS.USE_GROUNDBAIT]: (state) => {
-      const {x, y} = state.boat
+      const { x, y } = state.boat
       const radius = 80
 
-      let zones = state.zones.filter(z => {
+      let zones = state.zones.filter((z) => {
         const dx = x - z.x
         const dy = y - z.y
         return Math.max(Math.abs(dx), Math.abs(dy)) < radius
       })
 
       if (zones.length > 0) {
-        zones.forEach(zone => {
+        zones.forEach((zone) => {
           zone.level = zone.level + 1
 
           if (zone.level >= 3) {
@@ -221,7 +246,8 @@ export default {
         state.zones.push({
           type: 'medium',
           level: 1,
-          x: x, y: y
+          x: x,
+          y: y
         })
       }
 
@@ -244,19 +270,20 @@ export default {
       const aggroRadius = 500
       const boardingRadius = 10
 
-      state.pirates = state.pirates.filter(p => {
+      state.pirates = state.pirates.filter((p) => {
         const dx = boat.x - p.x
         const dy = boat.y - p.y
 
-        const inAggroRadius = Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius
-        const outAggroRadius = Math.abs(dx) > 2 * aggroRadius || Math.abs(dy) > 2 * aggroRadius
-        const inBoardingRadius = Math.abs(dx) < boardingRadius && Math.abs(dy) < boardingRadius
+        const inAggroRadius =
+          Math.abs(dx) < aggroRadius && Math.abs(dy) < aggroRadius
+        const outAggroRadius =
+          Math.abs(dx) > 2 * aggroRadius || Math.abs(dy) > 2 * aggroRadius
+        const inBoardingRadius =
+          Math.abs(dx) < boardingRadius && Math.abs(dy) < boardingRadius
 
-        if (p.state === 'patrol' && inAggroRadius)
-          p.state = 'chase'
+        if (p.state === 'patrol' && inAggroRadius) p.state = 'chase'
 
-        if (p.state === 'chase' && outAggroRadius)
-          p.state = 'patrol'
+        if (p.state === 'chase' && outAggroRadius) p.state = 'patrol'
 
         if (p.state === 'chase' && inBoardingRadius) {
           p.state = 'boarding'
@@ -267,7 +294,7 @@ export default {
               results: []
             }
         }
-        
+
         const dist = Math.sqrt(dx * dx + dy * dy)
 
         if (p.state === 'chase') {
@@ -275,17 +302,18 @@ export default {
           p.dirY = dy / dist
         }
 
-        const speed = (dist > 10) ? state.speed * (p.state === 'patrol' ? 1 : 2) : 0
+        const speed =
+          dist > 10 ? state.speed * (p.state === 'patrol' ? 1 : 2) : 0
 
         const nextX = p.x + p.dirX * speed
         const nextY = p.y + p.dirY * speed
 
         const islandHitbox = 90
 
-        const isCollision = state.islands.some(island => {
+        const isCollision = state.islands.some((island) => {
           const dx = nextX - island.x
           const dy = nextY - island.y
-          return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox 
+          return Math.max(Math.abs(dx), Math.abs(dy)) < islandHitbox
         })
 
         if (!isCollision) {
@@ -319,8 +347,8 @@ export default {
       }
 
       const boat = state.boat
-      
-      state.pirates = state.pirates.filter(p => {
+
+      state.pirates = state.pirates.filter((p) => {
         const dx = boat.x - p.x
         const dy = boat.y - p.y
 
@@ -335,11 +363,11 @@ export default {
       state.boarding.results.push(result)
     },
     [MUTATIONS.APPLY_BOARDING_RESULTS]: (state) => {
-      const results = state.boarding.results 
+      const results = state.boarding.results
 
-      let loseCount = 0 
+      let loseCount = 0
       for (let i = 0; i < 3; i++) if (!results[i]) loseCount++
-      
+
       if (loseCount >= 1) {
         state.balance = 0
       }
@@ -375,7 +403,7 @@ export default {
         corn: 3,
         maggots: 1,
         groundbait: 3
-      }      
+      }
     }
   },
   actions: {
@@ -396,15 +424,15 @@ export default {
       store.dispatch('save')
     },
     addFish: (store, payload) => {
-      const {type, weight} = payload
-      const item = {id: Date.now(), type: type, weight: weight}
+      const { type, weight } = payload
+      const item = { id: Date.now(), type: type, weight: weight }
       store.commit(MUTATIONS.ADD_FISH, item)
       store.dispatch('save')
     },
     generateZones: (store) => {
       const zones = []
-      
-      const {x: bx, y: by} = store.state.boat
+
+      const { x: bx, y: by } = store.state.boat
 
       for (let i = 0; i < 500; i++) {
         const x = Math.round(Math.random() * 500 - 250) * 10 + bx
@@ -412,7 +440,8 @@ export default {
         zones.push({
           type: 'medium',
           level: 1,
-          x: x, y: y
+          x: x,
+          y: y
         })
       }
 
@@ -422,7 +451,8 @@ export default {
         zones.push({
           type: 'high',
           level: 3,
-          x: x, y: y
+          x: x,
+          y: y
         })
       }
 
@@ -444,18 +474,18 @@ export default {
       localStorage.setItem('game_state', JSON.stringify(rest))
     },
     removeZone: (store) => {
-      store.commit(MUTATIONS.REMOVE_ZONE);
+      store.commit(MUTATIONS.REMOVE_ZONE)
       store.dispatch('save')
     },
     sellFish: (store, payload) => {
-      const {item, price} = payload
+      const { item, price } = payload
       console.log(item)
       store.commit(MUTATIONS.SELL_FISH, item)
       store.commit(MUTATIONS.CHANGE_BALANCE, price)
       store.dispatch('save')
     },
     buyBait: (store, payload) => {
-      const {type, price} = payload
+      const { type, price } = payload
       if (store.state.balance - price >= 0) {
         store.commit(MUTATIONS.BUY_BAIT, type)
         store.commit(MUTATIONS.CHANGE_BALANCE, -price)
@@ -463,30 +493,30 @@ export default {
       }
     },
     buyTackle: (store, payload) => {
-      const {type, item} = payload
+      const { type, item } = payload
       if (store.state.balance < item.price) return
 
       if (!store.state.tacklesOwned[type].includes(item.id)) {
-        store.commit(MUTATIONS.BUY_TACKLE, {type: type, id: item.id})
+        store.commit(MUTATIONS.BUY_TACKLE, { type: type, id: item.id })
         store.commit(MUTATIONS.CHANGE_BALANCE, -item.price)
         store.dispatch('save')
       }
     },
     sellTackle: (store, payload) => {
-      const {type, item} = payload
+      const { type, item } = payload
       if (item.id === 0) return
 
       if (store.state.tacklesOwned[type].includes(item.id)) {
-        store.commit(MUTATIONS.SELL_TACKLE, {type: type, id: item.id})
+        store.commit(MUTATIONS.SELL_TACKLE, { type: type, id: item.id })
         store.commit(MUTATIONS.CHANGE_BALANCE, +Math.round(item.price / 2))
         store.dispatch('save')
       }
     },
     useTackle: (store, payload) => {
-      const {type, item} = payload
-      
+      const { type, item } = payload
+
       if (store.state.tacklesOwned[type].includes(item.id)) {
-        store.commit(MUTATIONS.USE_TACKLE, {type: type, id: item.id})
+        store.commit(MUTATIONS.USE_TACKLE, { type: type, id: item.id })
         store.dispatch('save')
       }
     },
@@ -513,15 +543,20 @@ export default {
       const angle = Math.random() * 2 * Math.PI
 
       const item = {
-        id: Date.now(), 
-        x: x, y: y, 
-        dirX: Math.cos(angle), dirY: Math.sin(angle), 
-        state: 'patrol'}
+        id: Date.now(),
+        x: x,
+        y: y,
+        dirX: Math.cos(angle),
+        dirY: Math.sin(angle),
+        state: 'patrol'
+      }
 
       store.commit(MUTATIONS.ADD_PIRATE, item)
     },
     spawnPirates: (store) => {
-      const count = 1 + Math.max(0, Math.floor(Math.random() * (store.state.isNight ? 4 : 2)))
+      const count =
+        1 +
+        Math.max(0, Math.floor(Math.random() * (store.state.isNight ? 4 : 2)))
       for (let i = 0; i < count; i++) {
         store.dispatch('spawnPirate')
       }
@@ -531,8 +566,7 @@ export default {
         store.commit(MUTATIONS.UPDATE_PIRATES)
 
         if (store.state.pirates.length < (store.state.isNight ? 5 : 3)) {
-          if (Math.random() < 1 / 100) 
-            store.dispatch('spawnPirate')
+          if (Math.random() < 1 / 100) store.dispatch('spawnPirate')
         }
       }, 25)
     },
@@ -558,6 +592,7 @@ export default {
     }
   },
   modules: {
-    tacklesList, constants
+    tacklesList,
+    constants
   }
 }

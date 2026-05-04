@@ -1,80 +1,68 @@
 <template>
-<div class="market" v-if="isIslandsNearly && opened && !boarding.active">
-  <div class="market__title">
-    Рынок
-  </div>
-  
-  <div class="market__list">
-    <span class="market__title">Продать рыбу</span>
-
-    <div class="market__item" v-for="fish in inventory">
-      <span class="market__label">{{ fishNames[fish.type] }} ({{ fish.weight }} кг)</span>
-
-      <button 
-        class="market__btn" 
-        @click="() => sellFish(fish)">
-        Продать за {{  Math.round(fishPrices[fish.type] * fish.weight * 100) / 100 }}₽
-      </button>
+  <div class="market" v-if="isIslandsNearly && opened && !boarding.active">
+    <div class="market__title">
+      Рынок
     </div>
-  </div>
 
-  <div class="market__list">
-    <span class="market__title">Купить/Продать снасти</span>
+    <div class="market__list">
+      <span class="market__title">Продать рыбу</span>
 
-    <div v-for="tackle in tacklesList">
-      <span class="market__title">{{ tackle.name }}</span>
-      <div class="market__item" v-for="item in tackle.items">
-        <span class="market__label">{{ item.label }} {{ item.name }} ({{ item.power }})</span>
+      <div class="market__item" v-for="fish in inventory">
+        <span class="market__label">{{ fishNames[fish.type] }} ({{ fish.weight }} кг)</span>
 
-        <button 
-          class="market__btn"
-          v-if="!tacklesOwned[tackle.id].includes(item.id)" 
-          @click="() => buyTackle(tackle.id, item)">
-          Купить за {{ item.price }}₽ 
+        <button class="market__btn" @click="() => sellFish(fish)">
+          Продать за {{ Math.round(fishPrices[fish.type] * fish.weight * 100) / 100 }}₽
         </button>
-        <button 
-          class="market__btn"
-          v-else-if="tacklesOwned[tackle.id].includes(item.id) && item.id !== 0" 
-          @click="() => sellTackle(tackle.id, item)">
-          Продать за {{ item.price / 2 }}₽ 
-        </button>
+      </div>
+    </div>
 
-        <button 
-          class="market__btn"
-          v-if="tacklesOwned[tackle.id].includes(item.id)" 
-          @click="() => useTackle(tackle.id, item)">
-          Надеть
+    <div class="market__list">
+      <span class="market__title">Купить/Продать снасти</span>
+
+      <div v-for="tackle in tacklesList">
+        <span class="market__title">{{ tackle.name }}</span>
+        <div class="market__item" v-for="item in tackle.items">
+          <span class="market__label">{{ item.label }} {{ item.name }} ({{ item.power }})</span>
+
+          <button class="market__btn" v-if="!tacklesOwned[tackle.id].includes(item.id)"
+            @click="() => buyTackle(tackle.id, item)">
+            Купить за {{ item.price }}₽
+          </button>
+          <button class="market__btn" v-else-if="tacklesOwned[tackle.id].includes(item.id) && item.id !== 0"
+            @click="() => sellTackle(tackle.id, item)">
+            Продать за {{ item.price / 2 }}₽
+          </button>
+
+          <button class="market__btn" v-if="tacklesOwned[tackle.id].includes(item.id)"
+            @click="() => useTackle(tackle.id, item)">
+            Надеть
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="market__list">
+      <span class="market__title">Купить наживку</span>
+
+      <div class="market__item" v-for="bait in baitsList">
+        <span class="market__label">{{ bait.name }}</span>
+        <button class="market__btn" @click="() => buyBait(bait.id)">
+          Купить за {{ baitsPrices[bait.id] }}₽
+        </button>
+      </div>
+
+      <div class="market__item" v-if="balance < 1 && !IsHavingBaits">
+        <span class="market__label">Набор наживки</span>
+        <button class="market__btn" @click="() => getKit()">
+          Получить БЕСПЛАТНО
         </button>
       </div>
     </div>
   </div>
-
-  <div class="market__list">
-    <span class="market__title">Купить наживку</span>
-
-    <div class="market__item" v-for="bait in baitsList">
-      <span class="market__label">{{ bait.name }}</span>
-      <button 
-        class="market__btn" 
-        @click="() => buyBait(bait.id)">
-        Купить за {{ baitsPrices[bait.id] }}₽
-      </button>
-    </div>
-
-    <div class="market__item" v-if="balance < 1 && !IsHavingBaits">
-      <span class="market__label">Набор наживки</span>
-      <button 
-        class="market__btn" 
-        @click="() => getKit()">
-        Получить БЕСПЛАТНО
-      </button>
-    </div>
+  <div class="market-invite" v-if="isIslandsNearly && !boarding.active">
+    <div class="market__title" v-if="!opened">Нажмите [Е] чтобы открыть</div>
+    <div class="market__title" v-else>Нажмите [Е] чтобы закрыть</div>
   </div>
-</div>
-<div class="market-invite" v-if="isIslandsNearly && !boarding.active">
-  <div class="market__title" v-if="!opened">Нажмите [Е] чтобы открыть</div>
-  <div class="market__title" v-else>Нажмите [Е] чтобы закрыть</div>
-</div>
 </template>
 
 <script setup>
@@ -90,7 +78,7 @@ const baitsPrices = computed(() => store.getters['game/constants/getBaitsPrices'
 const balance = computed(() => store.getters['game/getBalance'])
 const baits = computed(() => store.getters['game/getBaits'])
 const IsHavingBaits = computed(() => {
-  const {worms, corn, maggots} = baits.value
+  const { worms, corn, maggots } = baits.value
   return worms || corn || maggots
 })
 
@@ -113,11 +101,11 @@ const hooks = computed(() => store.getters['game/tacklesList/getHooksList'])
 const lines = computed(() => store.getters['game/tacklesList/getLinesList'])
 
 const tacklesList = computed(() => [
-  { id: 'rods', name: 'Удилища', items: rods.value},
-  { id: 'reels', name: 'Катушки', items: reels.value},
-  { id: 'bobbers', name: 'Поплавки', items: bobbers.value},
-  { id: 'hooks', name: 'Крючки', items: hooks.value},
-  { id: 'lines', name: 'Лески', items: lines.value}
+  { id: 'rods', name: 'Удилища', items: rods.value },
+  { id: 'reels', name: 'Катушки', items: reels.value },
+  { id: 'bobbers', name: 'Поплавки', items: bobbers.value },
+  { id: 'hooks', name: 'Крючки', items: hooks.value },
+  { id: 'lines', name: 'Лески', items: lines.value }
 ])
 
 const baitsList = computed(() => [
@@ -128,24 +116,24 @@ const baitsList = computed(() => [
 ])
 
 const sellFish = (fish) => {
-  store.dispatch('game/sellFish', {item: fish, price: Math.round(fishPrices.value[fish.type] * fish.weight * 100) / 100})
+  store.dispatch('game/sellFish', { item: fish, price: Math.round(fishPrices.value[fish.type] * fish.weight * 100) / 100 })
 }
 
 const buyBait = (type) => {
   const price = baitsPrices.value[type]
-  store.dispatch('game/buyBait', {type: type, price: price})
+  store.dispatch('game/buyBait', { type: type, price: price })
 }
 
 const buyTackle = (type, item) => {
-  store.dispatch('game/buyTackle', {type: type, item: item})
+  store.dispatch('game/buyTackle', { type: type, item: item })
 }
 
 const sellTackle = (type, item) => {
-  store.dispatch('game/sellTackle', {type: type, item: item})
+  store.dispatch('game/sellTackle', { type: type, item: item })
 }
 
 const useTackle = (type, item) => {
-  store.dispatch('game/useTackle', {type: type, item: item})
+  store.dispatch('game/useTackle', { type: type, item: item })
 }
 
 const getKit = () => {
@@ -213,7 +201,7 @@ onUnmounted(() => {
     &::-webkit-scrollbar {
       width: 12px;
     }
-      
+
     &::-webkit-scrollbar-thumb {
       background: rgb(10, 10, 100);
     }
@@ -256,7 +244,7 @@ onUnmounted(() => {
   &::-webkit-scrollbar {
     width: 12px;
   }
-    
+
   &::-webkit-scrollbar-thumb {
     background: rgb(10, 10, 100);
   }

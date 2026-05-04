@@ -1,6 +1,6 @@
 export default {
   namespaced: true,
-  state () {
+  state() {
     return {
       fishNames: {
         common: 'Окунь',

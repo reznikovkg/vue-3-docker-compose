@@ -1,11 +1,11 @@
 <template>
   <div class="game-map" :style="mapStyle">
-    <div class="game-map__world"/>
+    <div class="game-map__world" />
   </div>
 
-  <Island v-for="island in islands" :island="island"/>
-  <Pirate v-for="pirate in pirates" :pirate="pirate"/>
-  <Boat/>
+  <Island v-for="island in islands" :island="island" />
+  <Pirate v-for="pirate in pirates" :pirate="pirate" />
+  <Boat />
 </template>
 
 <script setup>
@@ -36,7 +36,7 @@ const keys = {
   left: false,
   down: false,
   right: false
-} 
+}
 
 const handleMoveKeyDown = (e) => {
   if (e.key === 'ArrowUp' || e.key === 'w') keys.up = true
@@ -65,7 +65,7 @@ const moving = () => {
   if (keys.right) x += 1
 
   if (x !== 0 || y !== 0) {
-    store.dispatch('game/moveBoat', {x: x, y: y})
+    store.dispatch('game/moveBoat', { x: x, y: y })
     store.dispatch('game/setRowing', true)
 
     if (x !== 0) store.dispatch('game/setDirection', x > 0 ? 1 : -1)
@@ -121,7 +121,7 @@ onUnmounted(() => {
   position: absolute;
   overflow: hidden;
   z-index: 1;
-  
+
   &__world {
     position: absolute;
     width: 2500px;
