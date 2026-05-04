@@ -47,20 +47,20 @@
       ></polyline>
     </svg>
     <div>
-      <AddTowerBtn v-for="slot in slotTower" :key="slot.id" :x="slot.x" :y="slot.y" 
+      <BuildBtn v-for="slot in slotTower" :key="slot.id" :x="slot.x" :y="slot.y" variant="tower"
         @click="() => plusClick(slot)">
-      </AddTowerBtn>
+      </BuildBtn>
       <Tower v-for="tower in getActiveTowers" :key="tower.id" :id="tower.id" :x="tower.x" :y="tower.y" :color="tower.color"
         :level="tower.levelId" :stats="tower" @upgrade="(id) => upgradeTower(id)" @delete="(id) => deleteTower(id)">
       </Tower>
-      <Enemy v-for="enemy in getActiveEnemies" :key="enemy.id" :x="enemy.x" :y="enemy.y" :color="enemy.color"></Enemy>
-      <AddBarrierBtn v-for="slot in slotBarrier" :key="slot.id" :x="slot.x" :y="slot.y" :angle="slot.angle"
-        @click="() => plusClickBarrier(slot)"> 
-      </AddBarrierBtn>
+      <Character v-for="enemy in getActiveEnemies" :key="enemy.id" :x="enemy.x" :y="enemy.y" :color="enemy.color" variant="enemy"></Character>
+      <BuildBtn v-for="slot in slotBarrier" :key="slot.id" :x="slot.x" :y="slot.y" :angle="slot.angle"
+        variant="barrier" @click="() => plusClickBarrier(slot)"> 
+      </BuildBtn>
       <Barrier v-for="barrier in getActiveBarriers" :key="barrier.id" :id="barrier.id" :x="barrier.x" :y="barrier.y" 
         :angle="barrier.angle" :stats="barrier">
       </Barrier>
-      <Ally v-for="ally in getActiveAllies" :key="ally.id" :x="ally.x" :y="ally.y" :color="ally.color"></Ally>
+      <Character v-for="ally in getActiveAllies" :key="ally.id" :x="ally.x" :y="ally.y" :color="ally.color" variant="ally"></Character>
       <div class="map__bullets" v-for="bullet in getActiveBullets" :key="bullet.id" 
           :class="{ 'map__bullets--tower' :bullet.type === 'tower', 'map__bullets--ally' :bullet.type === 'ally', 
           'map__bullets--enemy' :bullet.type === 'enemy' }" :style="{ left: bullet.x + '%', top: bullet.y + '%' }">
@@ -90,12 +90,10 @@
 </template>
 
 <script lang="ts">
-import AddTowerBtn from '../ui/AddTowerBtn.vue';
+import BuildBtn from '../ui/BuildBtn.vue';
 import Tower from '../ui/Tower.vue';
-import Enemy from '../ui/Enemy.vue';
-import AddBarrierBtn from '../ui/AddBarrierBtn.vue';
+import Character from '../ui/Character.vue';
 import Barrier from '../ui/Barrier.vue';
-import Ally from '../ui/Ally.vue';
 import {levels} from '../../data/levels'
 import {allyTypes} from '../../data/allyTypes'
 import {characteristics} from '../../data/characteristics'
@@ -105,12 +103,10 @@ import { mapGetters, mapActions } from 'vuex';
 export default {
   name: 'GamePage',
   components: {
-    AddTowerBtn,
+    BuildBtn,
     Tower,
-    Enemy,
-    AddBarrierBtn,
+    Character,
     Barrier,
-    Ally
   },
   data () {
     return {

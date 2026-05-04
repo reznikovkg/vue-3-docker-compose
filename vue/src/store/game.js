@@ -564,22 +564,22 @@ export default {
           }
         }
       })
-        const targetLists = {
-          enemy: state.activeEnemies,
-          tower: state.activeTowers,
-          ally: state.activeAllies,
-          barrier: state.activeBarriers,
-        }
-        const damageMutations = {
-          enemy: MUTATIONS.HIT_ENEMY,
-          tower: MUTATIONS.DAMAGE_TOWER,
-          ally: MUTATIONS.DAMAGE_ALLY,
-          barrier: MUTATIONS.DAMAGE_BARRIER,
-        }
-        const moveBullets = state.activeBullets.map(d => {
-          const targetType = d.targetType || 'enemy'
-          const targets = targetLists[targetType] || []
-          const target = targets.find(t => t.id === d.targetId)
+      const targetLists = {
+        enemy: state.activeEnemies,
+        tower: state.activeTowers,
+        ally: state.activeAllies,
+        barrier: state.activeBarriers,
+      }
+      const damageMutations = {
+        enemy: MUTATIONS.HIT_ENEMY,
+        tower: MUTATIONS.DAMAGE_TOWER,
+        ally: MUTATIONS.DAMAGE_ALLY,
+        barrier: MUTATIONS.DAMAGE_BARRIER,
+      }
+      const moveBullets = state.activeBullets.map(d => {
+        const targetType = d.targetType || 'enemy'
+        const targets = targetLists[targetType] || []
+        const target = targets.find(t => t.id === d.targetId)
         if (!target) {
           return null
         }
