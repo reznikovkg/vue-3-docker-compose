@@ -127,6 +127,9 @@ export default {
         y: enemyData.y,
         health: enemyData.health || 50,
         maxHealth: enemyData.health || 50,
+        currentPointIndex: enemyData.currentPointIndex ?? 0,
+        speed: enemyData.speed || 0.2,
+        routeId: enemyData.routeId || 1,
       }
       commit(MUTATIONS.ADD_ENEMY, enemy)
     },
@@ -135,6 +138,12 @@ export default {
     },
     selectTower({ commit }, tower) {
       commit(MUTATIONS.SET_SELECTED_TOWER, tower)
+    },
+    setEnemies({ commit }, enemies) {
+      commit(MUTATIONS.SET_ENEMIES, enemies)
+    },
+    addCoins({ commit, state }, amount) {
+      commit(MUTATIONS.SET_GAME_COINS, state.coins + amount)
     },
   },
 }

@@ -1,16 +1,31 @@
 <template>
   <div class = "game-page">
     <div class = "game-page__header">
-      <div class = "game-page__coins"> Coins: {{ getCoins }}</div>
+      <div class = "game-page__coins"> Монеты: {{ getCoins }}</div>
       <div class = "game-page__controls">
         <button class = "game-page__btn" @click = "() => addTestEnemy()">
-          Add Enemy
+          Создать врагов
         </button>
         <button class = "game-page__btn" @click = "() => clearEnemies()">
-          Clear Enemies
+          Очистить врагов
         </button>
       </div>
+
+        <div class = "game-page__level-controls">
+        <button 
+            class = "game-page__btn" 
+            :class = "{ 'game-page__btn--active': currentLevel === 1 }" 
+            @click = "changeLevel(1)"
+        >Уровень 1</button>
+        <button 
+          class = "game-page__btn" 
+          :class = "{ 'game-page__btn--active': currentLevel === 2 }" 
+          @click = "changeLevel(2)"
+        >Уровень 2</button>
+      </div>
     </div>
+
+    
 
     <div ref = "gameArea" class = "game-page__game-area" @click = "() => handleGameAreaClick($event)">
     <svg class = "game-page__route-svg" viewBox = "0 0 900 600">
@@ -67,45 +82,45 @@
     </div>
 
     <div v-if = "getSelectedTower" class = "game-page__tower-panel">
-      <h3 class = "game-page__panel-title">Tower Stats</h3>
-      <div class = "game-page__stat">Level: {{ getSelectedTower.level }}</div>
-      <div class = "game-page__stat">Damage: {{ getSelectedTower.damage }}</div>
-      <div class = "game-page__stat">Health: {{ getSelectedTower.health }}</div>
-      <div class = "game-page__stat">Fire Rate: {{ getSelectedTower.fireRate }}ms</div>
-      <div class = "game-page__stat">Range: {{ getSelectedTower.range }}px</div>
+      <h3 class = "game-page__panel-title">Характеристики башни</h3>
+      <div class = "game-page__stat">Уровень: {{ getSelectedTower.level }}</div>
+      <div class = "game-page__stat">Урон: {{ getSelectedTower.damage }}</div>
+      <div class = "game-page__stat">Здоровье: {{ getSelectedTower.health }}</div>
+      <div class = "game-page__stat">Скорость стрельбы: {{ getSelectedTower.fireRate }}ms</div>
+      <div class = "game-page__stat">Дальность: {{ getSelectedTower.range }}px</div>
       <button
         class = "game-page__upgrade-btn"
         @click = "() => upgradeTower(getSelectedTower.id, 'damage')"
       >
-        Upgrade Damage ({{ getSelectedTower.level * 30 }})
+        Улучшить урон ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
         @click = "() => upgradeTower(getSelectedTower.id, 'health')"
       >
-        Upgrade Health ({{ getSelectedTower.level * 30 }})
+        Улучшить здоровье ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
         @click = "() => upgradeTower(getSelectedTower.id, 'fireRate')"
       >
-        Upgrade Speed ({{ getSelectedTower.level * 30 }})
+        Улучшить скорость ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
         @click = "() => upgradeTower(getSelectedTower.id, 'range')"
       >
-        Upgrade Range ({{ getSelectedTower.level * 30 }})
+        Улучшить дальность ({{ getSelectedTower.level * 30 }})
       </button>
       <button class = "game-page__remove-btn" @click = "() => removeTower(getSelectedTower.id)">
-        Remove Tower (+25)
+        Убрать башню (+25)
       </button>
     </div>
 
     <div class = "game-page__info">
-      <p>Click on slots to place towers (50)</p>
-      <p>Click on tower to select and upgrade</p>
-      <p>Use arrow keys to move enemies</p>
+      <p>Нажмите на слоты для размещения башен (50)</p>
+      <p>Нажмите на башню для выбора и улучшения</p>
+      <p>Используйте стрелки для перемещения врагов</p>
     </div>
   </div>
 </template>
@@ -183,6 +198,7 @@ export default {
       currentLevel: 1,
       enemyMoveInterval: null,
       selectedEnemy: null,
+      animationFrameId: null,
     }
   },
   computed: {
@@ -199,6 +215,7 @@ export default {
     this.loadLevel(this.currentLevel)
     document.addEventListener('keydown', this.handleKeyPress)
     this.towerShooting()
+    this.startEnemyMovement()
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeyPress)
@@ -207,7 +224,10 @@ export default {
     }
     if (this.towerShootInterval) {
     clearInterval(this.towerShootInterval)
-  }
+    }
+    if (this.animationFrameId) {
+    cancelAnimationFrame(this.animationFrameId)
+    }
   },
   methods: {
     ...mapActions('game', [
@@ -218,7 +238,19 @@ export default {
       'addEnemy',
       'moveEnemy',
       'selectTower',
+      'setEnemies',
+      'addCoins',
     ]),
+    changeLevel(level) {
+      if (this.currentLevel === level) return;
+
+      this.clearEnemies();
+      this.getTowers.forEach(t => this.removeTower(t.id));
+      this.selectTower(null);
+      this.currentLevel = level;
+      this.loadLevel(level);
+    },
+
     loadLevel(levelNum) {
       if (LEVELS[levelNum]) {
         this.setLevel(LEVELS[levelNum])
@@ -290,9 +322,19 @@ export default {
       }, 1000);
     },
     addTestEnemy() {
-      const startX = this.getLevel.routes[0]?.points[0]?.x || 0
-      const startY = this.getLevel.routes[0]?.points[0]?.y || 100
-      this.addEnemy({ x: startX, y: startY, health: 50 + this.currentLevel * 10 })
+      const route = this.getLevel.routes[0]
+      if (!route || !route.points || route.points.length === 0) return
+      
+      const startPoint = route.points[0]
+      
+      this.addEnemy({ 
+        x: startPoint.x, 
+        y: startPoint.y, 
+        health: 50 + this.currentLevel * 10,
+        speed: 0.3 + (this.currentLevel * 0.1),
+        routeId: route.id,
+        currentPointIndex: 0,
+      })
     },
     clearEnemies() {
      this.setEnemies([]);
@@ -323,6 +365,53 @@ export default {
 
       this.moveEnemy({ enemyId: this.selectedEnemy.id, x: newX, y: newY })
     },
+
+    startEnemyMovement() {
+      const move = () => {
+        if (this.getEnemies.length === 0) {
+          this.animationFrameId = requestAnimationFrame(move)
+          return
+        }
+
+      const updatedEnemies = this.getEnemies.map(enemy => {
+        if (!enemy.routeId) return enemy
+        
+        const route = this.getLevel.routes.find(r => r.id === enemy.routeId)
+        if (!route || !route.points || route.points.length === 0) return enemy
+
+        const nextIndex = enemy.currentPointIndex + 1
+        const nextPoint = route.points[nextIndex]
+        if (!nextPoint) {
+          return null
+        }
+        const dx = nextPoint.x - enemy.x
+        const dy = nextPoint.y - enemy.y
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        const speed = enemy.speed || 1.5
+
+        let newX, newY, newIndex
+        
+        if (dist <= speed) {
+          newX = nextPoint.x
+          newY = nextPoint.y
+          newIndex = nextIndex
+        } else {
+          newX = enemy.x + (dx / dist) * speed
+          newY = enemy.y + (dy / dist) * speed
+          newIndex = enemy.currentPointIndex
+        }
+        return {
+          ...enemy,
+          x: newX,
+          y: newY,
+          currentPointIndex: newIndex
+        }
+      }).filter(e => e !== null)
+      this.setEnemies(updatedEnemies)
+      this.animationFrameId = requestAnimationFrame(move)
+    }
+    this.animationFrameId = requestAnimationFrame(move)
+    },
   },
 }
 </script>
@@ -342,6 +431,8 @@ export default {
     padding: 15px;
     background: #16213e;
     border-radius: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   &__coins {
@@ -355,6 +446,12 @@ export default {
     gap: 10px;
   }
 
+   &__level-controls {
+    display: flex;
+    gap: 8px;
+    margin-left: 15px;
+  }
+
   &__btn {
     padding: 10px 20px;
     background: #0f3460;
@@ -364,6 +461,12 @@ export default {
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s;
+
+    &--active {
+      background: #e94560 !important;
+      font-weight: bold;
+      box-shadow: 0 0 8px rgba(233, 69, 96, 0.6);
+    }
 
     &:hover {
       background: #e94560;
