@@ -24,9 +24,14 @@ export default {
         y: window.innerHeight / 2
       },
       points: 0,
+      health: 100,
+      damage: 10,
+      mana: 0,
       bullets: [],
+      enemyBullets: [],
       enemies: [],
-      gameStatus: true
+      gameStatus: true,
+      pause: false
     }
   },
   getters: {
@@ -34,7 +39,8 @@ export default {
     getPoints: (state) => state.points,
     getBullets: (state) => state.bullets,
     getEnemies: (state) => state.enemies,
-    getGameStatus: (state) => state.gameStatus
+    getGameStatus: (state) => state.gameStatus,
+    getPause: (state) => state.pause
   },
   mutations: {
     [MUTATIONS.SET_X_COORD]: (state, payload) => {
@@ -92,7 +98,10 @@ export default {
           const dy = bullet.y - enemy.y
           const length = Math.sqrt(dx * dx + dy * dy)
           if (length < HITBOXES.bullet + HITBOXES.enemy) {
-            commit(MUTATIONS.DELETE_ENEMY, enemy.id)
+            enemy.hp -= state.damage
+            if (enemy.hp <= 0) {
+              commit(MUTATIONS.DELETE_ENEMY, enemy.id)
+            }
             commit(MUTATIONS.DELETE_BULLET, bullet.id)
           }
         })
@@ -105,29 +114,42 @@ export default {
       if (!state.gameStatus) {
         return
       }
+      let type = "warrior"
+      let hp = 20
+      const typeRandomizer = Math.random()
+      if (typeRandomizer > 0.75) {
+        type = "archer"
+        hp = 10
+      }
+      else if (typeRandomizer < 0.75 && typeRandomizer > 0.55) {
+        type = "tank"
+        hp = 40
+      }
       const offset = 50 + Math.random() * 40
       const side = Math.floor(Math.random() * 4)
       let spawnX, spawnY
       if (side === 0) {
-        spawnX = Math.random() * window.innerWidth
-        spawnY = offset
+        spawnX = Math.random() * window.innerWidth + state.coords.x - window.innerWidth / 2
+        spawnY = state.coords.y - window.innerHeight / 2 + offset
       }
       else if (side == 1) {
-        spawnX = window.innerWidth - offset
-        spawnY = Math.random() * window.innerHeight
+        spawnX = state.coords.x + window.innerWidth / 2 - offset
+        spawnY = Math.random() * window.innerHeight + state.coords.y - window.innerHeight / 2
       }
       else if (side == 2) {
-        spawnX = Math.random() * window.innerWidth
-        spawnY = window.innerHeight - offset
+        spawnX = Math.random() * window.innerWidth + state.coords.x - window.innerWidth / 2 
+        spawnY = state.coords.y + window.innerHeight / 2 - offset
       }
       else {
-        spawnX = offset
-        spawnY = Math.random() * window.innerHeight
+        spawnX = state.coords.x - window.innerWidth / 2 + offset
+        spawnY = Math.random() * window.innerHeight + state.coords.y - window.innerHeight / 2
       }
       commit(MUTATIONS.PUSH_ENEMY, {
         id: Math.random(),
         x: spawnX,
-        y: spawnY
+        y: spawnY,
+        hp: hp,
+        type: type
       })
     },
     moveEnemies: ({ state, commit }, payload) => {

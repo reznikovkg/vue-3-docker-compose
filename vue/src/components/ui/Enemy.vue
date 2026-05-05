@@ -19,12 +19,24 @@ export default {
     y: {
       type: Number,
       default: 0
+    },
+    type: {
+      type: String,
+      default: "warrior"
     }
   },
   computed: {
     styles () {
+      let color = "#1c2780"
+      if (this.type === "archer") {
+        color = "#eca740"
+      }
+      else if (this.type === "tank") {
+        color = "#dd496e"
+      }
       return {
-        transform: `translate(-50%, -50%) translateX(${this.x}px) translateY(${this.y}px)`
+        transform: `translate(-50%, -50%) translateX(${this.x}px) translateY(${this.y}px)`,
+        background: color
       }
     }
   }
@@ -35,7 +47,6 @@ export default {
 .enemy {
   position: absolute;
   border-radius: 50%;
-  background: rgb(28, 39, 128);
   width: 52px;
   height: 52px;
   transition: 0.1s;

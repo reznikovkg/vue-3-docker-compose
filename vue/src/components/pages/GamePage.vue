@@ -2,7 +2,7 @@
   <div class="map" @mousemove="(e) => handleMouseCoords(e)">
     <Bullet v-for="bullet in getBullets" :key="bullet.id" :x="cameraOffsetX(bullet.x)" :y="cameraOffsetY(bullet.y)" :id="bullet.id" />
     <div class="map__player" />
-    <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :id="enemy.id" />
+    <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :id="enemy.id" />
     <div v-if="!getGameStatus" class="map__over">
       Игра окончена
       <button class="map__over__restart" @click="() => restart()">
@@ -75,19 +75,19 @@ export default {
         return
       }
       const step = 20
-      if (e.key === 'ArrowRight' && this.getCoords.x < window.innerWidth) {
+      if (e.key === 'ArrowRight') {
         this.moveRight()
         this.cameraCoords.x += step
       }
-      if (e.key === 'ArrowLeft' && this.getCoords.x > 0) {
+      if (e.key === 'ArrowLeft') {
         this.moveLeft()
         this.cameraCoords.x -= step
       }
-      if (e.key === 'ArrowUp' && this.getCoords.y > 0) {
+      if (e.key === 'ArrowUp') {
         this.moveUp()
         this.cameraCoords.y -= step
       }
-      if (e.key === 'ArrowDown' && this.getCoords.y < window.innerHeight) {
+      if (e.key === 'ArrowDown') {
         this.moveDown()
         this.cameraCoords.y += step
       }
