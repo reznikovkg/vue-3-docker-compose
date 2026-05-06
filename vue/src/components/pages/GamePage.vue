@@ -13,9 +13,8 @@
             <label class="game__mode-toggle">
                 <input
                     type="checkbox"
-                    :checked="getHardMode"
+                    v-model="hardModeLocal"
                     :disabled="getGameStarted"
-                    @change="toggleHardMode($event.target.checked)"
                 >
                 Сложный режим
             </label>
@@ -74,7 +73,7 @@
 
 <script>
 import Flask from '@/ui/Flask.vue'
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapMutations } from 'vuex';
 
 export default {
     name: 'GamePage',
@@ -94,6 +93,14 @@ export default {
             'getBlockedFlask',
             'getGameStarted'
         ]),
+        hardModeLocal: {
+            get() {
+                return this.getHardMode
+            },
+            set(value) {
+                this.toggleHardMode(value)
+            }
+        },
         formattedTime() {
             return this.formatTime(this.getTime)
         }
@@ -106,13 +113,21 @@ export default {
             'startGame',
             'toggleHardMode'
         ]),
+        ...mapMutations('game', [
+            'SET_TIME',
+            'SET_HARD_MODE',
+            'SET_BLOCKED_FLASK',
+            'SET_BEST_TIMES',
+            'SET_HARD_MODE_BEST_TIMES',
+            'SET_CURRENT_FLASK'
+        ]),
         formatTime(seconds){
             const minutes = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return minutes + ':' + secs.toString().padStart(2, '0');
         },
         setCurrentFlask(index) {
-            this.$store.commit('game/SET_CURRENT_FLASK', index)
+            this.SET_CURRENT_FLASK(index)
         },
         handleFlaskClick(index) {
             if (!this.getGameStarted) {
@@ -129,20 +144,20 @@ export default {
         },
         restartGame() {
             this.stopTimer()
-            this.$store.commit('game/SET_TIME', 0)
-            this.$store.commit('game/SET_HARD_MODE', false)
-            this.$store.commit('game/SET_BLOCKED_FLASK', null)
+            this.SET_TIME(0)
+            this.SET_HARD_MODE(false)
+            this.SET_BLOCKED_FLASK(null)
             this.initGame()
         }
     },
     mounted() {
         const saved = localStorage.getItem('bestTimes')
         if (saved) {
-            this.$store.commit('game/SET_BEST_TIMES', JSON.parse(saved))
+            this.SET_BEST_TIMES(JSON.parse(saved))
         }
         const savedHardMode = localStorage.getItem('hardModeBestTimes')
         if (savedHardMode) {
-            this.$store.commit('game/SET_HARD_MODE_BEST_TIMES', JSON.parse(savedHardMode))
+            this.SET_HARD_MODE_BEST_TIMES(JSON.parse(savedHardMode))
         }
         this.restartGame()
     },

@@ -134,10 +134,11 @@ export default {
         startGame({ commit, state, dispatch }) {
             if (!state.gameStarted) {
                 commit(MUTATIONS.SET_GAME_STARTED, true)
-                dispatch('startTimer')
+                const actionsToDispatch = ['startTimer']
                 if (state.hardMode) {
-                    dispatch('blockRandomFlask')
+                    actionsToDispatch.push('blockRandomFlask')
                 }
+                actionsToDispatch.forEach(action => dispatch(action))
             }
         },
         startTimer({ commit, state }) {
