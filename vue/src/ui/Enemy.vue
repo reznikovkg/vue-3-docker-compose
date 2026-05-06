@@ -1,6 +1,10 @@
 <template>
   <div  ref = "enemyRef" class = "enemy" :style = "enemyStyle" @click.stop= "() => handleSelect()" @mousedown="() => handleDragStart($event)">
-    <div class = "enemy__body"></div>
+    <div class = "enemy__body"
+      :style="{ 
+        background: enemyColor, 
+        boxShadow: `0 0 10px ${enemyColor}` 
+      }"></div>
     <div class = "enemy__health">
       <div class = "enemy__health-bar" :style = "healthBarStyle"></div>
     </div>
@@ -30,6 +34,14 @@ export default {
         width: `${percentage}%`,
       }
     },
+    enemyColor() {
+      const colors = {
+        'basic': '#1e90ff',
+        'tank': '#ff4757',
+        'fast': '#2ed573',
+      }
+      return colors[this.enemy.type] || colors['basic']
+    }
   },
   methods: {
     handleMove() {
@@ -62,10 +74,8 @@ export default {
   &__body {
     width: 100%;
     height: 100%;
-    background: #e94560;
     border-radius: 50%;
     border: 2px solid #fff;
-    box-shadow: 0 0 10px rgba(233, 69, 96, 0.8);
   }
 
   &__health {

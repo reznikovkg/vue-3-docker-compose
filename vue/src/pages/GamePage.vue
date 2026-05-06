@@ -2,15 +2,6 @@
   <div class = "game-page">
     <div class = "game-page__header">
       <div class = "game-page__coins"> Монеты: {{ getCoins }}</div>
-      <div class = "game-page__controls">
-        <button class = "game-page__btn" @click = "() => addTestEnemy()">
-          Создать врагов
-        </button>
-        <button class = "game-page__btn" @click = "() => clearEnemies()">
-          Очистить врагов
-        </button>
-      </div>
-
         <div class = "game-page__level-controls">
         <button 
             class = "game-page__btn" 
@@ -22,12 +13,12 @@
           :class = "{ 'game-page__btn--active': currentLevel === 2 }" 
           @click = "changeLevel(2)"
         >Уровень 2</button>
-      </div>
+        </div>
     </div>
 
     
 
-    <div ref = "gameArea" class = "game-page__game-area" @click = "() => handleGameAreaClick($event)">
+    <div ref = "gameArea" class = "game-page__game-area" @click="handleGameAreaClick">
     <svg class = "game-page__route-svg" viewBox = "0 0 900 600">
       <path
         v-for = "route in getLevel.routes"
@@ -90,25 +81,25 @@
       <div class = "game-page__stat">Дальность: {{ getSelectedTower.range }}px</div>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(getSelectedTower.id, 'damage')"
+        @click="() => upgradeTower({ towerId: getSelectedTower.id, upgradeType: 'damage' })"
       >
         Улучшить урон ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(getSelectedTower.id, 'health')"
+        @click="() => upgradeTower({ towerId: getSelectedTower.id, upgradeType: 'health' })"
       >
         Улучшить здоровье ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(getSelectedTower.id, 'fireRate')"
+        @click = "() => upgradeTower({ towerId: getSelectedTower.id, upgradeType: 'fireRate' })"
       >
         Улучшить скорость ({{ getSelectedTower.level * 30 }})
       </button>
       <button
         class = "game-page__upgrade-btn"
-        @click = "() => upgradeTower(getSelectedTower.id, 'range')"
+        @click = "() => upgradeTower({ towerId: getSelectedTower.id, upgradeType: 'range' })"
       >
         Улучшить дальность ({{ getSelectedTower.level * 30 }})
       </button>
@@ -196,9 +187,13 @@ export default {
   data() {
     return {
       currentLevel: 1,
-      enemyMoveInterval: null,
       selectedEnemy: null,
       animationFrameId: null,
+      waveInterval: null,
+      enemiesSpawned: 0,
+      maxEnemiesPerWave: 5,
+      towerShootInterval: null,
+      enemyTypes: ['basic', 'tank', 'fast'],
     }
   },
   computed: {
@@ -216,17 +211,18 @@ export default {
     document.addEventListener('keydown', this.handleKeyPress)
     this.towerShooting()
     this.startEnemyMovement()
+    this.startWaveSpawner()
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeyPress)
-    if (this.enemyMoveInterval) {
-      clearInterval(this.enemyMoveInterval)
-    }
     if (this.towerShootInterval) {
-    clearInterval(this.towerShootInterval)
+      clearInterval(this.towerShootInterval)
     }
     if (this.animationFrameId) {
-    cancelAnimationFrame(this.animationFrameId)
+      cancelAnimationFrame(this.animationFrameId)
+    }
+    if (this.waveInterval) {
+      clearInterval(this.waveInterval)
     }
   },
   methods: {
@@ -275,6 +271,10 @@ export default {
       }
     },
     placeTower(position) {
+        console.log('Позиция:', position)
+        console.log('Монеты:', this.getCoins)
+        console.log('Текущие башни:', this.getTowers)
+
       const existingTower = this.getTowers.find(
         (t) => Math.abs(t.x - position.x) < 10 && Math.abs(t.y - position.y) < 10
       )
@@ -283,6 +283,7 @@ export default {
       }
       this.addTower({ x: position.x, y: position.y, cost: 50 })
     },
+
     selectEnemy(enemy) {
       this.selectedEnemy = enemy
     },
@@ -310,7 +311,7 @@ export default {
           if (target) {
             target.health -= tower.damage;
             if (target.health <= 0) {
-              coinsEarned += 10;
+              coinsEarned += target.reward || 10;
             }
           }
         });
@@ -321,7 +322,22 @@ export default {
         }
       }, 1000);
     },
-    addTestEnemy() {
+
+    startWaveSpawner() {
+      this.enemiesSpawned = 0
+      const spawnInterval = this.currentLevel === 1 ? 10000 : 800
+      this.waveInterval = setInterval(() => {
+        if (this.enemiesSpawned < this.maxEnemiesPerWave) {
+          const type = this.enemyTypes[Math.floor(Math.random() * this.enemyTypes.length)];
+          this.addTestEnemy(type)
+          this.enemiesSpawned++
+        } else {
+          clearInterval(this.waveInterval)
+        }
+      }, spawnInterval)
+    },
+
+    addTestEnemy(type = 'basic') {
       const route = this.getLevel.routes[0]
       if (!route || !route.points || route.points.length === 0) return
       
@@ -330,8 +346,7 @@ export default {
       this.addEnemy({ 
         x: startPoint.x, 
         y: startPoint.y, 
-        health: 50 + this.currentLevel * 10,
-        speed: 0.3 + (this.currentLevel * 0.1),
+        type: type || 'basic',
         routeId: route.id,
         currentPointIndex: 0,
       })

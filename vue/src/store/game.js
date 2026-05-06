@@ -11,6 +11,27 @@ const MUTATIONS = {
   SET_GAME_COINS: 'SET_GAME_COINS',
 }
 
+const ENEMY_TYPES = [
+  {
+    name: 'basic',
+    health: 70,
+    speed: 0.4,
+    reward: 10,
+  },
+  {
+    name: 'tank',
+    health: 150,
+    speed: 0.5,
+    reward: 25,
+  },
+  {
+    name: 'fast',
+    health: 80,
+    speed: 1.0,
+    reward: 15,
+  },
+]
+
 export default {
   namespaced: true,
   state() {
@@ -56,7 +77,21 @@ export default {
       state.enemies = payload
     },
     [MUTATIONS.ADD_ENEMY]: (state, payload) => {
-      state.enemies.push(payload)
+      if (!payload) return;
+      const typeData = ENEMY_TYPES.find(t => t.name === payload.type) || ENEMY_TYPES[0]
+      const enemy = {
+        id: Date.now() + Math.random(),
+        x: payload.x,
+        y: payload.y,
+        type: payload.type || 'basic',
+        health: payload.health || typeData.health,
+        maxHealth: typeData.health,
+        speed: typeData.speed|| 0.2,
+        routeId: payload.routeId || 1,
+        currentPointIndex: payload.currentPointIndex ?? 0,
+        reward: typeData.reward,
+      }
+      state.enemies.push(enemy)
     },
     [MUTATIONS.MOVE_ENEMY]: (state, payload) => {
       const enemy = state.enemies.find((e) => e.id === payload.id)
@@ -100,7 +135,10 @@ export default {
     },
     upgradeTower({ commit, state }, { towerId, upgradeType }) {
       const tower = state.towers.find((t) => t.id === towerId)
-      if (!tower) return
+      if (!tower) {
+        console.warn('Такой башни нет:', towerId)
+        return
+      }
 
       const upgradeCost = tower.level * 30
       if (state.coins < upgradeCost) return
@@ -120,17 +158,7 @@ export default {
       commit(MUTATIONS.UPGRADE_TOWER, { id: towerId, upgrades })
       commit(MUTATIONS.SET_GAME_COINS, state.coins - upgradeCost)
     },
-    addEnemy({ commit }, enemyData) {
-      const enemy = {
-        id: Date.now() + Math.random(),
-        x: enemyData.x,
-        y: enemyData.y,
-        health: enemyData.health || 50,
-        maxHealth: enemyData.health || 50,
-        currentPointIndex: enemyData.currentPointIndex ?? 0,
-        speed: enemyData.speed || 0.2,
-        routeId: enemyData.routeId || 1,
-      }
+    addEnemy({ commit }, enemy) {
       commit(MUTATIONS.ADD_ENEMY, enemy)
     },
     moveEnemy({ commit }, { enemyId, x, y }) {
