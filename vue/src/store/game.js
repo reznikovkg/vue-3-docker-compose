@@ -127,9 +127,9 @@ export default {
             commit(MUTATIONS.SET_TIME, 0)
             dispatch('stopTimer') //останавливаем таймер, если он был запущен
             commit(MUTATIONS.SET_GAME_STARTED, false)
-            if (state.hardMode) {
-                dispatch('blockRandomFlask')
-            }
+            //if (state.hardMode) {
+                //dispatch('blockRandomFlask')
+            //}
         },
         startGame({ commit, state, dispatch }) {
             if (!state.gameStarted) {
@@ -212,8 +212,26 @@ export default {
             if (isEnabled) {
                 dispatch('blockRandomFlask')
             } else {
-                commit(MUTATIONS.SET_BLOCKED_FLASK, null)
+                dispatch('setBlockedFlask', null)
             }
+        },
+        setTime({ commit }, time) {
+            commit(MUTATIONS.SET_TIME, time)
+        },
+        setHardMode({ commit }, mode) {
+            commit(MUTATIONS.SET_HARD_MODE, mode)
+        },
+        setBlockedFlask({ commit }, index) {
+            commit(MUTATIONS.SET_BLOCKED_FLASK, index)
+        },
+        setBestTimes({ commit }, times) {
+            commit(MUTATIONS.SET_BEST_TIMES, times)
+        },
+        setHardModeBestTimes({ commit }, times) {
+            commit(MUTATIONS.SET_HARD_MODE_BEST_TIMES, times)
+        },
+        setCurrentFlask({ commit }, index) {
+            commit(MUTATIONS.SET_CURRENT_FLASK, index)
         }
     }
 }

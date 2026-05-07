@@ -73,7 +73,7 @@
 
 <script>
 import Flask from '@/ui/Flask.vue'
-import { mapGetters, mapActions, mapMutations } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
     name: 'GamePage',
@@ -111,23 +111,18 @@ export default {
             'tryMove',
             'stopTimer',
             'startGame',
-            'toggleHardMode'
-        ]),
-        ...mapMutations('game', [
-            'SET_TIME',
-            'SET_HARD_MODE',
-            'SET_BLOCKED_FLASK',
-            'SET_BEST_TIMES',
-            'SET_HARD_MODE_BEST_TIMES',
-            'SET_CURRENT_FLASK'
+            'toggleHardMode',
+            'setTime',
+            'setHardMode',
+            'setBlockedFlask',
+            'setBestTimes',
+            'setHardModeBestTimes',
+            'setCurrentFlask'
         ]),
         formatTime(seconds){
             const minutes = Math.floor(seconds / 60);
             const secs = seconds % 60;
             return minutes + ':' + secs.toString().padStart(2, '0');
-        },
-        setCurrentFlask(index) {
-            this.SET_CURRENT_FLASK(index)
         },
         handleFlaskClick(index) {
             if (!this.getGameStarted) {
@@ -144,20 +139,20 @@ export default {
         },
         restartGame() {
             this.stopTimer()
-            this.SET_TIME(0)
-            this.SET_HARD_MODE(false)
-            this.SET_BLOCKED_FLASK(null)
+            this.setTime(0)
+            this.setHardMode(false)
+            this.setBlockedFlask(null)
             this.initGame()
         }
     },
     mounted() {
         const saved = localStorage.getItem('bestTimes')
         if (saved) {
-            this.SET_BEST_TIMES(JSON.parse(saved))
+            this.setBestTimes(JSON.parse(saved))
         }
         const savedHardMode = localStorage.getItem('hardModeBestTimes')
         if (savedHardMode) {
-            this.SET_HARD_MODE_BEST_TIMES(JSON.parse(savedHardMode))
+            this.setHardModeBestTimes(JSON.parse(savedHardMode))
         }
         this.restartGame()
     },
