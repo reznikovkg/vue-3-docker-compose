@@ -6,7 +6,6 @@
         Очки: <b>{{ scrore }}</b>
       </p>
     </div>
-
     <div class="game-wrapper__btns">
       <button
         class="btn btn--green"
@@ -22,7 +21,6 @@
         Сбросить
       </button>
     </div>
-
     <div
       class="game-wrapper__field"
       :style="{ 'grid-template-columns': `repeat(${grdiSize}, 1fr)` }"
@@ -45,177 +43,87 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
 import CellItem from '../ui/CellItem.vue'
 
-const FIELD_SIZE = 8
-const SAVE_KEY = 'number-merge-save'
-const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8]
-const POINTS_TABLE = [10, 25, 50, 100, 200, 400, 800, 1600]
+const store = useStore()
 
-export default {
-  name: 'GamePage',
-  components: { CellItem },
+const cells = computed(() => store.getters['game/getCells'])
+const scrore = computed(() => store.getters['game/getScore'])
+const grdiSize = computed(() => store.getters['game/getGridSize'])
 
-  data() {
-    return {
-      cells: [],
-      scrore: 0,
-      draging: false,
-      dragItem: null,
-      dragFromIdx: null,
-      touchStart: null,
-      grdiSize: FIELD_SIZE,
-    }
-  },
+const draging = ref(false)
+const dragItem = ref(null)
+const dragFromIdx = ref(null)
+const touchStart = ref(null)
 
-  created() {
-    this.tryLoadSave()
-  },
+onMounted(() => {
+  store.dispatch('game/loadState')
+})
 
-  methods: {
-    tryLoadSave() {
-      const raw = localStorage.getItem(SAVE_KEY)
-      if (!raw) {
-        this.createField()
-        return
-      }
-      try {
-        const parsed = JSON.parse(raw)
-        this.cells = parsed.cells
-        this.scrore = parsed.scrore
-      } catch {
-        this.createField()
-      }
-    },
+const spawnNumber = () => {
+  if (draging.value) return
+  store.dispatch('game/spawnNumber')
+}
 
-    persistState() {
-      const data = { cells: this.cells, scrore: this.scrore }
-      localStorage.setItem(SAVE_KEY, JSON.stringify(data))
-    },
+const restartGame = () => {
+  if (!confirm('Точно хочешь начать заново?')) return
+  store.dispatch('game/createField')
+}
 
-    createField() {
-      this.cells = new Array(this.grdiSize * this.grdiSize).fill(null)
-      this.scrore = 0
-      for (let k = 0; k < 8; k++) {
-        this.spawnNumber()
-      }
-      this.persistState()
-    },
+const onStartDrag = (data, idx) => {
+  if (!data) return
+  draging.value = true
+  dragItem.value = data
+  dragFromIdx.value = idx
+}
 
-    restartGame() {
-      if (!confirm('Точно хочешь начать заново?')) return
-      this.createField()
-    },
+const onStopDrag = () => {
+  draging.value = false
+  dragItem.value = null
+  dragFromIdx.value = null
+  touchStart.value = null
+}
 
-    spawnNumber() {
-      if (this.draging) return
+const onCellDrop = (targetIdx) => {
+  if (!dragItem.value || dragFromIdx.value === targetIdx) {
+    onStopDrag()
+    return
+  }
+  store.dispatch('game/tryMerge', { from: dragFromIdx.value, to: targetIdx })
+  onStopDrag()
+}
 
-      const free = []
-      this.cells.forEach((c, i) => {
-        if (c === null) free.push(i)
-      })
+const onFieldDrop = () => {
+  onStopDrag()
+}
 
-      if (free.length === 0) {
-        alert('Поле заполнено!')
-        return
-      }
+const onCellTouchMove = (evt, idx) => {
+  if (!touchStart.value) {
+    touchStart.value = { index: idx, data: cells.value[idx] }
+  }
+}
 
-      const pos = free[Math.floor(Math.random() * free.length)]
-      const lvl = Math.floor(Math.random() * 3)
-
-      this.cells[pos] = {
-        tier: lvl,
-        val: NUMBERS[lvl],
-      }
-      this.persistState()
-    },
-
-    onStartDrag(data, idx) {
-      if (!data) return
-      this.draging = true
-      this.dragItem = data
-      this.dragFromIdx = idx
-    },
-
-    onStopDrag() {
-      this.draging = false
-      this.dragItem = null
-      this.dragFromIdx = null
-      this.touchStart = null
-    },
-
-    onCellDrop(targetIdx) {
-      if (!this.dragItem || this.dragFromIdx === targetIdx) {
-        this.onStopDrag()
-        return
-      }
-      this.tryMerge(this.dragFromIdx, targetIdx)
-      this.onStopDrag()
-    },
-
-    onFieldDrop() {
-      this.onStopDrag()
-    },
-
-    onCellTouchMove(evt, idx) {
-      if (!this.touchStart) {
-        this.touchStart = { index: idx, data: this.cells[idx] }
-      }
-    },
-
-    onCellTouchEnd(evt, targetIdx) {
-      if (!this.touchStart || !this.touchStart.data) {
-        this.touchStart = null
-        return
-      }
-      if (this.touchStart.index !== targetIdx) {
-        this.tryMerge(this.touchStart.index, targetIdx)
-      }
-      this.touchStart = null
-    },
-
-    tryMerge(from, to) {
-      const itemFrom = this.cells[from]
-      const itemTo = this.cells[to]
-
-      if (!itemFrom) return
-
-      if (!itemTo) {
-        this.cells[to] = itemFrom
-        this.cells[from] = null
-        this.persistState()
-        return
-      }
-
-      if (itemFrom.tier === itemTo.tier) {
-        const nextTier = Math.min(itemFrom.tier + 1, NUMBERS.length - 1)
-        this.scrore += POINTS_TABLE[nextTier]
-
-        this.cells[to] = {
-          tier: nextTier,
-          val: NUMBERS[nextTier],
-        }
-        this.cells[from] = null
-      } else {
-        var tmp = this.cells[from]
-        this.cells[from] = this.cells[to]
-        this.cells[to] = tmp
-      }
-
-      this.persistState()
-    },
-  },
+const onCellTouchEnd = (evt, targetIdx) => {
+  if (!touchStart.value || !touchStart.value.data) {
+    touchStart.value = null
+    return
+  }
+  if (touchStart.value.index !== targetIdx) {
+    store.dispatch('game/tryMerge', { from: touchStart.value.index, to: targetIdx })
+  }
+  touchStart.value = null
 }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .game-wrapper {
   max-width: 750px;
   margin: 10px auto;
   padding: 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
   &__top {
     display: flex;
     justify-content: space-between;
@@ -227,29 +135,24 @@ export default {
     color: #e0e0e0;
     border: 1px solid #2a2a4a;
   }
-
   &__name {
     margin: 0;
     font-size: 22px;
     letter-spacing: 0.5px;
   }
-
   &__points {
     margin: 0;
     font-size: 18px;
-
     b {
       color: #f7d354;
       font-size: 22px;
     }
   }
-
   &__btns {
     display: flex;
     gap: 8px;
     margin-bottom: 16px;
   }
-
   &__field {
     display: grid;
     gap: 5px;
