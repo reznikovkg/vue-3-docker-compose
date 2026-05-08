@@ -10,13 +10,13 @@
       <button
         class="btn btn--green"
         :disabled="draging"
-        @click="spawnNumber"
+        @click="() => spawnNumber()"
       >
         + Число
       </button>
       <button
         class="btn btn--danger"
-        @click="restartGame"
+        @click="() => restartGame()"
       >
         Сбросить
       </button>
@@ -25,7 +25,7 @@
       class="game-wrapper__field"
       :style="{ 'grid-template-columns': `repeat(${grdiSize}, 1fr)` }"
       @dragover.prevent
-      @drop="onFieldDrop"
+      @drop="() => onFieldDrop()"
     >
       <CellItem
         v-for="(cell, i) in cells"
@@ -33,11 +33,11 @@
         :data="cell"
         :idx="i"
         :is-drag="draging"
-        @start-drag="onStartDrag"
-        @stop-drag="onStopDrag"
-        @cell-drop="onCellDrop"
-        @cell-touch-move="onCellTouchMove"
-        @cell-touch-end="onCellTouchEnd"
+        @start-drag="(data, idx) => onStartDrag(data, idx)"
+        @stop-drag="() => onStopDrag()"
+        @cell-drop="(idx) => onCellDrop(idx)"
+        @cell-touch-move="(evt, idx) => onCellTouchMove(evt, idx)"
+        @cell-touch-end="(evt, idx) => onCellTouchEnd(evt, idx)"
       />
     </div>
   </div>
