@@ -1,5 +1,5 @@
 <template>
-  <div class="car" :style="styles">
+  <div class="car" v-bind="$attrs" :style="styles">
     <div class="car__cuboid">
       <div class="car__cuboid__glass"/>
       <div class="car__cuboid__front"/>
@@ -12,10 +12,10 @@
       <div class="car__cuboid__back"/>
       <div class="car__cuboid__bottom"/>
     </div>
-    <div class="car__wheel1"/>
-    <div class="car__wheel2"/>
-    <div class="car__wheel3"/>
-    <div class="car__wheel4"/>
+    <div class="car__wheel" style="--y: -135%; --z: -8vw;"/>
+    <div class="car__wheel" style="--y: -135%; --z: 2vw;"/>
+    <div class="car__wheel" style="--y: -430%; --z: -8vw;"/>
+    <div class="car__wheel" style="--y: -430%; --z: 2vw;"/>
   </div>
 </template>
 
@@ -189,7 +189,7 @@ export default {
     }
   }
 
-  &__wheel1 {
+  &__wheel{
     position: absolute;
     width: 7vmin;
     height: 7vmin;
@@ -197,40 +197,7 @@ export default {
     background: radial-gradient(circle at 30% 30%, #2a2a2a, #0a0a0a);
     box-shadow: 0 0 0 0.4vmin #444, 0 0 0 0.8vmin #222, inset 0 0 0 0.2vmin #555;
     transform-style: preserve-3d;
-    transform: rotateY(-90deg) translateX(50%) translateY(-135%) translateZ(-8vw);
-  }
-
-  &__wheel2 {
-    position: absolute;
-    width: 7vmin;
-    height: 7vmin;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #2a2a2a, #0a0a0a);
-    box-shadow: 0 0 0 0.4vmin #444, 0 0 0 0.8vmin #222, inset 0 0 0 0.2vmin #555;
-    transform-style: preserve-3d;
-    transform: rotateY(-90deg) translateX(50%) translateY(-135%) translateZ(2vw);
-  }
-
-  &__wheel3 {
-    position: absolute;
-    width: 7vmin;
-    height: 7vmin;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #2a2a2a, #0a0a0a);
-    box-shadow: 0 0 0 0.4vmin #444, 0 0 0 0.8vmin #222, inset 0 0 0 0.2vmin #555;
-    transform-style: preserve-3d;
-    transform: rotateY(-90deg) translateX(50%) translateY(-430%) translateZ(-8vw);
-  }
-
-  &__wheel4 {
-    position: absolute;
-    width: 7vmin;
-    height: 7vmin;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #2a2a2a, #0a0a0a);
-    box-shadow: 0 0 0 0.4vmin #444, 0 0 0 0.8vmin #222, inset 0 0 0 0.2vmin #555;
-    transform-style: preserve-3d;
-    transform: rotateY(-90deg) translateX(50%) translateY(-430%) translateZ(2vw);
+    transform: rotateY(-90deg) translateX(50%) translateY(var(--y)) translateZ(var(--z));
   }
 }
 </style>
