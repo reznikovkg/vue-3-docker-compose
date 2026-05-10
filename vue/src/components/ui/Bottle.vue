@@ -1,5 +1,10 @@
 <template>
-  <div :class = "bottleClasses" @click = "() => onClick()">
+  <div
+    :class = "bottleClasses"
+    :style = "moveStyle"
+    @mousedown = "(e) => onMouseDown(e)"
+    @click = "() => onClick()"
+  >
     <div v-if = "isBlocked" class = "bottle__lock">Block</div>
     <div class = "bottle__inner">
       <div
@@ -35,12 +40,22 @@ export default {
       default: false
     }
   },
-  emits: ['select'],
+  emits: ['select', 'move-start', 'move-swap', 'move-end'],
+  data() {
+    return {
+      isMoving: false,
+      startX: 0,
+      startY: 0,
+      offsetX: 0,
+      offsetY: 0
+    }
+  },
   computed: {
     bottleClasses() {
       return ['bottle', {
         'bottle--selected': this.isSelected,
-        'bottle--blocked': this.isBlocked
+        'bottle--blocked': this.isBlocked,
+        'bottle--moving': this.isMoving
       }]
     },
     layerHeight() {
@@ -48,11 +63,62 @@ export default {
     },
     displayLayers() {
       return this.layers.slice().reverse()
+    },
+    moveStyle() {
+      if (!this.isMoving) return {}
+      return {
+        transform: `translate(${this.offsetX}px, ${this.offsetY}px)`,
+        zIndex: 1000,
+        transition: 'none', // Отключаем анимацию во время перетаскивания
+        position: 'relative'
+      }
     }
   },
   methods: {
     onClick() {
-      this.$emit('select')
+      if (!this.isMoving || (Math.abs(this.offsetX) < 3 && Math.abs(this.offsetY) < 3)) {
+        this.$emit('select')
+      }
+    },
+    onMouseDown(event) {
+      if (this.isBlocked) return
+      const rect = this.$el.getBoundingClientRect()
+      const initialMouseX = event.clientX
+      const initialMouseY = event.clientY
+      const shiftX = initialMouseX - rect.left
+      const shiftY = initialMouseY - rect.top
+      this.isMoving = false
+      const onMouseMove = (e) => {
+        if (!this.isMoving && (Math.abs(e.clientX - initialMouseX) > 3 || Math.abs(e.clientY - initialMouseY) > 3)) {
+          this.isMoving = true
+          this.$emit('move-start')
+        }
+        if (this.isMoving) {
+          const parentRect = this.$el.parentElement.getBoundingClientRect()
+          this.offsetX = e.clientX - shiftX - (this.$el.offsetLeft + parentRect.left)
+          this.offsetY = e.clientY - shiftY - (this.$el.offsetTop + parentRect.top)
+          const target = document.elementFromPoint(e.clientX, e.clientY)
+          const targetBottle = target?.closest('.bottle')
+          if (targetBottle && targetBottle !== this.$el) {
+            const targetIndex = Number(targetBottle.dataset.index)
+            if (!isNaN(targetIndex)) {
+              this.$emit('move-swap', targetIndex)
+            }
+          }
+        }
+      }
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup', onMouseUp)
+        if (this.isMoving) {
+          this.isMoving = false
+          this.offsetX = 0
+          this.offsetY = 0
+          this.$emit('move-end')
+        }
+      }
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
     }
   }
 }
@@ -67,9 +133,10 @@ export default {
   border-top: none;
   border-bottom-left-radius: 30px;
   border-bottom-right-radius: 30px;
-  cursor: pointer;
-  transition: transform 0.2s;
+  cursor: grab;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s;
   overflow: hidden; // Чтобы слои не выходили за скругления дна
+  user-select: none;
 
   &--selected {
     transform: translateY(-20px);
@@ -81,6 +148,7 @@ export default {
     flex-direction: column;
     justify-content: flex-end;
     height: 100%;
+    pointer-events: none;
   }
 
   &__layer {
@@ -102,6 +170,12 @@ export default {
     opacity: 0.2;
     cursor: not-allowed;
     filter: grayscale(1);
+  }
+
+  &--moving {
+     cursor: grabbing;
+     pointer-events: none;
+     opacity: 0.8;
   }
 }
 </style>
