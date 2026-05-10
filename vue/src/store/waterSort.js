@@ -162,5 +162,26 @@ export default {
     tickTimer: ({commit}) => {
       commit(MUTATIONS.TICK_TIMER);
     },
+    moveBottle({ state, commit }, { fromIndex, toIndex }) {
+      const newBottles = [...state.bottles];
+      const movedBottle = newBottles.splice(fromIndex, 1)[0];
+      newBottles.splice(toIndex, 0, movedBottle);
+      commit('SET_BOTTLES', newBottles);
+      if (state.blockedBottleIndex !== null) {
+        if (state.blockedBottleIndex === fromIndex) {
+          commit(MUTATIONS.SET_BLOCKED_BOTTLE, toIndex);
+        } else if (state.blockedBottleIndex === toIndex) {
+          if (fromIndex < toIndex) {
+            commit(MUTATIONS.SET_BLOCKED_BOTTLE, toIndex - 1);
+          } else {
+            commit(MUTATIONS.SET_BLOCKED_BOTTLE, toIndex + 1);
+          }
+        } else if (fromIndex < state.blockedBottleIndex && toIndex >= state.blockedBottleIndex) {
+          commit(MUTATIONS.SET_BLOCKED_BOTTLE, state.blockedBottleIndex - 1);
+        } else if (fromIndex > state.blockedBottleIndex && toIndex <= state.blockedBottleIndex) {
+          commit(MUTATIONS.SET_BLOCKED_BOTTLE, state.blockedBottleIndex + 1);
+        }
+      }
+    },
   }
 }
