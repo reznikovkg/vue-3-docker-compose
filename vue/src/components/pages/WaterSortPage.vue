@@ -13,15 +13,21 @@
     </div>
 
     <div class = "game__container">
-      <Bottle
-        v-for = "(bottle, index) in getBottle"
-        :key = "index"
-        :layers = "bottle"
-        :is-selected = "getSelected === index"
-        :is-blocked = "getBlockedBottle === index"
-        :max-layers = "4"
-        @select = "() => onBottleClick(index)"
-      />
+      <div class = "game__wrapper">
+        <Bottle
+          v-for = "(bottle, index) in getBottle"
+          :key = "bottleKey(bottle)"
+          :layers = "bottle"
+          :is-selected = "getSelected === index"
+          :is-blocked = "getBlockedBottle === index"
+          :max-layers = "4"
+          @select = "() => onBottleClick(index)"
+          @move-start = "() => onMoveStart(index)"
+          @move-swap = "(targetIndex) => onMoveEnter(targetIndex)"
+          @move-end = "() => onMoveEnd()"
+          :data-index = "index"
+        />
+      </div>
     </div>
 
     <div class = "game__controls">
@@ -55,7 +61,6 @@
 import { mapGetters, mapActions } from 'vuex'
 import Bottle from './../ui/Bottle.vue'
 import Btn from './../ui/Btn.vue'
-
 export default {
   name: 'WaterSortPage',
   components: {
@@ -64,7 +69,10 @@ export default {
   },
   data() {
     return {
-      timerInterval: null
+      timerInterval: null,
+      movedBottleIndex: null,
+      bottleKeyMap: new WeakMap(),
+      nextId: 0
     }
   },
   computed: {
@@ -88,7 +96,8 @@ export default {
       'initGame',
       'handleBottleClick',
       'tickTimer',
-      'toggleHardMode'
+      'toggleHardMode',
+      'moveBottle'
     ]),
     startTimer() {
       this.stopTimer()
@@ -110,10 +119,12 @@ export default {
       return `${m}:${s}`;
     },
     onRestart() {
+      this.resetKeys();
       this.initGame();
       this.stopTimer();
     },
     onToggleMode() {
+      this.resetKeys();
       this.toggleHardMode();
       this.stopTimer();
     },
@@ -124,6 +135,31 @@ export default {
       } else if (!this.getIsTimerRunning && this.timerInterval) {
         this.stopTimer();
       }
+    },
+    resetKeys() {
+      this.bottleKeyMap = new WeakMap();
+      this.nextId = 0;
+    },
+    bottleKey(bottleArray) {
+      if (!this.bottleKeyMap.has(bottleArray)) {
+        this.bottleKeyMap.set(bottleArray, this.nextId++);
+      }
+      return this.bottleKeyMap.get(bottleArray);
+    },
+    onMoveStart(index) {
+      this.movedBottleIndex = index;
+    },
+    onMoveEnter(toIndex) {
+      if (this.movedBottleIndex !== null && this.movedBottleIndex !== toIndex) {
+        this.moveBottle({
+          fromIndex: this.movedBottleIndex,
+          toIndex: toIndex
+        });
+        this.movedBottleIndex = toIndex;
+      }
+    },
+    onMoveEnd() {
+      this.movedBottleIndex = null;
     },
   }
 }
@@ -172,5 +208,13 @@ export default {
       color: #555;
     }
   }
+  &__wrapper {
+    display: flex;
+    gap: 20px;
+    position: relative;
+  }
+}
+.move-list-move {
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 </style>
