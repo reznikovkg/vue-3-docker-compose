@@ -166,7 +166,7 @@ export default {
       const newBottles = [...state.bottles];
       const movedBottle = newBottles.splice(fromIndex, 1)[0];
       newBottles.splice(toIndex, 0, movedBottle);
-      commit('SET_BOTTLES', newBottles);
+      commit(MUTATIONS.SET_BOTTLES, newBottles);
       if (state.blockedBottleIndex !== null) {
         if (state.blockedBottleIndex === fromIndex) {
           commit(MUTATIONS.SET_BLOCKED_BOTTLE, toIndex);
