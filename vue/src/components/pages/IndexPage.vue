@@ -4,28 +4,31 @@
   </div>
   <div class="water"/>
   <Boat/>
-  <Inventory/>
+  <BottomInventory/>
   <Location/>
   <MiniGame/>
   <Shop v-if="getIsShopping"/>
+  <SideInventory/>
 </template>
 
 <script>
 import Boat from './../ui/Boat.vue'
-import Inventory from './../ui/Inventory.vue'
+import BottomInventory from './../ui/BottomInventory.vue'
 import Location from './../ui/Location.vue'
 import MiniGame from './../ui/MiniGame.vue'
 import Shop from './../ui/Shop.vue'
+import SideInventory from './../ui/SideInventory.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'IndexPage',
   components: {
     Boat,
-    Inventory,
+    BottomInventory,
     Location,
     MiniGame,
-    Shop
+    Shop,
+    SideInventory
   },
   data() {
     return {
