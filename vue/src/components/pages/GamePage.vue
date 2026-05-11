@@ -32,6 +32,11 @@
                 :label = "'Колба ' + (index + 1)"
                 :max-layers = "getMaxLayers"
                 @click = "() => handleFlaskClick(index)"
+                draggable = "true"
+                @dragstart = "(e) => handleDragStart(e, index)"
+                @dragover = "(e) => handleDragOver(e)"
+                @drop = "(e) => handleDrop(e, index)"
+                @dragend = "(e) => handleDragEnd(e)"
             />
         </div>
         <div class="game__controls">
@@ -143,6 +148,34 @@ export default {
             this.setHardMode(false)
             this.setBlockedFlask(null)
             this.initGame()
+        },
+        handleDragStart(event, index) {
+            if (!this.getGameStarted) {
+                if (this.getHardMode && this.getBlockedFlask === index) {
+                    event.preventDefault()
+                    return
+                }
+                event.dataTransfer.setData('text/plain', index)
+                event.target.style.opacity = '0.5'
+            } else {
+                event.preventDefault()
+            }
+        },
+        handleDragOver(event) {
+            event.preventDefault()
+            event.dataTransfer.dropEffect = 'move'
+        },
+        handleDrop(event, toIndex) {
+            event.preventDefault()
+            if (!this.getGameStarted) {
+                const fromIndex = parseInt(event.dataTransfer.getData('text/plain'))
+                if (fromIndex !== toIndex) {
+                    console.log('Drop: ', fromIndex, ' -> ', toIndex) //временно
+                }
+            }
+        },
+        handleDragEnd(event) {
+            event.target.style.opacity = '1'
         }
     },
     mounted() {
