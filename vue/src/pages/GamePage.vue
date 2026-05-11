@@ -113,6 +113,14 @@
       <p>Нажмите на башню для выбора и улучшения</p>
       <p>Используйте стрелки для перемещения врагов</p>
     </div>
+
+    <div v-if="isGameOver" class="game-over-overlay" @click.stop>
+      <div class="game-over-content">
+        <h2>Игра окончена!</h2>
+        <p>Противник прорвался. Вы проиграли.</p>
+        <button class="game-over-btn" @click.stop="restartGame"> Начать заново</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -204,6 +212,7 @@ export default {
       'getSelectedTower',
       'getCoins',
       'getTowerPositions',
+      'isGameOver',
     ]),
   },
   mounted() {
@@ -236,15 +245,29 @@ export default {
       'selectTower',
       'setEnemies',
       'addCoins',
+      'setGameOver',
+      'resetGame',
     ]),
+    stopAllLoops() {
+      if (this.towerShootInterval) { clearInterval(this.towerShootInterval); this.towerShootInterval = null; }
+      if (this.waveInterval) { clearInterval(this.waveInterval); this.waveInterval = null; }
+      if (this.animationFrameId) { cancelAnimationFrame(this.animationFrameId); this.animationFrameId = null; }
+    },
     changeLevel(level) {
       if (this.currentLevel === level) return;
-
-      this.clearEnemies();
+      this.stopAllLoops();
+      this.setEnemies([]);
       this.getTowers.forEach(t => this.removeTower(t.id));
       this.selectTower(null);
       this.currentLevel = level;
+      this.enemiesSpawned = 0;
       this.loadLevel(level);
+      
+      this.$nextTick(() => {
+        this.towerShooting();
+        this.startEnemyMovement();
+        this.startWaveSpawner();
+      });
     },
 
     loadLevel(levelNum) {
@@ -299,27 +322,32 @@ export default {
     },
     towerShooting() {
       this.towerShootInterval = setInterval(() => {
-        const currentEnemies = [...this.getEnemies];
+        if (this.isGameOver) {
+          clearInterval(this.towerShootInterval);
+          this.towerShootInterval = null;
+          return;
+        }
+        
         let coinsEarned = 0;
-        this.getTowers.forEach(tower => {
-          const target = currentEnemies.find(enemy => {
+        const updatedEnemies = this.getEnemies.map(enemy => {
+          let currentHealth = enemy.health;
+          this.getTowers.forEach(tower => {
             const dx = enemy.x - tower.x;
             const dy = enemy.y - tower.y;
-            return Math.sqrt(dx * dx + dy * dy) <= tower.range;
-          });
-          
-          if (target) {
-            target.health -= tower.damage;
-            if (target.health <= 0) {
-              coinsEarned += target.reward || 10;
+            if (Math.sqrt(dx * dx + dy * dy) <= tower.range) {
+              currentHealth -= tower.damage;
             }
+          });
+
+          if (currentHealth <= 0) {
+            coinsEarned += enemy.reward || 10;
+            return null;
           }
-        });
-        const aliveEnemies = currentEnemies.filter(e => e.health > 0);
-        this.setEnemies(aliveEnemies);
-        if (coinsEarned > 0) {
-          this.addCoins(coinsEarned);
-        }
+          return { ...enemy, health: currentHealth };
+        }).filter(Boolean);
+
+        this.setEnemies(updatedEnemies);
+        if (coinsEarned > 0) this.addCoins(coinsEarned);
       }, 1000);
     },
 
@@ -327,14 +355,37 @@ export default {
       this.enemiesSpawned = 0
       const spawnInterval = this.currentLevel === 1 ? 10000 : 800
       this.waveInterval = setInterval(() => {
+        if (this.isGameOver) {
+          clearInterval(this.waveInterval)
+          return
+        }
+
         if (this.enemiesSpawned < this.maxEnemiesPerWave) {
           const type = this.enemyTypes[Math.floor(Math.random() * this.enemyTypes.length)];
           this.addTestEnemy(type)
           this.enemiesSpawned++
         } else {
-          clearInterval(this.waveInterval)
+          if (this.enemiesSpawned >= this.maxEnemiesPerWave) {
+             clearInterval(this.waveInterval);
+          }
         }
       }, spawnInterval)
+    },
+
+    restartGame() {
+      this.stopAllLoops();
+      this.resetGame();
+      this.currentLevel = 1;
+      this.enemiesSpawned = 0;
+      this.selectedEnemy = null;
+      this.selectTower(null);
+      this.loadLevel(1);
+
+      this.$nextTick(() => {
+        this.towerShooting();
+        this.startEnemyMovement();
+        this.startWaveSpawner();
+      });
     },
 
     addTestEnemy(type = 'basic') {
@@ -383,49 +434,69 @@ export default {
 
     startEnemyMovement() {
       const move = () => {
+        if (this.isGameOver) {
+          this.stopAllLoops();
+          return;
+        }
+
         if (this.getEnemies.length === 0) {
-          this.animationFrameId = requestAnimationFrame(move)
-          return
+          this.animationFrameId = requestAnimationFrame(move);
+          return;
         }
 
-      const updatedEnemies = this.getEnemies.map(enemy => {
-        if (!enemy.routeId) return enemy
-        
-        const route = this.getLevel.routes.find(r => r.id === enemy.routeId)
-        if (!route || !route.points || route.points.length === 0) return enemy
+        let reachedEnd = false;
+        const updatedEnemies = this.getEnemies.map(enemy => {
+          if (!enemy.routeId) return enemy;
+          
+          const route = this.getLevel.routes.find(r => r.id === enemy.routeId);
+          if (!route || !route.points || route.points.length === 0) return enemy;
 
-        const nextIndex = enemy.currentPointIndex + 1
-        const nextPoint = route.points[nextIndex]
-        if (!nextPoint) {
-          return null
-        }
-        const dx = nextPoint.x - enemy.x
-        const dy = nextPoint.y - enemy.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        const speed = enemy.speed || 1.5
+          const nextIndex = enemy.currentPointIndex + 1;
+          const nextPoint = route.points[nextIndex];
 
-        let newX, newY, newIndex
-        
-        if (dist <= speed) {
-          newX = nextPoint.x
-          newY = nextPoint.y
-          newIndex = nextIndex
-        } else {
-          newX = enemy.x + (dx / dist) * speed
-          newY = enemy.y + (dy / dist) * speed
-          newIndex = enemy.currentPointIndex
+          if (!nextPoint) {
+            reachedEnd = true;
+            return null;
+          }
+          
+          const dx = nextPoint.x - enemy.x;
+          const dy = nextPoint.y - enemy.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const speed = enemy.speed || 1.5;
+
+          let newX, newY, newIndex;
+          if (dist <= speed) {
+            newX = nextPoint.x;
+            newY = nextPoint.y;
+            newIndex = nextIndex;
+          } else {
+            newX = enemy.x + (dx / dist) * speed;
+            newY = enemy.y + (dy / dist) * speed;
+            newIndex = enemy.currentPointIndex;
+          }
+          return { ...enemy, x: newX, y: newY, currentPointIndex: newIndex };
+        }).filter(Boolean);
+
+        this.setEnemies(updatedEnemies);
+
+        if (reachedEnd) {
+          console.log('Враг дошёл до конца! Game Over');
+          console.log('isGameOver сейчас:', this.isGameOver);
+          
+          this.stopAllLoops();
+          this.setGameOver();
+          
+          setTimeout(() => {
+            console.log('isGameOver после setGameOver:', this.isGameOver);
+          }, 100);
+          
+          return;
         }
-        return {
-          ...enemy,
-          x: newX,
-          y: newY,
-          currentPointIndex: newIndex
-        }
-      }).filter(e => e !== null)
-      this.setEnemies(updatedEnemies)
-      this.animationFrameId = requestAnimationFrame(move)
-    }
-    this.animationFrameId = requestAnimationFrame(move)
+
+        this.animationFrameId = requestAnimationFrame(move);
+      };
+      
+      this.animationFrameId = requestAnimationFrame(move);
     },
   },
 }
@@ -604,5 +675,46 @@ export default {
       margin: 5px 0;
     }
   }
+
+  .game-over-overlay {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.85) !important;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999 !important;
+  backdrop-filter: blur(5px);
+}
+
+.game-over-content {
+  background: #16213e;
+  padding: 40px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(233, 69, 96, 0.6);
+  border: 2px solid #e94560;
+
+  h2 { color: #e94560; font-size: 32px; margin: 0 0 10px; }
+  p { color: #ccc; font-size: 18px; margin: 0 0 25px; }
+}
+
+.game-over-btn {
+  padding: 12px 35px;
+  background: #e94560;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+
+  &:hover {
+    background: #c73e54;
+    transform: scale(1.05);
+  }
+}
 }
 </style>
