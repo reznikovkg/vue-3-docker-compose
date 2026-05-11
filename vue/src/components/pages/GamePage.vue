@@ -122,7 +122,8 @@ export default {
             'setBlockedFlask',
             'setBestTimes',
             'setHardModeBestTimes',
-            'setCurrentFlask'
+            'setCurrentFlask',
+            'reorderFlasks'
         ]),
         formatTime(seconds){
             const minutes = Math.floor(seconds / 60);
@@ -170,7 +171,7 @@ export default {
             if (!this.getGameStarted) {
                 const fromIndex = parseInt(event.dataTransfer.getData('text/plain'))
                 if (fromIndex !== toIndex) {
-                    console.log('Drop: ', fromIndex, ' -> ', toIndex) //временно
+                    this.reorderFlasks({ from: fromIndex, to: toIndex })
                 }
             }
         },
@@ -229,6 +230,19 @@ export default {
         flex-wrap: wrap;
         justify-content: center;
         margin-bottom: 30px;
+        :deep(.flask[draggable="true"]) {
+            cursor: grab;
+            user-select: none;
+            transition: opacity 0.2s;
+
+            &:active {
+                cursor: grabbing;
+            }
+        }
+  
+        :deep(.flask--blocked) {
+            cursor: not-allowed !important;
+        }
     }
 
     &__controls {
