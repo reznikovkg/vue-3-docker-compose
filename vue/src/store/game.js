@@ -8,7 +8,8 @@ const MUTATIONS = {
     SET_HARD_MODE_BEST_TIMES: 'SET_HARD_MODE_BEST_TIMES',
     SET_HARD_MODE: 'SET_HARD_MODE',
     SET_BLOCKED_FLASK: 'SET_BLOCKED_FLASK',
-    SET_GAME_STARTED: 'SET_GAME_STARTED'
+    SET_GAME_STARTED: 'SET_GAME_STARTED',
+    REORDER_FLASKS: 'REORDER_FLASKS'
 }
 
 export default {
@@ -96,6 +97,10 @@ export default {
         },
         [MUTATIONS.SET_GAME_STARTED]: (state, started) => {
             state.gameStarted = started
+        },
+        [MUTATIONS.REORDER_FLASKS]: (state, { from, to }) => {
+            const item = state.flasks.splice(from, 1)[0]
+            state.flasks.splice(to, 0, item)
         }
     },
     actions: {
@@ -232,6 +237,11 @@ export default {
         },
         setCurrentFlask({ commit }, index) {
             commit(MUTATIONS.SET_CURRENT_FLASK, index)
+        },
+        reorderFlasks({ commit, state }, { from, to }) {
+            if (state.gameStarted) return
+            if (state.hardMode && state.blockedFlask === from) return
+            commit(MUTATIONS.REORDER_FLASKS, { from, to })
         }
     }
 }
