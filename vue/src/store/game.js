@@ -4,8 +4,10 @@ const MUTATIONS = {
   SET_POINTS: 'SET_POINTS',
   SET_GAME_STATUS: 'SET_GAME_STATUS',
   PUSH_BULLET: 'PUSH_BULLET',
+  PUSH_ENEMY_BULLET: 'PUSH_ENEMY_BULLET',
   PUSH_ENEMY: 'PUSH_ENEMY',
   DELETE_BULLET: 'DELETE_BULLET',
+  DELETE_ENEMY_BULLET: 'DELETE_ENEMY_BULLET',
   DELETE_ENEMY: 'DELETE_ENEMY'
 }
 
@@ -38,6 +40,7 @@ export default {
     getCoords: (state) => state.coords,
     getPoints: (state) => state.points,
     getBullets: (state) => state.bullets,
+    getEnemyBullets: (state) => state.enemyBullets,
     getEnemies: (state) => state.enemies,
     getGameStatus: (state) => state.gameStatus,
     getPause: (state) => state.pause
@@ -58,11 +61,17 @@ export default {
     [MUTATIONS.PUSH_BULLET]: (state, payload) => {
       state.bullets.push(payload)
     },
+    [MUTATIONS.PUSH_ENEMY_BULLET]: (state, payload) => {
+      state.enemyBullets.push(payload)
+    },
     [MUTATIONS.PUSH_ENEMY]: (state, payload) => {
       state.enemies.push(payload)
     },
     [MUTATIONS.DELETE_BULLET]: (state, payload) => {
       state.bullets = state.bullets.filter(bullet => bullet.id !== payload)
+    },
+    [MUTATIONS.DELETE_ENEMY_BULLET]: (state, payload) => {
+      state.enemyBullets = state.enemyBullets.filter(bullet => bullet.id !== payload)
     },
     [MUTATIONS.DELETE_ENEMY]: (state, payload) => {
       state.enemies = state.enemies.filter(enemy => enemy.id !== payload)
@@ -86,6 +95,27 @@ export default {
         vy
       })
     },
+    pushEnemyBullet: ({ state, commit }, payload) => {
+      if (!state.gameStatus) {
+        return
+      }
+      state.enemies.forEach(enemy => {
+        if (enemy.type === "archer") {
+          const dx = payload.playerX - enemy.x
+          const dy = payload.playerY - enemy.y
+          const length = Math.sqrt(dx * dx + dy * dy)
+          const vx = (dx / length) * 4
+          const vy = (dy / length) * 4
+          commit(MUTATIONS.PUSH_ENEMY_BULLET, {
+            id: Math.random(),
+            x: enemy.x,
+            y: enemy.y,
+            vx,
+            vy
+          })
+        }
+      })
+    },
     moveBullets: ({ state, commit }, payload) => {
       if (!state.gameStatus) {
         return
@@ -105,8 +135,33 @@ export default {
             commit(MUTATIONS.DELETE_BULLET, bullet.id)
           }
         })
-        if (bullet.x > window.innerWidth || bullet.x < 0 || bullet.y > window.innerHeight || bullet.y < 0) {
+        const dxPlayer = Math.abs(bullet.x - state.coords.x)
+        const dyPlayer = Math.abs(bullet.y - state.coords.y)
+        const distance = Math.sqrt(dxPlayer * dxPlayer + dyPlayer * dyPlayer)
+        if (distance > 2000) {
           commit(MUTATIONS.DELETE_BULLET, bullet.id)
+        }
+      })
+    },
+    moveEnemyBullets: ({ state, commit }, payload) => {
+      if (!state.gameStatus) {
+        return
+      }
+      state.enemyBullets.forEach(bullet => {
+        bullet.x += bullet.vx
+        bullet.y += bullet.vy
+        const dx = bullet.x - state.coords.x
+        const dy = bullet.y - state.coords.y
+        const length = Math.sqrt(dx * dx + dy * dy)
+        if (length < HITBOXES.player) {
+          state.health -= 20
+          commit(MUTATIONS.DELETE_ENEMY_BULLET, bullet.id)
+        }
+        const dxPlayer = Math.abs(bullet.x - state.coords.x)
+        const dyPlayer = Math.abs(bullet.y - state.coords.y)
+        const distance = Math.sqrt(dxPlayer * dxPlayer + dyPlayer * dyPlayer)
+        if (distance > 2000) {
+          commit(MUTATIONS.DELETE_ENEMY_BULLET, bullet.id)
         }
       })
     },
@@ -160,6 +215,10 @@ export default {
         const dx = payload.playerX - enemy.x
         const dy = payload.playerY - enemy.y
         const length = Math.sqrt(dx * dx + dy * dy)
+        const archerDistance = 400
+        if (length < archerDistance && enemy.type === "archer") {
+          return
+        }
         if (length < HITBOXES.enemy + HITBOXES.player) {
           commit(MUTATIONS.DELETE_ENEMY, enemy.id)
           commit(MUTATIONS.SET_GAME_STATUS, false)

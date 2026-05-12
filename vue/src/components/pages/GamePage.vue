@@ -1,6 +1,7 @@
 <template>
   <div class="map" @mousemove="(e) => handleMouseCoords(e)">
     <Bullet v-for="bullet in getBullets" :key="bullet.id" :x="cameraOffsetX(bullet.x)" :y="cameraOffsetY(bullet.y)" :id="bullet.id" />
+    <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
     <div class="map__player" />
     <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :id="enemy.id" />
     <div v-if="!getGameStatus" class="map__over">
@@ -40,6 +41,7 @@ export default {
       'getCoords',
       'getPoints',
       'getBullets',
+      'getEnemyBullets',
       'getEnemies',
       'getGameStatus'
     ])
@@ -55,12 +57,14 @@ export default {
   methods: {
     ...mapActions('game', [
       'pushBullet',
+      'pushEnemyBullet',
       'pushEnemy',
       'moveLeft',
       'moveRight',
       'moveUp',
       'moveDown',
       'moveBullets',
+      'moveEnemyBullets',
       'moveEnemies',
       'setGameStatus'
     ]),
@@ -106,8 +110,17 @@ export default {
         })
       }, 600)
       setInterval(() => {
+        this.pushEnemyBullet({
+          playerX: this.getCoords.x,
+          playerY: this.getCoords.y
+        })
+      }, 1600)
+      setInterval(() => {
         this.moveBullets()
       }, 16)
+      setInterval(() => {
+        this.moveEnemyBullets()
+      }, 32)
     },
     enemyMovement () {
       setInterval(() => {
