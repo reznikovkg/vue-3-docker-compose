@@ -8,13 +8,7 @@
           <div class="shop__content__list__item__cell">
             <img class="shop__content__list__item__cell__image" :src="tackle.image" width="70px" :alt="tackle.name">
           </div>
-          <div class="shop__content__list__item__buttons">
-            <button class="shop__content__list__item__buttons__button" v-if="!tackle.isOwned" @click="() => tradeTackle({index: index, buy: true})" :disabled="isDisabled(tackle, 1)">buy</button>
-            <button class="shop__content__list__item__buttons__button" v-else @click="() => equipTackle(index)" :disabled="tackle.isActive">{{ tackle.isActive ? 'equipped' : 'equip' }}</button>
-          </div>
-          <div class="shop__content__list__item__buttons">
-            <button class="shop__content__list__item__buttons__button" v-if="tackle.isOwned" @click="() => tradeTackle({index: index, buy: false})">sell</button>
-          </div>
+          <Buttons :button-rows="getTackleButtons(tackle, index)"/>
         </div>
       </div>
       <div class="shop__content__list">
@@ -22,13 +16,7 @@
           <div class="shop__content__list__item__cell">
             <img class="shop__content__list__item__cell__image" :src="bait.image" width="70px" :alt="bait.name">
           </div>
-          <div class="shop__content__list__item__buttons">
-            <button class="shop__content__list__item__buttons__button" v-for="count in countArray" @click="() => tradeBait({index: index, count: count})" :disabled="isDisabled(bait, count)">{{ count <= 0 ? count : '+' + count }}</button>
-          </div>
-          <div class="shop__content__list__item__buttons">
-            <button class="shop__content__list__item__buttons__button" @click="() => tradeBait({index: index, count: -bait.count})" :disabled="isDisabled(bait, -1)">min</button>
-            <button class="shop__content__list__item__buttons__button" @click="() => tradeBait({index: index, count: Math.floor(getBalance / bait.price)})" :disabled="isDisabled(bait, 1)">max</button>
-          </div>
+          <Buttons :button-rows="getBaitButtons(bait, index)"/>
         </div>
       </div>
     </div>
@@ -37,9 +25,13 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import Buttons from './../ui/Buttons.vue'
 
 export default {
   name: 'Shop',
+  components: {
+    Buttons
+  },
   data() {
     return {
       countArray: [-10, -1, 1, 10]
@@ -62,6 +54,46 @@ export default {
     ]),
     isDisabled(object, count) {
       return (count === 0 || (count > 0 ? this.getBalance < object.price * count : object.count < -count))
+    },
+    getTackleButtons(tackle, index) {
+      let rows = []
+      if(!tackle.isOwned)
+        rows.push([{
+          text: 'buy',
+          action: () => this.tradeTackle({index: index, buy: true}),
+          disabled: this.isDisabled(tackle, 1)
+        }])
+      else
+        rows.push([{
+          text: tackle.isActive ? 'equipped' : 'equip',
+          action: () => this.equipTackle(index),
+          disabled: tackle.isActive
+        }])
+      if(tackle.isOwned)
+        rows.push([{
+          text: 'sell',
+          action: () => this.tradeTackle({index: index, buy: false}),
+          disabled: false
+        }])
+      return rows
+    },
+    getBaitButtons(bait, index) {
+      let rows = []
+      rows.push(this.countArray.map(count => ({
+        text: count <= 0 ? count : '+' + count,
+        action: () => this.tradeBait({index: index, count: count}),
+        disabled: this.isDisabled(bait, count)
+      })))
+      rows.push([{
+        text: 'min',
+        action: () => this.tradeBait({index: index, count: -bait.count}),
+        disabled: this.isDisabled(bait, -1)
+      }, {
+        text: 'max',
+        action: () => this.tradeBait({index: index, count: Math.floor(this.getBalance / bait.price)}),
+        disabled: this.isDisabled(bait, 1)
+      }])
+      return rows
     }
   }
 }
@@ -152,28 +184,6 @@ export default {
 
           &__image {
             image-rendering: pixelated;
-          }
-        }
-
-        &__buttons {
-          display: flex;
-          gap: 4px;
-
-          &__button {
-            border: 2px solid rgb(25, 175, 175);
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-            background-color: rgb(111, 255, 255);
-
-            &:active {
-              border: 2px solid rgb(111, 255, 255);
-            }
-
-            &:disabled {
-              border: 2px solid rgb(100, 175, 175);
-              background-color: rgb(100, 175, 175);
-            }
           }
         }
       }
