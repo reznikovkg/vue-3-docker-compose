@@ -228,6 +228,9 @@ export default {
           state.bullets.forEach(deletedBullet => {
             commit(MUTATIONS.DELETE_BULLET, deletedBullet.id)
           })
+          state.enemyBullets.forEach(deletedBullet => {
+            commit(MUTATIONS.DELETE_ENEMY_BULLET, deletedBullet.id)
+          })
           commit(MUTATIONS.SET_X_COORD, window.innerWidth / 2)
           commit(MUTATIONS.SET_Y_COORD, window.innerHeight / 2)
         }
