@@ -6,12 +6,12 @@
         <button 
             class = "game-page__btn" 
             :class = "{ 'game-page__btn--active': currentLevel === 1 }" 
-            @click = "changeLevel(1)"
+            @click = "() => changeLevel(1)"
         >Уровень 1</button>
         <button 
           class = "game-page__btn" 
           :class = "{ 'game-page__btn--active': currentLevel === 2 }" 
-          @click = "changeLevel(2)"
+          @click = "() => changeLevel(2)"
         >Уровень 2</button>
         </div>
     </div>
@@ -294,10 +294,6 @@ export default {
       }
     },
     placeTower(position) {
-        console.log('Позиция:', position)
-        console.log('Монеты:', this.getCoins)
-        console.log('Текущие башни:', this.getTowers)
-
       const existingTower = this.getTowers.find(
         (t) => Math.abs(t.x - position.x) < 10 && Math.abs(t.y - position.y) < 10
       )
@@ -402,9 +398,6 @@ export default {
         currentPointIndex: 0,
       })
     },
-    clearEnemies() {
-     this.setEnemies([]);
-    }, 
     handleKeyPress(event) {
       if (!this.selectedEnemy) return
 
@@ -480,16 +473,8 @@ export default {
         this.setEnemies(updatedEnemies);
 
         if (reachedEnd) {
-          console.log('Враг дошёл до конца! Game Over');
-          console.log('isGameOver сейчас:', this.isGameOver);
-          
           this.stopAllLoops();
           this.setGameOver();
-          
-          setTimeout(() => {
-            console.log('isGameOver после setGameOver:', this.isGameOver);
-          }, 100);
-          
           return;
         }
 
