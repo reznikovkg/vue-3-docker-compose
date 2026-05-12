@@ -1,14 +1,21 @@
 import { createWebHistory, createRouter } from 'vue-router'
 import GamePage from './../components/pages/GamePage.vue'
+import EditorPage from './../components/pages/EditorPage.vue'
 
 export const ROUTES = {
-  GAME: 'GAME',
+  EDITOR: 'EDITOR',
+  GAME: 'GAME'
 }
 
 const routes = [
   {
-    name: ROUTES.GAME,
+    name: ROUTES.EDITOR,
     path: '/',
+    component: EditorPage
+  },
+  {
+    name: ROUTES.GAME,
+    path: '/game',
     component: GamePage
   },
 ]

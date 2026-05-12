@@ -24,6 +24,7 @@
         :row="cell.row" 
         :col="cell.col" 
         :cellSize="cellSize"
+        :color="currentFigure.color"
       />
     </div>
   

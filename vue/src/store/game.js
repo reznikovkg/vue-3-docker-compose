@@ -15,6 +15,16 @@ const MUTATIONS = {
   RESET_FIGURE: 'RESET_FIGURE', //сброс фигуры
   ADD_BOMB: 'ADD_BOMB', //добавить бомбу
   REMOVE_BOMB: 'REMOVE_BOMB', //удалить бомбу
+  SET_CURRENT_FIGURE_CELLS: 'SET_CURRENT_FIGURE_CELLS',// установка клеток редактируемой фигуры
+  SET_CURRENT_FIGURE_COLOR: 'SET_CURRENT_FIGURE_COLOR',//установка цвета редактируемой фигуры
+  ADD_CUSTOM_FIGURE: 'ADD_CUSTOM_FIGURE',//добавление в список моих фигур
+  UPDATE_CUSTOM_FIGURE: 'UPDATE_CUSTOM_FIGURE',//обновление фигуры
+  REMOVE_CUSTOM_FIGURE: 'REMOVE_CUSTOM_FIGURE',//удаление фигуры
+  SET_CUSTOM_FIGURES: 'SET_CUSTOM_FIGURES',//замена списка фигур
+  SET_CURRENT_EDITING_FIGURE_ID: 'SET_CURRENT_EDITING_FIGURE_ID',//запоминаем ID фигуры, которую сейчас редактируем
+  RESET_CURRENT_FIGURE: 'RESET_CURRENT_FIGURE',//сброс редактора (очистить сетку, сбросить цвет, ID фигуры)
+  SET_SELECTED_FIGURES: 'SET_SELECTED_FIGURES',//сохранение выбранных 3 фигур для игры
+  SET_EMPTY_FIGURE_CELLS: 'SET_EMPTY_FIGURE_CELLS'//создание пустой матрицы
 }
 const FIGURE_TYPES = {
   SINGLE: 'SINGLE',      // одна клетка 
@@ -26,6 +36,29 @@ const FIGURE_SHAPES = {
   [FIGURE_TYPES.STICK]: [[0, 0], [1, 0], [2, 0]],      
   [FIGURE_TYPES.L_SHAPE]: [[0, 0], [0, 1], [1, 0]]     
 }
+const BASE_FIGURES = [
+  {
+    id: 'base_single',
+    name: 'Квадратик',
+    cells: FIGURE_SHAPES[FIGURE_TYPES.SINGLE],
+    color: '#333333',
+    isBase: true
+  },
+  {
+    id: 'base_stick',
+    name: 'Палочка',
+    cells: FIGURE_SHAPES[FIGURE_TYPES.STICK],
+    color: '#333333',
+    isBase: true
+  },
+  {
+    id: 'base_lshape',
+    name: 'Уголок',
+    cells: FIGURE_SHAPES[FIGURE_TYPES.L_SHAPE],
+    color: '#333333',
+    isBase: true
+  }
+]
 export default {
   namespaced: true,
   state: {
@@ -43,7 +76,6 @@ export default {
       baseCol: 5  //столбец базовой клетки
     },
     figure: {
-      type: null,
       cells: [],
       position: {
         row: -1,
@@ -59,7 +91,13 @@ export default {
       black: [],   // чёрные бомбы (сбрасывают остров)
       red: [],     // красные бомбы (-30 секунд)
       green: []    // зелёные бонусы (+10 секунд)
-    }
+    },
+    // Редактор фигур
+    customFigures: [],        // пользовательские фигуры
+    currentFigureCells: Array(4).fill().map(() => Array(4).fill(false)),  // текущая сетка 4x4
+    currentFigureColor: '#333333',  
+    currentEditingFigureId: null,   // id фигуры, которую редактируем
+    selectedFigures: []
   },
   getters: {
     islandCells: (state) => state.island.cells,
@@ -79,21 +117,25 @@ export default {
       if (state.gameMode === 'speed') return state.currentSpeed
       return state.baseSpeed
     },
-    bombs: (state) => state.bombs 
+    bombs: (state) => state.bombs,
+    allFigures: (state) => {
+      return [...BASE_FIGURES, ...state.customFigures]
+    },
+    currentFigureCells: (state) => state.currentFigureCells,
+    currentFigureColor: (state) => state.currentFigureColor,
+    customFigures: (state) => state.customFigures,
+    currentEditingFigureId: (state) => state.currentEditingFigureId,
   },
   mutations: {
     [MUTATIONS.SET_GAME_MODE]: (state, mode) => {
       state.gameMode = mode
     },
-
     [MUTATIONS.INCREMENT_FIGURES_SPAWNED]: (state) => {
       state.figuresSpawned++
     },
-
     [MUTATIONS.SET_CURRENT_SPEED]: (state, speed) => {
       state.currentSpeed = speed
     },
-
     [MUTATIONS.RESET_SPEED]: (state) => {
       state.currentSpeed = state.baseSpeed
       state.figuresSpawned = 0
@@ -101,7 +143,6 @@ export default {
     },
     [MUTATIONS.RESET_FIGURE]: (state) => {
       state.figure = {
-        type: null,
         cells: [],
         position: { row: -1, col: -1 },
         direction: null
@@ -140,7 +181,6 @@ export default {
         baseCol: center
       },
       state.figure = {
-        type: null,
         cells: [],
         position: {
           row: -1,
@@ -159,6 +199,49 @@ export default {
     },
     [MUTATIONS.REMOVE_BOMB]: (state, { type, index }) => {
       state.bombs[type].splice(index, 1)
+    },
+    // Редактор
+    [MUTATIONS.SET_CURRENT_FIGURE_CELLS]: (state, cells) => {
+      state.currentFigureCells = cells
+    },
+    [MUTATIONS.SET_CURRENT_FIGURE_COLOR]: (state, color) => {
+      state.currentFigureColor = color
+    },
+    [MUTATIONS.ADD_CUSTOM_FIGURE]: (state, figure) => {
+      state.customFigures.push({
+        ...figure,
+        cells: figure.cells
+      })
+    },
+    [MUTATIONS.UPDATE_CUSTOM_FIGURE]: (state, { id, cells, color }) => {
+      const index = state.customFigures.findIndex(f => f.id === id)
+      if (index !== -1) {
+        state.customFigures[index] = {
+          ...state.customFigures[index],
+          cells: cells,
+          color: color
+        }
+      }
+    },
+    [MUTATIONS.REMOVE_CUSTOM_FIGURE]: (state, id) => {
+      const index = state.customFigures.findIndex(f => f.id === id)
+      if (index !== -1) state.customFigures.splice(index, 1)
+    },
+    [MUTATIONS.SET_CUSTOM_FIGURES]: (state, figures) => {
+      state.customFigures = figures
+    },
+    [MUTATIONS.SET_CURRENT_EDITING_FIGURE_ID]: (state, id) => {
+      state.currentEditingFigureId = id
+    },
+    [MUTATIONS.RESET_CURRENT_FIGURE]: (state) => {
+      state.currentFigureColor = '#333333'
+      state.currentEditingFigureId = null
+    },
+    [MUTATIONS.SET_SELECTED_FIGURES]: (state, figures) => {
+      state.selectedFigures = figures
+    },
+    [MUTATIONS.SET_EMPTY_FIGURE_CELLS]: (state) => {
+      state.currentFigureCells = Array(4).fill().map(() => Array(4).fill(false))
     },
   },
   actions: {
@@ -236,9 +319,8 @@ export default {
           if (hitIsland) {
             if (type === 'black') {
               // чёрная: сбрасываем остров до одной клетки
-              const baseOnly = [[state.island.baseRow, state.island.baseCol]]
               const removedCount = state.island.cells.length - 1
-              commit(MUTATIONS.SET_ISLAND, baseOnly)
+              commit(MUTATIONS.SET_ISLAND, [[state.island.baseRow, state.island.baseCol]])
               commit(MUTATIONS.ADD_SCORE, -removedCount * 5)
             }
             else if (type === 'red') {
@@ -278,24 +360,22 @@ export default {
       }   while (side === state.lastSide && state.lastSide !== -1)
   
       commit(MUTATIONS.SET_LAST_SIDE, side)
-  
-      // выбираем случайный тип фигуры
-      const types = [FIGURE_TYPES.SINGLE, FIGURE_TYPES.STICK, FIGURE_TYPES.L_SHAPE]
-      const type = types[Math.floor(Math.random() * types.length)]
 
-      let cells = [...FIGURE_SHAPES[type]]
+      // выбор из выбранных пользователем
+      let cells = []
+      let color = '#333333'  
+      const selected = state.selectedFigures
 
-      if (type === FIGURE_TYPES.STICK) {
-        switch (side) {
-          case 2: // вылет слева - горизонтально
-            cells = [[0, 0], [0, 1], [0, 2]]
-            break
-          case 3: // вылет справа - горизонтально
-            cells = [[0, 0], [0, -1], [0, -2]]
-            break
-        }
+      if (selected.length === 0) {
+        const types = [FIGURE_TYPES.SINGLE, FIGURE_TYPES.STICK, FIGURE_TYPES.L_SHAPE]
+        const type = types[Math.floor(Math.random() * types.length)]
+        cells = [...FIGURE_SHAPES[type]]
+      } else {
+        const figure = selected[Math.floor(Math.random() * selected.length)]
+        cells = [...figure.cells]  
+        color = figure.color  
       }
-  
+
       let row, col, direction
   
       switch(side) {
@@ -345,8 +425,9 @@ export default {
       }
   
       const figure = {
-        type,
+        //type,
         cells,
+        color,
         position: { row, col },
         direction
       }
@@ -540,6 +621,165 @@ export default {
       } else {
         commit(MUTATIONS.SET_TIME, newTime)
       }
+    },
+    toggleCellInCurrentFigure: ({ commit, state }, { row, col }) => {
+      const newCells = []
+      for (let i = 0; i < state.currentFigureCells.length; i++) {
+        const newRow = []
+        for (let j = 0; j < state.currentFigureCells[i].length; j++) {
+          if (i === row && j === col) {
+            newRow.push(!state.currentFigureCells[i][j])
+          } else {
+            newRow.push(state.currentFigureCells[i][j])
+          }
+        }
+        newCells.push(newRow)
+      }
+      commit(MUTATIONS.SET_CURRENT_FIGURE_CELLS, newCells)
+    },
+    saveCurrentFigure: ({ commit, state }) => {
+      const isConnected = (grid) => {
+        const rows = 4
+        const cols = 4
+
+        let startRow = -1
+        let startCol = -1
+
+        for (let i = 0; i < rows; i++) {
+          for (let j = 0; j < cols; j++) {
+            if (grid[i][j]) {
+              startRow = i
+              startCol = j
+              break
+            }
+          }
+          if (startRow !== -1) break
+        }
+
+        if (startRow === -1) return false
+
+        const visited = Array(rows).fill().map(() => Array(cols).fill(false))
+        const queue = [[startRow, startCol]]
+
+        while (queue.length) {
+          const [x, y] = queue.shift()
+          if (visited[x][y]) continue
+          visited[x][y] = true
+
+          const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]]
+          for (const [dx, dy] of dirs) {
+            const nx = x + dx
+            const ny = y + dy
+            if (nx >= 0 && nx < rows && ny >= 0 && ny < cols) {
+              if (grid[nx][ny] && !visited[nx][ny]) {
+                queue.push([nx, ny])
+              }
+            }
+          }
+        }
+
+        for (let i = 0; i < rows; i++) {
+          for (let j = 0; j < cols; j++) {
+            if (grid[i][j] && !visited[i][j]) return false
+          }
+        }
+
+        return true
+      }
+
+      const matrixToCoordinates = (matrix) => {
+        const coords = []
+        for (let i = 0; i < matrix.length; i++) {
+          for (let j = 0; j < matrix[i].length; j++) {
+            if (matrix[i][j]) {
+              coords.push([i, j])
+            }
+          }
+        }
+        return coords
+      }
+
+      if (!isConnected(state.currentFigureCells)) {
+        alert('Фигура должна быть единым целым')
+        return false
+      }
+
+      const cellsCoords = matrixToCoordinates(state.currentFigureCells)
+
+      if (state.currentEditingFigureId) {
+        commit(MUTATIONS.UPDATE_CUSTOM_FIGURE, {
+          id: state.currentEditingFigureId,
+          cells: cellsCoords,
+          color: state.currentFigureColor
+        })
+      } else {
+        const newFigure = {
+          id: Date.now(),
+          cells: cellsCoords,
+          color: state.currentFigureColor,
+          isBase: false,
+          selected: false
+        }
+        commit(MUTATIONS.ADD_CUSTOM_FIGURE, newFigure)
+      }
+
+      commit(MUTATIONS.SET_EMPTY_FIGURE_CELLS)
+      commit(MUTATIONS.RESET_CURRENT_FIGURE)
+      return true
+    },
+    loadBaseFigureToEditor: ({ commit }, figure) => {
+      let cellsList = figure.cells
+
+      //центрирование только для базовых фигур 
+      if (figure.isBase && cellsList.length > 0) {
+        // найти минимальные координаты
+        let minRow = cellsList[0][0]
+        let minCol = cellsList[0][1]
+        let maxRow = cellsList[0][0]
+        let maxCol = cellsList[0][1]
+
+        for (let i = 0; i < cellsList.length; i++) {
+          const r = cellsList[i][0]
+          const c = cellsList[i][1]
+          if (r < minRow) minRow = r
+          if (r > maxRow) maxRow = r
+          if (c < minCol) minCol = c
+          if (c > maxCol) maxCol = c
+        }
+
+        const height = maxRow - minRow + 1
+        const width = maxCol - minCol + 1
+        const offsetRow = Math.floor((4 - height) / 2) - minRow
+        const offsetCol = Math.floor((4 - width) / 2) - minCol
+
+        const newCells = []
+        for (let i = 0; i < cellsList.length; i++) {
+          newCells.push([
+            cellsList[i][0] + offsetRow,
+            cellsList[i][1] + offsetCol
+          ])
+        }
+        cellsList = newCells
+      }
+
+      //преобразуем координаты в матрицу 4×4
+      const matrix = Array(4).fill().map(() => Array(4).fill(false))
+      for (let i = 0; i < cellsList.length; i++) {
+        const row = cellsList[i][0]
+        const col = cellsList[i][1]
+        if (row >= 0 && row < 4 && col >= 0 && col < 4) {
+          matrix[row][col] = true
+        }
+      }
+
+      commit(MUTATIONS.SET_CURRENT_FIGURE_CELLS, matrix)
+      commit(MUTATIONS.SET_CURRENT_FIGURE_COLOR, figure.color)
+      commit(MUTATIONS.SET_CURRENT_EDITING_FIGURE_ID, figure.isBase ? null : figure.id)
+    },
+
+    resetCurrentFigure: ({ commit }) => {
+      commit(MUTATIONS.SET_EMPTY_FIGURE_CELLS)
+      commit(MUTATIONS.RESET_CURRENT_FIGURE)
     }
   }
 }

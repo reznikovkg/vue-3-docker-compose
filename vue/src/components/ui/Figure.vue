@@ -1,7 +1,7 @@
 <template>
   <div 
-    class="figure"
-    :style="figureStyle"
+    class = "figure"
+    :style = "figureStyle"
   >
    ◼
   </div>
@@ -14,9 +14,13 @@ export default {
     row: Number,
     col: Number, 
     cellSize: {      
-    type: Number,
-    default: 35
-  }
+      type: Number,
+      default: 35
+    },
+    color: {        
+      type: String,
+      default: '#aa00ff'
+    }
   },
   computed: {
     //вычисление позиции фигуры
@@ -27,7 +31,8 @@ export default {
 
       return {
         left: this.col*offset + padding + 'px',
-        top: this.row*offset + padding + 'px'
+        top: this.row*offset + padding + 'px',
+        backgroundColor: this.color    
       }
     }
   }
@@ -39,7 +44,6 @@ export default {
   position: absolute;
   width: v-bind('cellSize + "px"');    
   height: v-bind('cellSize + "px"');    
-  background: rgb(174, 0, 255);
   color: white;
   display: flex;
   align-items: center;
