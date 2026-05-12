@@ -7,10 +7,23 @@
       class="PlayingField__cell"
       :class="{
         'has-figure': hasFigureAt(cell),
-        'has-island': isIslandAt(cell)
+        'has-island': isIslandAt(cell),
+        'has-bomb': hasBlackBombAt(cell)
       }">
       
       <div v-if="hasFigureAt(cell)" class="PlayingField__figure"></div>
+
+      <div v-if="hasBlackBombAt(cell)" class="PlayingField__bomb">
+        <img :src="blackBomb" class="PlayingField__bomb--img">
+      </div>
+
+      <div v-if="hasRedBombAt(cell)" class="PlayingField__bomb">
+        <img :src="redBomb" class="PlayingField__bomb--img">
+      </div>
+
+      <div v-if="hasGreenBombAt(cell)" class="PlayingField__bomb">
+        <img :src="greenBomb" class="PlayingField__bomb--img">
+      </div>
       
       <div 
       v-if="isIslandAt(cell)"
@@ -23,9 +36,23 @@
   </div>
 </template>
 
+
+
 <script lang="ts">
+
+import redBomb from '@/components/icons/icons8-bomb-80.png'
+import blackBomb from '@/components/icons/icons8-bomb-80(1).png'
+import greenBomb from '@/components/icons/icons8-bomb-80(2).png'
+
 export default{
     name: 'PlayingField',
+    data() {
+      return {
+        blackBomb,
+        greenBomb,
+        redBomb
+      }
+    },
     props:{
         fieldSize:{
             type: Number,
@@ -40,6 +67,10 @@ export default{
           default: () => ({row: -1, col: -1})
         },
         figures:{
+          type: Array as () => any[],
+          default: () => []
+        },
+        bombs:{
           type: Array as () => any[],
           default: () => []
         }
@@ -72,7 +103,16 @@ export default{
       isCoreCell(position: {row: number; col: number}){
         const base = this.islandPosition[0];
         return base && position.row === base.row && position.col === base.col;
-      }
+      },
+      hasBlackBombAt(position: {row: number; col: number}) {
+        return this.bombs.some(bomb => bomb.type === 'black' && bomb.row === position.row && bomb.col === position.col)
+      },
+      hasRedBombAt(position: {row: number; col: number}) {
+        return this.bombs.some(bomb => bomb.type === 'red' && bomb.row === position.row && bomb.col === position.col)
+      },
+      hasGreenBombAt(position: {row: number; col: number}) {
+        return this.bombs.some(bomb => bomb.type === 'green' && bomb.row === position.row && bomb.col === position.col)
+      },
   }
 }
 </script>
@@ -108,6 +148,22 @@ $cGray: #7c3939;
     z-index: 2;
     font-weight: bold;
     font-size: 24px;
+  }
+
+  &__bomb{
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    overflow: hidden;       
+    display: flex;           
+    align-items: center;     
+    justify-content: center; 
+
+    &--img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;  
+    }
   }
 
   &__island{

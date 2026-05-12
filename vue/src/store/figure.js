@@ -9,7 +9,11 @@ const MUTATIONS = {
   SET_FIGURE_SPEED: 'SET_FIGURE_SPEED',
   SET_HIGH_SCORE: 'SET_HIGH_SCORE',
   SET_BEST_TIME: 'SET_BEST_TIME',
-  SET_SPEED_BOOST_NEXT: 'SET_SPEED_BOOST_NEXT'
+  SET_SPEED_BOOST_NEXT: 'SET_SPEED_BOOST_NEXT',
+  SUBTRACT_SCORE: 'SUBTRACT_SCORE',
+  ADD_BOMB: 'ADD_BOMB',
+  REMOVE_BOMB: 'REMOVE_BOMB',
+  UPDATE_BOMB_POSITION: 'UPDATE_BOMB_POSITION',
 }
 
 export default {
@@ -17,6 +21,7 @@ export default {
   state () {
     return {
       figures: [],
+      bombs: [],
       isGameActive: true,
       score: 0,
       figureSpeed: 1,
@@ -32,6 +37,9 @@ export default {
     getScore: (state) => state.score,
     getSpawnInterval: (state) => state.spawnInterval,
     getFiguresCount: (state) => state.figures.length,
+    getFigureSpeed: (state) => state.figureSpeed,
+    getBombs: (state) => state.bombs,
+    getBombsCount: (state) => state.bombs.length,
   },
   mutations: {
     [MUTATIONS.ADD_FIGURE]: (state, payload) => {
@@ -55,8 +63,10 @@ export default {
     },
     [MUTATIONS.RESET_GAME]: (state, payload) => {
       state.figures = [],
+      state.bombs = [],
       state.isGameActive = false,
-      state.score = 0
+      state.score = 0,
+      state.figureSpeed = 1
     },
     [MUTATIONS.SET_SPAWN_INTERVAL]: (state, payload) => {
       state.spawnInterval = payload
@@ -75,7 +85,23 @@ export default {
     [MUTATIONS.SET_SPEED_BOOST_NEXT]: (state, payload) =>{
       state.speedBoostNextFigure = payload;
       console.log(`Флаг ускорения следующей фигуры = ${payload}`);
-    }
+    },
+    [MUTATIONS.SUBTRACT_SCORE]: (state, payload) => {
+      state.score = Math.max(0, state.score - payload)
+    },
+    [MUTATIONS.ADD_BOMB]: (state, payload) => {
+      state.bombs.push(payload)
+    },
+    [MUTATIONS.REMOVE_BOMB]: (state, payload) => {
+      state.bombs = state.bombs.filter(bomb => bomb.id !== payload)
+    },
+    [MUTATIONS.UPDATE_BOMB_POSITION]: (state, {id, row, col}) => {
+      const bomb = state.bombs.find(b => b.id === id)
+      if (bomb) {
+        bomb.row = row,
+        bomb.col = col
+      }
+    },
   },
   actions: {
     spawnFigure: ({state, commit}, {fieldSize}) => {
@@ -163,6 +189,8 @@ export default {
           if (isOutBounds){
             console.log('Figure out of bounds, removing')
             commit(MUTATIONS.REMOVE_FIGURE, figure.id)
+            commit(MUTATIONS.SUBTRACT_SCORE, 3)  // штраф 3 очка за пропуск
+            console.log('Fine: -3 points for missing the figure')
           }else{
             console.log('Updating position')
             commit(MUTATIONS.UPDATE_FIGURE_POSITION, {id: figure.id, row: newRow, col: newCol})
@@ -372,6 +400,115 @@ export default {
 
     resetGame: ({state, commit}) =>{
       commit(MUTATIONS.RESET_GAME);
-    }
+    },
+
+    subtractScore: ({commit}, penalty) => {
+      commit(MUTATIONS.SUBTRACT_SCORE, penalty)
+    },
+
+    spawnBomb: ({state, commit}, {fieldSize}) => {
+      if (!state.isGameActive) return
+      if (state.bombs.length >= 3) return
+
+      let side = Math.floor(Math.random() * 4)
+      let row, col, direction
+      switch (side) {
+        case 0:
+          row = 0
+          col = Math.floor(Math.random() * fieldSize)
+          direction = 'down'
+          break
+        case 1:
+          row = fieldSize - 1
+          col = Math.floor(Math.random() * fieldSize)
+          direction = 'up'
+          break
+        case 2:
+          row = Math.floor(Math.random() * fieldSize)
+          col = 0
+          direction = 'right'
+          break
+        case 3:
+          row = Math.floor(Math.random() * fieldSize)
+          col = fieldSize - 1
+          direction = 'left'
+          break
+      }
+      const rand = Math.random()
+      const bombType = rand < 0.1 ? 'green' : rand < 0.55 ? 'black' : 'red'
+      const bomb = {
+        id: Date.now() + '-bomb-' + Math.random(),
+        row,
+        col,
+        direction,
+        speed: 1,
+        type: bombType
+      }
+      console.log(`Бомба заспавнена со стороны ${['top', 'bottom', 'left', 'right'][side]}`)
+      commit(MUTATIONS.ADD_BOMB, bomb)
+    },
+
+    moveBombs: ({commit, state}, {fieldSize}) => {
+      return new Promise((resolve) => {
+        if (!state.isGameActive) { resolve(); return }
+        state.bombs.forEach(bomb => {
+          let newRow = bomb.row
+          let newCol = bomb.col
+          switch (bomb.direction) {
+            case 'up': newRow = bomb.row - bomb.speed; break
+            case 'down': newRow = bomb.row + bomb.speed; break
+            case 'left': newCol = bomb.col - bomb.speed; break
+            case 'right': newCol = bomb.col + bomb.speed; break
+          }
+          const isOutBounds = newRow < 0 || newRow >= fieldSize || newCol < 0 || newCol >= fieldSize
+          if (isOutBounds) {
+            commit(MUTATIONS.REMOVE_BOMB, bomb.id)
+            console.log('Бомба вышла за пределы поля')
+          } else {
+            commit(MUTATIONS.UPDATE_BOMB_POSITION, {id: bomb.id, row: newRow, col: newCol})
+          }
+        })
+        resolve()
+      })
+    },
+
+    checkBombCollisions: ({state, commit}, {islandPosition}) => {
+      return new Promise((resolve) => {
+        if (!Array.isArray(islandPosition) || islandPosition.length === 0) {
+          resolve({hit: false, newIsland: islandPosition, timePenalty: 0, timeBonus: 0})
+          return
+        }
+        let newIsland = [...islandPosition]
+        let hit = false
+        let timePenalty = 0
+        let timeBonus = 0 
+        const bombsCopy = [...state.bombs]
+
+        bombsCopy.forEach(bomb => {
+          const willHitIsland = newIsland.some(cell =>
+            cell.row === bomb.row && cell.col === bomb.col
+          )
+          if (willHitIsland) {
+            if (bomb.type === 'black' && newIsland.length > 1){
+              const removedCount = newIsland.length - 1
+              commit(MUTATIONS.SUBTRACT_SCORE, removedCount * 2)
+              newIsland = [newIsland[0]]
+              console.log(`БОМБА ПОПАЛА! Сброшено ${removedCount} клеток, -${removedCount * 2} очков`)
+            }
+            else if (bomb.type === 'red'){
+              timePenalty = 30
+              console.log(`КРАСНАЯ БОМБА ПОПАЛА! -30 секунд с таймера `)
+            }
+            else if (bomb.type === 'green'){
+              timeBonus = 10
+              console.log(`ЗЕЛЁНЫЙ БОНУС ПОПАЛ! +10 секунд к таймеру`)
+            }
+            hit = true
+            commit(MUTATIONS.REMOVE_BOMB, bomb.id)
+          }
+        })
+        resolve({hit, newIsland, timePenalty, timeBonus})
+      })
+    },
   }
 }

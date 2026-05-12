@@ -11,6 +11,7 @@
     :islandPosition="islandPosition"
     :corePosition="corePosition"
     :figures="getFigures"
+    :bombs="getBombs"
     />
 
     <div class="game__controls">
@@ -73,12 +74,32 @@
           </button>
         </div>
 
-        <div class="game__speedArrow">
-          <button class="game__speedArrow--btn" :class="{'accelerated': isAccelerated}" @click="() => accelerateFigures()" >
-            {{ isAccelerated ? 'Турбо ВКЛ': 'Ускорить фигуры' }}
-            <img :src="speedArrow" class="game__speedArrow--icon">
-          </button>
+        <div class="game__sideButtons">
+
+          <div class="game__speedArrow">
+            <button class="game__speedArrow--btn" :class="{'accelerated': isAccelerated}" @click="() => accelerateFigures()" >
+              {{ isAccelerated ? 'Турбо ВКЛ': 'Ускорить фигуры' }}
+              <img :src="speedArrow" class="game__speedArrow--icon">
+            </button>
+          </div>
+
+          <div class="game__speedArrow">
+            <button class="game__speedArrow--btn" :class="{'accelerated': isSpeedModeActive}" @click="() => toggleSpeedMode()">
+              {{ isSpeedModeActive ? 'Разгон ВКЛ' : 'Режим разгона' }}
+              <img :src="speedArrow" class="game__speedArrow--icon">
+            </button>
+          </div>
+
+          <div class="game__bomb">
+            <button class="game__bomb--btn" :class="{'accelerated': isBombModeActive}" @click="() => toggleBombMode()">
+              {{ isBombModeActive ? 'Бомбы ВКЛ' : 'Режим бомб' }}
+              <img :src="blackBomb" class="game__bomb--icon">
+            </button>
+          </div>
+
         </div>
+
+
       </div>
     </div>
 
@@ -97,6 +118,9 @@ import rightArrow from '@/components/icons/icons8-right-arrow-80.png'
 import clockwiseArrow from '@/components/icons/icons8-curved-arrow-down-80.png'
 import counterwiseArrow from'@/components/icons/icons8-curved-arrow-downward-80.png'
 import speedArrow from '@/components/icons/icons8-speed-80.png'
+import redBomb from '@/components/icons/icons8-bomb-80.png'
+import blackBomb from '@/components/icons/icons8-bomb-80(1).png'
+import greenBomb from '@/components/icons/icons8-bomb-80(2).png'
 
 export default{
   name: 'GamingPage',
@@ -130,6 +154,13 @@ export default{
       isAccelerated: false,
       highScore: 0,
       bestTime: 0,
+      speedInterval: null as ReturnType<typeof setInterval> | null,
+      isSpeedModeActive: false,
+      isBombModeActive: false,
+      bombSpawnInterval: null as ReturnType<typeof setInterval> | null,
+      blackBomb,
+      greenBomb,
+      redBomb
     }
   },
   computed:{
@@ -138,8 +169,11 @@ export default{
       'getScore',
       'getSpawnInterval',
       'getFiguresCount',
+      'getFigureSpeed',
       'highScore',
-      'bestTime'
+      'bestTime',
+      'getBombs',
+      'getBombsCount',
     ]),
     ...mapGetters({
       count: 'getCount',
@@ -172,7 +206,11 @@ export default{
       'setBestTime',
       'setSpeedBoostNext',
       'setGameActive',
-      'resetGame'
+      'resetGame',
+      'subtractScore',
+      'spawnBomb',
+      'moveBombs',
+      'checkBombCollisions',
     ]),
     ...mapActions([
       'runIncrement',
@@ -231,6 +269,7 @@ export default{
       this.checkCollisions({ islandPosition: this.islandPosition })
         .then(added1 => {
           return this.moveFigures({ fieldSize: this.fieldSize })
+          .then(() => this.moveBombs({fieldSize: this.fieldSize}))
           .then(() => added1)
         })
         .then(added1 => {
@@ -239,12 +278,27 @@ export default{
         })
         .then(allNewCells => {
           if (allNewCells && allNewCells.length > 0) {
-          this.islandPosition = [...this.islandPosition, ...allNewCells]
-          console.log(` ISLAND GREW! Added ${allNewCells.length} cells => Total: ${this.islandPosition.length}`)
-        }
-        return this.checkGameOver({
-          islandPosition: this.islandPosition,
-          fieldSize: this.fieldSize
+            this.islandPosition = [...this.islandPosition, ...allNewCells]
+            console.log(` ISLAND GREW! Added ${allNewCells.length} cells => Total: ${this.islandPosition.length}`)
+          }
+          return this.checkBombCollisions({islandPosition: this.islandPosition})
+        })
+        .then(bombResult => {
+          if (bombResult.hit){
+            this.islandPosition = bombResult.newIsland
+            if (bombResult.timePenalty && bombResult.timePenalty > 0){
+              this.timeLeft = Math.max(0, this.timeLeft - bombResult.timePenalty)
+              console.log(`Красная бомба! -${bombResult.timePenalty} сек. Осталось: ${this.timeLeft}`)
+            } else if (bombResult.timeBonus && bombResult.timeBonus > 0){  
+              this.timeLeft += bombResult.timeBonus
+              console.log(`Зелёный бонус! +${bombResult.timeBonus} сек. Осталось: ${this.timeLeft}`)
+            } else {
+              console.log(`Чёрная бомба взорвала остров! Осталось только ядро.`)
+            }
+          }
+          return this.checkGameOver({
+            islandPosition: this.islandPosition,
+            fieldSize: this.fieldSize
           })
         })
         .then(isGameOver => {
@@ -291,6 +345,16 @@ export default{
         clearInterval(this.timerInterval)
         this.timerInterval = null
       }
+      if (this.speedInterval) {
+        clearInterval(this.speedInterval)
+        this.speedInterval = null
+      }
+      if (this.bombSpawnInterval) {
+        clearInterval(this.bombSpawnInterval)
+        this.bombSpawnInterval = null
+      }
+      this.isBombModeActive = false
+      this.isSpeedModeActive = false
       this.setGameActive(false)
       this.resetGame()
     },
@@ -386,7 +450,44 @@ export default{
       setTimeout(() => {
         this.isAccelerated = false;
       }, 800);
-    }
+    },
+    toggleSpeedMode(){
+      this.isSpeedModeActive = !this.isSpeedModeActive
+      if (this.isSpeedModeActive){
+       this.speedInterval = setInterval(() => {
+          const newSpeed = (this.getFigureSpeed ?? 1) + 1
+          this.setSpeed(newSpeed)
+          console.log(`Режим разгона: скорость увеличена до ${newSpeed}`)
+        }, 15000)
+        console.log('Режим постепенного разгона ВКЛЮЧЁН')
+      } else {
+        if (this.speedInterval){
+          clearInterval(this.speedInterval)
+          this.speedInterval = null
+        }
+        this.setSpeed(1)
+        console.log('Режим постепенного разгона ВЫКЛЮЧЕН')
+      }
+    },
+
+    toggleBombMode(){
+      this.isBombModeActive = !this.isBombModeActive
+      if (this.isBombModeActive){
+        this.bombSpawnInterval = setInterval(() => {
+          this.spawnBomb({fieldSize: this.fieldSize})
+          console.log('Бомба spawned, всего на поле:', this.getBombsCount)
+        }, 5000)
+        console.log('Режим бомб ВКЛЮЧЁН')
+      } else {
+        if (this.bombSpawnInterval){
+          clearInterval(this.bombSpawnInterval)
+          this.bombSpawnInterval = null
+        }
+        console.log('Режим бомб ВЫКЛЮЧЕН')
+      }
+    },
+
+
   }
 }
 </script>
@@ -494,13 +595,31 @@ export default{
     align-items: flex-start;
     gap: 100px;
   }
-  &__rotateArrow, &__speedArrow{
+  &__sideButtons{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+
+    &__speedArrow, &__blackBomb {
+      margin: 0;
+
+      &--btn {
+        width: 120px;
+        height: 55px;
+        font-size: 11px;
+        padding: 6px 10px;
+        text-align: center;
+        line-height: 1.3;
+      }
+    }
+  }
+  &__rotateArrow, &__speedArrow, &__bomb{
     display: flex;
     gap: 5px;
     flex-direction: row;
     align-items: center;
-    margin: 20px 0;
-    margin-top: 38px;
+    margin-top: 5px 0;
 
     &--icon{
       width: 30px;
