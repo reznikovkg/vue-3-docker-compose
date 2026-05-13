@@ -46,33 +46,22 @@ export default {
             state.flasks = flasks
         },
         [MUTATIONS.SET_CURRENT_FLASK]: (state, flask) => {
-            if (state.currentFlask === flask) {
-                state.currentFlask = null
-            } else {
-                state.currentFlask = flask
-            }
+            state.currentFlask = flask
         },
         [MUTATIONS.MOVE_LIQUID]: (state, { fromFlask, toFlask }) => {
             const fromLayers = state.flasks[fromFlask]
             const toLayers = state.flasks[toFlask]
             const topColor = fromLayers[fromLayers.length - 1]
-            // Считаем, сколько верхних слоёв одного цвета
-            let sameColorCount = 0
-            for (let i = fromLayers.length - 1; i >= 0; i--) {
-                if (fromLayers[i] === topColor) {
-                    sameColorCount++
-                } else {
-                    break
-                }
-            }
+            // Находим индекс последнего слоя другого цвета
+            const lastDifferentIndex = fromLayers.findLastIndex(color => color !== topColor)
+            // Считаем количество верхних слоёв одного цвета
+            const sameColorCount = fromLayers.length - 1 - lastDifferentIndex
             // Сколько места в целевой колбе
             const spaceInToFlask = state.maxLayers - toLayers.length
             // Сколько реально перельём
             const amountToMove = Math.min(sameColorCount, spaceInToFlask)
-            // Переливаем
-            for (let i = 0; i < amountToMove; i++) {
-                toLayers.push(topColor)
-            }
+            // Переливаем все слои сразу
+            toLayers.push(...Array(amountToMove).fill(topColor))
             fromLayers.splice(fromLayers.length - amountToMove, amountToMove)
         },
         [MUTATIONS.SET_GAME_WON]: (state, won) => {
@@ -130,11 +119,8 @@ export default {
             commit(MUTATIONS.SET_CURRENT_FLASK, null)
             commit(MUTATIONS.SET_GAME_WON, false)
             commit(MUTATIONS.SET_TIME, 0)
-            dispatch('stopTimer') //останавливаем таймер, если он был запущен
             commit(MUTATIONS.SET_GAME_STARTED, false)
-            //if (state.hardMode) {
-                //dispatch('blockRandomFlask')
-            //}
+            dispatch('stopTimer') //останавливаем таймер, если он был запущен
         },
         startGame({ commit, state, dispatch }) {
             if (!state.gameStarted) {
@@ -235,13 +221,33 @@ export default {
         setHardModeBestTimes({ commit }, times) {
             commit(MUTATIONS.SET_HARD_MODE_BEST_TIMES, times)
         },
-        setCurrentFlask({ commit }, index) {
-            commit(MUTATIONS.SET_CURRENT_FLASK, index)
+        setCurrentFlask({ commit, state }, index) {
+            if (state.currentFlask === index) {
+                commit(MUTATIONS.SET_CURRENT_FLASK, null)
+            } else {
+                commit(MUTATIONS.SET_CURRENT_FLASK, index)
+            }
         },
         reorderFlasks({ commit, state }, { from, to }) {
             if (state.gameStarted) return
             if (state.hardMode && state.blockedFlask === from) return
             commit(MUTATIONS.REORDER_FLASKS, { from, to })
+            // Если заблокированная колба была перемещена, обновляем индекс
+            if (state.hardMode && state.blockedFlask !== null) {
+                let newBlockedIndex = state.blockedFlask
+                // Если blockedFlask был на позиции from -> теперь на to
+                if (state.blockedFlask === from) {
+                    newBlockedIndex = to
+                }
+                // Если blockedFlask был между from и to -> сдвигается
+                else if (from < state.blockedFlask && state.blockedFlask <= to) {
+                    newBlockedIndex = state.blockedFlask - 1
+                }
+                else if (to <= state.blockedFlask && state.blockedFlask < from) {
+                    newBlockedIndex = state.blockedFlask + 1
+                }
+                commit(MUTATIONS.SET_BLOCKED_FLASK, newBlockedIndex)
+            }
         }
     }
 }

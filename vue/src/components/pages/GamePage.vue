@@ -25,7 +25,7 @@
         <div class="game__flasks">
             <Flask
                 v-for = "(flask, index) in getFlasks"
-                :key = "index"
+                :key = "'flask-' + index + '-' + getBlockedFlask"
                 :layers = "flask"
                 :active = "getCurrentFlask === index"
                 :blocked = "getHardMode && getBlockedFlask === index"
@@ -110,6 +110,20 @@ export default {
             return this.formatTime(this.getTime)
         }
     },
+    mounted() {
+        const saved = localStorage.getItem('bestTimes')
+        if (saved) {
+            this.setBestTimes(JSON.parse(saved))
+        }
+        const savedHardMode = localStorage.getItem('hardModeBestTimes')
+        if (savedHardMode) {
+            this.setHardModeBestTimes(JSON.parse(savedHardMode))
+        }
+        this.restartGame()
+    },
+    beforeUnmount() {
+        this.stopTimer()
+    },
     methods: {
         ...mapActions('game', [
             'initGame',
@@ -178,20 +192,6 @@ export default {
         handleDragEnd(event) {
             event.target.style.opacity = '1'
         }
-    },
-    mounted() {
-        const saved = localStorage.getItem('bestTimes')
-        if (saved) {
-            this.setBestTimes(JSON.parse(saved))
-        }
-        const savedHardMode = localStorage.getItem('hardModeBestTimes')
-        if (savedHardMode) {
-            this.setHardModeBestTimes(JSON.parse(savedHardMode))
-        }
-        this.restartGame()
-    },
-    beforeUnmount() {
-        this.stopTimer()
     }
 }
 </script>

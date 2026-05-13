@@ -25,9 +25,7 @@
 <script>
 export default {
     name: 'Flask',
-
     emits: ['click'],
-
     props: {
         layers: {
             type: Array,
@@ -50,7 +48,6 @@ export default {
             default: false
         }
     },
-
     methods: {
         handleClick() {
             if (!this.blocked) {
