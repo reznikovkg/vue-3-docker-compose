@@ -2,6 +2,11 @@ const MUTATIONS = {
   SET_X_COORD: 'SET_X_COORD',
   SET_Y_COORD: 'SET_Y_COORD',
   SET_POINTS: 'SET_POINTS',
+  SET_HEALTH: 'SET_HEALTH',
+  SET_HEALTH_LIMIT: 'SET_HEALTH_LIMIT',
+  SET_DAMAGE: 'SET_DAMAGE',
+  SET_MANA: 'SET_MANA',
+  SET_MANA_LIMIT: 'SET_MANA_LIMIT',
   SET_GAME_STATUS: 'SET_GAME_STATUS',
   SET_PAUSE: 'SET_PAUSE',
   PUSH_BULLET: 'PUSH_BULLET',
@@ -28,6 +33,7 @@ export default {
       },
       points: 0,
       health: 100,
+      healthLimit: 100,
       damage: 10,
       mana: 0,
       manaLimit: 25,
@@ -41,6 +47,11 @@ export default {
   getters: {
     getCoords: (state) => state.coords,
     getPoints: (state) => state.points,
+    getHealth: (state) => state.health,
+    getHealthLimit: (state) => state.healthLimit,
+    getDamage: (state) => state.damage,
+    getMana: (state) => state.mana,
+    getManaLimit: (state) => state.manaLimit,
     getBullets: (state) => state.bullets,
     getEnemyBullets: (state) => state.enemyBullets,
     getEnemies: (state) => state.enemies,
@@ -56,6 +67,21 @@ export default {
     },
     [MUTATIONS.SET_POINTS]: (state, payload) => {
       state.points = payload
+    },
+    [MUTATIONS.SET_HEALTH]: (state, payload) => {
+      state.health = payload
+    },
+    [MUTATIONS.SET_HEALTH_LIMIT]: (state, payload) => {
+      state.healthLimit = payload
+    },
+    [MUTATIONS.SET_DAMAGE]: (state, payload) => {
+      state.damage = payload
+    },
+    [MUTATIONS.SET_MANA]: (state, payload) => {
+      state.mana = payload
+    },
+    [MUTATIONS.SET_MANA_LIMIT]: (state, payload) => {
+      state.manaLimit = payload
     },
     [MUTATIONS.SET_GAME_STATUS]: (state, payload) => {
       state.gameStatus = payload
@@ -136,6 +162,7 @@ export default {
             enemy.hp -= state.damage
             if (enemy.hp <= 0) {
               commit(MUTATIONS.DELETE_ENEMY, enemy.id)
+              commit(MUTATIONS.SET_POINTS, state.points + 5)
             }
             commit(MUTATIONS.DELETE_BULLET, bullet.id)
           }
@@ -246,6 +273,43 @@ export default {
           enemy.y += vy
         }
       })
+    },
+    buyHeal: ({ state, commit }, payload) => {
+      if (state.points < 10) {
+        return
+      }
+      commit(MUTATIONS.SET_POINTS, state.points - 10)
+      const health = Math.min(state.healthLimit, state.health + 20)
+      commit(MUTATIONS.SET_HEALTH, health)
+    },
+    increaseDamage: ({ state, commit }, payload) => {
+      if (state.points < 25) {
+        return
+      }
+      commit(MUTATIONS.SET_POINTS, state.points - 25)
+      commit(MUTATIONS.SET_DAMAGE, state.damage + 10)
+    },
+    buyMana: ({ state, commit }, payload) => {
+      if (state.points < 15) {
+        return
+      }
+      commit(MUTATIONS.SET_POINTS, state.points - 15)
+      const mana = Math.min(state.manaLimit, state.mana + 25)
+      commit(MUTATIONS.SET_MANA, mana)
+    },
+    increaseHealthLimit: ({ state, commit }, payload) => {
+      if (state.points < 20) {
+        return
+      }
+      commit(MUTATIONS.SET_POINTS, state.points - 20)
+      commit(MUTATIONS.SET_HEALTH_LIMIT, state.healthLimit + 25)
+    },
+    increaseManaLimit: ({ state, commit }, payload) => {
+      if (state.points < 30) {
+        return
+      }
+      commit(MUTATIONS.SET_POINTS, state.points - 30)
+      commit(MUTATIONS.SET_MANA_LIMIT, state.manaLimit + 25)
     },
     moveLeft: ({ state, commit }, payload) => {
       commit(MUTATIONS.SET_X_COORD, state.coords.x - 20)

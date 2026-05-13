@@ -1,5 +1,11 @@
 <template>
   <div class="map" @mousemove="(e) => handleMouseCoords(e)">
+    {{ getPoints }}
+    {{ getHealth }}
+    {{ getHealthLimit }}
+    {{ getDamage }}
+    {{ getMana }}
+    {{ getManaLimit }}
     <Bullet v-for="bullet in getBullets" :key="bullet.id" :x="cameraOffsetX(bullet.x)" :y="cameraOffsetY(bullet.y)" :id="bullet.id" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
     <div class="map__player" />
@@ -12,11 +18,11 @@
     </div>
     <div v-if="getPause" class="map__pause">
       Пауза
-      <button class="map__pause__upgrade" @click="() => buyHeal()"> Купить хил </button>
-      <button class="map__pause__upgrade" @click="() => increaseDamage()"> Увеличение урона </button>
-      <button class="map__pause__upgrade" @click="() => buyMana()"> Купить ману </button>
-      <button class="map__pause__upgrade" @click="() => increaseHealthLimit()"> Увеличить лимит хп </button>
-      <button class="map__pause__upgrade" @click="() => increaseManaLimit()"> Увеличить лимит маны </button>
+      <button class="map__pause__upgrade" @click="() => buyHeal()"> Купить хил (10) </button>
+      <button class="map__pause__upgrade" @click="() => increaseDamage()"> Увеличение урона (25) </button>
+      <button class="map__pause__upgrade" @click="() => buyMana()"> Купить ману (15) </button>
+      <button class="map__pause__upgrade" @click="() => increaseHealthLimit()"> Увеличить лимит хп (20) </button>
+      <button class="map__pause__upgrade" @click="() => increaseManaLimit()"> Увеличить лимит маны (30) </button>
     </div>
   </div>
 </template>
@@ -48,6 +54,11 @@ export default {
     ...mapGetters('game', [
       'getCoords',
       'getPoints',
+      'getHealth',
+      'getHealthLimit',
+      'getDamage',
+      'getMana',
+      'getManaLimit',
       'getBullets',
       'getEnemyBullets',
       'getEnemies',
@@ -75,6 +86,11 @@ export default {
       'moveBullets',
       'moveEnemyBullets',
       'moveEnemies',
+      'buyHeal',
+      'increaseDamage',
+      'buyMana',
+      'increaseHealthLimit',
+      'increaseManaLimit',
       'setGameStatus',
       'setPause'
     ]),
@@ -225,7 +241,7 @@ export default {
     border: 2px solid gold;
 
     &__upgrade {
-      width: 375px;
+      width: 450px;
       height: 60px;
       border: 2px solid gold;
       background-color: rgb(43, 51, 168);
