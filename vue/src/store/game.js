@@ -3,6 +3,7 @@ const MUTATIONS = {
   SET_Y_COORD: 'SET_Y_COORD',
   SET_POINTS: 'SET_POINTS',
   SET_GAME_STATUS: 'SET_GAME_STATUS',
+  SET_PAUSE: 'SET_PAUSE',
   PUSH_BULLET: 'PUSH_BULLET',
   PUSH_ENEMY_BULLET: 'PUSH_ENEMY_BULLET',
   PUSH_ENEMY: 'PUSH_ENEMY',
@@ -29,6 +30,7 @@ export default {
       health: 100,
       damage: 10,
       mana: 0,
+      manaLimit: 25,
       bullets: [],
       enemyBullets: [],
       enemies: [],
@@ -58,6 +60,9 @@ export default {
     [MUTATIONS.SET_GAME_STATUS]: (state, payload) => {
       state.gameStatus = payload
     },
+    [MUTATIONS.SET_PAUSE]: (state, payload) => {
+      state.pause = payload
+    },
     [MUTATIONS.PUSH_BULLET]: (state, payload) => {
       state.bullets.push(payload)
     },
@@ -79,7 +84,7 @@ export default {
   },
   actions: {
     pushBullet: ({ state, commit }, payload) => {
-      if (!state.gameStatus) {
+      if (!state.gameStatus || state.pause) {
         return
       }
       const dx = payload.cursorX - payload.playerX
@@ -96,7 +101,7 @@ export default {
       })
     },
     pushEnemyBullet: ({ state, commit }, payload) => {
-      if (!state.gameStatus) {
+      if (!state.gameStatus || state.pause) {
         return
       }
       state.enemies.forEach(enemy => {
@@ -117,7 +122,7 @@ export default {
       })
     },
     moveBullets: ({ state, commit }, payload) => {
-      if (!state.gameStatus) {
+      if (!state.gameStatus || state.pause) {
         return
       }
       state.bullets.forEach(bullet => {
@@ -144,7 +149,7 @@ export default {
       })
     },
     moveEnemyBullets: ({ state, commit }, payload) => {
-      if (!state.gameStatus) {
+      if (!state.gameStatus || state.pause) {
         return
       }
       state.enemyBullets.forEach(bullet => {
@@ -166,7 +171,7 @@ export default {
       })
     },
     pushEnemy: ({ state, commit }, payload) => {
-      if (!state.gameStatus) {
+      if (!state.gameStatus || state.pause) {
         return
       }
       let type = "warrior"
@@ -208,7 +213,7 @@ export default {
       })
     },
     moveEnemies: ({ state, commit }, payload) => {
-      if (!state.gameStatus) {
+      if (!state.gameStatus || state.pause) {
         return
       }
       state.enemies.forEach(enemy => {
@@ -259,6 +264,9 @@ export default {
     },
     setGameStatus: ({ commit }, payload) => {
       commit(MUTATIONS.SET_GAME_STATUS, payload)
+    },
+    setPause: ({ commit }, payload) => {
+      commit(MUTATIONS.SET_PAUSE, payload)
     }
   }
 }

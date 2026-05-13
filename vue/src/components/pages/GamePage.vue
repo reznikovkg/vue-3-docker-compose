@@ -10,6 +10,14 @@
         Сыграть ещё
       </button>
     </div>
+    <div v-if="getPause" class="map__pause">
+      Пауза
+      <button class="map__pause__upgrade" @click="() => buyHeal()"> Купить хил </button>
+      <button class="map__pause__upgrade" @click="() => increaseDamage()"> Увеличение урона </button>
+      <button class="map__pause__upgrade" @click="() => buyMana()"> Купить ману </button>
+      <button class="map__pause__upgrade" @click="() => increaseHealthLimit()"> Увеличить лимит хп </button>
+      <button class="map__pause__upgrade" @click="() => increaseManaLimit()"> Увеличить лимит маны </button>
+    </div>
   </div>
 </template>
 
@@ -43,16 +51,17 @@ export default {
       'getBullets',
       'getEnemyBullets',
       'getEnemies',
-      'getGameStatus'
+      'getGameStatus',
+      'getPause'
     ])
   },
   mounted () {
-    window.addEventListener('keydown', (e) => this.pressedArrow(e))
+    window.addEventListener('keydown', (e) => this.pressedKey(e))
     this.bulletMovement()
     this.enemyMovement()
   },
   beforeUnmount () {
-    window.removeEventListener('keydown', (e) => this.pressedArrow(e))
+    window.removeEventListener('keydown', (e) => this.pressedKey(e))
   },
   methods: {
     ...mapActions('game', [
@@ -66,7 +75,8 @@ export default {
       'moveBullets',
       'moveEnemyBullets',
       'moveEnemies',
-      'setGameStatus'
+      'setGameStatus',
+      'setPause'
     ]),
     cameraOffsetX (x) {
       return x - this.cameraCoords.x + window.innerWidth / 2
@@ -74,9 +84,12 @@ export default {
     cameraOffsetY (y) {
       return y - this.cameraCoords.y + window.innerHeight / 2
     },
-    pressedArrow (e) {
+    pressedKey (e) {
       if (!this.getGameStatus) {
         return
+      }
+      if (e.key === 'Escape') {
+        this.setPause(!this.getPause)
       }
       const step = 20
       if (e.key === 'ArrowRight') {
@@ -185,6 +198,35 @@ export default {
     border: 2px solid gold;
 
     &__restart {
+      border: 2px solid gold;
+      background-color: rgb(43, 51, 168);
+      color: white;
+      font-size: 30px;
+      padding: 10px 20px;
+    }
+  }
+
+  &__pause {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 46px;
+    gap: 10px;
+    position: absolute;
+    width: 900px;
+    height: 450px;
+    top: 50%;
+    left: 50%;
+    color: white;
+    background-color: rgb(43, 51, 168);
+    border-radius: 2%;
+    transform: translate(-50%, -50%);
+    border: 2px solid gold;
+
+    &__upgrade {
+      width: 375px;
+      height: 60px;
       border: 2px solid gold;
       background-color: rgb(43, 51, 168);
       color: white;
