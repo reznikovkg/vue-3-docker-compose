@@ -416,13 +416,33 @@ export default{
     },
     handleKeyDown(e: KeyboardEvent){
       if (this.gameOver) return
-      switch (e.key.toLowerCase()){
+
+      const preventKeys = ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ']
+      if (preventKeys.includes(e.key)) e.preventDefault()
+
+      switch (e.key){
+        case 'ArrowUp':
+          this.moveIsland('up'); break;
+        case 'ArrowDown':
+          this.moveIsland('down'); break;
+        case 'ArrowLeft':
+          this.moveIsland('left'); break;
+        case 'ArrowRight':
+          this.moveIsland('right'); break;
         case 'q':
-          this.rotateIsland('counterclockwise');
-          break;
+        case 'Q':
+          this.rotateIsland('counterclockwise'); break;
         case 'e':
-          this.rotateIsland('clockwise');
-          break;
+        case 'E':
+          this.rotateIsland('clockwise'); break;
+        case ' ':
+          this.accelerateFigures(); break;
+        case 'b':
+        case 'B':
+          this.toggleBombMode(); break;
+        case 's':
+        case 'S':
+          this.toggleSpeedMode(); break;
       }
     },
     moveIsland (direction: 'up'|'down'|'left'|'right') {
