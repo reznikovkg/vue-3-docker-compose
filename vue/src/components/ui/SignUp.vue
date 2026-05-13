@@ -46,7 +46,7 @@ export default {
     signUp() {
       createUserWithEmailAndPassword(auth, this.email, this.password)
         .then(userCredential => {
-          const uid = userCredential.user.uid
+          let uid = userCredential.user.uid
 
           return setDoc(doc(db, 'users', uid), {
             name: this.name,
@@ -75,13 +75,12 @@ export default {
         })
     },
     signWithGoogle() {
-      const provider = new GoogleAuthProvider()
+      let provider = new GoogleAuthProvider()
 
       signInWithPopup(auth, provider)
         .then(result => {
-          const uid = result.user.uid
-          const name = result.user.displayName
-
+          let uid = result.user.uid
+          let name = result.user.displayName
 
           return getDoc(doc(db, 'users', uid))
             .then(userDoc => {
@@ -131,7 +130,6 @@ export default {
   padding-right: 4vh;
   box-shadow: 0 8px 30px 0 #003b5a;
   overflow: hidden;
-
 
   &__head {
     text-align: center;

@@ -2,7 +2,6 @@
   <div class="container" @click="() => onSwitch()">
     <div class="container__ball" :style="switchStyle"><p class="container__text">{{ textState }}</p></div>
   </div>
-
 </template>
 
 <script>

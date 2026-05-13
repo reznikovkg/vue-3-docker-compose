@@ -1,12 +1,12 @@
 <template>
   <div class="game" :style="gameStyle">
     <Flask
-        v-for="i in getQtyFlasks"
-        :ref="flask => flaskRefs[i] = flask"
-        :style="flaskStyle"
-        :index="i"
-        @click="() => handleClick(i)"
-        @flaskUpdated="(activeIndex) => handleFlaskUpdate(activeIndex)">
+      v-for="i in getQtyFlasks"
+      :ref="flask => flaskRefs[i] = flask"
+      :style="flaskStyle"
+      :index="i"
+      @click="() => handleClick(i)"
+      @flaskUpdated="(activeIndex) => handleFlaskUpdate(activeIndex)">
     </Flask>
   </div>
 </template>
@@ -31,6 +31,7 @@ export default {
       'getIsReadyFlasks',
       'getHardMode',
       'getNumberBlockedFlask',
+      'getLayersActive',
     ]),
     rowsCount() {
       return Math.ceil(this.getQtyFlasks / this.columnCount)
@@ -64,10 +65,10 @@ export default {
     ]),
     updateColumnCount() {
       this.$nextTick(() => {
-        const gameElement = this.$el
-        const gridStyles = window.getComputedStyle(gameElement)
-        const gridTemplateColumns = gridStyles.getPropertyValue('grid-template-columns')
-        const columnCount = gridTemplateColumns.split(' ').filter(x => parseFloat(x) > 0).length
+        let gameElement = this.$el
+        let gridStyles = window.getComputedStyle(gameElement)
+        let gridTemplateColumns = gridStyles.getPropertyValue('grid-template-columns')
+        let columnCount = gridTemplateColumns.split(' ').filter(x => parseFloat(x) > 0).length
         console.log(`Количество столбцов: ${columnCount}, ${gridTemplateColumns}`)
         this.columnCount = columnCount
       })
@@ -93,9 +94,9 @@ export default {
     },
     handleFlaskUpdate(activeIndex) {
       console.log("handleFlaskUpdate: ", activeIndex.activeIndex)
-      const activeFlask = this.flaskRefs[activeIndex.activeIndex]
+      let activeFlask = this.flaskRefs[activeIndex.activeIndex]
       if (activeFlask) {
-        activeFlask.layers = activeFlask.layersActiveFlask.map(l => ({...l}))
+        activeFlask.layers = this.getLayersActive.map(l => ({...l}))
       }
     },
     blockFlask(activeIndex) {

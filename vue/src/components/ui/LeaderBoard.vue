@@ -1,20 +1,20 @@
 <template>
-  <div class="leaderBoard">
-    <div class="leaderBoard__header">Лучшие игры</div>
-    <div class="leaderBoard__body">
-      <div  class="leaderBoard__list">
-        <p class="leaderBoard__field-header-short">Имя</p>
-        <p class="leaderBoard__field-header-short">Рейтинг</p>
-        <p class="leaderBoard__field-header-short">Время</p>
-        <p class="leaderBoard__field-header-long">Кол-во цветов</p>
-        <p class="leaderBoard__field-header-long">Сложный режим</p>
+  <div class="leader-board">
+    <div class="leader-board__header">Лучшие игры</div>
+    <div class="leader-board__body">
+      <div class="leader-board__list">
+        <p class="leader-board__field leader-board__field--short">Имя</p>
+        <p class="leader-board__field leader-board__field--short">Рейтинг</p>
+        <p class="leader-board__field leader-board__field--short">Время</p>
+        <p class="leader-board__field leader-board__field--long">Кол-во цветов</p>
+        <p class="leader-board__field leader-board__field--long">Сложный режим</p>
       </div>
-      <div v-for="line in getTop" class="leaderBoard__list">
-        <p class="leaderBoard__field">{{line.name}}</p>
-        <p class="leaderBoard__field">{{line.score.toFixed(4)}}</p>
-        <p class="leaderBoard__field">{{line.time}}</p>
-        <p class="leaderBoard__field">{{line.qty_colors}}</p>
-        <p class="leaderBoard__field">{{line.is_hard_mode ? "+" : "-"}}</p>
+      <div v-for="line in getTop" class="leader-board__list">
+        <p class="leader-board__field">{{line.name}}</p>
+        <p class="leader-board__field">{{line.score.toFixed(4)}}</p>
+        <p class="leader-board__field">{{line.time}}</p>
+        <p class="leader-board__field">{{line.qty_colors}}</p>
+        <p class="leader-board__field">{{line.is_hard_mode ? "+" : "-"}}</p>
       </div>
     </div>
   </div>
@@ -22,7 +22,6 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-
 
 export default {
   name: 'LeaderBoard',
@@ -52,7 +51,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.leaderBoard {
+.leader-board {
   display: grid;
   grid-template-rows: auto 1fr;
   justify-items: center;
@@ -124,91 +123,50 @@ export default {
     @media (max-width: 550px)  {
       font-size: 15px;
     }
-  }
 
-  &__field-header-short {
-    text-align: center;
-
-    @media (min-width: 1800px) {
-      font-size: 17px;
+    &--short {
+      @media (min-width: 1600px) and (max-width: 1800px) {
+        font-size: 14px;
+      }
     }
 
-    @media (min-width: 1600px) and (max-width: 1800px) {
-      font-size: 14px;
-    }
+    &--long {
+      @media (min-width: 1800px) {
+        font-size: 16px;
+      }
 
-    @media (min-width: 1300px) and (max-width: 1600px) {
-      font-size: 16px;
-    }
+      @media (min-width: 1600px) and (max-width: 1800px) {
+        font-size: 12px;
+      }
 
-    @media (min-width: 1000px) and (max-width: 1300px) {
-      font-size: 14px;
-    }
+      @media (min-width: 1300px) and (max-width: 1600px) {
+        font-size: 14px;
+      }
 
-    @media (min-width: 800px) and (max-width: 1000px) {
-      font-size: 13px;
-    }
+      @media (min-width: 800px) and (max-width: 1300px) {
+        font-size: 12px;
+      }
 
-    @media (min-width: 550px) and (max-width: 800px) {
-      font-size: 20px;
-    }
-
-    @media (max-width: 550px)  {
-      font-size: 15px;
+      @media (max-width: 550px)  {
+        font-size: 13px;
+      }
     }
   }
 
-  &__field-header-long {
-    text-align: center;
-
-    @media (min-width: 1800px) {
-      font-size: 16px;
-    }
-
-    @media (min-width: 1600px) and (max-width: 1800px) {
-      font-size: 12px;
-    }
-
-    @media (min-width: 1300px) and (max-width: 1600px) {
-      font-size: 14px;
-    }
-
-    @media (min-width: 800px) and (max-width: 1300px) {
-      font-size: 12px;
-    }
-
-    @media (min-width: 550px) and (max-width: 800px) {
-      font-size: 20px;
-    }
-
-    @media (max-width: 550px)  {
-      font-size: 13px;
-    }
-  }
-
-  @media (min-width: 1800px) {
+  @media (min-width: 1600px) {
     width: 23vw;
-    height: 70vh;
-  }
-
-  @media (min-width: 1600px) and (max-width: 1800px) {
-    width: 23vw;
-    height: 70vh;
   }
 
   @media (min-width: 1300px) and (max-width: 1600px) {
     width: 30vw;
-    height: 70vh;
   }
 
   @media (min-width: 1000px) and (max-width: 1300px) {
     width: 35vw;
-    height: 70vh;
   }
 
   @media (min-width: 800px) and (max-width: 1000px) {
     width: 40vw;
-    height: 70vh;
   }
 
   @media (min-width: 550px) and (max-width: 800px) {

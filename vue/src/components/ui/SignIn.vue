@@ -71,23 +71,22 @@ export default {
         })
     },
     signWithGoogle() {
-      const provider = new GoogleAuthProvider()
+      let provider = new GoogleAuthProvider()
 
       signInWithPopup(auth, provider)
         .then(result => {
-          const uid = result.user.uid
-          const name = result.user.displayName
-
+          let uid = result.user.uid
+          let name = result.user.displayName
 
           return getDoc(doc(db, 'users', uid))
-              .then(userDoc => {
-                if (!userDoc.exists()) {
-                  return setDoc(doc(db, 'users', uid), {
-                    name: name,
-                    extra_information: []
-                  })
-                }
-              })
+            .then(userDoc => {
+              if (!userDoc.exists()) {
+                return setDoc(doc(db, 'users', uid), {
+                  name: name,
+                  extra_information: []
+                })
+              }
+            })
         })
         .then(() => {
           this.$emit('success')
@@ -130,7 +129,6 @@ export default {
   padding-right: 4vh;
   box-shadow: 0 8px 30px 0 #003b5a;
   overflow: hidden;
-
 
   &__head {
     text-align: center;

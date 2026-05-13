@@ -1,24 +1,24 @@
 <template>
   <div class="settings">
-    <p class="settings__p settings__head_p">Переливатор</p>
+    <p class="settings__p settings__head-p">Переливатор</p>
 
     <div class="settings__parameter">
       <p class="settings__p">Количество колб: </p>
-      <p class="settings__show_qty">{{ qtyFlasks }}</p>
+      <p class="settings__show-qty">{{ qtyFlasks }}</p>
     </div>
-    <input type="range" min="3" max="20" step="1" :value="qtyFlasks" class="settings__input_qty" @input="(e) => changeQtyFlasks(e)">
+    <input type="range" min="3" max="20" step="1" :value="qtyFlasks" class="settings__input-qty" @input="(e) => changeQtyFlasks(e)">
 
     <div class="settings__parameter">
       <p class="settings__p">Количество цветов: </p>
-      <p class="settings__show_qty">{{ qtyColors }}</p>
+      <p class="settings__show-qty">{{ qtyColors }}</p>
     </div>
-    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="qtyColors" class="settings__input_qty" @input="(e) => changeQtyColors(e)">
+    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="qtyColors" class="settings__input-qty" @input="(e) => changeQtyColors(e)">
 
     <div class="settings__parameter">
       <p class="settings__p">Лимит слоев: </p>
-      <p class="settings__show_qty">{{ maxQtyLayers }}</p>
+      <p class="settings__show-qty">{{ maxQtyLayers }}</p>
     </div>
-    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="maxQtyLayers" class="settings__input_qty" @input="(e) => changeQtyLayers(e)">
+    <input type="range" min="2" :max="qtyFlasks - 1" step="1" :value="maxQtyLayers" class="settings__input-qty" @input="(e) => changeQtyLayers(e)">
 
     <div class="settings__parameter">
       <p class="settings__p">Сложный режим: </p>
@@ -91,7 +91,7 @@ export default {
         qtyColors: this.qtyColors,
         maxQtyLayers: this.maxQtyLayers,
         hardMode: this.hardMode
-      });
+      })
       console.log('start game')
       this.$router.push('/game')
     },
@@ -209,7 +209,7 @@ $font-size-btn: clamp(22px, 3vw, 30px);
     justify-items: stretch;
   }
 
-  &__head_p {
+  &__head-p {
     font-size: 40px;
     text-align: center;
     background-color: #e5f4fb;
@@ -230,7 +230,7 @@ $font-size-btn: clamp(22px, 3vw, 30px);
     z-index: 1;
   }
 
-  &__show_qty {
+  &__show-qty {
     color: #194d6c;
     font-size: clamp(21px, 3vw, 30px);
     text-align: center;
@@ -273,7 +273,6 @@ $font-size-btn: clamp(22px, 3vw, 30px);
   }
 
   &__signout {
-    border-left: 1px solid #194d6c;
     margin: auto;
     border-radius: 20px;
   }
@@ -295,7 +294,7 @@ $font-size-btn: clamp(22px, 3vw, 30px);
     }
   }
 
-  &__input_qty {
+  &__input-qty {
     width: 70%;
     background: #e0e0e0;
     border-radius: 10px;

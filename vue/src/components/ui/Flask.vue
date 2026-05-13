@@ -1,12 +1,12 @@
 <template>
-  <div class="body_flask" :style="[flaskStyle, pickedFlaskStyle, highlightBlockedFlask]" @click="() => wrapperClick()">
+  <div class="flask" :style="[flaskStyle, pickedFlaskStyle, highlightBlockedFlask]" @click="() => wrapperClick()">
     <div v-if="emptySpace > 0" class="flask__layer"> </div>
 
     <div
-        v-for="(layer, index) in displayLayers"
-        :key="index"
-        class="flask__layer"
-        :style="{backgroundColor: this.getColorCode(layer.color).value}">
+      v-for="(layer, index) in displayLayers"
+      :key="index"
+      class="flask__layer"
+      :style="{backgroundColor: this.getColorCode(layer.color).value}">
     </div>
   </div>
 </template>
@@ -60,7 +60,7 @@ export default {
       } else {
         emptySpace = currentLayers.at(-1).fill_level_end
       }
-      const rows = []
+      let rows = []
       if (emptySpace > 0) {
         rows.push(`${emptySpace}fr`)
       }
@@ -109,15 +109,15 @@ export default {
       return currentLayers.slice().reverse()
     },
     highlightBlockedFlask() {
-    if (this.getNumberBlockedFlask === this.index) {
-      return {
-        backgroundColor: 'rgba(251, 224, 224, 0.5)',
-        borderColor: '#913c3c',
-        borderWidth: '5px',
-        boxShadow: '0 10px 30px 0 #612e2e, inset 0 0px 30px 0 #7e2b2b',
-        transform: 'scale(1.1)'
+      if (this.getNumberBlockedFlask === this.index) {
+        return {
+          backgroundColor: 'rgba(251, 224, 224, 0.5)',
+          borderColor: '#913c3c',
+          borderWidth: '5px',
+          boxShadow: '0 10px 30px 0 #612e2e, inset 0 0px 30px 0 #7e2b2b',
+          transform: 'scale(1.1)'
+        }
       }
-    }
     }
   },
   created() {
@@ -191,7 +191,7 @@ export default {
       } else {
         console.log("counter2 edge: ")
         if (this.layers.length > 0) {
-          const lastLayer = this.layers.at(-1)
+          let lastLayer = this.layers.at(-1)
           localLimits[lastLayer.color - 1] += curResidualFillLevel
           lastLayer.fill_level_end = 0
           lastLayer.width += curResidualFillLevel
@@ -220,7 +220,7 @@ export default {
       }
       if (this.getClicks === 0) {
         console.log("flask click 0 p  :", this.getClicks)
-        const activeIndex = this.getActiveFlask
+        let activeIndex = this.getActiveFlask
         if (this.index === activeIndex) {
           this.resetFlasks()
           return
@@ -318,7 +318,7 @@ export default {
       return counter
     },
     saveGame() {
-      const uid = this.getUser
+      let uid = this.getUser
       if (!uid) return
 
       addDoc(collection(db, 'users', uid, 'games'), {
@@ -344,7 +344,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.body_flask {
+.flask {
   display: grid;
   background-color: rgba(224, 251, 251, 0.5);
   backdrop-filter: blur(2px);

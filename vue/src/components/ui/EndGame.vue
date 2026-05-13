@@ -38,7 +38,6 @@ export default {
   box-shadow: 0 6px 12px 0 #194d6c;
   overflow: hidden;
 
-
   &__head {
     text-align: center;
     background-color: #e5f4fb;
