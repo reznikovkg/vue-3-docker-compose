@@ -32,19 +32,17 @@ export default {
   methods: {
     toggleCell(row, col) {
       const newCells = []
-
-      for (let i = 0; i < this.cells.length; i++) {
+      this.cells.forEach((rowCells, i) => {
         const newRow = []
-        for (let j = 0; j < this.cells[i].length; j++) {
+        rowCells.forEach((cell, j) => {
           if (i === row && j === col) {
-            newRow.push(!this.cells[i][j])
+            newRow.push(!cell)
           } else {
-            newRow.push(this.cells[i][j])
+            newRow.push(cell)
           }
-        }
+        })
         newCells.push(newRow)
-      }
-
+      })
       this.$emit('update', newCells)
     }
   }

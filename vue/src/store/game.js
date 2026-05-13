@@ -780,6 +780,22 @@ export default {
     resetCurrentFigure: ({ commit }) => {
       commit(MUTATIONS.SET_EMPTY_FIGURE_CELLS)
       commit(MUTATIONS.RESET_CURRENT_FIGURE)
-    }
+    },
+
+    setSelectedFigures: ({ commit }, figures) => {
+      commit(MUTATIONS.SET_SELECTED_FIGURES, figures)
+    },
+
+    setCurrentFigureColor: ({ commit }, color) => {
+      commit(MUTATIONS.SET_CURRENT_FIGURE_COLOR, color)
+    },
+
+    setCustomFigures: ({ commit }, figures) => {
+      commit(MUTATIONS.SET_CUSTOM_FIGURES, figures)
+    },
+    
+    removeCustomFigure: ({ commit }, id) => {
+      commit(MUTATIONS.REMOVE_CUSTOM_FIGURE, id)
+    },
   }
 }

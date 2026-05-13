@@ -3,7 +3,7 @@
     <ModeSelector 
       class = "game__mode-selector"
       :show = "showModeSelector" 
-      @selectMode = "startGame"
+      @selectMode = "(mode) => startGame(mode)"
     />
     <template v-if = "!showModeSelector">
       <div class = "game__score">

@@ -102,12 +102,14 @@ export default {
       }
     },
     figureCells() {
-    if (!this.currentFigure || this.currentFigure.position.row === -1) return []
-    return this.currentFigure.cells.map(offset => ({
-      row: this.currentFigure.position.row + offset[0],
-      col: this.currentFigure.position.col + offset[1]
-    }))
-  }
+      if (!this.currentFigure || this.currentFigure.position.row === -1) {
+        return []
+      }
+      return this.currentFigure.cells.map(offset => ({
+        row: this.currentFigure.position.row + offset[0],
+        col: this.currentFigure.position.col + offset[1]
+      }))
+    }
   },
   methods: {
     //является ли клетка частью острова?

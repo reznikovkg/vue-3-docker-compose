@@ -142,7 +142,11 @@ export default {
       'toggleCellInCurrentFigure',
       'saveCurrentFigure',
       'loadBaseFigureToEditor',
-      'resetCurrentFigure'
+      'resetCurrentFigure',
+      'setSelectedFigures',
+      'setCurrentFigureColor',
+      'setCustomFigures',      
+      'removeCustomFigure'    
     ]),
     coordsToMatrix(coords) {
       const matrix = Array(4).fill().map(() => Array(4).fill(false))
@@ -163,11 +167,11 @@ export default {
       }
     },
     updateCurrentFigureColor(color) {
-      this.$store.commit('game/SET_CURRENT_FIGURE_COLOR', color)
+      this.setCurrentFigureColor(color)
     },
     loadBaseFigureToEditorById(id) {
       const figure = this.baseFigures.find(f => f.id === id)   
-      this.$store.dispatch('game/loadBaseFigureToEditor', figure)
+      this.loadBaseFigureToEditor(figure)
     },
     selectFigureForGame(figure) {
       const updatedFigures = this.customFigures.map(f => {
@@ -177,10 +181,10 @@ export default {
       return f
       })
   
-      this.$store.commit('game/SET_CUSTOM_FIGURES', updatedFigures)
+      this.setCustomFigures(updatedFigures)
     },
     deleteFigure(id) {
-      this.$store.commit('game/REMOVE_CUSTOM_FIGURE', id)
+      this.removeCustomFigure(id)
     },
     startGame() {
       const selected = this.customFigures.filter(f => f.selected === true)
@@ -188,7 +192,7 @@ export default {
         alert('Выберите ровно 3 фигуры')
         return
       }
-      this.$store.commit('game/SET_SELECTED_FIGURES', selected)
+      this.setSelectedFigures(selected)
       this.$router.push({ name: 'GAME' })
     }
   }
