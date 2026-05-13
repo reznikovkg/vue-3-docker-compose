@@ -4,20 +4,16 @@
     <div class="shop__content">
       <button class="shop__content__fish" @click="() => sellAllFish()" :disabled="getLengthInventoryFish === 0">sell all fish</button>
       <div class="shop__content__list">
-        <div class="shop__content__list__item" v-for="(tackle, index) in getInventoryTackle">
-          <div class="shop__content__list__item__cell">
-            <img class="shop__content__list__item__cell__image" :src="tackle.image" width="70px" :alt="tackle.name">
-          </div>
-          <Buttons :button-rows="getTackleButtons(tackle, index)"/>
-        </div>
+        <Item v-for="(tackle, index) in getInventoryTackle" type="shop">
+          <template #image><img :src="tackle.image" width="70" :alt="tackle.name"></template>
+          <template #text><Buttons :button-rows="getTackleButtons(tackle, index)"/></template>
+        </Item>
       </div>
       <div class="shop__content__list">
-        <div class="shop__content__list__item" v-for="(bait, index) in getInventoryBait">
-          <div class="shop__content__list__item__cell">
-            <img class="shop__content__list__item__cell__image" :src="bait.image" width="70px" :alt="bait.name">
-          </div>
-          <Buttons :button-rows="getBaitButtons(bait, index)"/>
-        </div>
+        <Item v-for="(bait, index) in getInventoryBait" type="shop">
+          <template #image><img :src="bait.image" width="70" :alt="bait.name"></template>
+          <template #text><Buttons :button-rows="getBaitButtons(bait, index)"/></template>
+        </Item>
       </div>
     </div>
   </div>
@@ -26,11 +22,13 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import Buttons from './../ui/Buttons.vue'
+import Item from './../ui/Item.vue'
 
 export default {
   name: 'Shop',
   components: {
-    Buttons
+    Buttons,
+    Item
   },
   data() {
     return {
@@ -56,7 +54,7 @@ export default {
       return (count === 0 || (count > 0 ? this.getBalance < object.price * count : object.count < -count))
     },
     getTackleButtons(tackle, index) {
-      let rows = []
+      const rows = []
       if(!tackle.isOwned)
         rows.push([{
           text: 'buy',
@@ -78,7 +76,7 @@ export default {
       return rows
     },
     getBaitButtons(bait, index) {
-      let rows = []
+      const rows = []
       rows.push(this.countArray.map(count => ({
         text: count <= 0 ? count : '+' + count,
         action: () => this.tradeBait({index: index, count: count}),
@@ -163,30 +161,6 @@ export default {
       display: flex;
       justify-content: center;
       width: 95%;
-
-      &__item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        width: 180px;
-        height: 180px;
-
-        &__cell {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 125px;
-          height: 125px;
-          border: 4px solid rgb(25, 175, 175);
-          border-radius: 8px;
-          background-color: rgb(111, 255, 255);
-
-          &__image {
-            image-rendering: pixelated;
-          }
-        }
-      }
     }
   }
 }

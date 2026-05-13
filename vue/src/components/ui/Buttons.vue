@@ -1,7 +1,7 @@
 <template>
   <div class="buttons">
-    <div v-for="row in buttonRows" class="buttons__row">
-      <button v-for="button in row" class="buttons__row__button" @click="button.action" :disabled="button.disabled">{{ button.text }}</button>
+    <div class="buttons__row" v-for="row in buttonRows">
+      <button class="buttons__row__button" v-for="button in row" @click="button.action" :disabled="button.disabled">{{ button.text }}</button>
     </div>
   </div>
 </template>

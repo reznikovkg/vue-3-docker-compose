@@ -1,20 +1,22 @@
 <template>
   <div class="side-inventory" :style="inventoryStyle">
     <div class="side-inventory__title">{{isSwitched ? 'Tackle' : 'Fish'}}</div>
-    <div class="side-inventory__item" v-for="item in currentItems">
-      <div class="side-inventory__item__cell">
-        <img class="side-inventory__item__cell__image" :src="item.image" width="75px" :alt="item.name">
-      </div>
-      <div class="side-inventory__item__text">{{ item.text }}</div>
-    </div>
+    <Item v-for="item in currentItems" type="side">
+      <template #image><img :src="item.image" width="75" :alt="item.name"></template>
+      <template #text>{{ item.text }}</template>
+    </Item>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import Item from './../ui/Item.vue'
 
 export default {
   name: 'SideInventory',
+  components: {
+    Item
+  },
   data() {
     return {
       isSwitched: false
@@ -101,41 +103,6 @@ export default {
       2.5px -2.5px 0 black,
       -2.5px 2.5px 0 black,
       2.5px 2.5px 0 black;
-  }
-
-  &__item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 110%;
-    padding: 15px 35px;
-    transform: translateX(-5%);
-    background-color: rgba(0, 0, 0, 0.2);
-
-    &__cell {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 125px;
-      height: 125px;
-      border: 3px solid black;
-      border-radius: 12px;
-      background-color: rgba(245, 222, 179, 0.65);
-
-      &__image {
-        image-rendering: pixelated;
-      }
-    }
-
-    &__text {
-      font-size: 24px;
-      font-weight: bold;
-      color: lightgray;
-      text-shadow: -2px -2px 0 black,
-      2px -2px 0 black,
-      -2px 2px 0 black,
-      2px 2px 0 black;
-    }
   }
 }
 </style>

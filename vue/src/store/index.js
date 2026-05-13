@@ -356,7 +356,7 @@ export default createStore({
       })
     },
     startArea: (store) => {
-      let areas = [], coords = []
+      const areas = [], coords = []
       for(let i = 0; i < 3; ++i) {
         const c = offsets(750, 2500)
         coords.push({
