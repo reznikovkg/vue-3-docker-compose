@@ -1,10 +1,15 @@
 <template>
   <div class="game" :style="gameStyle">
     <Flask
-      v-for="i in getQtyFlasks"
+      v-for="i in flaskOrder"
+      :key="i"
       :ref="flask => flaskRefs[i] = flask"
       :style="flaskStyle"
       :index="i"
+      draggable="true"
+      @dragstart="(event) => onDragStart(event, i)"
+      @dragover="(event) => onDragOver(event)"
+      @drop="() => onDrop(i)"
       @click="() => handleClick(i)"
       @flaskUpdated="(activeIndex) => handleFlaskUpdate(activeIndex)">
     </Flask>
@@ -21,7 +26,9 @@ export default {
   data() {
     return {
       columnCount: 0,
-      flaskRefs: {}
+      flaskRefs: {},
+      flaskOrder: [],
+      draggedIndex: null
     }
   },
   computed: {
@@ -50,6 +57,9 @@ export default {
     }
   },
   mounted() {
+    for (let i = 1; i <= this.getQtyFlasks; i++) {
+      this.flaskOrder.push(i)
+    }
     this.updateColumnCount()
     window.addEventListener('resize', this.updateColumnCount)
   },
@@ -110,7 +120,39 @@ export default {
           isCorrect = true
         }
       }
-    }
+    },
+    onDragStart(event, i) {
+      event.dataTransfer.effectAllowed = 'move'
+      this.draggedIndex = i
+      const original = event.currentTarget
+      const rect = original.getBoundingClientRect()
+      console.log("rect: ", rect)
+      const crt = original.cloneNode(true)
+      crt.style.minWidth = `${rect.width}px`
+      crt.style.height = `${rect.height}px`
+      crt.style.aspectRatio = 'auto'
+      crt.style.boxShadow = 'none'
+      crt.style.backdropFilter = 'none'
+      crt.style.position = 'absolute'
+      crt.style.top = '-10000px'
+      crt.style.left = '-10000px'
+      document.body.appendChild(crt)
+      event.dataTransfer.setDragImage(crt, rect.width / 2, rect.height / 2)
+    },
+    onDragOver(event) {
+      event.dataTransfer.effectAllowed = 'move'
+      event.preventDefault()
+    },
+    onDrop(i) {
+      if (this.draggedIndex === null || this.draggedIndex === i)
+        return
+      let from = this.flaskOrder.indexOf(this.draggedIndex)
+      let to = this.flaskOrder.indexOf(i)
+      this.flaskOrder[from] = i
+      this.flaskOrder[to] = this.draggedIndex
+      console.log("flaskOrder: ", this.flaskOrder)
+      this.draggedIndex = null
+    },
   }
 }
 </script>
@@ -169,5 +211,4 @@ export default {
     height: 80vh;
   }
 }
-
 </style>

@@ -131,6 +131,8 @@ export default {
     }
 
     &--long {
+      white-space: normal;
+
       @media (min-width: 1800px) {
         font-size: 16px;
       }
