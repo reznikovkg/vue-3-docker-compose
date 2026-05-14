@@ -1,10 +1,11 @@
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
-  --vt-c-white: #ffffff;
+  --vt-c-white: #c8eafb;
   --vt-c-white-soft: #f8f8f8;
   --vt-c-white-mute: #f2f2f2;
 
-  --vt-c-black: #181818;
+  /*--vt-c-black: #181818;*/
+  --vt-c-black: #c8eafb;
   --vt-c-black-soft: #222222;
   --vt-c-black-mute: #282828;
 
@@ -62,9 +63,9 @@ body {
   min-height: 100vh;
   color: var(--color-text);
   background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
+  /*transition:*/
+  /*  color 0.5s,*/
+  /*  background-color 0.5s;*/
   line-height: 1.6;
   font-family:
     Inter,
