@@ -7,6 +7,8 @@ const MUTATIONS = {
   SET_DAMAGE: 'SET_DAMAGE',
   SET_MANA: 'SET_MANA',
   SET_MANA_LIMIT: 'SET_MANA_LIMIT',
+  SET_MEGA_SHOT: 'SET_MEGA_SHOT',
+  SET_AREA_SHOT: 'SET_AREA_SHOT',
   SET_GAME_STATUS: 'SET_GAME_STATUS',
   SET_PAUSE: 'SET_PAUSE',
   PUSH_BULLET: 'PUSH_BULLET',
@@ -35,11 +37,13 @@ export default {
       health: 100,
       healthLimit: 100,
       damage: 10,
-      mana: 0,
+      mana: 25,
       manaLimit: 25,
       bullets: [],
       enemyBullets: [],
       enemies: [],
+      megaShot: null,
+      areaShot: null,
       gameStatus: true,
       pause: false
     }
@@ -55,6 +59,8 @@ export default {
     getBullets: (state) => state.bullets,
     getEnemyBullets: (state) => state.enemyBullets,
     getEnemies: (state) => state.enemies,
+    getMegaShot: (state) => state.megaShot,
+    getAreaShot: (state) => state.areaShot,
     getGameStatus: (state) => state.gameStatus,
     getPause: (state) => state.pause
   },
@@ -82,6 +88,12 @@ export default {
     },
     [MUTATIONS.SET_MANA_LIMIT]: (state, payload) => {
       state.manaLimit = payload
+    },
+    [MUTATIONS.SET_MEGA_SHOT]: (state, payload) => {
+      state.megaShot = payload
+    },
+    [MUTATIONS.SET_AREA_SHOT]: (state, payload) => {
+      state.areaShot = payload
     },
     [MUTATIONS.SET_GAME_STATUS]: (state, payload) => {
       state.gameStatus = payload
@@ -273,6 +285,73 @@ export default {
           enemy.y += vy
         }
       })
+    },
+    megaShot: ({ state, commit }, payload) => {
+      if (state.mana < 25) {
+        return
+      }
+      commit(MUTATIONS.SET_MANA, state.mana - 25)
+      const dx = payload.cursorX - payload.playerX
+      const dy = payload.cursorY - payload.playerY
+      const length = Math.sqrt(dx * dx + dy * dy)
+      const dirX = dx / length
+      const dirY = dy / length
+      const megaShotLength = 2000
+      const endX = payload.playerX + dirX * megaShotLength
+      const endY = payload.playerY + dirY * megaShotLength
+      state.enemies.forEach(enemy => {
+        const ex = enemy.x - payload.playerX
+        const ey = enemy.y - payload.playerY
+        const dot = ex * dirX + ey * dirY
+        if (dot < 0 || dot > megaShotLength) {
+          return
+        }
+        const closestX = payload.playerX + dirX * dot
+        const closestY = payload.playerY + dirY * dot
+        const distX = enemy.x - closestX
+        const distY = enemy.y - closestY
+        const distance = Math.sqrt(distX * distX + distY * distY)
+        if (distance < 25) {
+          commit(MUTATIONS.DELETE_ENEMY, enemy.id)
+          commit(MUTATIONS.SET_POINTS, state.points + 5)
+        }
+      })
+      commit(MUTATIONS.SET_MEGA_SHOT, {
+        startX: payload.playerX,
+        startY: payload.playerY,
+        endX,
+        endY
+      })
+      setTimeout(() => {
+        commit(MUTATIONS.SET_MEGA_SHOT, null)
+      }, 60)
+    },
+    areaShot: ({ state, commit }, payload) => {
+      if (state.mana < 25) {
+        return
+      }
+      commit(MUTATIONS.SET_MANA, state.mana - 25)
+      const radius = 200
+      state.enemies.forEach(enemy => {
+        const ex = enemy.x - payload.playerX
+        const ey = enemy.y - payload.playerY
+        const distance = Math.sqrt(ex * ex + ey * ey)
+        if (distance < radius) {
+          enemy.hp -= 20
+          if (enemy.hp <= 0) {
+            commit(MUTATIONS.DELETE_ENEMY, enemy.id)
+            commit(MUTATIONS.SET_POINTS, state.points + 5)
+          }
+        }
+      })
+      commit(MUTATIONS.SET_AREA_SHOT, {
+        x: payload.playerX,
+        y: payload.playerY,
+        radius
+      })
+      setTimeout(() => {
+        commit(MUTATIONS.SET_AREA_SHOT, null)
+      }, 60)
     },
     buyHeal: ({ state, commit }, payload) => {
       if (state.points < 10) {

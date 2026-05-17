@@ -6,7 +6,9 @@
     {{ getDamage }}
     {{ getMana }}
     {{ getManaLimit }}
-    <Bullet v-for="bullet in getBullets" :key="bullet.id" :x="cameraOffsetX(bullet.x)" :y="cameraOffsetY(bullet.y)" :id="bullet.id" />
+    <Bullet v-for="bullet in getBullets" :key="bullet.id" :x="cameraOffsetX(bullet.x)" :y="cameraOffsetY(bullet.y)" :megaBullet="bullet.megaBullet" :id="bullet.id" />
+    <MegaShot v-if="getMegaShot" :startX="cameraOffsetX(getMegaShot.startX)" :startY="cameraOffsetY(getMegaShot.startY)" :endX="cameraOffsetX(getMegaShot.endX)" :endY="cameraOffsetY(getMegaShot.endY)" />
+    <AreaShot v-if="getAreaShot" :x="cameraOffsetX(getAreaShot.x)" :y="cameraOffsetY(getAreaShot.y)" :radius="getAreaShot.radius" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
     <div class="map__player" />
     <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :id="enemy.id" />
@@ -30,13 +32,17 @@
 <script>
 import Bullet from './../ui/Bullet.vue'
 import Enemy from './../ui/Enemy.vue'
+import MegaShot from './../ui/MegaShot.vue'
+import AreaShot from './../ui/AreaShot.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'GamePage',
   components: {
     Bullet,
-    Enemy
+    Enemy,
+    MegaShot,
+    AreaShot
   },
   data () {
     return {
@@ -62,6 +68,8 @@ export default {
       'getBullets',
       'getEnemyBullets',
       'getEnemies',
+      'getMegaShot',
+      'getAreaShot',
       'getGameStatus',
       'getPause'
     ])
@@ -86,6 +94,8 @@ export default {
       'moveBullets',
       'moveEnemyBullets',
       'moveEnemies',
+      'megaShot',
+      'areaShot',
       'buyHeal',
       'increaseDamage',
       'buyMana',
@@ -106,6 +116,20 @@ export default {
       }
       if (e.key === 'Escape') {
         this.setPause(!this.getPause)
+      }
+      if (e.key === 'z') {
+        this.megaShot({
+          playerX: this.getCoords.x,
+          playerY: this.getCoords.y,
+          cursorX: this.mouseCoords.x,
+          cursorY: this.mouseCoords.y
+        })
+      }
+      if (e.key === 'x') {
+        this.areaShot({
+          playerX: this.getCoords.x,
+          playerY: this.getCoords.y
+        })
       }
       const step = 20
       if (e.key === 'ArrowRight') {
