@@ -1,17 +1,17 @@
 <template>
   <div class="map" @mousemove="(e) => handleMouseCoords(e)">
-    {{ getPoints }}
-    {{ getHealth }}
-    {{ getHealthLimit }}
-    {{ getDamage }}
-    {{ getMana }}
-    {{ getManaLimit }}
     <Bullet v-for="bullet in getBullets" :key="bullet.id" :x="cameraOffsetX(bullet.x)" :y="cameraOffsetY(bullet.y)" :megaBullet="bullet.megaBullet" :id="bullet.id" />
     <MegaShot v-if="getMegaShot" :startX="cameraOffsetX(getMegaShot.startX)" :startY="cameraOffsetY(getMegaShot.startY)" :endX="cameraOffsetX(getMegaShot.endX)" :endY="cameraOffsetY(getMegaShot.endY)" />
     <AreaShot v-if="getAreaShot" :x="cameraOffsetX(getAreaShot.x)" :y="cameraOffsetY(getAreaShot.y)" :radius="getAreaShot.radius" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
     <div class="map__player" />
     <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :id="enemy.id" />
+    <div class="map__hotbar">
+      <div class="map__hotbar__slot">Points: {{ getPoints }}</div>
+      <div class="map__hotbar__slot">HP: {{ getHealth }} / {{ getHealthLimit }}</div>
+      <div class="map__hotbar__slot">Damage: {{ getDamage }}</div>
+      <div class="map__hotbar__slot">Mana: {{ getMana }} / {{ getManaLimit }}</div>
+    </div>
     <div v-if="!getGameStatus" class="map__over">
       Игра окончена
       <button class="map__over__restart" @click="() => restart()">
@@ -217,6 +217,33 @@ export default {
     left: 50%;
     transform: translate(-50%, -50%);
     transition: 0.2s;
+  }
+
+  &__hotbar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    font-size: 46px;
+    gap: 10px;
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    padding: 10px;
+    color: white;
+    background-color: rgb(43, 51, 168);
+    border-radius: 2%;
+    transform: translateX(-50%);
+    border: 2px solid gold;
+    box-sizing: border-box;
+
+    &__slot {
+      width: 300px;
+      height: 100px;
+      font-size: 30px;
+      padding: 10px 20px;
+      text-align: center;
+    }
   }
 
   &__over {

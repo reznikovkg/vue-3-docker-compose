@@ -200,6 +200,27 @@ export default {
         if (length < HITBOXES.player) {
           state.health -= 20
           commit(MUTATIONS.DELETE_ENEMY_BULLET, bullet.id)
+          if (state.health <= 0) {
+            commit(MUTATIONS.SET_GAME_STATUS, false)
+            state.enemies.forEach(deletedEnemy => {
+              commit(MUTATIONS.DELETE_ENEMY, deletedEnemy.id)
+            })
+            state.bullets.forEach(deletedBullet => {
+              commit(MUTATIONS.DELETE_BULLET, deletedBullet.id)
+            })
+            state.enemyBullets.forEach(deletedBullet => {
+              commit(MUTATIONS.DELETE_ENEMY_BULLET, deletedBullet.id)
+            })
+            commit(MUTATIONS.SET_X_COORD, window.innerWidth / 2)
+            commit(MUTATIONS.SET_Y_COORD, window.innerHeight / 2)
+            commit(MUTATIONS.SET_HEALTH, 100)
+            commit(MUTATIONS.SET_HEALTH_LIMIT, 100)
+            commit(MUTATIONS.SET_DAMAGE, 10)
+            commit(MUTATIONS.SET_MANA, 25)
+            commit(MUTATIONS.SET_MANA_LIMIT, 25)
+            commit(MUTATIONS.SET_MEGA_SHOT, null)
+            commit(MUTATIONS.SET_AREA_SHOT, null)
+          }
         }
         const dxPlayer = Math.abs(bullet.x - state.coords.x)
         const dyPlayer = Math.abs(bullet.y - state.coords.y)
@@ -277,6 +298,13 @@ export default {
           })
           commit(MUTATIONS.SET_X_COORD, window.innerWidth / 2)
           commit(MUTATIONS.SET_Y_COORD, window.innerHeight / 2)
+          commit(MUTATIONS.SET_HEALTH, 100)
+          commit(MUTATIONS.SET_HEALTH_LIMIT, 100)
+          commit(MUTATIONS.SET_DAMAGE, 10)
+          commit(MUTATIONS.SET_MANA, 25)
+          commit(MUTATIONS.SET_MANA_LIMIT, 25)
+          commit(MUTATIONS.SET_MEGA_SHOT, null)
+          commit(MUTATIONS.SET_AREA_SHOT, null)
         }
         else {
           const vx = (dx / length) * 6
