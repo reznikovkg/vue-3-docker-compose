@@ -12,6 +12,9 @@ const MUTATIONS = {
   DECREMENT_LIVES: 'DECREMENT_LIVES',
   RESET_GAME: 'RESET_GAME',
   SET_GAME_OVER: 'SET_GAME_OVER',
+  ADD_BARRIER: 'ADD_BARRIER',
+  REMOVE_BARRIER: 'REMOVE_BARRIER',
+  DAMAGE_BARRIER: 'DAMAGE_BARRIER',
 }
 
 const ENEMY_TYPES = [
@@ -45,6 +48,7 @@ export default {
       },
       towers: [],
       enemies: [],
+      barriers: [],
       selectedTower: null,
       coins: 100,
       isGameOver: false,
@@ -58,6 +62,7 @@ export default {
     getCoins: (state) => state.coins,
     getTowerPositions: (state) => state.level.towerPositions,
     isGameOver: (state) => state.isGameOver,
+    getBarriers: (state) => state.barriers,
   },
   mutations: {
     [MUTATIONS.SET_LEVEL]: (state, payload) => {
@@ -118,9 +123,20 @@ export default {
       state.level = { routes: [], towerPositions: [] }
       state.towers = []
       state.enemies = []
+      state.barriers = []
       state.selectedTower = null
       state.coins = 100
       state.isGameOver = false
+    },
+    [MUTATIONS.ADD_BARRIER]: (state, payload) => {
+      state.barriers.push(payload)
+    },
+    [MUTATIONS.REMOVE_BARRIER]: (state, id) => {
+      state.barriers = state.barriers.filter(b => b.id !== id)
+    },
+    [MUTATIONS.DAMAGE_BARRIER]: (state, { id, damage }) => {
+      const b = state.barriers.find(b => b.id === id)
+      if (b) b.health -= damage
     },
   },
   actions: {
@@ -195,6 +211,23 @@ export default {
     },
     resetGame({ commit }) {
       commit(MUTATIONS.RESET_GAME)
+    },
+    addBarrier({ commit, state }, { x, y }) {
+      const cost = 30
+      if (state.coins >= cost) {
+        commit(MUTATIONS.ADD_BARRIER, {
+          id: Date.now() + Math.random(),
+          x, y,
+          health: 200,
+          maxHealth: 200,
+          cost
+        })
+        commit(MUTATIONS.SET_GAME_COINS, state.coins - cost)
+      }
+    },
+    removeBarrier({ commit, state }, barrierId) {
+      commit(MUTATIONS.REMOVE_BARRIER, barrierId)
+      commit(MUTATIONS.SET_GAME_COINS, state.coins + 15)
     },
   },
 }

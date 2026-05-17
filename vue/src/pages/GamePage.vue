@@ -14,6 +14,11 @@
           @click = "() => changeLevel(2)"
         >Уровень 2</button>
         </div>
+        <button 
+          class = "game-page__btn" 
+          :class = "{ 'game-page__btn--active': isBarrierMode }" 
+          @click = "() => isBarrierMode = !isBarrierMode"
+        >Режим барьера ({{ getBarrierCost }})</button>
     </div>
 
     
@@ -69,6 +74,14 @@
         :enemy = "enemy"
         @select = "() => selectEnemy(enemy)"
         @move = "(e) => handleEnemyDrag(enemy, e)"
+      />
+
+      <Barrier
+        v-for = "barrier in getBarriers"
+        :key = "barrier.id"
+        :barrier = "barrier"
+        @select = "() => selectBarrier(barrier)"
+        @remove = "() => removeBarrier(barrier.id)"
       />
     </div>
 
@@ -128,6 +141,7 @@
 import { mapGetters, mapActions } from 'vuex'
 import Tower from '../ui/Tower.vue'
 import Enemy from '../ui/Enemy.vue'
+import Barrier from '../ui/Barrier.vue'
 
 const LEVELS = {
         1: {
@@ -191,6 +205,7 @@ export default {
   components: {
     Tower,
     Enemy,
+    Barrier,
   },
   data() {
     return {
@@ -202,6 +217,8 @@ export default {
       maxEnemiesPerWave: 5,
       towerShootInterval: null,
       enemyTypes: ['basic', 'tank', 'fast'],
+      isBarrierMode: false,
+      getBarrierCost: 30,
     }
   },
   computed: {
@@ -213,6 +230,7 @@ export default {
       'getCoins',
       'getTowerPositions',
       'isGameOver',
+      'getBarriers',
     ]),
   },
   mounted() {
@@ -247,6 +265,8 @@ export default {
       'addCoins',
       'setGameOver',
       'resetGame',
+      'addBarrier',
+      'removeBarrier',
     ]),
     stopAllLoops() {
       if (this.towerShootInterval) { clearInterval(this.towerShootInterval); this.towerShootInterval = null; }
@@ -290,6 +310,13 @@ export default {
     },
     handleGameAreaClick(event) {
       if (event.target === event.currentTarget) {
+        if (this.isBarrierMode) {
+          const rect = event.currentTarget.getBoundingClientRect()
+          const x = event.clientX - rect.left
+          const y = event.clientY - rect.top
+          this.addBarrier({ x, y })
+          return
+        }
         this.selectTower(null)
       }
     },
@@ -440,6 +467,20 @@ export default {
         let reachedEnd = false;
         const updatedEnemies = this.getEnemies.map(enemy => {
           if (!enemy.routeId) return enemy;
+
+          const closestBarrier = this.getBarriers.find(b => {
+            const dx = enemy.x - b.x;
+            const dy = enemy.y - b.y;
+            return Math.sqrt(dx * dx + dy * dy) < 45;
+          });
+
+          if (closestBarrier) {
+            closestBarrier.health -= 0.5;
+            if (closestBarrier.health <= 0) {
+              this.removeBarrier(closestBarrier.id);
+            }
+            return { ...enemy, isBlocked: true };
+          }
           
           const route = this.getLevel.routes.find(r => r.id === enemy.routeId);
           if (!route || !route.points || route.points.length === 0) return enemy;
