@@ -1,20 +1,6 @@
 import { createStore } from 'vuex'
-import greenFish from '../assets/images/fish/green.png'
-import blueFish from '../assets/images/fish/blue.png'
-import redFish from '../assets/images/fish/red.png'
-import worm from '../assets/images/bait/worm.png'
-import caterpillar from '../assets/images/bait/caterpillar.png'
-import crab from '../assets/images/bait/crab.png'
-import feed from '../assets/images/bait/feed.png'
-import bambooRod from '../assets/images/tackle/rod/bamboo.png'
-import woodRod from '../assets/images/tackle/rod/wood.png'
-import carbonRod from '../assets/images/tackle/rod/carbon.png'
-import basicReel from '../assets/images/tackle/reel/basic.png'
-import blueReel from '../assets/images/tackle/reel/blue.png'
-import redReel from '../assets/images/tackle/reel/red.png'
-import basicHook from '../assets/images/tackle/hook/basic.png'
-import blueHook from '../assets/images/tackle/hook/blue.png'
-import goldHook from '../assets/images/tackle/hook/gold.png'
+import { FISH_TYPES, TACKLE_TYPES, BAIT_TYPES } from '../config/types.js'
+import { findAreaIndex, getRandomInt, getRandomOffset } from '../utils/functions.js'
 
 const MUTATIONS = {
   MOVE: 'MOVE',
@@ -38,29 +24,6 @@ const MUTATIONS = {
   SET_SHOPPING: 'SET_SHOPPING'
 }
 
-const randomInt = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-const offsets = (minDist, maxDist) => {
-  let x, y
-  do {
-    x = randomInt(-maxDist, maxDist)
-    y = randomInt(-maxDist, maxDist)
-  } while(Math.abs(x) < minDist && Math.abs(y) < minDist)
-  return {x: x, y: y}
-}
-
-const findAreaIndex = (x, y, areas, type, allTypes) => {
-  return areas.findIndex(area => {
-    if(area.type === type || allTypes) {
-      const dx = x - area.x, dy = y - area.y
-      return (dx * dx + dy * dy <= area.radius * area.radius)
-    }
-    return false
-  })
-}
-
 export default createStore({
   state () {
     return {
@@ -70,32 +33,20 @@ export default createStore({
         speed: 4,
         direction: 1
       },
-      fishTypes: [
-        {name: 'green fish', image: greenFish, minWeight: 1, maxWeight: 6, pricePerKg: 2},
-        {name: 'blue fish', image: blueFish, minWeight: 8, maxWeight: 24, pricePerKg: 3},
-        {name: 'red fish', image: redFish, minWeight: 27, maxWeight: 81, pricePerKg: 4},
-      ],
       currentFish: null,
       fishSkipped: 0,
       inventory: {
         fishes: [],
-        tackles: [
-          {name: 'bamboo rod', image: bambooRod, isOwned: true, level: 1, price: 0, isActive: true, type: 'rod'},
-          {name: 'wood rod', image: woodRod, isOwned: false, level: 2, price: 250, isActive: false, type: 'rod'},
-          {name: 'carbon rod', image: carbonRod, isOwned: false, level: 3, price: 1000, isActive: false, type: 'rod'},
-          {name: 'basic reel', image: basicReel, isOwned: true, level: 1, price: 0, isActive: true, type: 'reel'},
-          {name: 'blue reel', image: blueReel, isOwned: false, level: 2, price: 100, isActive: false, type: 'reel'},
-          {name: 'red reel', image: redReel, isOwned: false, level: 3, price: 1000, isActive: false, type: 'reel'},
-          {name: 'basic hook', image: basicHook, isOwned: true, level: 1, price: 0, isActive: true, type: 'hook'},
-          {name: 'blue hook', image: blueHook, isOwned: false, level: 2, price: 50, isActive: false, type: 'hook'},
-          {name: 'gold hook', image: goldHook, isOwned: false, level: 3, price: 1000, isActive: false, type: 'hook'}
-        ],
-        baits: [
-          {name: 'worm', image: worm, count: 10, level: 0, price: 2, isActive: true, type: 'fishing'},
-          {name: 'caterpillar', image: caterpillar, count: 0, level: 1, price: 6, isActive: false, type: 'fishing'},
-          {name: 'crab', image: crab, count: 0, level: 2, price: 12, isActive: false, type: 'fishing'},
-          {name: 'feed', image: feed, count: 0, level: 0, price: 10, isActive: false, type: 'feeding'}
-        ]
+        tackles: TACKLE_TYPES.map(tackle => ({
+          ...tackle,
+          isActive: tackle.level === 1,
+          isOwned: tackle.level === 1
+        })),
+        baits: BAIT_TYPES.map((bait, index) => ({
+          ...bait,
+          isActive: index === 0,
+          count: index === 0 ? 10 : 0
+        }))
       },
       balance: 0,
       areas: [],
@@ -301,7 +252,7 @@ export default createStore({
         index: store.getters.getActiveBaitInfo.index,
         count: -1
       })
-      const type = store.state.fishTypes[randomInt(0, store.getters.getActiveBaitInfo.bait.level)], weight = randomInt(type.minWeight, type.maxWeight)
+      const type = FISH_TYPES[getRandomInt(0, store.getters.getActiveBaitInfo.bait.level)], weight = getRandomInt(type.minWeight, type.maxWeight)
       store.commit(MUTATIONS.SET_CURRENT_FISH, {
         name: type.name,
         image: type.image,
@@ -371,7 +322,7 @@ export default createStore({
     startArea: (store) => {
       const areas = [], coords = []
       for(let i = 0; i < 3; ++i) {
-        const c = offsets(750, 2500)
+        const c = getRandomOffset(750, 2500)
         coords.push({
           x: c.x,
           y: c.y
@@ -393,16 +344,16 @@ export default createStore({
       }
       for(let i = 0; i < 50; ++i) {
         areas.push({
-          x: randomInt(-2500, 2500),
-          y: randomInt(-2500, 2500),
+          x: getRandomInt(-2500, 2500),
+          y: getRandomInt(-2500, 2500),
           type: 'high',
           radius: 100
         })
       }
       for(let i = 0; i < 25; ++i) {
         areas.push({
-          x: randomInt(-2500, 2500),
-          y: randomInt(-2500, 2500),
+          x: getRandomInt(-2500, 2500),
+          y: getRandomInt(-2500, 2500),
           type: 'medium',
           radius: 250
         })
@@ -411,7 +362,7 @@ export default createStore({
     },
     relocateCurrentArea: (store) => {
       if(store.getters.getCurrentAreaInfo) {
-        const offset = offsets(1000, 2500)
+        const offset = getRandomOffset(1000, 2500)
         store.commit(MUTATIONS.RELOCATE_AREA, {
           index: store.getters.getCurrentAreaInfo.index,
           px: store.state.boat.x + offset.x,
@@ -422,7 +373,7 @@ export default createStore({
     relocateDistantAreas: (store) => {
       store.state.areas.forEach((area, index) => {
         if(Math.abs(area.x - store.state.boat.x) > 2500 || Math.abs(area.y - store.state.boat.y) > 2500) {
-          const offset = offsets(1000, 2500)
+          const offset = getRandomOffset(1000, 2500)
           store.commit(MUTATIONS.RELOCATE_AREA, {
             index: index,
             px: store.state.boat.x + offset.x,
