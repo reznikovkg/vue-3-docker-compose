@@ -1,10 +1,9 @@
 <template>
   <div  ref = "enemyRef" class = "enemy" :style = "enemyStyle" @click.stop= "() => handleSelect()" @mousedown="() => handleDragStart($event)">
     <div class = "enemy__body"
-      :style="{ 
-        background: enemyColor, 
-        boxShadow: `0 0 10px ${enemyColor}` 
-      }"></div>
+      :class="{ 'enemy__body--shooter': isShooter }"
+      :style="{ background: enemyColor, boxShadow: `0 0 10px ${enemyColor}`}">
+    </div>
     <div class = "enemy__health">
       <div class = "enemy__health-bar" :style = "healthBarStyle"></div>
     </div>
@@ -39,8 +38,13 @@ export default {
         'basic': '#1e90ff',
         'tank': '#ff4757',
         'fast': '#2ed573',
+        'archer': '#00b4d8',
+        'elite_archer': '#9d4edd', 
       }
       return colors[this.enemy.type] || colors['basic']
+    },
+    isShooter() {
+      return this.enemy.shootRange && this.enemy.shootRange > 0
     }
   },
   methods: {
@@ -76,6 +80,16 @@ export default {
     height: 100%;
     border-radius: 50%;
     border: 2px solid #fff;
+  }
+  
+  &__body--shooter {
+    border-radius: 0;
+    border: none;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    width: 34px;
+    height: 34px;
+    margin-left: -2px;
+    margin-top: -2px;
   }
 
   &__health {

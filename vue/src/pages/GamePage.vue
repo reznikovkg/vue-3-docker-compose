@@ -229,7 +229,7 @@ export default {
       enemiesSpawned: 0,
       maxEnemiesPerWave: 5,
       towerShootInterval: null,
-      enemyTypes: ['basic', 'tank', 'fast'],
+      enemyTypes: [/*'basic', 'tank', 'fast', */'archer', 'elite_archer'],
       isBarrierMode: false,
       getBarrierCost: 30,
       isFighterMode: false,
@@ -257,6 +257,7 @@ export default {
     this.startEnemyMovement()
     this.startWaveSpawner()
     this.startFighterMovement()
+    this.startEnemyShooting()
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeyPress)
@@ -292,6 +293,7 @@ export default {
       'addFighter',
       'removeFighter',
       'setFighters',
+      'setTowers',
     ]),
     selectBarrier(barrier) {
       console.log('Выбран барьер:', barrier)
@@ -301,6 +303,7 @@ export default {
       if (this.waveInterval) { clearInterval(this.waveInterval); this.waveInterval = null; }
       if (this.animationFrameId) { cancelAnimationFrame(this.animationFrameId); this.animationFrameId = null; }
       if (this.fighterAnimationFrameId) { cancelAnimationFrame(this.fighterAnimationFrameId); this.fighterAnimationFrameId = null; }
+      if (this.enemyShootInterval) { clearInterval(this.enemyShootInterval); this.enemyShootInterval = null; }
     },
     changeLevel(level) {
       if (this.currentLevel === level) return;
@@ -317,6 +320,7 @@ export default {
         this.startEnemyMovement();
         this.startWaveSpawner();
         this.startFighterMovement();
+        this.startEnemyShooting();
       });
     },
 
@@ -470,7 +474,8 @@ export default {
         this.towerShooting();
         this.startEnemyMovement();
         this.startWaveSpawner();
-        this.startFighterMovement(); 
+        this.startFighterMovement();
+        this.startEnemyShooting(); 
       });
     },
 
@@ -624,22 +629,6 @@ export default {
           });
           if (hitEnemy) return { ...fighter, isBlocked: true };
 
-          /*
-          const nearbyEnemy = this.getEnemies.find(e => {
-            const dist = Math.sqrt((fighter.x - e.x) ** 2 + (fighter.y - e.y) ** 2);
-            return dist < 45;
-          });
-
-          const nearbyBarrier = this.getBarriers.find(b => {
-            const dist = Math.sqrt((fighter.x - b.x) ** 2 + (fighter.y - b.y) ** 2);
-            return dist < 45;
-          });
-
-          if (nearbyEnemy || nearbyBarrier) {
-            return { ...fighter, isBlocked: true };
-          }
-          */
-
           const route = this.getLevel.routes.find(r => r.id === fighter.routeId);
           if (!route || !route.points || route.points.length === 0) return fighter;
 
@@ -665,6 +654,47 @@ export default {
       };
 
       this.fighterAnimationFrameId = requestAnimationFrame(move);
+    },
+
+        startEnemyShooting() {
+      this.enemyShootInterval = setInterval(() => {
+        if (this.isGameOver) {
+          clearInterval(this.enemyShootInterval);
+          this.enemyShootInterval = null;
+          return;
+        }
+
+        let updatedTowers = [...this.getTowers];
+        let updatedFighters = [...this.getFighters];
+
+        this.getEnemies.forEach(enemy => {
+          if (!enemy.shootRange || enemy.shootRange <= 0) return;
+
+          updatedTowers.forEach(tower => {
+            const dist = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2);
+            if (dist <= enemy.shootRange) {
+              tower.health -= enemy.shootDamage;
+            }
+          });
+
+          updatedFighters.forEach(fighter => {
+            const dist = Math.sqrt((enemy.x - fighter.x) ** 2 + (enemy.y - fighter.y) ** 2);
+            if (dist <= enemy.shootRange) {
+              fighter.health -= enemy.shootDamage;
+            }
+          });
+        });
+
+        updatedTowers = updatedTowers.filter(t => t.health > 0);
+        updatedFighters = updatedFighters.filter(f => f.health > 0);
+
+        if (updatedTowers.length !== this.getTowers.length) {
+          this.setTowers(updatedTowers);
+        }
+        if (updatedFighters.length !== this.getFighters.length) {
+          this.setFighters(updatedFighters);
+        }
+      }, 1000);
     },
   },
 }

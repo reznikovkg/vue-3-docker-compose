@@ -41,6 +41,20 @@ const ENEMY_TYPES = [
     speed: 1.0,
     reward: 15,
   },
+  { name: 'archer',
+    health: 60,
+    speed: 0.8,
+    reward: 20,
+    shootRange: 120,
+    shootDamage: 8
+  },
+  { name: 'elite_archer',
+    health: 90,
+    speed: 0.6,
+    reward: 35,
+    shootRange: 150,
+    shootDamage: 12
+  },
 ]
 
 export default {
@@ -107,6 +121,8 @@ export default {
         routeId: payload.routeId || 1,
         currentPointIndex: payload.currentPointIndex ?? 0,
         reward: typeData.reward,
+        shootRange: typeData.shootRange || 0,
+        shootDamage: typeData.shootDamage || 0,
       }
       state.enemies.push(enemy)
     },
@@ -133,7 +149,7 @@ export default {
       state.barriers = []
       state.fighters = []
       state.selectedTower = null
-      state.coins = 100
+      state.coins = 150
       state.isGameOver = false
     },
     [MUTATIONS.ADD_BARRIER]: (state, payload) => {
@@ -283,6 +299,9 @@ export default {
     },
     setFighters({ commit }, fighters) {
       commit(MUTATIONS.SET_FIGHTERS, fighters)
+    },
+    setTowers({ commit }, towers) {
+      commit(MUTATIONS.SET_TOWERS, towers)
     },
   },
 }
