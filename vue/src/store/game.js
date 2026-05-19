@@ -87,11 +87,7 @@ export default {
     score: 0,
     speedBoost: false,
     timeLeft: 60,
-    bombs: {
-      black: [],   // чёрные бомбы (сбрасывают остров)
-      red: [],     // красные бомбы (-30 секунд)
-      green: []    // зелёные бонусы (+10 секунд)
-    },
+    bombs: [],
     // Редактор фигур
     customFigures: [],        // пользовательские фигуры
     currentFigureCells: Array(4).fill().map(() => Array(4).fill(false)),  // текущая сетка 4x4
@@ -139,7 +135,7 @@ export default {
     [MUTATIONS.RESET_SPEED]: (state) => {
       state.currentSpeed = state.baseSpeed
       state.figuresSpawned = 0
-      state.bombs = { black: [], red: [], green: [] }
+      state.bombs = []
     },
     [MUTATIONS.RESET_FIGURE]: (state) => {
       state.figure = {
@@ -192,13 +188,13 @@ export default {
       state.score = 0
       state.speedBoost = false
       state.timeLeft = 60
-      state.bombs = { black: [], red: [], green: [] }
+      state.bombs = []
     },
-    [MUTATIONS.ADD_BOMB]: (state, { type, bomb }) => {
-      state.bombs[type].push(bomb)
+    [MUTATIONS.ADD_BOMB]: (state, bomb) => {
+      state.bombs.push(bomb)
     },
-    [MUTATIONS.REMOVE_BOMB]: (state, { type, index }) => {
-      state.bombs[type].splice(index, 1)
+    [MUTATIONS.REMOVE_BOMB]: (state, index) => {
+      state.bombs.splice(index, 1)
     },
     // Редактор
     [MUTATIONS.SET_CURRENT_FIGURE_CELLS]: (state, cells) => {
@@ -288,68 +284,59 @@ export default {
     //создание бомбы
     createBomb({ commit }, { type, row, col, direction }) {
       commit(MUTATIONS.ADD_BOMB, {
-        type,
-        bomb: { row, col, direction, type }
+        row, col, direction, type
       })
     },
     //движение бомбы
     moveBombs: ({ commit, state }) => {
-      const bombTypes = ['black', 'red', 'green']
+      for (let i = 0; i < state.bombs.length; i++) {
+        const bomb = state.bombs[i]
+        let newRow = bomb.row
+        let newCol = bomb.col
 
-      for (const type of bombTypes) {
-        for (let i = 0; i < state.bombs[type].length; i++) {
-          const bomb = state.bombs[type][i]
+        if (bomb.direction === 'down') newRow++
+        else if (bomb.direction === 'up') newRow--
+        else if (bomb.direction === 'right') newCol++
+        else if (bomb.direction === 'left') newCol--
 
-          const oldRow = bomb.row
-          const oldCol = bomb.col
+        // проверка столкновения с островом
+        const hitIsland = state.island.cells.some(cell =>
+          cell[0] === newRow && cell[1] === newCol
+        )
 
-          let newRow = oldRow
-          let newCol = oldCol
-
-          if (bomb.direction === 'down') newRow++
-          else if (bomb.direction === 'up') newRow--
-          else if (bomb.direction === 'right') newCol++
-          else if (bomb.direction === 'left') newCol--
-
-          // проверка столкновения с островом
-          const hitIsland = state.island.cells.some(cell =>
-            cell[0] === newRow && cell[1] === newCol
-          )
-
-          if (hitIsland) {
-            if (type === 'black') {
-              // чёрная: сбрасываем остров до одной клетки
-              const removedCount = state.island.cells.length - 1
-              commit(MUTATIONS.SET_ISLAND, [[state.island.baseRow, state.island.baseCol]])
-              commit(MUTATIONS.ADD_SCORE, -removedCount * 5)
-            }
-            else if (type === 'red') {
-              // красная: минус 30 секунд
-              const newTime = Math.max(0, state.timeLeft - 30)
-              commit(MUTATIONS.SET_TIME, newTime)
-            }
-            else if (type === 'green') {
-              // зелёная: плюс 10 секунд
-              commit(MUTATIONS.SET_TIME, state.timeLeft + 10)
-            }
-
-            commit(MUTATIONS.REMOVE_BOMB, { type, index: i })
-            i-- 
-            continue
+        if (hitIsland) {
+          if (bomb.type === 'black') {
+            // чёрная: сбрасываем остров до одной клетки
+            const removedCount = state.island.cells.length - 1
+            commit(MUTATIONS.SET_ISLAND, [[state.island.baseRow, state.island.baseCol]])
+            commit(MUTATIONS.ADD_SCORE, -removedCount * 5)
+          }
+          else if (bomb.type === 'red') {
+            // красная: минус 30 секунд
+            const newTime = Math.max(0, state.timeLeft - 30)
+            commit(MUTATIONS.SET_TIME, newTime)
+          }
+          else if (bomb.type === 'green') {
+            // зелёная: плюс 10 секунд
+            commit(MUTATIONS.SET_TIME, state.timeLeft + 10)
           }
 
-          // проверка выхода за границы
-          if (newRow < 0 || newRow >= state.gridSize ||
-            newCol < 0 || newCol >= state.gridSize) {
-            commit(MUTATIONS.REMOVE_BOMB, { type, index: i })
-            i--
-            continue
-          }
-
-          // обновляем позицию бомбы
-          state.bombs[type][i].row = newRow
-          state.bombs[type][i].col = newCol
+          commit(MUTATIONS.REMOVE_BOMB, i)
+          i-- 
+          continue
         }
+
+        // проверка выхода за границы
+        if (newRow < 0 || newRow >= state.gridSize ||
+          newCol < 0 || newCol >= state.gridSize) {
+          commit(MUTATIONS.REMOVE_BOMB, i)
+          i--
+          continue
+        }
+
+        // обновляем позицию бомбы
+        state.bombs[i].row = newRow
+        state.bombs[i].col = newCol
       }
     },
     //создание новой фигуры

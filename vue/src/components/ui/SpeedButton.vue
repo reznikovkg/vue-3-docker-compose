@@ -2,7 +2,7 @@
   <div class = "speed-button">
     <button 
       class = "speed-button__btn" 
-      @click = "() => activateSpeed()"
+      @click = "() => activateSpeedBoost()"
       :disabled = "speedBoost"
     >
       Ускорить
@@ -19,10 +19,7 @@ export default {
     ...mapGetters('game', ['speedBoost'])
   },
   methods: {
-    ...mapActions('game', ['activateSpeedBoost']),
-    activateSpeed() {
-      this.activateSpeedBoost()
-    }
+    ...mapActions('game', ['activateSpeedBoost'])
   }
 }
 </script>

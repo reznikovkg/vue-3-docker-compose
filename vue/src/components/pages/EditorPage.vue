@@ -40,7 +40,7 @@
       <div class = "editor-page__grid-wrapper">
         <FigureGrid
           :cells = "currentFigureCells"
-          @update = "updateCurrentFigureCells"
+          @update = "(newCells) => updateCurrentFigureCells(newCells)"
         />
       </div>
 
@@ -158,14 +158,15 @@ export default {
       return matrix
     },
     updateCurrentFigureCells(newCells) {
-      for (let i = 0; i < newCells.length; i++) {
-        for (let j = 0; j < newCells[i].length; j++) {
-          if (newCells[i][j] !== this.currentFigureCells[i]?.[j]) {
+      newCells.forEach((row, i) => {
+        row.forEach((cell, j) => {
+          if (cell !== this.currentFigureCells[i]?.[j]) {
             this.toggleCellInCurrentFigure({ row: i, col: j })
           }
-        }
-      }
+        })
+      })
     },
+
     updateCurrentFigureColor(color) {
       this.setCurrentFigureColor(color)
     },
