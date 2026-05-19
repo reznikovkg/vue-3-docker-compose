@@ -18,6 +18,9 @@ const MUTATIONS = {
   SET_TACKLE_OWNED: 'SET_TACKLE_OWNED',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
   CHANGE_BAIT_COUNT: 'CHANGE_BAIT_COUNT',
+  TICK_TIME: 'TICK_TIME',
+  TOGGLE_NIGHT: 'TOGGLE_NIGHT',
+  CLEAR_TIME_INTERVAL: 'CLEAR_TIME_INTERVAL',
   CHANGE_BALANCE: 'CHANGE_BALANCE',
   START_AREA: 'START_AREA',
   RELOCATE_AREA: 'RELOCATE_AREA',
@@ -30,7 +33,7 @@ export default createStore({
       boat: {
         x: 0,
         y: 0,
-        speed: 4,
+        speed: 6,
         direction: 1
       },
       currentFish: null,
@@ -48,6 +51,8 @@ export default createStore({
           count: index === 0 ? 10 : 0
         }))
       },
+      time: 360,
+      timeInterval: null,
       balance: 0,
       areas: [],
       isMoving: false,
@@ -55,7 +60,8 @@ export default createStore({
       isGaming: false,
       isHooked: false,
       isBroken: false,
-      isShopping: false
+      isShopping: false,
+      isNight: false
     }
   },
   getters: {
@@ -104,6 +110,13 @@ export default createStore({
         index: index
       }
     },
+    getTime: (state) => {
+      const time = state.time
+      let hours = Math.floor(time / 60), minutes = time % 60
+      hours = hours < 10 ? '0' + hours : hours
+      minutes = minutes < 10 ? '0' + minutes : minutes
+      return hours + ':' + minutes
+    },
     getBalance: (state) => state.balance,
     getAreas: (state) => state.areas,
     getCurrentAreaInfo: (state) => {
@@ -116,7 +129,8 @@ export default createStore({
       }
       return null
     },
-    getIsShopping: (state) => state.isShopping
+    getIsShopping: (state) => state.isShopping,
+    getIsNight: (state) => state.isNight
   },
   mutations: {
     [MUTATIONS.MOVE]: (state, payload) => {
@@ -183,6 +197,21 @@ export default createStore({
     [MUTATIONS.CHANGE_BAIT_COUNT]: (state, payload) => {
       const {index, count} = payload
       state.inventory.baits[index].count += count
+    },
+    [MUTATIONS.TICK_TIME]: (state) => {
+      if(state.time + 1 >= 1440) {
+        state.time = 0
+      }
+      else {
+        state.time += 1
+      }
+    },
+    [MUTATIONS.TOGGLE_NIGHT]: (state) => {
+      state.isNight = !state.isNight
+      state.boat.speed = state.isNight ? 4 : 6
+    },
+    [MUTATIONS.CLEAR_TIME_INTERVAL]: (state) => {
+      clearInterval(state.timeInterval)
     },
     [MUTATIONS.CHANGE_BALANCE]: (state, value) => {
       state.balance += value
@@ -253,6 +282,9 @@ export default createStore({
         count: -1
       })
       const type = FISH_TYPES[getRandomInt(0, store.getters.getActiveBaitInfo.bait.level)], weight = getRandomInt(type.minWeight, type.maxWeight)
+      if(store.state.isNight) {
+        weight *= 2
+      }
       store.commit(MUTATIONS.SET_CURRENT_FISH, {
         name: type.name,
         image: type.image,
@@ -318,6 +350,18 @@ export default createStore({
         index: index,
         count: count
       })
+    },
+    startTickTime: (store) => {
+      if (store.state.timeInterval) {
+        store.commit(MUTATIONS.CLEAR_TIME_INTERVAL)
+      }
+      store.state.timeInterval = setInterval(() => {
+        store.commit(MUTATIONS.TICK_TIME)
+        const hours = Math.floor(store.state.time / 60)
+        if((hours > 21 || hours < 6) !== store.state.isNight) {
+          store.commit(MUTATIONS.TOGGLE_NIGHT)
+        }
+      }, 1000)
     },
     startArea: (store) => {
       const areas = [], coords = []

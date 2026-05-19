@@ -2,7 +2,7 @@
   <div class="boat">
     <div class = "boat__image">
       <img src="../../assets/images/boat.png" width="150" alt="boat">
-      <div class="boat__image__man" :class="manClass" :style="manStyle"/>
+      <div class="boat__image__man" :class="manClass" :style="[manStyle, moveStyle]"/>
     </div>
   </div>
 </template>
@@ -34,6 +34,13 @@ export default {
       return {
         transform: 'scale(' + 2.5 * this.getBoat.direction + ', 2.5)',
         left: 50 + this.getBoat.direction * 20 + 'px'
+      }
+    },
+    moveStyle() {
+      if(this.getIsMoving) {
+        return {
+          animationDuration: 2.5 / this.getBoat.speed + 's'
+        }
       }
     }
   }

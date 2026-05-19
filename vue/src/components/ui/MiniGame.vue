@@ -44,7 +44,8 @@ export default {
       'getActiveTacklesInfo',
       'getFeedInfo',
       'getActiveBaitInfo',
-      'getCurrentAreaInfo'
+      'getCurrentAreaInfo',
+      'getIsNight'
     ])
   },
   methods: {
@@ -64,6 +65,9 @@ export default {
     startFishing() {
       this.setCurrentFish()
       this.playerDelay = (!this.getCurrentAreaInfo ? 2500 : (this.getCurrentAreaInfo.area.type === 'medium' ? 1000 : 0))
+      if(this.getIsNight) {
+        this.playerDelay = Math.max(this.playerDelay * 2, 500)
+      }
       this.timeout = setTimeout(() => {
         this.playerSpeed = Math.max(Math.min(Math.floor(this.getCurrentFish.weight / this.getActiveTacklesInfo.totalLevel), 17), 1)
         this.setGaming(true)
