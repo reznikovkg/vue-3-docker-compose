@@ -15,6 +15,11 @@ const MUTATIONS = {
   ADD_BARRIER: 'ADD_BARRIER',
   REMOVE_BARRIER: 'REMOVE_BARRIER',
   DAMAGE_BARRIER: 'DAMAGE_BARRIER',
+  SET_BARRIERS: 'SET_BARRIERS',
+  ADD_FIGHTER: 'ADD_FIGHTER',
+  REMOVE_FIGHTER: 'REMOVE_FIGHTER',
+  DAMAGE_FIGHTER: 'DAMAGE_FIGHTER',
+  SET_FIGHTERS: 'SET_FIGHTERS',
 }
 
 const ENEMY_TYPES = [
@@ -49,6 +54,7 @@ export default {
       towers: [],
       enemies: [],
       barriers: [],
+      fighters: [],
       selectedTower: null,
       coins: 100,
       isGameOver: false,
@@ -63,6 +69,7 @@ export default {
     getTowerPositions: (state) => state.level.towerPositions,
     isGameOver: (state) => state.isGameOver,
     getBarriers: (state) => state.barriers,
+    getFighters: (state) => state.fighters,
   },
   mutations: {
     [MUTATIONS.SET_LEVEL]: (state, payload) => {
@@ -124,6 +131,7 @@ export default {
       state.towers = []
       state.enemies = []
       state.barriers = []
+      state.fighters = []
       state.selectedTower = null
       state.coins = 100
       state.isGameOver = false
@@ -137,6 +145,22 @@ export default {
     [MUTATIONS.DAMAGE_BARRIER]: (state, { id, damage }) => {
       const b = state.barriers.find(b => b.id === id)
       if (b) b.health -= damage
+    },
+    [MUTATIONS.SET_BARRIERS]: (state, payload) => {
+      state.barriers = payload
+    },
+    [MUTATIONS.ADD_FIGHTER]: (state, payload) => {
+      state.fighters.push(payload)
+    },
+    [MUTATIONS.REMOVE_FIGHTER]: (state, id) => {
+      state.fighters = state.fighters.filter(f => f.id !== id)
+    },
+    [MUTATIONS.DAMAGE_FIGHTER]: (state, { id, damage }) => {
+      const f = state.fighters.find(f => f.id === id)
+      if (f) f.health -= damage
+    },
+    [MUTATIONS.SET_FIGHTERS]: (state, payload) => {
+      state.fighters = payload
     },
   },
   actions: {
@@ -228,6 +252,37 @@ export default {
     removeBarrier({ commit, state }, barrierId) {
       commit(MUTATIONS.REMOVE_BARRIER, barrierId)
       commit(MUTATIONS.SET_GAME_COINS, state.coins + 15)
+    },
+    setBarriers({ commit }, barriers) {
+      commit(MUTATIONS.SET_BARRIERS, barriers)
+    },
+    addFighter({ commit, state }, routeId = 1) {
+      const cost = 40
+      if (state.coins >= cost) {
+        const route = state.level.routes.find(r => r.id === routeId)
+        if (!route || !route.points || route.points.length === 0) return
+        
+        const startPoint = route.points[route.points.length - 1]
+        
+        commit(MUTATIONS.ADD_FIGHTER, {
+          id: Date.now() + Math.random(),
+          x: startPoint.x,
+          y: startPoint.y,
+          health: 100,
+          maxHealth: 100,
+          damage: 5,
+          speed: 1.0,
+          routeId,
+          pointIndex: route.points.length - 1
+        })
+        commit(MUTATIONS.SET_GAME_COINS, state.coins - cost)
+      }
+    },
+    removeFighter({ commit }, fighterId) {
+      commit(MUTATIONS.REMOVE_FIGHTER, fighterId)
+    },
+    setFighters({ commit }, fighters) {
+      commit(MUTATIONS.SET_FIGHTERS, fighters)
     },
   },
 }

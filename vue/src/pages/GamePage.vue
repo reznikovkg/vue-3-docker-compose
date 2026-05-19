@@ -19,6 +19,10 @@
           :class = "{ 'game-page__btn--active': isBarrierMode }" 
           @click = "() => isBarrierMode = !isBarrierMode"
         >Режим барьера ({{ getBarrierCost }})</button>
+        <button 
+          class="game-page__btn" 
+          @click="() => addFighter()"
+        >Вызвать бойца ({{ getFighterCost }})</button>
     </div>
 
     
@@ -83,6 +87,13 @@
         @select = "() => selectBarrier(barrier)"
         @remove = "() => removeBarrier(barrier.id)"
       />
+
+      <Fighter
+        v-for="fighter in getFighters"
+        :key="fighter.id"
+        :fighter="fighter"
+        @remove="() => removeFighter(fighter.id)"
+      />
     </div>
 
     <div v-if = "getSelectedTower" class = "game-page__tower-panel">
@@ -142,6 +153,7 @@ import { mapGetters, mapActions } from 'vuex'
 import Tower from '../ui/Tower.vue'
 import Enemy from '../ui/Enemy.vue'
 import Barrier from '../ui/Barrier.vue'
+import Fighter from '../ui/Fighter.vue'
 
 const LEVELS = {
         1: {
@@ -206,6 +218,7 @@ export default {
     Tower,
     Enemy,
     Barrier,
+    Fighter,
   },
   data() {
     return {
@@ -219,6 +232,9 @@ export default {
       enemyTypes: ['basic', 'tank', 'fast'],
       isBarrierMode: false,
       getBarrierCost: 30,
+      isFighterMode: false,
+      getFighterCost: 40,
+      fighterAnimationFrameId: null,
     }
   },
   computed: {
@@ -231,6 +247,7 @@ export default {
       'getTowerPositions',
       'isGameOver',
       'getBarriers',
+      'getFighters',
     ]),
   },
   mounted() {
@@ -239,6 +256,7 @@ export default {
     this.towerShooting()
     this.startEnemyMovement()
     this.startWaveSpawner()
+    this.startFighterMovement()
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeyPress)
@@ -250,6 +268,9 @@ export default {
     }
     if (this.waveInterval) {
       clearInterval(this.waveInterval)
+    }
+    if (this.fighterAnimationFrameId) {
+      cancelAnimationFrame(this.fighterAnimationFrameId)
     }
   },
   methods: {
@@ -267,11 +288,19 @@ export default {
       'resetGame',
       'addBarrier',
       'removeBarrier',
+      'setBarriers',
+      'addFighter',
+      'removeFighter',
+      'setFighters',
     ]),
+    selectBarrier(barrier) {
+      console.log('Выбран барьер:', barrier)
+    },
     stopAllLoops() {
       if (this.towerShootInterval) { clearInterval(this.towerShootInterval); this.towerShootInterval = null; }
       if (this.waveInterval) { clearInterval(this.waveInterval); this.waveInterval = null; }
       if (this.animationFrameId) { cancelAnimationFrame(this.animationFrameId); this.animationFrameId = null; }
+      if (this.fighterAnimationFrameId) { cancelAnimationFrame(this.fighterAnimationFrameId); this.fighterAnimationFrameId = null; }
     },
     changeLevel(level) {
       if (this.currentLevel === level) return;
@@ -287,6 +316,7 @@ export default {
         this.towerShooting();
         this.startEnemyMovement();
         this.startWaveSpawner();
+        this.startFighterMovement();
       });
     },
 
@@ -352,24 +382,56 @@ export default {
         }
         
         let coinsEarned = 0;
-        const updatedEnemies = this.getEnemies.map(enemy => {
-          let currentHealth = enemy.health;
-          this.getTowers.forEach(tower => {
-            const dx = enemy.x - tower.x;
-            const dy = enemy.y - tower.y;
-            if (Math.sqrt(dx * dx + dy * dy) <= tower.range) {
-              currentHealth -= tower.damage;
-            }
-          });
+        let updatedEnemies = [...this.getEnemies];
+        let updatedBarriers = [...this.getBarriers];
+        let updatedFighters = [...this.getFighters];
 
-          if (currentHealth <= 0) {
+
+        updatedEnemies = updatedEnemies.map(enemy => {
+          let dmg = 0;
+          this.getTowers.forEach(tower => {
+            const dist = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2);
+            if (dist <= tower.range) dmg += tower.damage;
+          });
+          enemy.health -= dmg;
+          if (enemy.health <= 0) {
             coinsEarned += enemy.reward || 10;
             return null;
           }
-          return { ...enemy, health: currentHealth };
+          return enemy;
         }).filter(Boolean);
 
+        updatedEnemies.forEach(enemy => {
+          if (enemy.isBlocked) {
+            const barrier = updatedBarriers.find(b => {
+              const dist = Math.sqrt((enemy.x - b.x) ** 2 + (enemy.y - b.y) ** 2);
+              return dist < 45;
+            });
+            if (barrier) {
+              barrier.health -= 4;
+            }
+          }
+        });
+
+        updatedFighters = updatedFighters.map(fighter => {
+          const target = updatedEnemies.find(e => {
+            const dist = Math.sqrt((fighter.x - e.x) ** 2 + (fighter.y - e.y) ** 2);
+            return dist < 45;
+          });
+
+          if (target) {
+            target.health -= fighter.damage * 0.15;
+            fighter.health -= 2;
+          }
+          
+          return fighter.health > 0 ? fighter : null;
+        }).filter(Boolean);
+
+        updatedBarriers = updatedBarriers.filter(b => b.health > 0);
+
         this.setEnemies(updatedEnemies);
+        this.setFighters(updatedFighters);
+        this.setBarriers(updatedBarriers);
         if (coinsEarned > 0) this.addCoins(coinsEarned);
       }, 1000);
     },
@@ -408,6 +470,7 @@ export default {
         this.towerShooting();
         this.startEnemyMovement();
         this.startWaveSpawner();
+        this.startFighterMovement(); 
       });
     },
 
@@ -473,14 +536,14 @@ export default {
             const dy = enemy.y - b.y;
             return Math.sqrt(dx * dx + dy * dy) < 45;
           });
+          if (closestBarrier) return { ...enemy, isBlocked: true };
 
-          if (closestBarrier) {
-            closestBarrier.health -= 0.5;
-            if (closestBarrier.health <= 0) {
-              this.removeBarrier(closestBarrier.id);
-            }
-            return { ...enemy, isBlocked: true };
-          }
+          const hitFighter = this.getFighters.find(f => {
+            const dx = enemy.x - f.x;
+            const dy = enemy.y - f.y;
+            return Math.sqrt(dx * dx + dy * dy) < 45;
+          });
+          if (hitFighter) return { ...enemy, isBlocked: true };
           
           const route = this.getLevel.routes.find(r => r.id === enemy.routeId);
           if (!route || !route.points || route.points.length === 0) return enemy;
@@ -497,18 +560,25 @@ export default {
           const dy = nextPoint.y - enemy.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const speed = enemy.speed || 1.5;
+          const moveStep = Math.min(dist, speed);
 
-          let newX, newY, newIndex;
-          if (dist <= speed) {
-            newX = nextPoint.x;
-            newY = nextPoint.y;
-            newIndex = nextIndex;
+         if (dist <= speed) {
+            return {
+              ...enemy,
+              x: nextPoint.x,
+              y: nextPoint.y,
+              currentPointIndex: nextIndex,
+              isBlocked: false
+            };
           } else {
-            newX = enemy.x + (dx / dist) * speed;
-            newY = enemy.y + (dy / dist) * speed;
-            newIndex = enemy.currentPointIndex;
+            return {
+              ...enemy,
+              x: enemy.x + (dx / dist) * speed,
+              y: enemy.y + (dy / dist) * speed,
+              currentPointIndex: enemy.currentPointIndex,
+              isBlocked: false
+            };
           }
-          return { ...enemy, x: newX, y: newY, currentPointIndex: newIndex };
         }).filter(Boolean);
 
         this.setEnemies(updatedEnemies);
@@ -523,6 +593,78 @@ export default {
       };
       
       this.animationFrameId = requestAnimationFrame(move);
+    },
+
+    startFighterMovement() {
+      const move = () => {
+        if (this.isGameOver) {
+          this.fighterAnimationFrameId = null;
+          return;
+        }
+
+        if (this.getFighters.length === 0) {
+          this.fighterAnimationFrameId = requestAnimationFrame(move);
+          return;
+        }
+
+       const updatedFighters = this.getFighters.map(fighter => {
+          if (!fighter.routeId) return fighter;
+
+          const hitBarrier = this.getBarriers.find(b => {
+            const dx = fighter.x - b.x;
+            const dy = fighter.y - b.y;
+            return Math.sqrt(dx * dx + dy * dy) < 45;
+          });
+          if (hitBarrier) return { ...fighter, isBlocked: true };
+
+          const hitEnemy = this.getEnemies.find(e => {
+            const dx = fighter.x - e.x;
+            const dy = fighter.y - e.y;
+            return Math.sqrt(dx * dx + dy * dy) < 45;
+          });
+          if (hitEnemy) return { ...fighter, isBlocked: true };
+
+          /*
+          const nearbyEnemy = this.getEnemies.find(e => {
+            const dist = Math.sqrt((fighter.x - e.x) ** 2 + (fighter.y - e.y) ** 2);
+            return dist < 45;
+          });
+
+          const nearbyBarrier = this.getBarriers.find(b => {
+            const dist = Math.sqrt((fighter.x - b.x) ** 2 + (fighter.y - b.y) ** 2);
+            return dist < 45;
+          });
+
+          if (nearbyEnemy || nearbyBarrier) {
+            return { ...fighter, isBlocked: true };
+          }
+          */
+
+          const route = this.getLevel.routes.find(r => r.id === fighter.routeId);
+          if (!route || !route.points || route.points.length === 0) return fighter;
+
+          const prevIndex = fighter.pointIndex - 1;
+          const prevPoint = route.points[prevIndex];
+
+          if (!prevPoint || prevIndex < 0) return null;
+
+          const dx = prevPoint.x - fighter.x;
+          const dy = prevPoint.y - fighter.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const speed = ((fighter.speed || 1.0)*0.5);
+
+          if (dist <= speed) {
+            return { ...fighter, x: prevPoint.x, y: prevPoint.y, pointIndex: prevIndex, isBlocked: false };
+          } else {
+            return { ...fighter, x: fighter.x + (dx / dist) * speed, y: fighter.y + (dy / dist) * speed, pointIndex: fighter.pointIndex, isBlocked: false };
+          }
+        }).filter(Boolean);
+
+        this.setFighters(updatedFighters);
+        this.fighterAnimationFrameId = requestAnimationFrame(move);
+      };
+
+      this.fighterAnimationFrameId = requestAnimationFrame(move);
     },
   },
 }
