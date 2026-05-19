@@ -19,8 +19,9 @@
         <label>Field Size (нечетное число):</label>
 
         <div class="game__fieldSize">
-        <input v-model="value" type="number" step="2" min="1" class="game__fieldSize--input">
-        <button class="game__fieldSize--btn" @click="() => incFieldSize()" >Применить</button>
+          <input v-model="value" type="number" step="2" min="1" class="game__fieldSize--input">
+          <button class="game__fieldSize--btn" @click="() => incFieldSize()" >Применить</button>
+          <FigureEditor/>
         </div>
       </div>
 
@@ -98,9 +99,8 @@
           </div>
 
         </div>
-
-
       </div>
+
     </div>
 
   </div>
@@ -110,6 +110,7 @@
 
 import { mapGetters, mapActions } from 'vuex'
 import PlayingField from '../ui/PlayingField.vue'
+import FigureEditor from '../ui/FigureEditor.vue'
 
 import upArrow from '@/components/icons/icons8-up-arrow-80.png'
 import downArrow from '@/components/icons/icons8-down-arrow-80.png'
@@ -121,11 +122,12 @@ import speedArrow from '@/components/icons/icons8-speed-80.png'
 import redBomb from '@/components/icons/icons8-bomb-80.png'
 import blackBomb from '@/components/icons/icons8-bomb-80(1).png'
 import greenBomb from '@/components/icons/icons8-bomb-80(2).png'
-
+const DEFAULT_FIGURE_COLOR = '#ff4444'
 export default{
   name: 'GamingPage',
   components:{
-    PlayingField
+    PlayingField,
+    FigureEditor
   },
   data(){
     const initialFieldSize = 11
@@ -175,10 +177,16 @@ export default{
       'getBombs',
       'getBombsCount',
     ]),
+    ...mapGetters( 'figureShapes',[
+      'getActiveShape'
+    ]),
     ...mapGetters({
       count: 'getCount',
       list: 'list/getList'
-    })
+    }),
+    activeShapeColor(){
+      return this.getActiveShape?.color ?? DEFAULT_FIGURE_COLOR
+    },
   },
   mounted(){
     console.log('GamingPage MOUNTED')
@@ -234,7 +242,11 @@ export default{
       const vm = this
       this.spawnInterval = setInterval(() => {
         console.log('SPAWN TICK')
-        vm.spawnFigure({fieldSize: vm.fieldSize})
+        vm.spawnFigure({
+          fieldSize: vm.fieldSize, 
+          color: vm.activeShapeColor,
+          shapeCells: this.getActiveShape?.cells ?? null,
+        })
       }, 2000)
       this.moveInterval = setInterval( () => {
         this.gameTick()
@@ -390,26 +402,27 @@ export default{
       const centerRow = this.corePosition.row;
       const centerCol = this.corePosition.col;
 
-      const newPositions = this.islandPosition.map(cell =>{
-      const relRow = cell.row - centerRow;
-      const relCol = cell.col - centerCol;
+      const newPositions = this.islandPosition.map((cell: {row: number; col: number; color?: string}) =>{
+        const relRow = cell.row - centerRow;
+        const relCol = cell.col - centerCol;
 
-      let newRelRow, newRelCol;
-      if (direction === 'clockwise'){
-        newRelRow = relCol;
-        newRelCol = -relRow;
-      }
-      else{
-        newRelRow = -relCol;
-        newRelCol = relRow;
-      }
-      const newRow = newRelRow + centerRow;
-      const newCol = newRelCol + centerCol;
+        let newRelRow, newRelCol;
+        if (direction === 'clockwise'){
+          newRelRow = relCol;
+          newRelCol = -relRow;
+        }
+        else{
+          newRelRow = -relCol;
+          newRelCol = relRow;
+        }
+        const newRow = newRelRow + centerRow;
+        const newCol = newRelCol + centerCol;
 
-      return{
-        row: Math.max(0, Math.min(this.fieldSize - 1, newRow)),
-        col: Math.max(0, Math.min(this.fieldSize - 1, newCol))
-      }
+        return{
+          row: Math.max(0, Math.min(this.fieldSize - 1, newRow)),
+          col: Math.max(0, Math.min(this.fieldSize - 1, newCol)),
+          color: cell.color,
+        }
       })
       this.islandPosition = newPositions;
       console.log(`Остров повернут ${direction === 'clockwise' ? 'по часовой':'против часовой'}`)
@@ -453,9 +466,10 @@ export default{
         right: {row: 0, col: 1}
       }[direction]
       if (!delta) return;
-      const newCells = this.islandPosition.map(cell => ({
+      const newCells = this.islandPosition.map((cell: {row: number; col: number; color?: string}) => ({
         row: Math.min(this.fieldSize - 1, Math.max(0, cell.row + delta.row)),
         col: Math.min(this.fieldSize - 1, Math.max(0, cell.col + delta.col)),
+        color: cell.color,
       }))
       this.corePosition = {
         row: Math.min(this.fieldSize - 1, Math.max(0, this.corePosition.row + delta.row)),

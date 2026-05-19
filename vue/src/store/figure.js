@@ -15,6 +15,7 @@ const MUTATIONS = {
   REMOVE_BOMB: 'REMOVE_BOMB',
   UPDATE_BOMB_POSITION: 'UPDATE_BOMB_POSITION',
 }
+const DEFAULT_FIGURE_COLOR = '#ff4444'
 
 export default {
   namespaced: true,
@@ -104,7 +105,7 @@ export default {
     },
   },
   actions: {
-    spawnFigure: ({state, commit}, {fieldSize}) => {
+    spawnFigure: ({state, commit}, {fieldSize, color = DEFAULT_FIGURE_COLOR, shapeCells = null}) => {
       console.log('=== SPAWN_FIGURE START ===')
       console.log('fieldSize:', fieldSize)
       console.log('isGameActive:', state.isGameActive)
@@ -142,12 +143,15 @@ export default {
           break
       }
       const speedForThisFigure = state.speedBoostNextFigure ? 2: state.figureSpeed;
+
       const figure = {
         id: Date.now() + '-' + Math.random(),
         row,
         col,
         direction,
-        speed: speedForThisFigure
+        speed: speedForThisFigure,
+        color,
+        shapeCells,
       }
       if (state.speedBoostNextFigure){
         console.log(`Ускорена ОДНА  следующая фигура (speed = 2)`)
@@ -230,25 +234,37 @@ export default {
               case 'right': targetCol = figure.col + step; break
             }
 
-            const willHitIsland = islandPosition.some(cell =>
-              cell.row === targetRow && cell.col === targetCol
+            const figCells = figure.shapeCells ? figure.shapeCells.map(c => ({
+              row: targetRow + c.row,
+              col: targetCol + c.col,
+            })) : [{row: targetRow, col: targetCol}]
+
+            const willHitIsland = figCells.some(fc =>
+              islandPosition.some(cell => cell.row === fc.row && cell.col === fc.col)
             )
 
-            if (willHitIsland) {
-              const attachCell = { row: currentRow, col: currentCol }
+            if (willHitIsland) {                                    // ← if начинается здесь
+              const cellsToAttach = figure.shapeCells
+                ? figure.shapeCells.map(c => ({
+                    row: currentRow + c.row,
+                    col: currentCol + c.col,
+                    color: figure.color ?? DEFAULT_FIGURE_COLOR
+                  }))
+                : [{row: currentRow, col: currentCol, color: figure.color ?? DEFAULT_FIGURE_COLOR}]
 
-              const alreadyExists = islandPosition.some(c => c.row === attachCell.row && c.col === attachCell.col) ||
-                                    newCells.some(c => c.row === attachCell.row && c.col === attachCell.col)
-
-              if (!alreadyExists) {
-                newCells.push(attachCell)
-                console.log(` HIT! Attaching at (${attachCell.row}, ${attachCell.col}) | speed=${speed}, step=${step} from direction ${figure.direction}`)
-              }
+              cellsToAttach.forEach(attachCell => {
+                const alreadyExists = islandPosition.some(c => c.row === attachCell.row && c.col === attachCell.col) ||
+                                      newCells.some(c => c.row === attachCell.row && c.col === attachCell.col)
+                if (!alreadyExists) {
+                  newCells.push(attachCell)
+                  console.log(`HIT! Attaching at (${attachCell.row}, ${attachCell.col}) from direction ${figure.direction}`)
+                }
+              })
 
               commit(MUTATIONS.REMOVE_FIGURE, figure.id)
-              break
-            }
-            currentRow = targetRow
+              break                                                 
+            }                                                      
+            currentRow = targetRow                                  
             currentCol = targetCol
           }
         })

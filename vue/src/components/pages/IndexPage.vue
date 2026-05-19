@@ -1,7 +1,7 @@
 <template>
   <h1>Игра "Тетростров"</h1><br>
   <div>
-    <RouterLink :to="{ name: $routes.GAME }">
+    <RouterLink :to="{ name: 'GAME' }">
      Начать игру 
     </RouterLink>
   </div>

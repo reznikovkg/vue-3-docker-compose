@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import figure from './figure'
+import figureShapes from './figureShapes'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -36,6 +37,7 @@ export default createStore({
     },
   },
   modules: {
-    figure
+    figure,
+    figureShapes
   }
 })

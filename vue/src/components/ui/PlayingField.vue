@@ -11,7 +11,12 @@
         'has-bomb': hasBlackBombAt(cell)
       }">
       
-      <div v-if="hasFigureAt(cell)" class="PlayingField__figure"></div>
+      <div 
+        v-if="hasFigureAt(cell)" 
+        class="PlayingField__figure" 
+        :style="{background: getFigureColor(cell)}"
+      >
+      </div>
 
       <div v-if="hasBlackBombAt(cell)" class="PlayingField__bomb">
         <img :src="blackBomb" class="PlayingField__bomb--img">
@@ -26,11 +31,11 @@
       </div>
       
       <div 
-      v-if="isIslandAt(cell)"
-      class="PlayingField__island"
-      :class="{
-        'core': isCoreCell(cell)
-      }">
+        v-if="isIslandAt(cell)"
+        class="PlayingField__island"
+        :class="{'core': isCoreCell(cell)}"
+        :style="!isCoreCell(cell) ? {background: getIslandCellColor(cell)} : {}"
+      >
       </div>
     </div>
   </div>
@@ -43,6 +48,9 @@
 import redBomb from '@/components/icons/icons8-bomb-80.png'
 import blackBomb from '@/components/icons/icons8-bomb-80(1).png'
 import greenBomb from '@/components/icons/icons8-bomb-80(2).png'
+
+const DEFAULT_FIGURE_COLOR = '#ff4444'
+const DEFAULT_ISLAND_COLOR = '#2207ef'
 
 export default{
     name: 'PlayingField',
@@ -59,7 +67,7 @@ export default{
             default: 11
         },
         islandPosition: {
-            type: Array as () => {row: number; col: number}[],
+            type: Array as () => {row: number; col: number; color?: string}[],
             required: true,
         },
         corePosition: {
@@ -95,7 +103,12 @@ export default{
     },
     methods: {
       hasFigureAt(position: {row: number; col: number}) {
-        return this.figures.some(figure => figure.row === position.row && figure.col === position.col)
+        return this.figures.some(figure => {
+          if (!figure.shapeCells){
+            return figure.row === position.row && figure.col === position.col
+          }
+          return figure.shapeCells.some((cell: any) => figure.row + cell.row  === position.row && figure.col + cell.col === position.col)
+        })
       },
       isIslandAt(position: {row: number; col: number}) {
         return this.islandPosition.some(cell => cell.row === position.row && cell.col === position.col)
@@ -112,6 +125,19 @@ export default{
       },
       hasGreenBombAt(position: {row: number; col: number}) {
         return this.bombs.some(bomb => bomb.type === 'green' && bomb.row === position.row && bomb.col === position.col)
+      },
+      getFigureColor(position: {row: number; col: number}){
+        const figure = this.figures.find(figure =>{
+          if (!figure.shapeCells){
+            return figure.row === position.row && figure.col === position.col
+          }
+          return figure.shapeCells.some((cell: any) => figure.row + cell.row === position.row && figure.col + cell.col === position.col)
+        })
+        return figure?.color ?? DEFAULT_FIGURE_COLOR 
+      },
+      getIslandCellColor(position: {row: number; col: number}) {
+        const cell = this.islandPosition.find(c => c.row === position.row && c.col === position.col)
+        return cell?.color ?? DEFAULT_ISLAND_COLOR
       },
   }
 }
