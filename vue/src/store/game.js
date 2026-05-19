@@ -625,26 +625,25 @@ export default {
       commit(MUTATIONS.SET_CURRENT_FIGURE_CELLS, newCells)
     },
     saveCurrentFigure: ({ commit, state }) => {
-      const isConnected = (grid) => {
-        const rows = 4
-        const cols = 4
+      const rows = 4
+      const cols = 4
+      let startRow = -1
+      let startCol = -1
 
-        let startRow = -1
-        let startCol = -1
-
-        for (let i = 0; i < rows; i++) {
-          for (let j = 0; j < cols; j++) {
-            if (grid[i][j]) {
-              startRow = i
-              startCol = j
-              break
-            }
+      for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+          if (state.currentFigureCells[i][j]) {
+            startRow = i
+            startCol = j
+            break
           }
-          if (startRow !== -1) break
         }
+        if (startRow !== -1) break
+      }
 
-        if (startRow === -1) return false
+      let isConnected = true
 
+      if (startRow !== -1) {
         const visited = Array(rows).fill().map(() => Array(cols).fill(false))
         const queue = [[startRow, startCol]]
 
@@ -658,7 +657,7 @@ export default {
             const nx = x + dx
             const ny = y + dy
             if (nx >= 0 && nx < rows && ny >= 0 && ny < cols) {
-              if (grid[nx][ny] && !visited[nx][ny]) {
+              if (state.currentFigureCells[nx][ny] && !visited[nx][ny]) {
                 queue.push([nx, ny])
               }
             }
@@ -667,11 +666,19 @@ export default {
 
         for (let i = 0; i < rows; i++) {
           for (let j = 0; j < cols; j++) {
-            if (grid[i][j] && !visited[i][j]) return false
+            if (state.currentFigureCells[i][j] && !visited[i][j]) {
+              isConnected = false
+              break
+            }
           }
         }
+      } else {
+        isConnected = false
+      }
 
-        return true
+      if (!isConnected) {
+        alert('Фигура должна быть единым целым')
+        return false
       }
 
       const matrixToCoordinates = (matrix) => {
@@ -684,11 +691,6 @@ export default {
           }
         }
         return coords
-      }
-
-      if (!isConnected(state.currentFigureCells)) {
-        alert('Фигура должна быть единым целым')
-        return false
       }
 
       const cellsCoords = matrixToCoordinates(state.currentFigureCells)
