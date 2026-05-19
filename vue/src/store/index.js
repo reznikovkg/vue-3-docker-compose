@@ -281,7 +281,8 @@ export default createStore({
         index: store.getters.getActiveBaitInfo.index,
         count: -1
       })
-      const type = FISH_TYPES[getRandomInt(0, store.getters.getActiveBaitInfo.bait.level)], weight = getRandomInt(type.minWeight, type.maxWeight)
+      const type = FISH_TYPES[getRandomInt(0, store.getters.getActiveBaitInfo.bait.level)]
+      let weight = getRandomInt(type.minWeight, type.maxWeight)
       if(store.state.isNight) {
         weight *= 2
       }
