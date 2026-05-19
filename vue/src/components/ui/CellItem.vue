@@ -9,15 +9,15 @@
     data-cell
     :data-idx="idx"
     :draggable="!!data && !isDrag"
-    @dragstart="handleDragStart"
-    @dragend="handleDragEnd"
+    @dragstart="(e) => handleDragStart(e)"
+    @dragend="() => handleDragEnd()"
     @dragover.prevent
-    @drop.prevent="handleDrop"
-    @touchstart="handleTouchStart"
-    @touchmove.prevent="handleTouchMove"
-    @touchend="handleTouchEnd"
+    @drop.prevent="() => handleDrop()"
+    @touchstart="() => handleTouchStart()"
+    @touchmove.prevent="(e) => handleTouchMove(e)"
+    @touchend="(e) => handleTouchEnd(e)"
   >
-    <span 
+    <span
       v-if="data"
       class="cell-item__num"
       :class="'cell-item__num--lvl-' + data.tier"
