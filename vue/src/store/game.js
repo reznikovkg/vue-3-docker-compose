@@ -70,7 +70,7 @@ export default {
       barriers: [],
       fighters: [],
       selectedTower: null,
-      coins: 100,
+      coins: 150,
       isGameOver: false,
     }
   },

@@ -23,6 +23,11 @@
           class="game-page__btn" 
           @click="() => addFighter()"
         >Вызвать бойца ({{ getFighterCost }})</button>
+        <button 
+          class="game-page__btn" 
+          :class="{ 'game-page__btn--active': isArtilleryMode }"
+          @click="() => isArtilleryMode = !isArtilleryMode"
+        >Артиллерия ({{ artilleryCost }})</button>
     </div>
 
     
@@ -54,6 +59,13 @@
         stroke-linejoin = "round"
       />
     </svg>
+
+      <div
+        v-for="exp in explosions"
+        :key="exp.id"
+        class="artillery-explosion"
+        :style="{ left: exp.x + 'px', top: exp.y + 'px' }"
+      ></div>
 
       <div
         v-for = "position in getTowerPositions"
@@ -229,12 +241,17 @@ export default {
       enemiesSpawned: 0,
       maxEnemiesPerWave: 5,
       towerShootInterval: null,
-      enemyTypes: [/*'basic', 'tank', 'fast', */'archer', 'elite_archer'],
+      enemyTypes: ['basic', 'tank', 'fast', 'archer', 'elite_archer'],
       isBarrierMode: false,
       getBarrierCost: 30,
       isFighterMode: false,
       getFighterCost: 40,
       fighterAnimationFrameId: null,
+      isArtilleryMode: false,
+      artilleryCost: 150,
+      artilleryRadius: 100,
+      artilleryDamage: 200,
+      explosions: [],
     }
   },
   computed: {
@@ -321,6 +338,7 @@ export default {
         this.startWaveSpawner();
         this.startFighterMovement();
         this.startEnemyShooting();
+        this.explosions = [];
       });
     },
 
@@ -344,13 +362,20 @@ export default {
     },
     handleGameAreaClick(event) {
       if (event.target === event.currentTarget) {
-        if (this.isBarrierMode) {
           const rect = event.currentTarget.getBoundingClientRect()
           const x = event.clientX - rect.left
           const y = event.clientY - rect.top
-          this.addBarrier({ x, y })
-          return
-        }
+
+          if (this.isArtilleryMode) {
+            this.fireArtillery({ x, y })
+            return
+          }
+
+          if (this.isBarrierMode) {
+            this.addBarrier({ x, y })
+            return
+          }
+
         this.selectTower(null)
       }
     },
@@ -475,7 +500,8 @@ export default {
         this.startEnemyMovement();
         this.startWaveSpawner();
         this.startFighterMovement();
-        this.startEnemyShooting(); 
+        this.startEnemyShooting();
+        this.explosions = [];
       });
     },
 
@@ -656,7 +682,7 @@ export default {
       this.fighterAnimationFrameId = requestAnimationFrame(move);
     },
 
-        startEnemyShooting() {
+    startEnemyShooting() {
       this.enemyShootInterval = setInterval(() => {
         if (this.isGameOver) {
           clearInterval(this.enemyShootInterval);
@@ -682,8 +708,8 @@ export default {
             if (dist <= enemy.shootRange) {
               fighter.health -= enemy.shootDamage;
             }
-          });
-        });
+          }); 
+         });
 
         updatedTowers = updatedTowers.filter(t => t.health > 0);
         updatedFighters = updatedFighters.filter(f => f.health > 0);
@@ -694,7 +720,59 @@ export default {
         if (updatedFighters.length !== this.getFighters.length) {
           this.setFighters(updatedFighters);
         }
-      }, 1000);
+     }, 1000);
+    },
+
+    fireArtillery(target) {
+      const cost = this.artilleryCost;
+      if (this.getCoins < cost) return;
+
+      const id = Date.now();
+      this.explosions.push({ id, x: target.x, y: target.y });
+      setTimeout(() => {
+        this.explosions = this.explosions.filter(e => e.id !== id);
+      }, 600); 
+
+      let coinsEarned = 0;
+      let updatedEnemies = [...this.getEnemies];
+      let updatedFighters = [...this.getFighters];
+
+      updatedEnemies = updatedEnemies.map(enemy => {
+        const dx = enemy.x - target.x;
+        const dy = enemy.y - target.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= this.artilleryRadius) {
+          const damageFactor = 1 - (dist / this.artilleryRadius);
+          const actualDamage = Math.floor(this.artilleryDamage * damageFactor);
+          enemy.health -= actualDamage;
+        }
+
+        if (enemy.health <= 0) {
+          coinsEarned += enemy.reward || 10;
+          return null;
+        }
+        return enemy.health > 0 ? enemy : null;
+      }).filter(Boolean);
+
+      updatedFighters = updatedFighters.map(fighter => {
+        const dx = fighter.x - target.x;
+        const dy = fighter.y - target.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist <= this.artilleryRadius) {
+          const damageFactor = 1 - (dist / this.artilleryRadius);
+          const actualDamage = Math.floor(this.artilleryDamage * damageFactor);
+          fighter.health -= actualDamage;
+        }
+        return fighter.health > 0 ? fighter : null;
+      }).filter(Boolean);
+
+      this.setEnemies(updatedEnemies);
+      this.setFighters(updatedFighters);
+      this.addCoins(-cost);
+
+      if (coinsEarned > 0) {
+        this.addCoins(coinsEarned);
+      }
     },
   },
 }
@@ -913,6 +991,19 @@ export default {
     background: #c73e54;
     transform: scale(1.05);
   }
+}
+
+.artillery-explosion {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,165,0,0.8) 0%, rgba(255,69,0,0.4) 60%, transparent 100%);
+  border: 2px solid rgba(255, 100, 0, 0.9);
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+  animation: explode 0.6s ease-out forwards;
 }
 }
 </style>
