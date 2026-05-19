@@ -17,7 +17,7 @@
     @touchmove.prevent="handleTouchMove"
     @touchend="handleTouchEnd"
   >
-    <span
+    <span 
       v-if="data"
       class="cell-item__num"
       :class="'cell-item__num--lvl-' + data.tier"
@@ -27,77 +27,77 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'CellItem',
+<script setup>
+import { ref } from 'vue'
 
-  props: {
-    data: { type: Object, default: null },
-    idx: { type: Number, required: true },
-    isDrag: { type: Boolean, default: false },
-  },
+const props = defineProps({
+  data: { type: Object, default: null },
+  idx: { type: Number, required: true },
+  isDrag: { type: Boolean, default: false },
+})
 
-  emits: ['start-drag', 'stop-drag', 'cell-drop', 'cell-touch-move', 'cell-touch-end'],
+const emit = defineEmits([
+  'start-drag',
+  'stop-drag',
+  'cell-drop',
+  'cell-touch-move',
+  'cell-touch-end',
+])
 
-  data: () => ({
-    pressTimer: null,
-  }),
+const pressTimer = ref(null)
 
-  methods: {
-    handleDragStart(e) {
-      if (!this.data) return
+const handleDragStart = (e) => {
+  if (!props.data) return
 
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('text/plain', String(this.idx))
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData('text/plain', String(props.idx))
 
-      const preview = document.createElement('div')
-      preview.className = 'cell-item__preview'
-      preview.textContent = this.data.val
-      document.body.appendChild(preview)
-      e.dataTransfer.setDragImage(preview, 25, 25)
-      setTimeout(() => preview.remove(), 0)
+  const preview = document.createElement('div')
+  preview.className = 'cell-item__preview'
+  preview.textContent = props.data.val
+  document.body.appendChild(preview)
+  e.dataTransfer.setDragImage(preview, 25, 25)
+  setTimeout(() => preview.remove(), 0)
 
-      this.$emit('start-drag', this.data, this.idx)
-    },
+  emit('start-drag', props.data, props.idx)
+}
 
-    handleDragEnd() {
-      this.$emit('stop-drag')
-    },
+const handleDragEnd = () => {
+  emit('stop-drag')
+}
 
-    handleDrop(e) {
-      this.$emit('cell-drop', this.idx)
-    },
+const handleDrop = () => {
+  emit('cell-drop', props.idx)
+}
 
-    handleTouchStart() {
-      if (!this.data) return
-      this.pressTimer = setTimeout(() => {
-        this.$emit('cell-touch-move', this.idx)
-      }, 200)
-    },
+const handleTouchStart = () => {
+  if (!props.data) return
+  pressTimer.value = setTimeout(() => {
+    emit('cell-touch-move', null, props.idx)
+  }, 200)
+}
 
-    handleTouchMove(e) {
-      if (!this.data) return
-      clearTimeout(this.pressTimer)
+const handleTouchMove = (e) => {
+  if (!props.data) return
+  clearTimeout(pressTimer.value)
 
-      const t = e.touches[0]
-      const el = document.elementFromPoint(t.clientX, t.clientY)
-      const cellEl = el?.closest('[data-cell]')
-      if (cellEl && cellEl.dataset.idx !== undefined) {
-        this.$emit('cell-touch-move', parseInt(cellEl.dataset.idx))
-      }
-    },
+  const t = e.touches[0]
+  const el = document.elementFromPoint(t.clientX, t.clientY)
+  const cellEl = el?.closest('[data-cell]')
+  if (cellEl && cellEl.dataset.idx !== undefined) {
+    emit('cell-touch-move', e, parseInt(cellEl.dataset.idx))
+  }
+}
 
-    handleTouchEnd(e) {
-      clearTimeout(this.pressTimer)
+const handleTouchEnd = (e) => {
+  clearTimeout(pressTimer.value)
 
-      const t = e.changedTouches[0]
-      const el = document.elementFromPoint(t.clientX, t.clientY)
-      const cellEl = el?.closest('[data-cell]')
-      if (cellEl && cellEl.dataset.idx !== undefined) {
-        this.$emit('cell-touch-end', e, parseInt(cellEl.dataset.idx))
-      }
-    },
-  },
+  const t = e.changedTouches[0]
+  const el = document.elementFromPoint(t.clientX, t.clientY)
+  const cellEl = el?.closest('[data-cell]')
+  if (cellEl && cellEl.dataset.idx !== undefined) {
+    emit('cell-touch-end', e, parseInt(cellEl.dataset.idx))
+  }
 }
 </script>
 
