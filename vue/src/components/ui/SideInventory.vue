@@ -63,12 +63,15 @@ export default {
       'changeFishSkipped'
     ]),
     inventoryKeyDown(event) {
-      if(event.code === 'KeyW' && this.getFishSkipped > 0)
+      if(event.code === 'KeyW' && this.getFishSkipped > 0) {
         this.changeFishSkipped(-1)
-      else if(event.code === 'KeyS' && this.getFishSkipped + 3 < this.getLengthInventoryFish)
+      }
+      else if(event.code === 'KeyS' && this.getFishSkipped + 3 < this.getLengthInventoryFish) {
         this.changeFishSkipped(1)
-      else if(event.code === 'KeyA' || event.code === 'KeyD')
+      }
+      else if(event.code === 'KeyA' || event.code === 'KeyD') {
         this.isSwitched = !this.isSwitched
+      }
     }
   }
 }

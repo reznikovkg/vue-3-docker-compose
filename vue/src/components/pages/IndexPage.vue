@@ -97,14 +97,18 @@ export default {
     updateMoving() {
       if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken && !this.getIsShopping) {
         let x = 0, y = 0
-        if(this.pressed.ArrowDown)
+        if(this.pressed.ArrowDown) {
           y += 1
-        if(this.pressed.ArrowUp)
+        }
+        if(this.pressed.ArrowUp) {
           y -= 1
-        if(this.pressed.ArrowRight)
+        }
+        if(this.pressed.ArrowRight) {
           x += 1
-        if(this.pressed.ArrowLeft)
+        }
+        if(this.pressed.ArrowLeft) {
           x -= 1
+        }
         if(x !== 0 || y !== 0) {
           if(Math.abs(this.getBoat.x - this.lastCheck.x) > 500 || Math.abs(this.getBoat.y - this.lastCheck.y) > 500) {
             this.relocateDistantAreas()
@@ -113,11 +117,13 @@ export default {
           }
           this.move({px: x, py: y})
         }
-        else
+        else {
           this.setMoving(false)
+        }
       }
-      else
+      else {
         this.setMoving(false)
+      }
       requestAnimationFrame(this.updateMoving)
     },
     updateCenter() {
@@ -125,12 +131,14 @@ export default {
       this.center.y = window.innerHeight / 2
     },
     movingKeyDown(event) {
-      if(this.pressed.hasOwnProperty(event.code))
+      if(this.pressed.hasOwnProperty(event.code)) {
         this.pressed[event.code] = true
+      }
     },
     movingKeyUp(event) {
-      if(this.pressed.hasOwnProperty(event.code))
+      if(this.pressed.hasOwnProperty(event.code)) {
         this.pressed[event.code] = false
+      }
     }
   }
 }

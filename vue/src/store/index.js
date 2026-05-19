@@ -127,10 +127,12 @@ export default createStore({
     getActiveTacklesInfo: (state) => {
       const activeTackles = state.inventory.tackles.filter(tackle => tackle.isActive)
       let totalLevel = 1
-      if(activeTackles.length === 3)
+      if(activeTackles.length === 3) {
         activeTackles.forEach(tackle => totalLevel *= tackle.level)
-      else
+      }
+      else {
         totalLevel = 0
+      }
       return {
         activeTackles: activeTackles,
         totalLevel: totalLevel
@@ -170,10 +172,12 @@ export default createStore({
       const {px, py} = payload
       state.boat.x += state.boat.speed * px
       state.boat.y += state.boat.speed * py
-      if(px > 0)
+      if(px > 0) {
         state.boat.direction = 1
-      else if(px < 0)
+      }
+      else if(px < 0) {
         state.boat.direction = -1
+      }
     },
     [MUTATIONS.SET_MOVING]: (state, value) => {
       state.isMoving = value
@@ -208,14 +212,16 @@ export default createStore({
     },
     [MUTATIONS.SET_ACTIVE_TACKLE]: (state, payload) => {
       const {oldIndex, newIndex} = payload
-      if(oldIndex !== -1)
+      if(oldIndex !== -1) {
         state.inventory.tackles[oldIndex].isActive = false
+      }
       state.inventory.tackles[newIndex].isActive = true
     },
     [MUTATIONS.SET_TACKLE_OWNED]: (state, payload) => {
       const {index, buy} = payload
-      if(!buy)
+      if(!buy) {
         state.inventory.tackles[index].isActive = buy
+      }
       state.inventory.tackles[index].isOwned = buy
     },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, payload) => {
@@ -254,21 +260,24 @@ export default createStore({
         store.commit(MUTATIONS.SET_MOVING, true)
       }
       else {
-        if(px !== 0)
+        if(px !== 0) {
           index = findAreaIndex(next.x, store.state.boat.y, store.state.areas, 'island', false)
+        }
         if(index === -1) {
           store.commit(MUTATIONS.MOVE, {px: px, py: 0})
           store.commit(MUTATIONS.SET_MOVING, true)
         }
         else {
-          if(py !== 0)
+          if(py !== 0) {
             index = findAreaIndex(store.state.boat.x, next.y, store.state.areas, 'island', false)
+          }
           if(index === -1) {
             store.commit(MUTATIONS.MOVE, {px: 0, py: py})
             store.commit(MUTATIONS.SET_MOVING, true)
           }
-          else
+          else {
             store.commit(MUTATIONS.SET_MOVING, false)
+          }
         }
       }
     },
@@ -320,10 +329,12 @@ export default createStore({
     },
     tradeTackle: (store, payload) => {
       const {index, buy} = payload
-      if(buy)
+      if(buy) {
         store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.inventory.tackles[index].price)
-      else
+      }
+      else {
         store.commit(MUTATIONS.CHANGE_BALANCE, store.state.inventory.tackles[index].price / 2)
+      }
       store.commit(MUTATIONS.SET_TACKLE_OWNED, {
         index: index,
         buy: buy
@@ -346,10 +357,12 @@ export default createStore({
     },
     tradeBait: (store, payload) => {
       const {index, count} = payload
-      if(count < 0)
+      if(count < 0) {
         store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.inventory.baits[index].price * count / 2)
-      else
+      }
+      else {
         store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.inventory.baits[index].price * count)
+      }
       store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
         index: index,
         count: count

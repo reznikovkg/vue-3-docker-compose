@@ -90,8 +90,9 @@ export default {
     },
     checkKeyDown(event) {
       if(!this.getIsHooked && !this.getIsBroken) {
-        if(this.baitKeyIndex.hasOwnProperty(event.code) && !this.getIsFishing)
+        if(this.baitKeyIndex.hasOwnProperty(event.code) && !this.getIsFishing) {
           this.setActiveBait(this.baitKeyIndex[event.code])
+        }
         else if(event.code === 'KeyV' && !this.getIsFishing) {
           if(this.getFeedInfo.feed.count > 0 && !this.getCurrentAreaInfo) {
             this.relocateMaxDistanceAreaToBoat('medium')
@@ -104,15 +105,18 @@ export default {
           }
         }
         else if(event.code === 'Space') {
-          if(this.getCurrentAreaInfo && this.getCurrentAreaInfo.area.type === 'shallow')
+          if(this.getCurrentAreaInfo && this.getCurrentAreaInfo.area.type === 'shallow') {
             this.setShopping()
+          }
           else {
             this.setFishing()
             if(this.getIsFishing) {
-              if(this.getActiveBaitInfo.bait.count <= 0 || this.getActiveTacklesInfo.totalLevel === 0)
+              if(this.getActiveBaitInfo.bait.count <= 0 || this.getActiveTacklesInfo.totalLevel === 0) {
                 this.setFishing()
-              else
+              }
+              else {
                 this.startFishing()
+              }
             }
             else if(this.getIsGaming && Math.abs(this.targetPosition - this.playerPosition) <= 5) {
               this.stopFishing()

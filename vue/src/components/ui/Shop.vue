@@ -55,24 +55,27 @@ export default {
     },
     getTackleButtons(tackle, index) {
       const rows = []
-      if(!tackle.isOwned)
+      if(!tackle.isOwned) {
         rows.push([{
           text: 'buy',
           action: () => this.tradeTackle({index: index, buy: true}),
           disabled: this.isDisabled(tackle, 1)
         }])
-      else
+      }
+      else {
         rows.push([{
           text: tackle.isActive ? 'equipped' : 'equip',
           action: () => this.equipTackle(index),
           disabled: tackle.isActive
         }])
-      if(tackle.isOwned)
+      }
+      if(tackle.isOwned) {
         rows.push([{
           text: 'sell',
           action: () => this.tradeTackle({index: index, buy: false}),
           disabled: false
         }])
+      }
       return rows
     },
     getBaitButtons(bait, index) {
