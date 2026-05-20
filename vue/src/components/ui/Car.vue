@@ -1,8 +1,8 @@
 <template>
   <div class="car" v-bind="$attrs" :style="styles">
     <div class="car__cuboid">
-      <div class="car__cuboid__glass"/>
-      <div class="car__cuboid__front"/>
+      <div class="car__cuboid__front" style="--deg: 45deg; --color1: #5e4f8a; --color2: #8e7bbd; --color3: #b6a3e0; --height: 1;"/>
+      <div class="car__cuboid__front" style="--deg: 110deg; --color1:#e2f0ff 0%; --color2: #7fb4d0 40%; --color3: #1f4b6e 80%; --height: 0.3;"/>
       <div class="car__cuboid__top" style="--deg: 145deg; --color1: #6b5f8e; --color2: #8f82b3; --color3: #b2a6d6; --height: 40%; --transY: 0%;"/>
       <div class="car__cuboid__left" style="--deg: 135deg; --color1: #4a3f6b; --color2: #6b5f8e; --color3: #8a7ab3; --height: 40%; --transY: 0%;"/>
       <div class="car__cuboid__right" style="--deg: 135deg; --color1: #4a3f6b; --color2: #6b5f8e; --color3: #8a7ab3; --height: 40%; --transY: 0%;"/>
@@ -68,24 +68,11 @@ export default {
     height: 100%;
     transform-style: preserve-3d;
 
-    &__glass {
-      background: linear-gradient(110deg, #e2f0ff 0%, #7fb4d0 40%, #1f4b6e 80%);
-      box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2), inset 2px 2px 8px rgba(255,255,255,0.6);
-      z-index: 6;
-      position: absolute;
-      width: 100%;
-      height: calc(var(--car-depth) * 1vmin*0.3);
-      top: 0;
-      transform-origin: top;
-      transform: rotateX(-90deg) rotateY(180deg) translateY(calc(var(--car-depth) * 1vmin / -2));
-      border-radius: 5px;
-    }
-
     &__front {
-      background: linear-gradient(45deg, #5e4f8a, #8e7bbd, #b6a3e0);
+      background: linear-gradient(var(--deg), var(--color1), var(--color2), var(--color3));
       position: absolute;
       width: 100%;
-      height: calc(var(--car-depth) * 1vmin);
+      height: calc(var(--car-depth) * 1vmin * var(--height));
       top: 0;
       transform-origin: top;
       transform: rotateX(-90deg) rotateY(180deg) translateY(calc(var(--car-depth) * 1vmin / -2));
