@@ -33,7 +33,6 @@ export default {
         getFlasks: (state) => state.flasks,
         getCurrentFlask: (state) => state.currentFlask,
         getGameWon: (state) => state.gameWon,
-        getMaxLayers: (state) => state.maxLayers,
         getTime: (state) => state.time,
         getBestTimes: (state) => state.bestTimes,
         getHardModeBestTimes: (state) => state.hardModeBestTimes,

@@ -113,6 +113,16 @@ export default {
         font-weight: bold;
     }
 
+    &[draggable="true"] {
+        cursor: grab;
+        user-select: none;
+        transition: opacity 0.2s;
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
     &--blocked {
         opacity: 0.6;
         cursor: not-allowed;

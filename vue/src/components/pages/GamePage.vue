@@ -25,12 +25,12 @@
         <div class="game__flasks">
             <Flask
                 v-for = "(flask, index) in getFlasks"
-                :key = "'flask-' + index + '-' + getBlockedFlask"
+                :key = "index"
                 :layers = "flask"
                 :active = "getCurrentFlask === index"
                 :blocked = "getHardMode && getBlockedFlask === index"
                 :label = "'Колба ' + (index + 1)"
-                :max-layers = "getMaxLayers"
+                :max-layers = "MAX_LAYERS"
                 @click = "() => handleFlaskClick(index)"
                 draggable = "true"
                 @dragstart = "(e) => handleDragStart(e, index)"
@@ -80,8 +80,15 @@
 import Flask from '@/ui/Flask.vue'
 import { mapGetters, mapActions } from 'vuex';
 
+const MAX_LAYERS = 4
+
 export default {
     name: 'GamePage',
+    data() {
+        return {
+            MAX_LAYERS
+        }
+    },
     components: {
         Flask
     },
@@ -90,7 +97,6 @@ export default {
             'getFlasks',
             'getCurrentFlask',
             'getGameWon',
-            'getMaxLayers',
             'getTime',
             'getBestTimes',
             'getHardModeBestTimes',
@@ -230,19 +236,6 @@ export default {
         flex-wrap: wrap;
         justify-content: center;
         margin-bottom: 30px;
-        :deep(.flask[draggable="true"]) {
-            cursor: grab;
-            user-select: none;
-            transition: opacity 0.2s;
-
-            &:active {
-                cursor: grabbing;
-            }
-        }
-  
-        :deep(.flask--blocked) {
-            cursor: not-allowed !important;
-        }
     }
 
     &__controls {
