@@ -1,7 +1,7 @@
 <template>
   <div class="boat">
     <div class = "boat__image">
-      <img src="../../assets/images/boat.png" width="150" alt="boat">
+      <img src="../../assets/images/man/boat.png" width="150" alt="boat">
       <div class="boat__image__man" :class="manClass" :style="[manStyle, moveStyle]"/>
     </div>
   </div>
@@ -53,7 +53,7 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 2;
+  z-index: 3;
 
   &__image {
     image-rendering: pixelated;
@@ -67,7 +67,7 @@ export default {
 
       &--move {
         background-image: url(../../assets/images/man/move.png);
-        animation: man-move 0.65s infinite step-end
+        animation: man-move infinite step-end
       }
 
       &--delay {

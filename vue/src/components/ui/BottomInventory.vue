@@ -34,6 +34,6 @@ export default {
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 2;
+  z-index: 3;
 }
 </style>

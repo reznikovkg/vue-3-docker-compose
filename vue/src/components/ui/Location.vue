@@ -51,7 +51,7 @@ export default {
     -2px 2px 0 black,
     2px 2px 0 black;
   transform: translateX(-50%);
-  z-index: 2;
+  z-index: 3;
 
   &__balance {
     font-weight: bold;

@@ -161,7 +161,7 @@ export default {
     4px 4px rgba(0, 0, 0, 0.4),
     6px 6px rgba(0, 0, 0, 0.2);
   transform: translateY(-50%);
-  z-index: 2;
+  z-index: 3;
 
   &__bar {
     position: relative;

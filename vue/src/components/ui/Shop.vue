@@ -113,7 +113,7 @@ export default {
   padding: 5px;
   transform: translate(-50%, -50%);
   background-color: rgba(111, 255, 255, 0.5);
-  z-index: 2;
+  z-index: 3;
 
   &__title {
     font-size: 30px;
