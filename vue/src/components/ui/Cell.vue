@@ -5,7 +5,7 @@
     @drop="onDrop"
 
   >
-    <Item v-if="item" :item="item" @drag-start="onDragStart"/>
+    <Item v-if="item" :item="item" @drag-start="onDragStart" @item-click="onItemClick" @item-right-click="onItemRightClick"/>
   </div>
 </template>
 <script>
@@ -18,13 +18,19 @@ export default {
     x: Number,
     y: Number
   },
-  emits: ['drag-start', 'drop'],
+  emits: ['drag-start', 'drop', 'cell-click', 'cell-right-click'],
   methods: {
     onDrop(){
       this.$emit('drop',{x: this.x, y: this.y});
     },
     onDragStart(){
       this.$emit('drag-start',{x: this.x, y: this.y});
+    },
+    onItemRightClick(){
+      this.$emit('cell-right-click',{x: this.x, y: this.y});
+    },
+    onItemClick(){
+      this.$emit('cell-click',{x: this.x, y: this.y, item: this.item});
     }
   }
 }

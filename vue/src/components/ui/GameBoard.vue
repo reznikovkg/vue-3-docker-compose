@@ -11,6 +11,8 @@
           :y="y"
           @drop="onDrop"
           @drag-start="onDragStart"
+          @cell-click="onCellClick"
+          @cell-right-click="onCellRightClick"
           />
       </div>
     </div>
@@ -40,7 +42,7 @@ export default {
     this.initGame();
   },
   methods: {
-    ...mapActions('game', ['initGame', 'restart', 'spawn', 'handleDrop']),
+    ...mapActions('game', ['initGame', 'restart', 'spawn', 'handleDrop','spawnFromMax','sellItem']),
     onDragStart(position) {
       this.dragged = position;
     },
@@ -48,6 +50,13 @@ export default {
       if (!this.dragged) return;
       this.handleDrop({positionFrom: this.dragged, positionTo});
       this.dragged = null;
+    },
+
+    onCellClick({item}) {
+      if(item && item.level == 4) this.spawnFromMax(item.branch);
+    },
+    onCellRightClick(position) {
+      this.sellItem(position);
     }
   }
 }

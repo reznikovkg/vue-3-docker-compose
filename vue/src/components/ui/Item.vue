@@ -3,8 +3,11 @@
     class="item"
     draggable="true"
     @dragstart="onDragStart"
+    @click="onClick"
+    @contextmenu.prevent="onRightClick"
   >
     <img :src="image"/>
+    <div v-if="item.level === 4" class="item--max">MAX</div>
   </div>
 </template>
 <script>
@@ -15,20 +18,27 @@ export default {
   },
   computed: {
     image() {
-      return `../icons/image-${this.item.level}.png`;//находятся в папке public вне src
+      return `../icons/branch-${this.item.branch}-${this.item.level}.png`;
     }
   },
-  emits: ["drag-start"],
+  emits: ['drag-start','item-click', 'item-right-click'],
 
   methods: {
     onDragStart() {
-      this.$emit("drag-start");
+      this.$emit('drag-start');
+    },
+    onClick() {
+      this.$emit('item-click');
+    },
+    onRightClick() {
+      this.$emit('item-right-click');
     }
   }
 }
 </script>
 <style scoped lang="scss">
 .item {
+  position: relative;
   width: 60px;
   height: 60px;
   cursor: grab;
@@ -43,6 +53,19 @@ export default {
     width: 58px;
     height: 58px;
     object-fit: contain;
+    pointer-events: none;
+  }
+  &--max {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    padding: 2px 5px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: white;
+    background: rgba(239, 68, 68, 0.95);
+    border-radius: 6px;
     pointer-events: none;
   }
 
