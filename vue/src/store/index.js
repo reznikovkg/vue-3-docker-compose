@@ -47,7 +47,15 @@ export default createStore({
         x: 0,
         y: 0,
         speed: 6,
-        direction: 1
+        direction: 1,
+        isMoving: false,
+        isFishing: false,
+        isGaming: false,
+        isHooked: false,
+        isBroken: false,
+        isFighting: false,
+        isShopping: false,
+        isStopped: false
       },
       currentFish: null,
       fishSkipped: 0,
@@ -70,27 +78,19 @@ export default createStore({
       balance: 0,
       areas: [],
       pirates: [],
-      isMoving: false,
-      isFishing: false,
-      isGaming: false,
-      isHooked: false,
-      isBroken: false,
-      isFighting: false,
-      isShopping: false,
-      isStopped: false,
       isNight: false
     }
   },
   getters: {
     getBoat: (state) => state.boat,
-    getIsMoving: (state) => state.isMoving,
-    getIsFishing: (state) => state.isFishing,
-    getIsGaming: (state) => state.isGaming,
-    getIsHooked: (state) => state.isHooked,
-    getIsBroken: (state) => state.isBroken,
-    getIsFighting: (state) => state.isFighting,
-    getIsShopping: (state) => state.isShopping,
-    getIsStopped: (state) => state.isStopped,
+    getIsMoving: (state) => state.boat.isMoving,
+    getIsFishing: (state) => state.boat.isFishing,
+    getIsGaming: (state) => state.boat.isGaming,
+    getIsHooked: (state) => state.boat.isHooked,
+    getIsBroken: (state) => state.boat.isBroken,
+    getIsFighting: (state) => state.boat.isFighting,
+    getIsShopping: (state) => state.boat.isShopping,
+    getIsStopped: (state) => state.boat.isStopped,
     getIsNight: (state) => state.isNight,
     getCurrentFish: (state) => state.currentFish,
     getFishSkipped: (state) => state.fishSkipped,
@@ -168,28 +168,28 @@ export default createStore({
       state.boat.direction = value
     },
     [MUTATIONS.SET_MOVING]: (state, value) => {
-      state.isMoving = value
+      state.boat.isMoving = value
     },
     [MUTATIONS.SET_FISHING]: (state) => {
-      state.isFishing = !state.isFishing
+      state.boat.isFishing = !state.boat.isFishing
     },
     [MUTATIONS.SET_GAMING]: (state, value) => {
-      state.isGaming = value
+      state.boat.isGaming = value
     },
     [MUTATIONS.SET_HOOKED]: (state) => {
-      state.isHooked = !state.isHooked
+      state.boat.isHooked = !state.boat.isHooked
     },
     [MUTATIONS.SET_BROKEN]: (state) => {
-      state.isBroken = !state.isBroken
+      state.boat.isBroken = !state.boat.isBroken
     },
     [MUTATIONS.SET_FIGHTING]: (state, value) => {
-      state.isFighting = value
+      state.boat.isFighting = value
     },
     [MUTATIONS.SET_SHOPPING]: (state) => {
-      state.isShopping = !state.isShopping
+      state.boat.isShopping = !state.boat.isShopping
     },
     [MUTATIONS.SET_STOPPED]: (state, value) => {
-      state.isStopped = value
+      state.boat.isStopped = value
     },
     [MUTATIONS.SET_CURRENT_FISH]: (state, payload) => {
       state.currentFish = payload
@@ -595,7 +595,7 @@ export default createStore({
       store.state.pirates.forEach((pirate, index) => {
         if(!pirate.isFighting) {
           const dx = store.state.boat.x - pirate.x, dy = store.state.boat.y - pirate.y, distance = Math.sqrt(dx * dx + dy * dy)
-          if(distance > 600 || store.state.isFighting) {
+          if(distance > 600 || store.state.boat.isFighting) {
             if(pirate.speed !== 2) {
               store.commit(MUTATIONS.SET_PIRATE_SPEED, {
                 index: index,
@@ -628,7 +628,7 @@ export default createStore({
                 value: false
               })
             }
-            if(!store.state.isFishing && !store.state.isHooked && !store.state.isBroken && !store.state.isShopping) {
+            if(!store.state.boat.isFishing && !store.state.boat.isHooked && !store.state.boat.isBroken && !store.state.boat.isShopping) {
               store.commit(MUTATIONS.SET_FIGHTING, true)
               store.commit(MUTATIONS.SET_DIRECTION, -pirate.direction)
               store.commit(MUTATIONS.SET_PIRATE_FIGHTING, {
@@ -645,7 +645,7 @@ export default createStore({
             piratesToRemove.push(index)
           }
         }
-        else if(!store.state.isFighting) {
+        else if(!store.state.boat.isFighting) {
           piratesToRemove.push(index)
         }
       })

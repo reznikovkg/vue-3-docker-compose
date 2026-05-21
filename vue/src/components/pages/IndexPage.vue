@@ -1,10 +1,10 @@
 <template>
   <div class="map" :style="mapStyle">
     <div class="map__area" v-for="area in getReversedAreas" :class="'map__area--' + area.type" :style="areaStyle(area)"/>
-    <PirateBoat v-for="pirate in getPirates" :x="pirate.x" :y="pirate.y" :speed="pirate.speed" :direction="pirate.direction" :is-moving="pirate.isMoving" :is-fighting="pirate.isFighting"/>
+    <Boat v-for="pirate in getPirates" :boat="pirate" type="pirate"/>
   </div>
   <div class="water" :style="waterStyle"/>
-  <Boat/>
+  <Boat :boat="getBoat" type="player"/>
   <BottomInventory/>
   <Location/>
   <MiniGame/>
@@ -17,7 +17,6 @@ import Boat from './../ui/Boat.vue'
 import BottomInventory from './../ui/BottomInventory.vue'
 import Location from './../ui/Location.vue'
 import MiniGame from './../ui/MiniGame.vue'
-import PirateBoat from './../ui/PirateBoat.vue'
 import Shop from './../ui/Shop.vue'
 import SideInventory from './../ui/SideInventory.vue'
 import { mapGetters, mapActions } from 'vuex'
@@ -29,7 +28,6 @@ export default {
     BottomInventory,
     Location,
     MiniGame,
-    PirateBoat,
     Shop,
     SideInventory
   },

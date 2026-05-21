@@ -1,47 +1,67 @@
 <template>
-  <div class="boat">
-    <div class = "boat__image">
-      <img src="../../assets/images/man/boat.png" width="150" alt="boat">
-      <div class="boat__image__man" :class="manClass" :style="[manStyle, moveStyle]"/>
-    </div>
+  <div class="boat" :class="'boat--' + type" :style="boatStyle">
+    <img :src="boatImage" width="150" alt="boat">
+    <div :class="manClass" :style="[manStyle, moveStyle]"/>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import playerBoatImage from '../../assets/images/player/boat.png'
+import pirateBoatImage from '../../assets/images/pirate/boat.png'
 
 export default {
   name: 'Boat',
+  props: {
+    boat: {
+      type: Object,
+      required: true
+    },
+    type: {
+      type: String,
+      required: true
+    }
+  },
   computed: {
-    ...mapGetters([
-      'getBoat',
-      'getIsMoving',
-      'getIsFishing',
-      'getIsGaming',
-      'getIsHooked',
-      'getIsBroken',
-      'getIsFighting'
-    ]),
+    boatStyle() {
+      if(this.type === 'pirate') {
+        return {
+          transform: 'translate(' + this.boat.x + 'px, ' + this.boat.y + 'px)'
+        }
+      }
+    },
+    boatImage() {
+      return this.type === 'pirate' ? pirateBoatImage : playerBoatImage
+    },
     manClass() {
-      return {
-        'boat__image__man--move': this.getIsMoving,
-        'boat__image__man--delay': this.getIsFishing && !this.getIsGaming,
-        'boat__image__man--fishing': this.getIsGaming,
-        'boat__image__man--hook': this.getIsHooked,
-        'boat__image__man--broke': this.getIsBroken,
-        'boat__image__man--fight': this.getIsFighting
+      if(this.type === 'player') {
+        return {
+          'boat--player__man': true,
+          'boat--player__man--move': this.boat.isMoving,
+          'boat--player__man--delay': this.boat.isFishing && !this.boat.isGaming,
+          'boat--player__man--fishing': this.boat.isGaming,
+          'boat--player__man--hook': this.boat.isHooked,
+          'boat--player__man--broke': this.boat.isBroken,
+          'boat--player__man--fight': this.boat.isFighting
+        }
+      }
+      else if(this.type === 'pirate') {
+        return {
+          'boat--pirate__man': true,
+          'boat--pirate__man--move': this.boat.isMoving,
+          'boat--pirate__man--fight': this.boat.isFighting
+        }
       }
     },
     manStyle() {
       return {
-        transform: 'scale(' + 2.5 * this.getBoat.direction + ', 2.5)',
-        left: 50 + this.getBoat.direction * 20 + 'px'
+        transform: 'scale(' + 2.5 * this.boat.direction + ', 2.5)',
+        left: 50 + this.boat.direction * 20 + 'px'
       }
     },
     moveStyle() {
-      if(this.getIsMoving) {
+      if(this.boat.isMoving) {
         return {
-          animationDuration: 2.5 / this.getBoat.speed + 's'
+          animationDuration: 2.5 / this.boat.speed + 's'
         }
       }
     }
@@ -52,52 +72,77 @@ export default {
 <style scoped lang="scss">
 .boat {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 3;
+  image-rendering: pixelated;
 
-  &__image {
-    image-rendering: pixelated;
+  &--player {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
 
     &__man {
       position: absolute;
       width: 50px;
       height: 50px;
       top: -39px;
-      background-image: url(../../assets/images/man/move.png);
+      background-image: url(../../assets/images/player/move.png);
 
       &--move {
-        background-image: url(../../assets/images/man/move.png);
+        background-image: url(../../assets/images/player/move.png);
         animation: man-move infinite step-end
       }
 
       &--delay {
         top: -80px;
-        background-image: url(../../assets/images/man/fish.png);
+        background-image: url(../../assets/images/player/fish.png);
       }
 
       &--fishing {
         top: -80px;
-        background-image: url(../../assets/images/man/fish.png);
+        background-image: url(../../assets/images/player/fish.png);
         animation: man-fish 0.55s steps(4) infinite
       }
 
       &--hook {
         top: -80px;
-        background-image: url(../../assets/images/man/hook.png);
+        background-image: url(../../assets/images/player/hook.png);
         animation: man-hook 0.55s steps(5) 1 forwards
       }
 
       &--broke {
         top: -80px;
-        background-image: url(../../assets/images/man/broke.png);
+        background-image: url(../../assets/images/player/broke.png);
         animation: man-broke 0.4s steps(5) 1 forwards
       }
 
       &--fight {
         top: -80px;
-        background-image: url(../../assets/images/man/fight.png);
+        background-image: url(../../assets/images/player/fight.png);
+        animation: man-fight 0.55s steps(4) infinite
+      }
+    }
+  }
+
+  &--pirate {
+    top: -16.17px;
+    left: -75px;
+    z-index: 2;
+
+    &__man {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      top: -39px;
+      background-image: url(../../assets/images/pirate/move.png);
+
+      &--move {
+        background-image: url(../../assets/images/pirate/move.png);
+        animation: man-move infinite step-end
+      }
+
+      &--fight {
+        top: -80px;
+        background-image: url(../../assets/images/pirate/fight.png);
         animation: man-fight 0.55s steps(4) infinite
       }
     }
