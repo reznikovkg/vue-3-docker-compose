@@ -32,11 +32,10 @@ export default {
     getBottle: (state) => state.bottles,
     getSelected: (state) => state.selectedBottleIndex,
     isWin: (state) => {
-      if (state.bottles.length === 0) return false;
       return state.bottles.every(b =>
-          b.length === 0 || (b.length === MAX_LAYERS && b.every(color => color === b[0]))
+        b.layers.length === 0 || (b.layers.length === MAX_LAYERS && b.layers.every(color => color === b.layers[0]))
       );
-    },
+  },
     getTime: (state) => state.time,
     getFormattedTime: (state) => {
       const m = Math.floor(state.time / 60).toString().padStart(2, '0');
@@ -101,59 +100,32 @@ export default {
       const bottles = [];
       const countBottles = colors.length + 2;
       for (let i = 0; i < countBottles; i++) {
-        bottles.push(i < colors.length ? allLayers.splice(0, MAX_LAYERS) : []);
+        bottles.push({
+          id: `bottle_${Math.random().toString(36).substring(2, 9)}_${i}`,
+          layers: i < colors.length ? allLayers.splice(0, MAX_LAYERS) : []
+        });
       }
       commit(MUTATIONS.SET_START_GAME, bottles);
       commit(MUTATIONS.SET_BLOCKED_BOTTLE, null);
     },
-    handleBottleClick: ({commit, state, getters}, index) => {
-      if (!state.isTimerRunning) {
-        commit(MUTATIONS.SET_TIMER_RUNNING, true);
-      }
-      if (state.isHardMode && index === state.blockedBottleIndex) {
-        return;
-      }
-      const selected = state.selectedBottleIndex;
-      if (selected === null) {
-        if (state.bottles[index].length > 0) {
-          commit(MUTATIONS.SET_SELECTED_BOTTLE, index);
+    handleBottleClick: ({commit, state, dispatch}, index) => {
+      dispatch('checkTimer').then(() => {
+        if (state.isHardMode && index === state.blockedBottleIndex) {
+          return;
         }
-      } else {
-        if (selected === index) {
+        const selectedIndex = state.selectedBottleIndex;
+        if (selectedIndex === null) {
+          if (state.bottles[index].layers.length > 0) {
+            commit(MUTATIONS.SET_SELECTED_BOTTLE, index);
+          }
+          return;
+        }
+        if (selectedIndex === index) {
           commit(MUTATIONS.SET_SELECTED_BOTTLE, null);
           return;
         }
-        const source = [...state.bottles[selected]];
-        const target = [...state.bottles[index]];
-        const colorToMove = source[source.length - 1];
-        if (target.length < MAX_LAYERS && (target.length === 0
-            || target[target.length - 1] === colorToMove)) {
-          let count = 0;
-          for (let i = source.length - 1; i >= 0; i--) {
-            if (source[i] === colorToMove) count++;
-            else break;
-          }
-          const spaceLeft = MAX_LAYERS - target.length;
-          const amount = Math.min(count, spaceLeft);
-          for (let i = 0; i < amount; i++) {
-            target.push(source.pop());
-          }
-          const newBottles = [...state.bottles];
-          newBottles[selected] = source;
-          newBottles[index] = target;
-          commit(MUTATIONS.SET_BOTTLES, newBottles);
-          commit(MUTATIONS.SET_SELECTED_BOTTLE, null);
-          if (state.isHardMode) {
-            commit(MUTATIONS.SET_BLOCKED_BOTTLE, Math.floor(Math.random() * state.bottles.length));
-          }
-          if (getters.isWin) {
-            commit(MUTATIONS.ADD_RECORD, state.time);
-            commit(MUTATIONS.SET_TIMER_RUNNING, false);
-          }
-        } else {
-          commit(MUTATIONS.SET_SELECTED_BOTTLE, index);
-        }
-      }
+        dispatch('executeTransfer', {sourceIndex: selectedIndex, targetIndex: index});
+      });
     },
     toggleHardMode: ({state, commit, dispatch}) => {
       commit(MUTATIONS.SET_HARD_MODE, !state.isHardMode);
@@ -183,5 +155,74 @@ export default {
         }
       }
     },
+    canTransfer: ({state}, {sourceIndex, targetIndex}) => new Promise((resolve) => {
+      const sourceLayers = state.bottles[sourceIndex].layers;
+      const targetLayers = state.bottles[targetIndex].layers;
+      if (targetLayers.length >= MAX_LAYERS) {
+        resolve(false);
+        return;
+      }
+      if (targetLayers.length === 0) {
+        resolve(true);
+        return;
+      }
+      const sourceColor = sourceLayers[sourceLayers.length - 1];
+      const targetColor = targetLayers[targetLayers.length - 1];
+      resolve(sourceColor === targetColor);
+    }),
+    calculateTransferAmount: ({state}, {sourceIndex, targetIndex}) => new Promise((resolve) => {
+      const sourceLayers = state.bottles[sourceIndex].layers;
+      const targetLayers = state.bottles[targetIndex].layers;
+      const colorToMove = sourceLayers[sourceLayers.length - 1];
+      let count = 0;
+      for (let i = sourceLayers.length - 1; i >= 0; i--) {
+        if (sourceLayers[i] === colorToMove) count++;
+        else break;
+      }
+      const spaceLeft = MAX_LAYERS - targetLayers.length;
+      resolve(Math.min(count, spaceLeft));
+     }),
+     applyTransfer: ({state, commit}, {sourceIndex, targetIndex, amount}) => new Promise((resolve) => {
+       const newBottles = [...state.bottles];
+       const source = [...newBottles[sourceIndex].layers];
+       const target = [...newBottles[targetIndex].layers];
+       for (let i = 0; i < amount; i++) {
+         target.push(source.pop());
+       }
+       newBottles[sourceIndex] = {...newBottles[sourceIndex], layers: source};
+       newBottles[targetIndex] = {...newBottles[targetIndex], layers: target};
+       commit(MUTATIONS.SET_BOTTLES, newBottles);
+       resolve();
+     }),
+     finishTransfer: ({commit, state, getters}) => new Promise((resolve) => {
+       commit(MUTATIONS.SET_SELECTED_BOTTLE, null);
+       if (state.isHardMode) {
+         commit(MUTATIONS.SET_BLOCKED_BOTTLE, Math.floor(Math.random() * state.bottles.length));
+       }
+       if (getters.isWin) {
+         commit(MUTATIONS.ADD_RECORD, state.time);
+         commit(MUTATIONS.SET_TIMER_RUNNING, false);
+       }
+       resolve();
+     }),
+     executeTransfer: ({commit, dispatch}, {sourceIndex, targetIndex}) => {
+       return dispatch('canTransfer', {sourceIndex, targetIndex})
+         .then((canMove) => {
+         if (canMove) {
+           return dispatch('calculateTransferAmount', {sourceIndex, targetIndex})
+           .then((amount) => dispatch('applyTransfer', {sourceIndex, targetIndex, amount}))
+           .then(() => dispatch('finishTransfer'));
+         } else {
+           commit(MUTATIONS.SET_SELECTED_BOTTLE, targetIndex);
+           return Promise.resolve();
+         }
+      });
+    },
+     checkTimer: ({commit, state}) => new Promise((resolve) => {
+       if (!state.isTimerRunning) {
+         commit(MUTATIONS.SET_TIMER_RUNNING, true);
+       }
+       resolve();
+     }),
   }
 }

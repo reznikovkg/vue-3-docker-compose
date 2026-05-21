@@ -70,7 +70,6 @@ export default {
         transform: `translate(${this.offsetX}px, ${this.offsetY}px)`,
         zIndex: 1000,
         transition: 'none', // Отключаем анимацию во время перетаскивания
-        position: 'relative'
       }
     }
   },
@@ -100,10 +99,7 @@ export default {
           const target = document.elementFromPoint(e.clientX, e.clientY)
           const targetBottle = target?.closest('.bottle')
           if (targetBottle && targetBottle !== this.$el) {
-            const targetIndex = Number(targetBottle.dataset.index)
-            if (!isNaN(targetIndex)) {
-              this.$emit('move-swap', targetIndex)
-            }
+            this.$emit('move-swap', targetBottle)
           }
         }
       }
@@ -173,9 +169,10 @@ export default {
   }
 
   &--moving {
-     cursor: grabbing;
-     pointer-events: none;
-     opacity: 0.8;
+    cursor: grabbing;
+    pointer-events: none;
+    opacity: 0.8;
+    transition: none;
   }
 }
 </style>

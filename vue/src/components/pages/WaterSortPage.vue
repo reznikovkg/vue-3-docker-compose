@@ -13,19 +13,17 @@
     </div>
 
     <div class = "game__container">
-      <div class = "game__wrapper">
+      <div class = "game__wrapper" ref = "wrapper">
         <Bottle
-          v-for = "(bottle, index) in getBottle"
-          :key = "bottleKey(bottle)"
-          :layers = "bottle"
-          :is-selected = "getSelected === index"
-          :is-blocked = "getBlockedBottle === index"
-          :max-layers = "4"
-          @select = "() => onBottleClick(index)"
-          @move-start = "() => onMoveStart(index)"
-          @move-swap = "(targetIndex) => onMoveEnter(targetIndex)"
-          @move-end = "() => onMoveEnd()"
-          :data-index = "index"
+            v-for = "(bottle, index) in getBottle"
+            :key = "bottle.id"
+            :layers = "bottle.layers"
+            :is-selected = "getSelected === index"
+            :is-blocked = "getBlockedBottle === index"
+            @select = "() => onBottleClick(index)"
+            @move-start = "() => onMoveStart(index)"
+            @move-swap = "(node) => onMoveEnter(node)"
+            @move-end = "() => onMoveEnd()"
         />
       </div>
     </div>
@@ -36,24 +34,7 @@
       </Btn>
     </div>
 
-    <div class = "game__records-container">
-      <div v-if = "getRecords.easy.length > 0" class = "game__records">
-        <h2 class = "game__records-title">Топ 10 лучших результатов в лёгком режиме</h2>
-        <ol class = "game__records-list">
-          <li v-for = "(time, idx) in getRecords.easy" :key = "idx">
-            {{ formatRecord(time) }}
-          </li>
-        </ol>
-      </div>
-      <div v-if = "getRecords.hard.length > 0" class = "game__records">
-        <h2 class = "game__records-title">Топ 10 лучших результатов в сложном режиме</h2>
-        <ol class = "game__records-list">
-          <li v-for = "(time, idx) in getRecords.hard" :key = "idx">
-            {{ formatRecord(time) }}
-          </li>
-        </ol>
-      </div>
-    </div>
+    <GameRecords :records = "getRecords" />
   </div>
 </template>
 
@@ -61,18 +42,18 @@
 import { mapGetters, mapActions } from 'vuex'
 import Bottle from './../ui/Bottle.vue'
 import Btn from './../ui/Btn.vue'
+import GameRecords from './../ui/GameRecords.vue'
 export default {
   name: 'WaterSortPage',
   components: {
     Bottle,
-    Btn
+    Btn,
+    GameRecords
   },
   data() {
     return {
       timerInterval: null,
-      movedBottleIndex: null,
-      bottleKeyMap: new WeakMap(),
-      nextId: 0
+      movedBottleIndex: null
     }
   },
   computed: {
@@ -113,18 +94,11 @@ export default {
         this.timerInterval = null
       }
     },
-    formatRecord(seconds) {
-      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const s = (seconds % 60).toString().padStart(2, '0');
-      return `${m}:${s}`;
-    },
     onRestart() {
-      this.resetKeys();
       this.initGame();
       this.stopTimer();
     },
     onToggleMode() {
-      this.resetKeys();
       this.toggleHardMode();
       this.stopTimer();
     },
@@ -136,26 +110,21 @@ export default {
         this.stopTimer();
       }
     },
-    resetKeys() {
-      this.bottleKeyMap = new WeakMap();
-      this.nextId = 0;
-    },
-    bottleKey(bottleArray) {
-      if (!this.bottleKeyMap.has(bottleArray)) {
-        this.bottleKeyMap.set(bottleArray, this.nextId++);
-      }
-      return this.bottleKeyMap.get(bottleArray);
-    },
     onMoveStart(index) {
       this.movedBottleIndex = index;
     },
-    onMoveEnter(toIndex) {
-      if (this.movedBottleIndex !== null && this.movedBottleIndex !== toIndex) {
-        this.moveBottle({
-          fromIndex: this.movedBottleIndex,
-          toIndex: toIndex
-        });
-        this.movedBottleIndex = toIndex;
+    onMoveEnter(targetNode) {
+      if (this.movedBottleIndex !== null) {
+        const wrapper = this.$refs.wrapper;
+        if (!wrapper) return;
+        const targetIndex = Array.from(wrapper.children).indexOf(targetNode);
+        if (targetIndex !== -1 && this.movedBottleIndex !== targetIndex) {
+          this.moveBottle({
+            fromIndex: this.movedBottleIndex,
+            toIndex: targetIndex
+          });
+          this.movedBottleIndex = targetIndex;
+        }
       }
     },
     onMoveEnd() {
@@ -185,36 +154,12 @@ export default {
   }
   &__controls {
     margin-top: 30px;
-  }
-  &__records {
-    background: #f5f5f5;
-    padding: 20px 40px;
-    border-radius: 12px;
-    text-align: center;
-  }
-  &__records-title {
-    margin-bottom: 15px;
-    font-size: 20px;
-    color: #444;
-  }
-  &__records-list {
-    list-style-type: decimal;
-    text-align: left;
-    padding-left: 20px;
-    margin: 0;
-    li {
-      font-size: 18px;
-      margin-bottom: 8px;
-      color: #555;
-    }
+    margin-bottom: 40px;
   }
   &__wrapper {
     display: flex;
     gap: 20px;
     position: relative;
   }
-}
-.move-list-move {
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 </style>
