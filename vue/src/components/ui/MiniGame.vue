@@ -1,7 +1,7 @@
 <template>
   <div class="game">
     <div class="game__bar">
-      <div class="game__bar__target" v-if="getIsGaming" :style="{ top: targetPosition + '%' }"/>
+      <div class="game__bar__target" v-if="getIsGaming" :style="targetStyle"/>
       <div class="game__bar__player" v-if="getIsGaming" :style="{ top: playerPosition + '%' }"/>
     </div>
   </div>
@@ -24,6 +24,8 @@ export default {
       playerSpeed: 2,
       playerDelay: 0,
       direction: 1,
+      winCount: 0,
+      fightCount: 0,
       timeout: null,
       interval: null
     }
@@ -40,13 +42,20 @@ export default {
       'getIsGaming',
       'getIsHooked',
       'getIsBroken',
+      'getIsFighting',
+      'getIsNight',
       'getCurrentFish',
       'getActiveTacklesInfo',
       'getFeedInfo',
       'getActiveBaitInfo',
-      'getCurrentAreaInfo',
-      'getIsNight'
-    ])
+      'getCurrentAreaInfo'
+    ]),
+    targetStyle() {
+      return {
+        top: this.targetPosition + '%',
+        backgroundColor: this.getIsFighting ? 'rgb(155, 0, 40)' : 'rgb(46, 139, 87)'
+      }
+    }
   },
   methods: {
     ...mapActions([
@@ -54,22 +63,29 @@ export default {
       'setGaming',
       'setHooked',
       'setBroken',
+      'setFighting',
+      'setShopping',
+      'fightResult',
       'setCurrentFish',
       'addCurrentFish',
       'changeFeedCount',
       'setActiveBait',
       'relocateCurrentArea',
-      'relocateMaxDistanceAreaToBoat',
-      'setShopping'
+      'relocateMaxDistanceAreaToBoat'
     ]),
-    startFishing() {
-      this.setCurrentFish()
-      this.playerDelay = (!this.getCurrentAreaInfo ? 2500 : (this.getCurrentAreaInfo.area.type === 'medium' ? 1000 : 0))
-      if(this.getIsNight) {
-        this.playerDelay = Math.max(this.playerDelay * 2, 500)
+    startGaming() {
+      if(this.getIsFighting) {
+        this.playerDelay = 0
+      }
+      else {
+        this.setCurrentFish()
+        this.playerDelay = (!this.getCurrentAreaInfo ? 2500 : (this.getCurrentAreaInfo.area.type === 'medium' ? 1000 : 0))
+        if(this.getIsNight) {
+          this.playerDelay = Math.max(this.playerDelay * 2, 500)
+        }
       }
       this.timeout = setTimeout(() => {
-        this.playerSpeed = Math.max(Math.min(Math.floor(this.getCurrentFish.weight / this.getActiveTacklesInfo.totalLevel), 17), 1)
+        this.playerSpeed =  this.getIsFighting ? 3 : Math.max(Math.min(Math.floor(this.getCurrentFish.weight / this.getActiveTacklesInfo.totalLevel), 17), 1)
         this.setGaming(true)
         this.direction = 1
         this.playerPosition = 0
@@ -87,10 +103,16 @@ export default {
         }
       }, 10)
     },
-    stopFishing() {
+    stopGaming() {
       this.setGaming(false)
       clearTimeout(this.timeout)
       clearInterval(this.interval)
+    },
+    stopFighting() {
+      this.fightResult(this.winCount)
+      this.fightCount = 0
+      this.winCount = 0
+      this.setFighting(false)
     },
     checkKeyDown(event) {
       if(!this.getIsHooked && !this.getIsBroken) {
@@ -109,34 +131,51 @@ export default {
           }
         }
         else if(event.code === 'Space') {
-          if(this.getCurrentAreaInfo && this.getCurrentAreaInfo.area.type === 'shallow') {
+          if(!this.getIsFighting && this.getCurrentAreaInfo && this.getCurrentAreaInfo.area.type === 'shallow') {
             this.setShopping()
           }
           else {
             this.setFishing()
             if(this.getIsFishing) {
-              if(this.getActiveBaitInfo.bait.count <= 0 || this.getActiveTacklesInfo.totalLevel === 0) {
+              if(!this.getIsFighting && (this.getActiveBaitInfo.bait.count <= 0 || this.getActiveTacklesInfo.totalLevel === 0)) {
                 this.setFishing()
               }
               else {
-                this.startFishing()
+                this.startGaming()
               }
             }
             else if(this.getIsGaming && Math.abs(this.targetPosition - this.playerPosition) <= 5) {
-              this.stopFishing()
-              this.setHooked()
-              setTimeout(() => {
-                this.relocateCurrentArea()
-                this.addCurrentFish()
+              this.stopGaming()
+              if(this.getIsFighting) {
+                this.fightCount++
+                this.winCount++
+                if(this.fightCount >= 3) {
+                  this.stopFighting()
+                }
+              }
+              else {
                 this.setHooked()
-              }, 1000)
+                setTimeout(() => {
+                  this.relocateCurrentArea()
+                  this.addCurrentFish()
+                  this.setHooked()
+                }, 1000)
+              }
             }
             else {
-              this.stopFishing()
-              this.setBroken()
-              setTimeout(() => {
+              this.stopGaming()
+              if(this.getIsFighting) {
+                this.fightCount++
+                if(this.fightCount >= 3) {
+                  this.stopFighting()
+                }
+              }
+              else {
                 this.setBroken()
-              }, 800)
+                setTimeout(() => {
+                  this.setBroken()
+                }, 800)
+              }
             }
           }
         }
@@ -176,7 +215,6 @@ export default {
       width: 100%;
       height: 12%;
       transform: translateY(-50%);
-      background-color: seagreen;
     }
 
     &__player {

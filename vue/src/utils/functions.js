@@ -20,3 +20,7 @@ export const getRandomOffset = (minDist, maxDist) => {
   } while(Math.abs(x) < minDist && Math.abs(y) < minDist)
   return {x: x, y: y}
 }
+
+export const normalize = (value, reserve) => {
+  return Math.abs(value) < 3 ? reserve : value / Math.abs(value)
+}

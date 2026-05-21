@@ -19,7 +19,8 @@ export default {
       'getIsFishing',
       'getIsGaming',
       'getIsHooked',
-      'getIsBroken'
+      'getIsBroken',
+      'getIsFighting'
     ]),
     manClass() {
       return {
@@ -27,7 +28,8 @@ export default {
         'boat__image__man--delay': this.getIsFishing && !this.getIsGaming,
         'boat__image__man--fishing': this.getIsGaming,
         'boat__image__man--hook': this.getIsHooked,
-        'boat__image__man--broke': this.getIsBroken
+        'boat__image__man--broke': this.getIsBroken,
+        'boat__image__man--fight': this.getIsFighting
       }
     },
     manStyle() {
@@ -92,6 +94,12 @@ export default {
         background-image: url(../../assets/images/man/broke.png);
         animation: man-broke 0.4s steps(5) 1 forwards
       }
+
+      &--fight {
+        top: -80px;
+        background-image: url(../../assets/images/man/fight.png);
+        animation: man-fight 0.55s steps(4) infinite
+      }
     }
   }
 }
@@ -113,5 +121,9 @@ export default {
 @keyframes man-broke {
   from { background-position: 0 0 }
   to { background-position: -240px 0 }
+}
+@keyframes man-fight {
+  from { background-position: 0 0 }
+  to { background-position: -192px 0 }
 }
 </style>

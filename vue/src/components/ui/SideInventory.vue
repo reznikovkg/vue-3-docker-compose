@@ -30,11 +30,11 @@ export default {
   },
   computed: {
     ...mapGetters([
+      'getIsShopping',
       'getFishSkipped',
       'getLengthInventoryFish',
       'getVisibleFish',
-      'getActiveTacklesInfo',
-      'getIsShopping'
+      'getActiveTacklesInfo'
     ]),
     inventoryStyle() {
       return {

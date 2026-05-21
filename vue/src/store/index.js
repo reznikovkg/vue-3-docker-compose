@@ -1,30 +1,43 @@
 import { createStore } from 'vuex'
 import { FISH_TYPES, TACKLE_TYPES, BAIT_TYPES } from '../config/types.js'
-import { findAreaIndex, getRandomInt, getRandomOffset } from '../utils/functions.js'
+import { findAreaIndex, getRandomInt, getRandomOffset, normalize } from '../utils/functions.js'
 
 const MUTATIONS = {
   MOVE: 'MOVE',
+  SET_DIRECTION: 'SET_DIRECTION',
   SET_MOVING: 'SET_MOVING',
   SET_FISHING: 'SET_FISHING',
   SET_GAMING: 'SET_GAMING',
   SET_HOOKED: 'SET_HOOKED',
   SET_BROKEN: 'SET_BROKEN',
+  SET_FIGHTING: 'SET_FIGHTING',
+  SET_SHOPPING: 'SET_SHOPPING',
+  SET_STOPPED: 'SET_STOPPED',
   SET_CURRENT_FISH: 'SET_CURRENT_FISH',
   ADD_CURRENT_FISH: 'ADD_CURRENT_FISH',
   SET_FISH_SKIPPED: 'SET_FISH_SKIPPED',
+  SET_TIME_INTERVAL: 'SET_TIME_INTERVAL',
+  SET_PIRATES_INTERVAL: 'SET_PIRATES_INTERVAL',
   CHANGE_FISH_SKIPPED: 'CHANGE_FISH_SKIPPED',
   CLEAR_INVENTORY_FISH: 'CLEAR_INVENTORY_FISH',
   SET_ACTIVE_TACKLE: 'SET_ACTIVE_TACKLE',
   SET_TACKLE_OWNED: 'SET_TACKLE_OWNED',
+  CLEAR_INVENTORY_TACKLE: 'CLEAR_INVENTORY_TACKLE',
   SET_ACTIVE_BAIT: 'SET_ACTIVE_BAIT',
   CHANGE_BAIT_COUNT: 'CHANGE_BAIT_COUNT',
   TICK_TIME: 'TICK_TIME',
   TOGGLE_NIGHT: 'TOGGLE_NIGHT',
   CLEAR_TIME_INTERVAL: 'CLEAR_TIME_INTERVAL',
+  CLEAR_PIRATES_INTERVAL: 'CLEAR_PIRATES_INTERVAL',
   CHANGE_BALANCE: 'CHANGE_BALANCE',
   START_AREA: 'START_AREA',
   RELOCATE_AREA: 'RELOCATE_AREA',
-  SET_SHOPPING: 'SET_SHOPPING'
+  MOVE_PIRATE: 'MOVE_PIRATE',
+  SET_PIRATE_SPEED: 'SET_PIRATE_SPEED',
+  SET_PIRATE_MOVING: 'SET_PIRATE_MOVING',
+  SET_PIRATE_FIGHTING: 'SET_PIRATE_FIGHTING',
+  ADD_PIRATE: 'ADD_PIRATE',
+  REMOVE_PIRATE: 'REMOVE_PIRATE'
 }
 
 export default createStore({
@@ -53,14 +66,18 @@ export default createStore({
       },
       time: 360,
       timeInterval: null,
+      piratesInterval: null,
       balance: 0,
       areas: [],
+      pirates: [],
       isMoving: false,
       isFishing: false,
       isGaming: false,
       isHooked: false,
       isBroken: false,
+      isFighting: false,
       isShopping: false,
+      isStopped: false,
       isNight: false
     }
   },
@@ -71,6 +88,10 @@ export default createStore({
     getIsGaming: (state) => state.isGaming,
     getIsHooked: (state) => state.isHooked,
     getIsBroken: (state) => state.isBroken,
+    getIsFighting: (state) => state.isFighting,
+    getIsShopping: (state) => state.isShopping,
+    getIsStopped: (state) => state.isStopped,
+    getIsNight: (state) => state.isNight,
     getCurrentFish: (state) => state.currentFish,
     getFishSkipped: (state) => state.fishSkipped,
     getLengthInventoryFish: (state) => state.inventory.fishes.length,
@@ -129,8 +150,7 @@ export default createStore({
       }
       return null
     },
-    getIsShopping: (state) => state.isShopping,
-    getIsNight: (state) => state.isNight
+    getPirates: (state) => state.pirates
   },
   mutations: {
     [MUTATIONS.MOVE]: (state, payload) => {
@@ -143,6 +163,9 @@ export default createStore({
       else if(px < 0) {
         state.boat.direction = -1
       }
+    },
+    [MUTATIONS.SET_DIRECTION]: (state, value) => {
+      state.boat.direction = value
     },
     [MUTATIONS.SET_MOVING]: (state, value) => {
       state.isMoving = value
@@ -158,6 +181,15 @@ export default createStore({
     },
     [MUTATIONS.SET_BROKEN]: (state) => {
       state.isBroken = !state.isBroken
+    },
+    [MUTATIONS.SET_FIGHTING]: (state, value) => {
+      state.isFighting = value
+    },
+    [MUTATIONS.SET_SHOPPING]: (state) => {
+      state.isShopping = !state.isShopping
+    },
+    [MUTATIONS.SET_STOPPED]: (state, value) => {
+      state.isStopped = value
     },
     [MUTATIONS.SET_CURRENT_FISH]: (state, payload) => {
       state.currentFish = payload
@@ -189,6 +221,14 @@ export default createStore({
       }
       state.inventory.tackles[index].isOwned = buy
     },
+    [MUTATIONS.CLEAR_INVENTORY_TACKLE]: (state) => {
+      state.inventory.tackles.forEach(tackle => {
+        if(tackle.isActive) {
+          tackle.isActive = false
+          tackle.isOwned = false
+        }
+      })
+    },
     [MUTATIONS.SET_ACTIVE_BAIT]: (state, payload) => {
       const {oldIndex, newIndex} = payload
       state.inventory.baits[oldIndex].isActive = false
@@ -210,8 +250,17 @@ export default createStore({
       state.isNight = !state.isNight
       state.boat.speed = state.isNight ? 4 : 6
     },
+    [MUTATIONS.SET_TIME_INTERVAL]: (state, value) => {
+      state.timeInterval = value
+    },
+    [MUTATIONS.SET_PIRATES_INTERVAL]: (state, value) => {
+      state.piratesInterval = value
+    },
     [MUTATIONS.CLEAR_TIME_INTERVAL]: (state) => {
       clearInterval(state.timeInterval)
+    },
+    [MUTATIONS.CLEAR_PIRATES_INTERVAL]: (state) => {
+      clearInterval(state.piratesInterval)
     },
     [MUTATIONS.CHANGE_BALANCE]: (state, value) => {
       state.balance += value
@@ -224,8 +273,46 @@ export default createStore({
       state.areas[index].x = px
       state.areas[index].y = py
     },
-    [MUTATIONS.SET_SHOPPING]: (state) => {
-      state.isShopping = !state.isShopping
+    [MUTATIONS.MOVE_PIRATE]: (state, payload) => {
+      const {index, px, py} = payload
+      state.pirates[index].x += state.pirates[index].speed * px
+      state.pirates[index].y += state.pirates[index].speed * py
+      if(px > 0) {
+        state.pirates[index].direction = 1
+      }
+      else if(px < 0) {
+        state.pirates[index].direction = -1
+      }
+    },
+    [MUTATIONS.SET_PIRATE_SPEED]: (state, payload) => {
+      const {index, value} = payload
+      state.pirates[index].speed = value
+    },
+    [MUTATIONS.SET_PIRATE_MOVING]: (state, payload) => {
+      const {index, value} = payload
+      state.pirates[index].isMoving = value
+    },
+    [MUTATIONS.SET_PIRATE_FIGHTING]: (state, payload) => {
+      const {index, value} = payload
+      state.pirates[index].isFighting = value
+    },
+    [MUTATIONS.ADD_PIRATE]: (state, payload) => {
+      const {px, py, speed, direction, isMoving, isFighting} = payload
+      const newPirates = [...state.pirates]
+      newPirates.push({
+        x: px,
+        y: py,
+        speed: speed,
+        direction: direction,
+        isMoving: isMoving,
+        isFighting: isFighting
+      })
+      state.pirates = newPirates
+    },
+    [MUTATIONS.REMOVE_PIRATE]: (state, value) => {
+      const newPirates = [...state.pirates]
+      newPirates.splice(value, 1)
+      state.pirates = newPirates
     }
   },
   actions: {
@@ -275,6 +362,30 @@ export default createStore({
     },
     setBroken: (store) => {
       store.commit(MUTATIONS.SET_BROKEN)
+    },
+    setFighting: (store, value) => {
+      store.commit(MUTATIONS.SET_FIGHTING, value)
+    },
+    setShopping: (store) => {
+      store.commit(MUTATIONS.SET_SHOPPING)
+    },
+    fightResult: (store, value) => {
+      if(value === 3) {
+        store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
+          index: 0,
+          count: 1
+        })
+      }
+      else if(value < 3) {
+        store.commit(MUTATIONS.CHANGE_BALANCE, -store.state.balance)
+        if(value < 2) {
+          store.commit(MUTATIONS.CLEAR_INVENTORY_TACKLE)
+          if(value < 1) {
+            store.commit(MUTATIONS.SET_FISH_SKIPPED, 0)
+            store.commit(MUTATIONS.CLEAR_INVENTORY_FISH)
+          }
+        }
+      }
     },
     setCurrentFish: (store) => {
       store.commit(MUTATIONS.CHANGE_BAIT_COUNT, {
@@ -352,17 +463,23 @@ export default createStore({
         count: count
       })
     },
+    clearIntervals: (store) => {
+      store.commit(MUTATIONS.CLEAR_TIME_INTERVAL)
+      store.commit(MUTATIONS.CLEAR_PIRATES_INTERVAL)
+    },
     startTickTime: (store) => {
-      if (store.state.timeInterval) {
+      if(store.state.timeInterval) {
         store.commit(MUTATIONS.CLEAR_TIME_INTERVAL)
       }
-      store.state.timeInterval = setInterval(() => {
-        store.commit(MUTATIONS.TICK_TIME)
-        const hours = Math.floor(store.state.time / 60)
-        if((hours > 21 || hours < 6) !== store.state.isNight) {
-          store.commit(MUTATIONS.TOGGLE_NIGHT)
-        }
-      }, 1000)
+      store.commit(MUTATIONS.SET_TIME_INTERVAL,
+        setInterval(() => {
+          store.commit(MUTATIONS.TICK_TIME)
+          const hours = Math.floor(store.state.time / 60)
+          if((hours > 21 || hours < 6) !== store.state.isNight) {
+            store.commit(MUTATIONS.TOGGLE_NIGHT)
+          }
+        }, 1000)
+      )
     },
     startArea: (store) => {
       const areas = [], coords = []
@@ -452,8 +569,89 @@ export default createStore({
         py: store.state.boat.y
       })
     },
-    setShopping: (store) => {
-      store.commit(MUTATIONS.SET_SHOPPING)
+    startAddPirates: (store) => {
+      if(store.state.piratesInterval) {
+        store.commit(MUTATIONS.CLEAR_PIRATES_INTERVAL)
+      }
+      store.commit(MUTATIONS.SET_PIRATES_INTERVAL,
+        setInterval(() => {
+          const piratesCount = store.state.pirates.length
+          if(piratesCount < 1 || (piratesCount < (store.state.isNight ? 5 : 3) && Math.random() < 0.25)) {
+            const offset = getRandomOffset(3000, 4000)
+            store.commit(MUTATIONS.ADD_PIRATE, {
+              px: store.state.boat.x + offset.x,
+              py: store.state.boat.y + offset.y,
+              speed: 2,
+              direction: -normalize(offset.x, -1),
+              isMoving: true,
+              isFighting: false
+            })
+          }
+        }, 1000)
+      )
+    },
+    movePirates: (store) => {
+      const piratesToRemove = []
+      store.state.pirates.forEach((pirate, index) => {
+        if(!pirate.isFighting) {
+          const dx = store.state.boat.x - pirate.x, dy = store.state.boat.y - pirate.y, distance = Math.sqrt(dx * dx + dy * dy)
+          if(distance > 600 || store.state.isFighting) {
+            if(pirate.speed !== 2) {
+              store.commit(MUTATIONS.SET_PIRATE_SPEED, {
+                index: index,
+                value: 2
+              })
+            }
+            store.commit(MUTATIONS.MOVE_PIRATE, {
+              index: index,
+              px: pirate.direction,
+              py: 0
+            })
+          }
+          else if(distance > 200) {
+            if(pirate.speed !== 4) {
+              store.commit(MUTATIONS.SET_PIRATE_SPEED, {
+                index: index,
+                value: 4
+              })
+            }
+            store.commit(MUTATIONS.MOVE_PIRATE, {
+              index: index,
+              px: normalize(dx, 0),
+              py: normalize(dy, 0)
+            })
+          }
+          else {
+            if(pirate.isMoving) {
+              store.commit(MUTATIONS.SET_PIRATE_MOVING, {
+                index: index,
+                value: false
+              })
+            }
+            if(!store.state.isFishing && !store.state.isHooked && !store.state.isBroken && !store.state.isShopping) {
+              store.commit(MUTATIONS.SET_FIGHTING, true)
+              store.commit(MUTATIONS.SET_DIRECTION, -pirate.direction)
+              store.commit(MUTATIONS.SET_PIRATE_FIGHTING, {
+                index: index,
+                value: true
+              })
+              store.commit(MUTATIONS.SET_STOPPED, false)
+            }
+            else {
+              store.commit(MUTATIONS.SET_STOPPED, true)
+            }
+          }
+          if(findAreaIndex(pirate.x, pirate.y, store.state.areas, 'island', false) !== -1 || distance > 5000) {
+            piratesToRemove.push(index)
+          }
+        }
+        else if(!store.state.isFighting) {
+          piratesToRemove.push(index)
+        }
+      })
+      piratesToRemove.reverse().forEach(index => {
+        store.commit(MUTATIONS.REMOVE_PIRATE, index);
+      })
     }
   }
 })

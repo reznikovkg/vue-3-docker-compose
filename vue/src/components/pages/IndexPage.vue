@@ -1,6 +1,7 @@
 <template>
   <div class="map" :style="mapStyle">
     <div class="map__area" v-for="area in getReversedAreas" :class="'map__area--' + area.type" :style="areaStyle(area)"/>
+    <PirateBoat v-for="pirate in getPirates" :x="pirate.x" :y="pirate.y" :speed="pirate.speed" :direction="pirate.direction" :is-moving="pirate.isMoving" :is-fighting="pirate.isFighting"/>
   </div>
   <div class="water" :style="waterStyle"/>
   <Boat/>
@@ -16,6 +17,7 @@ import Boat from './../ui/Boat.vue'
 import BottomInventory from './../ui/BottomInventory.vue'
 import Location from './../ui/Location.vue'
 import MiniGame from './../ui/MiniGame.vue'
+import PirateBoat from './../ui/PirateBoat.vue'
 import Shop from './../ui/Shop.vue'
 import SideInventory from './../ui/SideInventory.vue'
 import { mapGetters, mapActions } from 'vuex'
@@ -27,6 +29,7 @@ export default {
     BottomInventory,
     Location,
     MiniGame,
+    PirateBoat,
     Shop,
     SideInventory
   },
@@ -56,6 +59,7 @@ export default {
     this.updateMoving()
     this.updateCenter()
     this.startTickTime()
+    this.startAddPirates()
     this.startArea()
   },
   beforeUnmount() {
@@ -63,6 +67,7 @@ export default {
     window.removeEventListener('keyup', this.movingKeyUp)
     window.removeEventListener('resize', this.updateCenter)
     cancelAnimationFrame(this.animationFrame)
+    this.clearIntervals()
   },
   computed: {
     ...mapGetters([
@@ -70,9 +75,12 @@ export default {
       'getIsFishing',
       'getIsHooked',
       'getIsBroken',
-      'getAreas',
+      'getIsFighting',
       'getIsShopping',
-      'getIsNight'
+      'getIsStopped',
+      'getIsNight',
+      'getAreas',
+      'getPirates'
     ]),
     mapStyle() {
       return {
@@ -94,9 +102,12 @@ export default {
     ...mapActions([
       'move',
       'setMoving',
+      'clearIntervals',
       'startTickTime',
       'startArea',
-      'relocateDistantAreas'
+      'relocateDistantAreas',
+      'startAddPirates',
+      'movePirates'
     ]),
     areaStyle(area) {
       return {
@@ -107,7 +118,7 @@ export default {
       }
     },
     updateMoving() {
-      if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken && !this.getIsShopping) {
+      if(!this.getIsFishing && !this.getIsHooked && !this.getIsBroken && !this.getIsFighting && !this.getIsShopping && !this.getIsStopped) {
         let x = 0, y = 0
         if(this.pressed.ArrowDown) {
           y += 1
@@ -136,6 +147,7 @@ export default {
       else {
         this.setMoving(false)
       }
+      this.movePirates()
       this.animationFrame = requestAnimationFrame(this.updateMoving)
     },
     updateCenter() {
