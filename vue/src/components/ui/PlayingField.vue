@@ -19,15 +19,15 @@
       </div>
 
       <div v-if="hasBlackBombAt(cell)" class="PlayingField__bomb">
-        <img :src="blackBomb" class="PlayingField__bomb--img">
+        <img src="/icons/icons8-bomb-80(1).png" class="PlayingField__bomb--img">
       </div>
 
       <div v-if="hasRedBombAt(cell)" class="PlayingField__bomb">
-        <img :src="redBomb" class="PlayingField__bomb--img">
+        <img src="/icons/icons8-bomb-80.png" class="PlayingField__bomb--img">
       </div>
 
       <div v-if="hasGreenBombAt(cell)" class="PlayingField__bomb">
-        <img :src="greenBomb" class="PlayingField__bomb--img">
+        <img src="/icons/icons8-bomb-80(2).png" class="PlayingField__bomb--img">
       </div>
       
       <div 
@@ -41,26 +41,12 @@
   </div>
 </template>
 
-
-
 <script lang="ts">
-
-import redBomb from '@/components/icons/icons8-bomb-80.png'
-import blackBomb from '@/components/icons/icons8-bomb-80(1).png'
-import greenBomb from '@/components/icons/icons8-bomb-80(2).png'
-
 const DEFAULT_FIGURE_COLOR = '#ff4444'
 const DEFAULT_ISLAND_COLOR = '#2207ef'
 
 export default{
     name: 'PlayingField',
-    data() {
-      return {
-        blackBomb,
-        greenBomb,
-        redBomb
-      }
-    },
     props:{
         fieldSize:{
             type: Number,

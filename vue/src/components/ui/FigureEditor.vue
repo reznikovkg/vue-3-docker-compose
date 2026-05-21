@@ -1,7 +1,6 @@
 <template>
-
   <button class="openBtn" @click="() => isOpen = true">
-    <img :src="settings">
+    <img src="/icons/icons8-settings-80.png">
   </button>
 
   <div v-if="isOpen" class="overlay" @click="(e) => handleOverlayClick(e)"> 
@@ -132,7 +131,6 @@
 
 <script lang="ts">
 import { mapGetters, mapActions } from 'vuex'
-import settings from '@/components/icons/icons8-settings-80.png'
 
 const EDITOR_GRID_SIZE = 7
 const EDITOR_CENTER = Math.floor(EDITOR_GRID_SIZE / 2)
@@ -147,7 +145,6 @@ export default{
       newFigureName: '',
       showNameInput: false,
       saveAsSource: '',
-      settings
     }
   },
   computed: {
@@ -321,7 +318,6 @@ export default{
 </script>
 
 <style scoped lang="scss">
-
 .openBtn {
     width: 50px;
     height: 50px;
