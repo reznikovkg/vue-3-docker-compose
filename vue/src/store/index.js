@@ -650,7 +650,7 @@ export default createStore({
         }
       })
       piratesToRemove.reverse().forEach(index => {
-        store.commit(MUTATIONS.REMOVE_PIRATE, index);
+        store.commit(MUTATIONS.REMOVE_PIRATE, index)
       })
     }
   }
