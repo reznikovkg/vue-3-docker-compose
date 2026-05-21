@@ -17,7 +17,22 @@
       </div>
     </div>
 
-    <div ref = "stageRef" class = "bubble-playground__stage" @mousedown = "(event) => handleClick(event)">
+    <div
+        ref = "stageRef"
+        class = "bubble-playground__stage"
+        :class = "{ 'bubble-playground__stage--bomb': bombActive }"
+        @mousedown = "(event) => onMouseDown(event)"
+        @mousemove = "(event) => onMouseMove(event)"
+        @mouseup = "() => onMouseUp()"
+        @mouseleave = "() => onMouseLeave()"
+    >
+      <div
+          v-for = "mark in marks"
+          :key = "mark.id"
+          class = "bubble-playground__mark"
+          :style = "{ left: mark.x + 'px', top: mark.y + 'px' }"
+      ></div>
+
       <div
           v-for = "item in items"
           :key = "item.id"
@@ -31,11 +46,38 @@
         }"
       ></div>
     </div>
+
+    <div class = "bubble-playground__controls">
+      <div class = "controls-group">
+        <button @click = "() => setMode('standard')" :class = "{ active: currentMode === 'standard' }">Клик</button>
+        <button @click = "() => setMode('laser')" :class = "{ active: currentMode === 'laser' }">Лазер</button>
+        <button @click = "() => setMode('auto')" :class = "{ active: currentMode === 'auto' }">Автомат</button>
+      </div>
+
+      <div class = "controls-stats">
+        <span class = "combo--good">Комбо: x{{ combo.toFixed(1) }}</span>
+        <span class = "combo--bad">Штраф: x{{ penaltyCombo.toFixed(1) }}</span>
+      </div>
+
+      <div class = "controls-group">
+        <button
+            class = "bomb-btn"
+            @click = "() => toggleBomb()"
+            :disabled = "bombs <= 0"
+            :class = "{ active: bombActive }"
+        >
+          💣 Бомба ({{ bombs }})
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { RADIUS, WRONG_PENALTIES, ESCAPE_PENALTIES, PUSH_FACTORS, COLOR_IMAGES, COLOR_NAMES, COLOR_LIST } from '@/config/gameConfig'
+
+const laserCursor = "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"8\" fill=\"%2300ff00\" stroke=\"white\" stroke-width=\"2\"/%3E%3C/svg%3E') 12 12, crosshair"
+const autoCursor = "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"8\" fill=\"%23ff0000\" stroke=\"white\" stroke-width=\"2\"/%3E%3C/svg%3E') 12 12, crosshair"
 
 export default {
   name: 'BubblePlayground',
@@ -64,7 +106,19 @@ export default {
       tutorialVisible: false,
       tutorialTimer: null,
       tutorialBlocking: false,
-      animatedPushes: []
+      animatedPushes: [],
+
+      currentMode: 'standard',
+      isDragging: false,
+      mouseX: 0,
+      mouseY: 0,
+      autoTimer: null,
+      marks: [],
+      combo: 1.0,
+      penaltyCombo: 1.0,
+      successCount: 0,
+      bombs: 0,
+      bombActive: false
     }
   },
 
@@ -98,6 +152,7 @@ export default {
     if (this.frameId) cancelAnimationFrame(this.frameId)
     if (this.countdownId) clearInterval(this.countdownId)
     if (this.tutorialTimer) clearTimeout(this.tutorialTimer)
+    if (this.autoTimer) clearInterval(this.autoTimer)
     window.removeEventListener('resize', this.updateStageSize)
   },
 
@@ -143,6 +198,7 @@ export default {
       if (!this.sessionEnded) {
         if (!this.tutorialBlocking) {
           this.moveElements(now)
+          this.marks = this.marks.filter(m => now - m.time < 2000)
         }
       }
       this.frameId = requestAnimationFrame(this.animationStep)
@@ -309,41 +365,182 @@ export default {
       return children
     },
 
-    handleClick(event) {
-      if (this.sessionEnded) return;
-      const stage = this.$refs.stageRef;
-      if (!stage) return;
-      const rect = stage.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return;
-      const clickX = event.clientX - rect.left;
-      const clickY = event.clientY - rect.top;
-      const hit = [];
+    setCursor(mode) {
+      const stage = this.$refs.stageRef
+      if (!stage) return
+      if (this.bombActive) {
+        stage.style.cursor = 'crosshair'
+        return
+      }
+      switch (mode) {
+        case 'laser':
+          stage.style.cursor = laserCursor
+          break
+        case 'auto':
+          stage.style.cursor = autoCursor
+          break
+        default:
+          stage.style.cursor = 'default'
+      }
+    },
+
+    getCoordinates(event) {
+      const stage = this.$refs.stageRef
+      if (!stage) return { x: 0, y: 0 }
+      const rect = stage.getBoundingClientRect()
+      return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+      }
+    },
+
+    onMouseMove(event) {
+      const coords = this.getCoordinates(event)
+      this.mouseX = coords.x
+      this.mouseY = coords.y
+      if (this.currentMode === 'laser' && this.isDragging && !this.bombActive) {
+        this.tryPopBubbles(this.mouseX, this.mouseY)
+      }
+    },
+
+    onMouseDown(event) {
+      if (this.sessionEnded || this.tutorialBlocking) return
+      this.isDragging = true
+      const coords = this.getCoordinates(event)
+      if (this.bombActive) {
+        this.explodeBomb(coords.x, coords.y)
+        return
+      }
+      if (this.currentMode === 'standard' || this.currentMode === 'laser') {
+        this.tryPopBubbles(coords.x, coords.y)
+      }
+    },
+
+    onMouseUp() {
+      this.isDragging = false
+    },
+
+    onMouseLeave() {
+      this.isDragging = false
+    },
+
+    setMode(mode) {
+      this.currentMode = mode
+      this.bombActive = false
+      this.setCursor(mode)
+      if (this.autoTimer) {
+        clearInterval(this.autoTimer)
+        this.autoTimer = null
+      }
+      if (mode === 'auto') {
+        this.autoTimer = setInterval(() => {
+          if (this.sessionEnded || this.tutorialBlocking) return
+          this.marks.push({
+            id: Date.now() + Math.random(),
+            x: this.mouseX,
+            y: this.mouseY,
+            time: performance.now()
+          })
+          this.tryPopBubbles(this.mouseX, this.mouseY)
+        }, 500)
+      }
+    },
+
+    toggleBomb() {
+      if (this.bombs > 0) {
+        this.bombActive = !this.bombActive
+        this.setCursor(this.currentMode)
+      }
+    },
+
+    tryPopBubbles(clickX, clickY) {
+      if (this.sessionEnded) return
+      const hit = []
       for (let i = 0; i < this.items.length; i++) {
-        const item = this.items[i];
-        const centerX = item.x + item.radius;
-        const centerY = item.y + item.radius;
-        const dx = clickX - centerX;
-        const dy = clickY - centerY;
-        const dist = Math.hypot(dx, dy);
+        const item = this.items[i]
+        const centerX = item.x + item.radius
+        const centerY = item.y + item.radius
+        const dist = Math.hypot(clickX - centerX, clickY - centerY)
         if (dist <= item.radius) {
-          hit.push(item);
+          hit.push(item)
         }
       }
-      if (hit.length === 0) return;
-      let totalPoints = 0;
-      let newChildren = [];
+      if (hit.length === 0) return
+      let totalPoints = 0
+      let newChildren = []
       for (const item of hit) {
-        const isCorrect = item.color === this.targetColor;
-        totalPoints += isCorrect ? this.pointsForCorrect : WRONG_PENALTIES[item.size];
-        this.schedulePush(item.x, item.y, item.size);
-        const children = this.spawnChildren(item);
-        if (children.length) newChildren.push(...children);
-        const idx = this.items.indexOf(item);
-        if (idx !== -1) this.items.splice(idx, 1);
+        const isCorrect = item.color === this.targetColor
+        if (isCorrect) {
+          totalPoints += this.pointsForCorrect * this.combo
+          this.combo = Math.min(5, this.combo * 1.2)
+          this.penaltyCombo = 1.0
+          this.successCount++
+          if (this.successCount % 10 === 0) this.bombs++
+        } else {
+          const penaltyBase = WRONG_PENALTIES[item.size] || this.pointsForWrong
+          totalPoints += penaltyBase * this.penaltyCombo
+          this.penaltyCombo = Math.min(7, this.penaltyCombo * 1.3)
+          this.combo = 1.0
+        }
+        this.schedulePush(item.x, item.y, item.size)
+        const children = this.spawnChildren(item)
+        if (children.length) newChildren.push(...children)
+        const idx = this.items.indexOf(item)
+        if (idx !== -1) this.items.splice(idx, 1)
       }
-      if (newChildren.length) this.items.push(...newChildren);
-      this.points += totalPoints;
-      this.$emit('score', { points: totalPoints, count: hit.length });
+      if (newChildren.length) this.items.push(...newChildren)
+      this.points += totalPoints
+      this.$emit('score', { points: totalPoints, count: hit.length })
+    },
+
+    explodeBomb(x, y) {
+      this.bombActive = false
+      this.bombs--
+      const BOMB_RADIUS = 150
+      let newChildren = []
+      for (let i = this.items.length - 1; i >= 0; i--) {
+        const item = this.items[i]
+        const centerX = item.x + item.radius
+        const centerY = item.y + item.radius
+        const dist = Math.hypot(x - centerX, y - centerY)
+        if (dist <= BOMB_RADIUS) {
+          if (item.size === 'large') {
+            newChildren.push(...this.spawnBombSmalls(item))
+          }
+          this.items.splice(i, 1)
+        }
+      }
+      if (newChildren.length) this.items.push(...newChildren)
+      this.setCursor(this.currentMode)
+    },
+
+    spawnBombSmalls(parent) {
+      const children = []
+      const childRadius = RADIUS.small
+      const count = 7
+      const orbitRadius = parent.radius + childRadius + 5
+      const angleStep = (Math.PI * 2) / count
+      for (let i = 0; i < count; i++) {
+        const angle = i * angleStep
+        const x = parent.x + Math.cos(angle) * orbitRadius
+        const y = parent.y + Math.sin(angle) * orbitRadius
+        const randomColor = this.activeColors[Math.floor(Math.random() * this.activeColors.length)]
+        const color = i === 0 ? parent.color : randomColor
+        children.push({
+          id: Date.now() + Math.random() + i,
+          color: color,
+          x: x,
+          y: y,
+          radius: childRadius,
+          size: 'small',
+          speedX: (Math.random() - 0.5) * 3,
+          speedY: 1 + Math.random() * 3,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpeed: 0.02 + Math.random() * 0.03,
+          active: true
+        })
+      }
+      return children
     },
 
     restartGame() {
@@ -357,6 +554,14 @@ export default {
       this.sessionEnded = false
       this.items = []
       this.animatedPushes = []
+      this.combo = 1.0
+      this.penaltyCombo = 1.0
+      this.successCount = 0
+      this.bombs = 0
+      this.bombActive = false
+      this.marks = []
+      this.setMode('standard')
+      if (this.autoTimer) clearInterval(this.autoTimer)
       if (this.frameId) cancelAnimationFrame(this.frameId)
       if (this.countdownId) clearInterval(this.countdownId)
       if (this.tutorialTimer) clearTimeout(this.tutorialTimer)
@@ -378,6 +583,7 @@ export default {
       this.animatedPushes = []
       if (this.countdownId) clearInterval(this.countdownId)
       if (this.tutorialTimer) clearTimeout(this.tutorialTimer)
+      if (this.autoTimer) clearInterval(this.autoTimer)
       this.tutorialVisible = false
       this.tutorialBlocking = false
       this.$emit('finish', { score: this.points, timeElapsed: this.gameDuration })
@@ -394,6 +600,8 @@ $textMuted: #d39974;
 $accentPastel: #f3b3a1;
 $borderSoft: #f0d9cf;
 $timerWarning: #f3b3a1;
+$successColor: #8fcd8f;
+$dangerColor: #e57373;
 
 .bubble-playground {
   position: fixed;
@@ -490,6 +698,10 @@ $timerWarning: #f3b3a1;
     width: 100%;
     height: 100%;
     overflow: hidden;
+
+    &--bomb {
+      cursor: crosshair !important;
+    }
   }
 
   &__bubble {
@@ -500,9 +712,71 @@ $timerWarning: #f3b3a1;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
-    cursor: pointer;
     transition: transform 0.05s linear;
     will-change: transform;
+  }
+
+  &__mark {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, rgba(255,100,100,0.8) 0%, transparent 60%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 10;
+    animation: markFade 2s forwards;
+  }
+
+  &__controls {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 15px 25px;
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    border: 2px solid $borderSoft;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+
+    .controls-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .controls-stats {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+      font-size: 1.1rem;
+      text-align: center;
+      min-width: 120px;
+      .combo--good { color: $successColor; }
+      .combo--bad { color: $dangerColor; }
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #fff;
+      color: $textLight;
+      border: 2px solid $accentPastel;
+      transition: all 0.2s;
+      &:hover { background: #fafafa; }
+      &.active { background: $accentPastel; color: #fff; }
+      &:disabled { opacity: 0.5; cursor: not-allowed; }
+      &.bomb-btn { border-color: #ffb74d; color: #ffb74d; &.active { background: #ffb74d; color: #fff; } }
+    }
   }
 }
 
@@ -511,5 +785,11 @@ $timerWarning: #f3b3a1;
   15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   85% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+}
+
+@keyframes markFade {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  20% { transform: translate(-50%, -50%) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
 }
 </style>
