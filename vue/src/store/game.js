@@ -3,7 +3,9 @@ const MUTATIONS = {
   SET_SCORE: 'SET_SCORE',
   LOAD_GAME: 'LOAD_GAME',
 }
-
+const MAX_LEVEL = 4;
+const MAX_BRANCH = 3;
+const START_SCORE = 100
 export default {
   namespaced: true,
 
@@ -11,7 +13,7 @@ export default {
     return {
       grid: [],
       gridSize: 8,
-      score: 100
+      score: START_SCORE
       }
   },
 
@@ -65,7 +67,7 @@ export default {
         grid[pos.x][pos.y] = {
           id: Date.now() + Math.random(),
           level: 1,
-          branch: Math.floor(Math.random() * 3) + 1
+          branch: Math.floor(Math.random() * MAX_BRANCH) + 1
         }
         spawned++;
       }
@@ -149,7 +151,7 @@ export default {
         grid[positionTo.y][positionTo.x] = source;
         moved = true;
       }
-      else if(dest.level === source.level && dest.level < 4 && dest.branch === source.branch) {
+      else if(dest.level === source.level && dest.level < MAX_LEVEL && dest.branch === source.branch) {
         commit(MUTATIONS.SET_SCORE, state.score + source.level * 10);
         dest.level += 1
         grid[positionFrom.y][positionFrom.x] = null

@@ -64,7 +64,7 @@ export default {
     font-weight: 700;
     line-height: 1;
     color: white;
-    background: rgba(239, 68, 68, 0.95);
+    background: red;
     border-radius: 6px;
     pointer-events: none;
   }

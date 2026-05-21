@@ -53,7 +53,7 @@ export default {
     },
 
     onCellClick({item}) {
-      if(item && item.level == 4) this.spawnFromMax(item.branch);
+      if(item && item.level === 4) this.spawnFromMax(item.branch);
     },
     onCellRightClick(position) {
       this.sellItem(position);
