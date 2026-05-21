@@ -40,32 +40,32 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.game__records-container {
+.records {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
 
-.game__records {
-  background: #f5f5f5;
-  padding: 20px 40px;
-  border-radius: 12px;
-  text-align: center;
-}
+  &__block {
+    background: #f5f5f5;
+    padding: 20px 40px;
+    border-radius: 12px;
+    text-align: center;
+  }
 
-.game__records-title {
-  margin-bottom: 15px;
-  font-size: 20px;
-  color: #444;
-}
+  &__title {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #444;
+  }
 
-.game__records-list {
-  list-style-type: decimal;
-  text-align: left;
-  padding-left: 20px;
-  margin: 0;
+  &__list {
+    list-style-type: decimal;
+    text-align: left;
+    padding-left: 20px;
+    margin: 0;
+  }
 
-  li {
+  &__item {
     font-size: 18px;
     margin-bottom: 8px;
     color: #555;
