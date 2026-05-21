@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import listModule from './list'
+import game from './game'
 
 const MUTATION_TYPES = {
     SET_CONFIG: 'SET_CONFIG',
@@ -56,6 +57,7 @@ export default createStore({
         }
     },
     modules: {
-        list: listModule
+        list: listModule,
+        game
     }
 })
