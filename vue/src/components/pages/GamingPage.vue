@@ -278,14 +278,15 @@ export default{
     },
     gameTick() {
       console.log('--- GAME TICK --- figures:', this.getFiguresCount)
-      this.checkCollisions({ islandPosition: this.islandPosition })
+      const islandSnapshot = [...this.islandPosition]
+      this.checkCollisions({ islandPosition: islandSnapshot })
         .then(added1 => {
           return this.moveFigures({ fieldSize: this.fieldSize })
           .then(() => this.moveBombs({fieldSize: this.fieldSize}))
           .then(() => added1)
         })
         .then(added1 => {
-          return this.checkCollisions({ islandPosition: this.islandPosition })
+          return this.checkCollisions({ islandPosition: islandSnapshot })
           .then(added2 => [...added1, ...added2])
         })
         .then(allNewCells => {
