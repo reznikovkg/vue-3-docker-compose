@@ -311,6 +311,11 @@ export default {
       'removeFighter',
       'setFighters',
       'setTowers',
+      'processTowerShooting',
+      'processEnemyMovement',
+      'processFighterMovement',
+      'processEnemyShooting',
+      'processArtilleryFire',
     ]),
     selectBarrier(barrier) {
       console.log('Выбран барьер:', barrier)
@@ -326,6 +331,8 @@ export default {
       if (this.currentLevel === level) return;
       this.stopAllLoops();
       this.setEnemies([]);
+      this.setBarriers([]);
+      this.setFighters([]);
       this.getTowers.forEach(t => this.removeTower(t.id));
       this.selectTower(null);
       this.currentLevel = level;
@@ -372,6 +379,12 @@ export default {
           }
 
           if (this.isBarrierMode) {
+            
+            if (!this.isPointOnRoute(x, y)) {
+              console.warn('Барьер можно ставить только на дороге!');
+              return;
+            }
+
             this.addBarrier({ x, y })
             return
           }
@@ -410,58 +423,7 @@ export default {
           return;
         }
         
-        let coinsEarned = 0;
-        let updatedEnemies = [...this.getEnemies];
-        let updatedBarriers = [...this.getBarriers];
-        let updatedFighters = [...this.getFighters];
-
-
-        updatedEnemies = updatedEnemies.map(enemy => {
-          let dmg = 0;
-          this.getTowers.forEach(tower => {
-            const dist = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2);
-            if (dist <= tower.range) dmg += tower.damage;
-          });
-          enemy.health -= dmg;
-          if (enemy.health <= 0) {
-            coinsEarned += enemy.reward || 10;
-            return null;
-          }
-          return enemy;
-        }).filter(Boolean);
-
-        updatedEnemies.forEach(enemy => {
-          if (enemy.isBlocked) {
-            const barrier = updatedBarriers.find(b => {
-              const dist = Math.sqrt((enemy.x - b.x) ** 2 + (enemy.y - b.y) ** 2);
-              return dist < 45;
-            });
-            if (barrier) {
-              barrier.health -= 4;
-            }
-          }
-        });
-
-        updatedFighters = updatedFighters.map(fighter => {
-          const target = updatedEnemies.find(e => {
-            const dist = Math.sqrt((fighter.x - e.x) ** 2 + (fighter.y - e.y) ** 2);
-            return dist < 45;
-          });
-
-          if (target) {
-            target.health -= fighter.damage * 0.15;
-            fighter.health -= 2;
-          }
-          
-          return fighter.health > 0 ? fighter : null;
-        }).filter(Boolean);
-
-        updatedBarriers = updatedBarriers.filter(b => b.health > 0);
-
-        this.setEnemies(updatedEnemies);
-        this.setFighters(updatedFighters);
-        this.setBarriers(updatedBarriers);
-        if (coinsEarned > 0) this.addCoins(coinsEarned);
+        this.processTowerShooting();
       }, 1000);
     },
 
@@ -553,72 +515,7 @@ export default {
           return;
         }
 
-        if (this.getEnemies.length === 0) {
-          this.animationFrameId = requestAnimationFrame(move);
-          return;
-        }
-
-        let reachedEnd = false;
-        const updatedEnemies = this.getEnemies.map(enemy => {
-          if (!enemy.routeId) return enemy;
-
-          const closestBarrier = this.getBarriers.find(b => {
-            const dx = enemy.x - b.x;
-            const dy = enemy.y - b.y;
-            return Math.sqrt(dx * dx + dy * dy) < 45;
-          });
-          if (closestBarrier) return { ...enemy, isBlocked: true };
-
-          const hitFighter = this.getFighters.find(f => {
-            const dx = enemy.x - f.x;
-            const dy = enemy.y - f.y;
-            return Math.sqrt(dx * dx + dy * dy) < 45;
-          });
-          if (hitFighter) return { ...enemy, isBlocked: true };
-          
-          const route = this.getLevel.routes.find(r => r.id === enemy.routeId);
-          if (!route || !route.points || route.points.length === 0) return enemy;
-
-          const nextIndex = enemy.currentPointIndex + 1;
-          const nextPoint = route.points[nextIndex];
-
-          if (!nextPoint) {
-            reachedEnd = true;
-            return null;
-          }
-          
-          const dx = nextPoint.x - enemy.x;
-          const dy = nextPoint.y - enemy.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const speed = enemy.speed || 1.5;
-          const moveStep = Math.min(dist, speed);
-
-         if (dist <= speed) {
-            return {
-              ...enemy,
-              x: nextPoint.x,
-              y: nextPoint.y,
-              currentPointIndex: nextIndex,
-              isBlocked: false
-            };
-          } else {
-            return {
-              ...enemy,
-              x: enemy.x + (dx / dist) * speed,
-              y: enemy.y + (dy / dist) * speed,
-              currentPointIndex: enemy.currentPointIndex,
-              isBlocked: false
-            };
-          }
-        }).filter(Boolean);
-
-        this.setEnemies(updatedEnemies);
-
-        if (reachedEnd) {
-          this.stopAllLoops();
-          this.setGameOver();
-          return;
-        }
+        this.processEnemyMovement();
 
         this.animationFrameId = requestAnimationFrame(move);
       };
@@ -633,49 +530,8 @@ export default {
           return;
         }
 
-        if (this.getFighters.length === 0) {
-          this.fighterAnimationFrameId = requestAnimationFrame(move);
-          return;
-        }
-
-       const updatedFighters = this.getFighters.map(fighter => {
-          if (!fighter.routeId) return fighter;
-
-          const hitBarrier = this.getBarriers.find(b => {
-            const dx = fighter.x - b.x;
-            const dy = fighter.y - b.y;
-            return Math.sqrt(dx * dx + dy * dy) < 45;
-          });
-          if (hitBarrier) return { ...fighter, isBlocked: true };
-
-          const hitEnemy = this.getEnemies.find(e => {
-            const dx = fighter.x - e.x;
-            const dy = fighter.y - e.y;
-            return Math.sqrt(dx * dx + dy * dy) < 45;
-          });
-          if (hitEnemy) return { ...fighter, isBlocked: true };
-
-          const route = this.getLevel.routes.find(r => r.id === fighter.routeId);
-          if (!route || !route.points || route.points.length === 0) return fighter;
-
-          const prevIndex = fighter.pointIndex - 1;
-          const prevPoint = route.points[prevIndex];
-
-          if (!prevPoint || prevIndex < 0) return null;
-
-          const dx = prevPoint.x - fighter.x;
-          const dy = prevPoint.y - fighter.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const speed = ((fighter.speed || 1.0)*0.5);
-
-          if (dist <= speed) {
-            return { ...fighter, x: prevPoint.x, y: prevPoint.y, pointIndex: prevIndex, isBlocked: false };
-          } else {
-            return { ...fighter, x: fighter.x + (dx / dist) * speed, y: fighter.y + (dy / dist) * speed, pointIndex: fighter.pointIndex, isBlocked: false };
-          }
-        }).filter(Boolean);
-
-        this.setFighters(updatedFighters);
+        this.processFighterMovement();
+        
         this.fighterAnimationFrameId = requestAnimationFrame(move);
       };
 
@@ -690,89 +546,67 @@ export default {
           return;
         }
 
-        let updatedTowers = [...this.getTowers];
-        let updatedFighters = [...this.getFighters];
-
-        this.getEnemies.forEach(enemy => {
-          if (!enemy.shootRange || enemy.shootRange <= 0) return;
-
-          updatedTowers.forEach(tower => {
-            const dist = Math.sqrt((enemy.x - tower.x) ** 2 + (enemy.y - tower.y) ** 2);
-            if (dist <= enemy.shootRange) {
-              tower.health -= enemy.shootDamage;
-            }
-          });
-
-          updatedFighters.forEach(fighter => {
-            const dist = Math.sqrt((enemy.x - fighter.x) ** 2 + (enemy.y - fighter.y) ** 2);
-            if (dist <= enemy.shootRange) {
-              fighter.health -= enemy.shootDamage;
-            }
-          }); 
-         });
-
-        updatedTowers = updatedTowers.filter(t => t.health > 0);
-        updatedFighters = updatedFighters.filter(f => f.health > 0);
-
-        if (updatedTowers.length !== this.getTowers.length) {
-          this.setTowers(updatedTowers);
-        }
-        if (updatedFighters.length !== this.getFighters.length) {
-          this.setFighters(updatedFighters);
-        }
+        this.processEnemyShooting();
      }, 1000);
     },
 
     fireArtillery(target) {
-      const cost = this.artilleryCost;
-      if (this.getCoins < cost) return;
+      const success = this.processArtilleryFire({
+        x: target.x,
+        y: target.y,
+        cost: this.artilleryCost,
+        radius: this.artilleryRadius,
+        damage: this.artilleryDamage
+      });
 
-      const id = Date.now();
-      this.explosions.push({ id, x: target.x, y: target.y });
-      setTimeout(() => {
-        this.explosions = this.explosions.filter(e => e.id !== id);
-      }, 600); 
-
-      let coinsEarned = 0;
-      let updatedEnemies = [...this.getEnemies];
-      let updatedFighters = [...this.getFighters];
-
-      updatedEnemies = updatedEnemies.map(enemy => {
-        const dx = enemy.x - target.x;
-        const dy = enemy.y - target.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= this.artilleryRadius) {
-          const damageFactor = 1 - (dist / this.artilleryRadius);
-          const actualDamage = Math.floor(this.artilleryDamage * damageFactor);
-          enemy.health -= actualDamage;
-        }
-
-        if (enemy.health <= 0) {
-          coinsEarned += enemy.reward || 10;
-          return null;
-        }
-        return enemy.health > 0 ? enemy : null;
-      }).filter(Boolean);
-
-      updatedFighters = updatedFighters.map(fighter => {
-        const dx = fighter.x - target.x;
-        const dy = fighter.y - target.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= this.artilleryRadius) {
-          const damageFactor = 1 - (dist / this.artilleryRadius);
-          const actualDamage = Math.floor(this.artilleryDamage * damageFactor);
-          fighter.health -= actualDamage;
-        }
-        return fighter.health > 0 ? fighter : null;
-      }).filter(Boolean);
-
-      this.setEnemies(updatedEnemies);
-      this.setFighters(updatedFighters);
-      this.addCoins(-cost);
-
-      if (coinsEarned > 0) {
-        this.addCoins(coinsEarned);
+      if (success) {
+        const id = Date.now();
+        this.explosions.push({ id, x: target.x, y: target.y });
+        setTimeout(() => {
+          this.explosions = this.explosions.filter(e => e.id !== id);
+        }, 600); 
       }
+    },
+
+    isPointOnRoute(x, y) {
+      const routes = this.getLevel.routes;
+      if (!routes || routes.length === 0) return false;
+      
+      const threshold = 25;
+
+      for (const route of routes) {
+        const points = route.points;
+        for (let i = 0; i < points.length - 1; i++) {
+          const p1 = points[i];
+          const p2 = points[i + 1];
+
+          const A = x - p1.x;
+          const B = y - p1.y;
+          const C = p2.x - p1.x;
+          const D = p2.y - p1.y;
+
+          const dot = A * C + B * D;
+          const lenSq = C * C + D * D;
+          let param = lenSq !== 0 ? dot / lenSq : -1;
+
+          let xx, yy;
+          if (param < 0) {
+            xx = p1.x; yy = p1.y;
+          } else if (param > 1) {
+            xx = p2.x; yy = p2.y;
+          } else {
+            xx = p1.x + param * C;
+            yy = p1.y + param * D;
+          }
+
+          const dx = x - xx;
+          const dy = y - yy;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist <= threshold) return true;
+        }
+      }
+      return false;
     },
   },
 }

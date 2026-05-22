@@ -1,11 +1,13 @@
 <template>
-  <div class = "barrier" :style="style" @click.stop = "$emit('select', barrier)">
+  <div class = "barrier" :style="style" @click.stop = "() => handleSelect()">
     <div class = "barrier__hp-bar">
       <div class = "barrier__hp-fill" :style = "{ width: hpPercent + '%' }"></div>
     </div>
-    <button class = "barrier__remove" @click.stop = "$emit('remove', barrier.id)">✕</button>
+    <button class = "barrier__remove" @click.stop = "() => handleRemove()">✕</button>
   </div>
 </template>
+
+
 
 <script>
 export default {
@@ -18,11 +20,20 @@ export default {
     hpPercent() {
       return Math.max(0, (this.barrier.health / this.barrier.maxHealth) * 100)
     }
-  }
+  },
+
+    methods: {
+      handleSelect() {
+        this.$emit('select', this.barrier);
+      },
+      handleRemove() {
+        this.$emit('remove', this.barrier.id);
+      }
+    }
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .barrier {
   position: absolute;
   width: 40px;
@@ -35,31 +46,32 @@ export default {
   justify-content: center;
   z-index: 5;
   border: 2px solid #2c5aa0;
-}
-.barrier__hp-bar {
-  position: absolute;
-  bottom: -8px;
-  width: 100%;
-  height: 4px;
-  background: #222;
-  border-radius: 2px;
-}
-.barrier__hp-fill {
-  height: 100%;
-  background: #4caf50;
-  transition: width 0.2s;
-}
-.barrier__remove {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 20px;
-  height: 20px;
-  background: #e94560;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 12px;
+
+  &__hp-bar {
+    position: absolute;
+    bottom: -8px;
+    width: 100%;
+    height: 4px;
+    background: #222;
+    border-radius: 2px;
+  }
+  &__hp-fill {
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.2s;
+  }
+  &__remove {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background: #e94560;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+  }
 }
 </style>
