@@ -91,6 +91,11 @@ export default {
     onFinish: { type: Function, default: () => {} },
     gameDuration: { type: Number, default: 60 }
   },
+  data() {
+    return {
+      resizeHandler: null
+    }
+  },
   computed: {
     ...mapState('game', [
       'points', 'remaining', 'sessionEnded', 'items', 'stageWidth', 'stageHeight',
@@ -102,10 +107,12 @@ export default {
     ]),
   },
   mounted() {
+    this.resizeHandler = () => this.updateStageSize({ stageRef: this.$refs.stageRef })
+
     this.$nextTick(() => {
-      this.updateStageSize()
-      window.addEventListener('resize', this.updateStageSize)
-      this.$store.dispatch('game/initGame', {
+      this.resizeHandler()
+      window.addEventListener('resize', this.resizeHandler)
+      this.initGame({
         totalColors: this.totalColors,
         targetColor: this.targetColor,
         spawnRate: this.spawnRate,
@@ -119,17 +126,13 @@ export default {
     })
   },
   beforeDestroy() {
-    window.removeEventListener('resize', this.updateStageSize)
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler)
+    }
   },
   methods: {
-    ...mapActions('game', ['setMode', 'toggleBomb', 'setDragging', 'resetGame']),
-    updateStageSize() {
-      if (this.$refs.stageRef) {
-        const width = this.$refs.stageRef.clientWidth
-        const height = this.$refs.stageRef.clientHeight
-        this.$store.commit('game/SET_STAGE_SIZE', { width, height })
-      }
-    },
+    ...mapActions('game', ['setMode', 'toggleBomb', 'setDragging', 'resetGame', 'updateStageSize', 'initGame']),
+
     onMouseDown(event) {
       this.$store.dispatch('game/handleMouseDown', { event, stageRef: this.$refs.stageRef })
     },

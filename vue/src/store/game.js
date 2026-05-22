@@ -12,6 +12,76 @@ function getCoords(event, stageRef) {
     }
 }
 
+function spawnChildrenSync(state, getters, parent, customConfig = null) {
+    const children = []
+    const parentSize = parent.size
+    const parentColor = parent.color
+    const parentX = parent.x
+    const parentY = parent.y
+    let childSize, childRadius, count
+    if (customConfig) {
+        childSize = customConfig.size
+        childRadius = customConfig.radius
+        count = customConfig.count
+    } else {
+        if (parentSize === 'large') { childSize = 'medium'; childRadius = RADIUS.medium; count = 3 }
+        else if (parentSize === 'medium') { childSize = 'small'; childRadius = RADIUS.small; count = 5 }
+        else return []
+    }
+    const orbitRadius = parent.radius + childRadius + 5
+    const angleStep = (Math.PI * 2) / count
+    for (let i = 0; i < count; i++) {
+        const angle = i * angleStep
+        const x = parentX + Math.cos(angle) * orbitRadius
+        const y = parentY + Math.sin(angle) * orbitRadius
+        let randomColor
+        do { randomColor = getters.activeColors[Math.floor(Math.random() * getters.activeColors.length)] }
+        while (randomColor === parentColor && getters.activeColors.length > 1)
+        children.push({
+            id: Date.now() + Math.random() + i,
+            color: i === 0 ? parentColor : randomColor,
+            x: x,
+            y: y,
+            radius: childRadius,
+            size: childSize,
+            speedX: (Math.random() - 0.5) * 1.5,
+            speedY: 1 + Math.random() * 2.5,
+            wobble: Math.random() * Math.PI * 2,
+            wobbleSpeed: 0.02 + Math.random() * 0.03,
+            active: true
+        })
+    }
+    return children
+}
+
+function spawnBombSmallsSync(state, getters, parent) {
+    const children = []
+    const childRadius = RADIUS.small
+    const count = 7
+    const orbitRadius = parent.radius + childRadius + 5
+    const angleStep = (Math.PI * 2) / count
+    for (let i = 0; i < count; i++) {
+        const angle = i * angleStep
+        const x = parent.x + Math.cos(angle) * orbitRadius
+        const y = parent.y + Math.sin(angle) * orbitRadius
+        const randomColor = getters.activeColors[Math.floor(Math.random() * getters.activeColors.length)]
+        children.push({
+            id: Date.now() + Math.random() + i,
+            color: i === 0 ? parent.color : randomColor,
+            x: x,
+            y: y,
+            radius: childRadius,
+            size: 'small',
+            speedX: (Math.random() - 0.5) * 3,
+            speedY: 1 + Math.random() * 3,
+            wobble: Math.random() * Math.PI * 2,
+            wobbleSpeed: 0.02 + Math.random() * 0.03,
+            active: true
+        })
+    }
+    return children
+}
+
 export default {
     namespaced: true,
     state: () => ({
@@ -148,6 +218,14 @@ export default {
         },
     },
     actions: {
+        updateStageSize({ commit }, { stageRef }) {
+            if (stageRef) {
+                const width = stageRef.clientWidth
+                const height = stageRef.clientHeight
+                commit('SET_STAGE_SIZE', { width, height })
+            }
+        },
+
         initGame({ commit, dispatch }, settings) {
             commit('INIT_SETTINGS', settings)
             dispatch('loadImages')
@@ -296,74 +374,55 @@ export default {
             }
         },
 
-        spawnChildren({ state, getters }, parent, customConfig = null) {
-            const children = []
-            const parentSize = parent.size
-            const parentColor = parent.color
-            const parentX = parent.x
-            const parentY = parent.y
-            let childSize, childRadius, count
-            if (customConfig) {
-                childSize = customConfig.size
-                childRadius = customConfig.radius
-                count = customConfig.count
-            } else {
-                if (parentSize === 'large') { childSize = 'medium'; childRadius = RADIUS.medium; count = 3 }
-                else if (parentSize === 'medium') { childSize = 'small'; childRadius = RADIUS.small; count = 5 }
-                else return []
+        tryPopBubbles({ commit, state, getters, dispatch }, { clickX, clickY }) {
+            if (state.sessionEnded) return
+            const hit = state.items.filter(item => Math.hypot(clickX - (item.x + item.radius), clickY - (item.y + item.radius)) <= item.radius)
+            if (hit.length === 0) return
+            let totalPoints = 0
+            let newChildren = []
+            for (const item of hit) {
+                const isCorrect = item.color === state.targetColor
+                if (isCorrect) {
+                    totalPoints += state.pointsForCorrect * state.combo
+                    commit('SET_COMBO', Math.min(5, state.combo * 1.2))
+                    commit('SET_PENALTY_COMBO', 1.0)
+                    if ((state.successCount + 1) % 10 === 0) commit('ADD_BOMB')
+                    commit('INCREMENT_SUCCESS_COUNT')
+                } else {
+                    totalPoints += (WRONG_PENALTIES[item.size] || state.pointsForWrong) * state.penaltyCombo
+                    commit('SET_PENALTY_COMBO', Math.min(7, state.penaltyCombo * 1.3))
+                    commit('SET_COMBO', 1.0)
+                }
+                dispatch('applyPush', { centerX: item.x + item.radius, centerY: item.y + item.radius, sourceSize: item.size })
+                const children = spawnChildrenSync(state, getters, item)
+                if (children && children.length) newChildren.push(...children)
+                commit('REMOVE_ITEM_BY_INDEX', state.items.indexOf(item))
             }
-            const orbitRadius = parent.radius + childRadius + 5
-            const angleStep = (Math.PI * 2) / count
-            for (let i = 0; i < count; i++) {
-                const angle = i * angleStep
-                const x = parentX + Math.cos(angle) * orbitRadius
-                const y = parentY + Math.sin(angle) * orbitRadius
-                let randomColor
-                do { randomColor = getters.activeColors[Math.floor(Math.random() * getters.activeColors.length)] }
-                while (randomColor === parentColor && getters.activeColors.length > 1)
-                children.push({
-                    id: Date.now() + Math.random() + i,
-                    color: i === 0 ? parentColor : randomColor,
-                    x: x,
-                    y: y,
-                    radius: childRadius,
-                    size: childSize,
-                    speedX: (Math.random() - 0.5) * 1.5,
-                    speedY: 1 + Math.random() * 2.5,
-                    wobble: Math.random() * Math.PI * 2,
-                    wobbleSpeed: 0.02 + Math.random() * 0.03,
-                    active: true
-                })
-            }
-            return children
+            if (newChildren.length) commit('ADD_ITEMS', newChildren)
+            commit('ADD_POINTS', totalPoints)
+            if (state.onScore) state.onScore({ points: totalPoints, count: hit.length })
         },
 
-        spawnBombSmalls({ state, getters }, parent) {
-            const children = []
-            const childRadius = RADIUS.small
-            const count = 7
-            const orbitRadius = parent.radius + childRadius + 5
-            const angleStep = (Math.PI * 2) / count
-            for (let i = 0; i < count; i++) {
-                const angle = i * angleStep
-                const x = parent.x + Math.cos(angle) * orbitRadius
-                const y = parent.y + Math.sin(angle) * orbitRadius
-                const randomColor = getters.activeColors[Math.floor(Math.random() * getters.activeColors.length)]
-                children.push({
-                    id: Date.now() + Math.random() + i,
-                    color: i === 0 ? parent.color : randomColor,
-                    x: x,
-                    y: y,
-                    radius: childRadius,
-                    size: 'small',
-                    speedX: (Math.random() - 0.5) * 3,
-                    speedY: 1 + Math.random() * 3,
-                    wobble: Math.random() * Math.PI * 2,
-                    wobbleSpeed: 0.02 + Math.random() * 0.03,
-                    active: true
-                })
+        toggleBomb({ commit, state }) {
+            if (state.bombs > 0) commit('SET_BOMB_ACTIVE', !state.bombActive)
+        },
+
+        explodeBomb({ commit, state, getters }, { x, y }) {
+            commit('SET_BOMB_ACTIVE', false)
+            commit('SET_BOMBS', state.bombs - 1)
+            const BOMB_RADIUS = 150
+            let newChildren = []
+            for (let i = state.items.length - 1; i >= 0; i--) {
+                const item = state.items[i]
+                if (Math.hypot(x - (item.x + item.radius), y - (item.y + item.radius)) <= BOMB_RADIUS) {
+                    if (item.size === 'large') {
+                        const children = spawnBombSmallsSync(state, getters, item)
+                        if (children && children.length) newChildren.push(...children)
+                    }
+                    commit('REMOVE_ITEM_BY_INDEX', i)
+                }
             }
-            return children
+            if (newChildren.length) commit('ADD_ITEMS', newChildren)
         },
 
         handleMouseDown({ dispatch, state, commit }, { event, stageRef }) {
@@ -406,55 +465,8 @@ export default {
             commit('SET_AUTO_TIMER', timer)
         },
 
-        async tryPopBubbles({ commit, state, dispatch }, { clickX, clickY }) {
-            if (state.sessionEnded) return
-            const hit = state.items.filter(item => Math.hypot(clickX - (item.x + item.radius), clickY - (item.y + item.radius)) <= item.radius)
-            if (hit.length === 0) return
-            let totalPoints = 0
-            let newChildren = []
-            for (const item of hit) {
-                const isCorrect = item.color === state.targetColor
-                if (isCorrect) {
-                    totalPoints += state.pointsForCorrect * state.combo
-                    commit('SET_COMBO', Math.min(5, state.combo * 1.2))
-                    commit('SET_PENALTY_COMBO', 1.0)
-                    if ((state.successCount + 1) % 10 === 0) commit('ADD_BOMB')
-                    commit('INCREMENT_SUCCESS_COUNT')
-                } else {
-                    totalPoints += (WRONG_PENALTIES[item.size] || state.pointsForWrong) * state.penaltyCombo
-                    commit('SET_PENALTY_COMBO', Math.min(7, state.penaltyCombo * 1.3))
-                    commit('SET_COMBO', 1.0)
-                }
-                dispatch('applyPush', { centerX: item.x + item.radius, centerY: item.y + item.radius, sourceSize: item.size })
-                const children = await dispatch('spawnChildren', item)
-                if (children && children.length) newChildren.push(...children)
-                commit('REMOVE_ITEM_BY_INDEX', state.items.indexOf(item))
-            }
-            if (newChildren.length) commit('ADD_ITEMS', newChildren)
-            commit('ADD_POINTS', totalPoints)
-            if (state.onScore) state.onScore({ points: totalPoints, count: hit.length })
-        },
-
-        toggleBomb({ commit, state }) { if (state.bombs > 0) commit('SET_BOMB_ACTIVE', !state.bombActive) },
-        async explodeBomb({ commit, state, dispatch }, { x, y }) {
-            commit('SET_BOMB_ACTIVE', false)
-            commit('SET_BOMBS', state.bombs - 1)
-            const BOMB_RADIUS = 150
-            let newChildren = []
-            for (let i = state.items.length - 1; i >= 0; i--) {
-                const item = state.items[i]
-                if (Math.hypot(x - (item.x + item.radius), y - (item.y + item.radius)) <= BOMB_RADIUS) {
-                    if (item.size === 'large') {
-                        const children = await dispatch('spawnBombSmalls', item)
-                        if (children && children.length) newChildren.push(...children)
-                    }
-                    commit('REMOVE_ITEM_BY_INDEX', i)
-                }
-            }
-            if (newChildren.length) commit('ADD_ITEMS', newChildren)
-        },
-
         resetGame({ commit, dispatch }) { commit('RESET_STATE'); dispatch('beginSession') },
+
         finishSession({ commit, state }) {
             commit('SET_SESSION_ENDED', true)
             if (state.countdownId) clearInterval(state.countdownId)
