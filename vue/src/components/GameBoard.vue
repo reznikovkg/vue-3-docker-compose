@@ -1,5 +1,8 @@
 <template>
-  <div class="board-wrapper">
+  <div
+    v-if="!gameFinished"
+    class="board-wrapper"
+  >
     <div class="board-wrapper__layer">
       Текущий слой: {{ currentLayer }}
     </div>
@@ -8,12 +11,13 @@
       v-for="layer in layers"
       :key="layer"
       :class="[
-        'board',
-        'board-' + layer,
-        {
-          'board--active': layer === currentLayer
-        }
-      ]"
+  'board',
+  'board-' + layer,
+  {
+    'board--active': layer === currentLayer,
+    'board--hidden': layer < currentLayer
+  }
+]"
     >
       <GameCard
         v-for="card in getCards(layer)"
@@ -37,20 +41,18 @@ export default {
 
   computed: {
     ...mapGetters([
-      'cards',
-      'layers',
-      'currentLayer'
-    ])
+  'cards',
+  'layers',
+  'currentLayer',
+  'gameFinished'
+]) 
   },
 
   methods: {
     getCards(layer) {
-      return this.cards.filter(card => {
-        return (
-          card.layer === layer &&
-          !card.removed
-        )
-      })
+  return this.cards.filter(card => {
+    return card.layer === layer
+  })
     }
   }
 }
@@ -74,10 +76,13 @@ export default {
     font-size: 28px;
     font-weight: bold;
   }
+  overflow: visible;
 }
 
 .board {
   position: absolute;
+
+  width: max-content;
 
   display: grid;
 
@@ -128,5 +133,8 @@ export default {
   top: 80px;
   left: 80px;
   z-index: 1;
+}
+.board--hidden {
+  display: none;
 }
 </style>

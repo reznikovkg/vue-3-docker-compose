@@ -73,8 +73,8 @@ export default {
   }
 
   &.removed {
-    opacity: 0;
-    pointer-events: none;
+  visibility: hidden;
+  pointer-events: none;
   }
 
   &__image {
