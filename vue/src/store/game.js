@@ -2,7 +2,9 @@ const MUTATIONS = {
   SET_GRID: 'SET_GRID',
   SET_SCORE: 'SET_SCORE',
   LOAD_GAME: 'LOAD_GAME',
+  SET_GRID_SIZE: 'SET_GRID_SIZE'
 }
+const START_GRID_SIZE = 3;
 const MAX_LEVEL = 4;
 const MAX_BRANCH = 3;
 const START_SCORE = 100
@@ -12,7 +14,7 @@ export default {
   state(){
     return {
       grid: [],
-      gridSize: 8,
+      gridSize: START_GRID_SIZE,
       score: START_SCORE
       }
   },
@@ -20,7 +22,18 @@ export default {
   getters: {
     getGrid: (state) => state.grid,
     getScore: (state) => state.score,
-    getSize: (state) => state.gridSize
+    getSize: (state) => state.gridSize,
+    getExpandInfo: (state) => {
+      const expansions = state.gridSize - START_GRID_SIZE;
+
+      const condition = 200 * (10 ** expansions);
+      const cost = START_SCORE * (10 ** expansions);
+      return {
+        condition,
+        cost,
+        canExpand: state.score >= condition
+      }
+    }
   },
 
   mutations: {
@@ -30,10 +43,14 @@ export default {
     [MUTATIONS.SET_SCORE]: (state, score) => {
       state.score = score;
     },
+    [MUTATIONS.SET_GRID_SIZE]: (state, size) => {
+      state.gridSize = size;
+    },
 
     [MUTATIONS.LOAD_GAME]: (state, data) => {
       state.grid = data.grid;
       state.score = data.score ?? 100;
+      state.gridSize = data.size ?? START_GRID_SIZE;
     }
   },
   actions: {
@@ -116,9 +133,10 @@ export default {
       commit(MUTATIONS.SET_GRID, grid);
     },
     restart: ({state, commit, dispatch}) => {
-      const grid = Array.from({length: state.gridSize}, () =>
-          Array.from({length: state.gridSize}, () => null)
+      const grid = Array.from({length: START_GRID_SIZE}, () =>
+          Array.from({length: START_GRID_SIZE}, () => null)
       );
+      commit(MUTATIONS.SET_GRID_SIZE, START_GRID_SIZE);
       commit(MUTATIONS.SET_GRID, grid);
       commit(MUTATIONS.SET_SCORE, 100);
       dispatch("spawnStart");
@@ -164,10 +182,31 @@ export default {
 
       return moved;
     },
+    expandGrid: ({state, commit, getters, dispatch}) => {
+      const info = getters.getExpandInfo;
+
+      if(!info.canExpand) return;
+      const newSize = state.gridSize + 1;
+
+      const newGrid = Array.from({length: newSize}, () =>
+        Array.from({length: newSize}, () => null)
+      );
+
+      state.grid.forEach((row, y) => {
+        row.forEach((col, x) => {
+          newGrid[y][x] = col;
+        });
+      });
+      commit(MUTATIONS.SET_GRID, newGrid);
+      commit(MUTATIONS.SET_SCORE, state.score - info.cost);
+      commit(MUTATIONS.SET_GRID_SIZE, newSize);
+      dispatch("saveGame");
+    },
     saveGame: ({state}) => {
       localStorage.setItem('game', JSON.stringify({
         grid: state.grid,
-        score: state.score
+        score: state.score,
+        gridSize: state.gridSize
       }));
     }
   }

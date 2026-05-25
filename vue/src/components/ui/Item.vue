@@ -2,9 +2,9 @@
   <div
     class="item"
     draggable="true"
-    @dragstart="onDragStart"
-    @click="onClick"
-    @contextmenu.prevent="onRightClick"
+    @dragstart="(e) => onDragStart(e)"
+    @click="(e) => onClick(e)"
+    @contextmenu.prevent="(e) =>onRightClick(e)"
   >
     <img :src="image"/>
     <div v-if="item.level === 4" class="item--max">MAX</div>
