@@ -2,12 +2,31 @@ const DEFAULT_FIELD_SIZE = 11
 const DEFAULT_TIME = 60
 const NORMAL_DELAY = 400
 const BOOST_DELAY = 120
+const MIN_FIGURE_DELAY = 100
+const SPEED_STEP = 20
 const BEST_SCORE_KEY = 'prom-best-score'
+
+const MISS_PENALTY = 2
+const BLACK_BOMB_PENALTY = 1
+const RED_BOMB_TIME_LOSS = 30
+const GREEN_BOMB_TIME_GAIN = 10
+
+const BOMB_TICK_DELAY = 260
+const BOMB_SPAWN_INTERVAL = 1400
+const MAX_BOMBS = 3
+const GREEN_BOMB_CHANCE = 0.1
+const RED_BOMB_CHANCE = 0.25
 
 const STATUS = {
   IDLE: 'idle',
   RUNNING: 'running',
   GAME_OVER: 'game-over'
+}
+
+const BOMB_KIND = {
+  BLACK: 'black',
+  RED: 'red',
+  GREEN: 'green'
 }
 
 const MUTATIONS = {
@@ -22,8 +41,14 @@ const MUTATIONS = {
   SET_STATUS: 'SET_STATUS',
   SET_FIGURE_DELAY: 'SET_FIGURE_DELAY',
   SET_BOOST_DELAY: 'SET_BOOST_DELAY',
+  SET_BASE_DELAY: 'SET_BASE_DELAY',
   SET_FIGURE_TIMEOUT_ID: 'SET_FIGURE_TIMEOUT_ID',
-  SET_TIMER_INTERVAL_ID: 'SET_TIMER_INTERVAL_ID'
+  SET_TIMER_INTERVAL_ID: 'SET_TIMER_INTERVAL_ID',
+  SET_BOMBS: 'SET_BOMBS',
+  SET_BOMB_TICK_ID: 'SET_BOMB_TICK_ID',
+  SET_BOMB_SPAWN_ID: 'SET_BOMB_SPAWN_ID',
+  SET_SPEED_MODE: 'SET_SPEED_MODE',
+  SET_BOMBS_MODE: 'SET_BOMBS_MODE'
 }
 
 const MOVES = {
@@ -103,9 +128,15 @@ const createDefaultState = () => ({
   timeLeft: DEFAULT_TIME,
   status: STATUS.IDLE,
   figureDelay: NORMAL_DELAY,
+  baseDelay: NORMAL_DELAY,
   boostDelay: BOOST_DELAY,
   figureTimeoutId: null,
-  timerIntervalId: null
+  timerIntervalId: null,
+  bombs: [],
+  bombTickId: null,
+  bombSpawnId: null,
+  speedMode: false,
+  bombsMode: false
 })
 
 const cellKey = (cell) => `${cell.x}:${cell.y}`
@@ -190,6 +221,58 @@ const pickSpawnSide = (lastSpawnSide) => {
   const index = getRandomInt(0, availableSides.length - 1)
 
   return availableSides[index]
+}
+
+const pickBombSide = () => SIDES[getRandomInt(0, SIDES.length - 1)]
+
+const pickBombKind = () => {
+  const roll = Math.random()
+
+  if (roll < GREEN_BOMB_CHANCE) {
+    return BOMB_KIND.GREEN
+  }
+
+  if (roll < GREEN_BOMB_CHANCE + RED_BOMB_CHANCE) {
+    return BOMB_KIND.RED
+  }
+
+  return BOMB_KIND.BLACK
+}
+
+const getBombSpawnCell = (side, fieldSize) => {
+  if (side === 'top') {
+    return {
+      x: getRandomInt(0, fieldSize - 1),
+      y: -1
+    }
+  }
+
+  if (side === 'bottom') {
+    return {
+      x: getRandomInt(0, fieldSize - 1),
+      y: fieldSize
+    }
+  }
+
+  if (side === 'left') {
+    return {
+      x: -1,
+      y: getRandomInt(0, fieldSize - 1)
+    }
+  }
+
+  return {
+    x: fieldSize,
+    y: getRandomInt(0, fieldSize - 1)
+  }
+}
+
+let bombIdSeq = 0
+
+const nextBombId = () => {
+  bombIdSeq += 1
+
+  return bombIdSeq
 }
 
 const getSpawnAnchor = (cells, side, fieldSize) => {
@@ -394,6 +477,24 @@ const clearTimerInterval = (state, commit) => {
   commit(MUTATIONS.SET_TIMER_INTERVAL_ID, null)
 }
 
+const clearBombTick = (state, commit) => {
+  if (state.bombTickId === null) {
+    return
+  }
+
+  globalThis.clearTimeout(state.bombTickId)
+  commit(MUTATIONS.SET_BOMB_TICK_ID, null)
+}
+
+const clearBombSpawn = (state, commit) => {
+  if (state.bombSpawnId === null) {
+    return
+  }
+
+  globalThis.clearTimeout(state.bombSpawnId)
+  commit(MUTATIONS.SET_BOMB_SPAWN_ID, null)
+}
+
 const maybeUpdateBestScore = (state, commit) => {
   if (state.score <= state.bestScore) {
     return
@@ -416,7 +517,11 @@ export default {
     getBestScore: (state) => state.bestScore,
     getTimeLeft: (state) => state.timeLeft,
     getStatus: (state) => state.status,
-    getFigureDelay: (state) => state.figureDelay
+    getFigureDelay: (state) => state.figureDelay,
+    getBaseDelay: (state) => state.baseDelay,
+    getBombs: (state) => state.bombs,
+    getSpeedMode: (state) => state.speedMode,
+    getBombsMode: (state) => state.bombsMode
   },
   mutations: {
     [MUTATIONS.SET_FIELD_SIZE]: (state, payload) => {
@@ -452,11 +557,29 @@ export default {
     [MUTATIONS.SET_BOOST_DELAY]: (state, payload) => {
       state.boostDelay = payload
     },
+    [MUTATIONS.SET_BASE_DELAY]: (state, payload) => {
+      state.baseDelay = payload
+    },
     [MUTATIONS.SET_FIGURE_TIMEOUT_ID]: (state, payload) => {
       state.figureTimeoutId = payload
     },
     [MUTATIONS.SET_TIMER_INTERVAL_ID]: (state, payload) => {
       state.timerIntervalId = payload
+    },
+    [MUTATIONS.SET_BOMBS]: (state, payload) => {
+      state.bombs = payload
+    },
+    [MUTATIONS.SET_BOMB_TICK_ID]: (state, payload) => {
+      state.bombTickId = payload
+    },
+    [MUTATIONS.SET_BOMB_SPAWN_ID]: (state, payload) => {
+      state.bombSpawnId = payload
+    },
+    [MUTATIONS.SET_SPEED_MODE]: (state, payload) => {
+      state.speedMode = payload
+    },
+    [MUTATIONS.SET_BOMBS_MODE]: (state, payload) => {
+      state.bombsMode = payload
     }
   },
   actions: {
@@ -512,6 +635,35 @@ export default {
       commit(MUTATIONS.SET_FIGURE_TIMEOUT_ID, figureTimeoutId)
     },
 
+    scheduleBombTick: ({ state, commit, dispatch }) => {
+      if (state.status !== STATUS.RUNNING || !state.bombsMode) {
+        return
+      }
+
+      clearBombTick(state, commit)
+
+      const bombTickId = globalThis.setTimeout(() => {
+        dispatch('tickBombs')
+      }, BOMB_TICK_DELAY)
+
+      commit(MUTATIONS.SET_BOMB_TICK_ID, bombTickId)
+    },
+
+    scheduleBombSpawn: ({ state, commit, dispatch }) => {
+      if (state.status !== STATUS.RUNNING || !state.bombsMode) {
+        return
+      }
+
+      clearBombSpawn(state, commit)
+
+      const bombSpawnId = globalThis.setTimeout(() => {
+        dispatch('spawnBomb')
+        dispatch('scheduleBombSpawn')
+      }, BOMB_SPAWN_INTERVAL)
+
+      commit(MUTATIONS.SET_BOMB_SPAWN_ID, bombSpawnId)
+    },
+
     startGame: ({ state, commit, dispatch }, fieldSize) => {
       const nextFieldSize = normalizeFieldSize(fieldSize ?? state.fieldSize)
       const center = Math.floor(nextFieldSize / 2)
@@ -522,6 +674,8 @@ export default {
 
       clearFigureTimeout(state, commit)
       clearTimerInterval(state, commit)
+      clearBombTick(state, commit)
+      clearBombSpawn(state, commit)
 
       commit(MUTATIONS.SET_FIELD_SIZE, nextFieldSize)
       commit(MUTATIONS.SET_BASE_CELL, baseCell)
@@ -532,11 +686,18 @@ export default {
       commit(MUTATIONS.SET_TIME_LEFT, DEFAULT_TIME)
       commit(MUTATIONS.SET_STATUS, STATUS.RUNNING)
       commit(MUTATIONS.SET_FIGURE_DELAY, NORMAL_DELAY)
+      commit(MUTATIONS.SET_BASE_DELAY, NORMAL_DELAY)
       commit(MUTATIONS.SET_BOOST_DELAY, BOOST_DELAY)
+      commit(MUTATIONS.SET_BOMBS, [])
 
       dispatch('loadBestScore')
       dispatch('startTimer')
       dispatch('spawnFigure')
+
+      if (state.bombsMode) {
+        dispatch('scheduleBombTick')
+        dispatch('scheduleBombSpawn')
+      }
     },
 
     restartGame: ({ dispatch }, fieldSize) => {
@@ -546,6 +707,8 @@ export default {
     stopGame: ({ state, commit }) => {
       clearFigureTimeout(state, commit)
       clearTimerInterval(state, commit)
+      clearBombTick(state, commit)
+      clearBombSpawn(state, commit)
     },
 
     spawnFigure: ({ state, commit, dispatch }) => {
@@ -559,9 +722,16 @@ export default {
       const side = pickSpawnSide(state.lastSpawnSide)
       const figure = buildFigure(type, rotationIndex, side, state.fieldSize)
 
+      let nextBaseDelay = state.baseDelay
+
+      if (state.speedMode) {
+        nextBaseDelay = Math.max(MIN_FIGURE_DELAY, state.baseDelay - SPEED_STEP)
+      }
+
       commit(MUTATIONS.SET_ACTIVE_FIGURE, figure)
       commit(MUTATIONS.SET_LAST_SPAWN_SIDE, side)
-      commit(MUTATIONS.SET_FIGURE_DELAY, NORMAL_DELAY)
+      commit(MUTATIONS.SET_BASE_DELAY, nextBaseDelay)
+      commit(MUTATIONS.SET_FIGURE_DELAY, nextBaseDelay)
 
       dispatch('scheduleFigureTick')
     },
@@ -583,6 +753,7 @@ export default {
 
       if (isFigureOutsideBoard(nextCells, state.fieldSize, state.activeFigure.side)) {
         commit(MUTATIONS.SET_ACTIVE_FIGURE, null)
+        commit(MUTATIONS.SET_SCORE, Math.max(0, state.score - MISS_PENALTY))
         dispatch('spawnFigure')
         return
       }
@@ -651,9 +822,12 @@ export default {
 
       clearFigureTimeout(state, commit)
       clearTimerInterval(state, commit)
+      clearBombTick(state, commit)
+      clearBombSpawn(state, commit)
       maybeUpdateBestScore(state, commit)
 
       commit(MUTATIONS.SET_ACTIVE_FIGURE, null)
+      commit(MUTATIONS.SET_BOMBS, [])
       commit(MUTATIONS.SET_STATUS, STATUS.GAME_OVER)
 
       dispatch('saveBestScore')
@@ -726,6 +900,124 @@ export default {
 
       commit(MUTATIONS.SET_FIGURE_DELAY, state.boostDelay)
       dispatch('scheduleFigureTick', state.boostDelay)
+    },
+
+    spawnBomb: ({ state, commit }) => {
+      if (state.status !== STATUS.RUNNING || !state.bombsMode) {
+        return
+      }
+
+      if (state.bombs.length >= MAX_BOMBS) {
+        return
+      }
+
+      const side = pickBombSide()
+      const kind = pickBombKind()
+      const cell = getBombSpawnCell(side, state.fieldSize)
+      const bomb = {
+        id: nextBombId(),
+        kind,
+        side,
+        vector: { ...SIDE_VECTORS[side] },
+        cell
+      }
+
+      commit(MUTATIONS.SET_BOMBS, [...state.bombs, bomb])
+    },
+
+    tickBombs: ({ state, commit, dispatch }) => {
+      if (state.status !== STATUS.RUNNING) {
+        return
+      }
+
+      commit(MUTATIONS.SET_BOMB_TICK_ID, null)
+
+      let currentIsland = state.islandCells
+      let islandKeySet = createCellKeySet(currentIsland)
+      let scoreDelta = 0
+      let timeDelta = 0
+      let islandChanged = false
+
+      const nextBombs = []
+
+      for (const bomb of state.bombs) {
+        const nextCell = {
+          x: bomb.cell.x + bomb.vector.x,
+          y: bomb.cell.y + bomb.vector.y
+        }
+
+        if (islandKeySet.has(cellKey(nextCell))) {
+          if (bomb.kind === BOMB_KIND.BLACK) {
+            const droppedCount = Math.max(0, currentIsland.length - 1)
+
+            scoreDelta -= droppedCount * BLACK_BOMB_PENALTY
+            currentIsland = state.baseCell ? [{ ...state.baseCell }] : []
+            islandKeySet = createCellKeySet(currentIsland)
+            islandChanged = true
+          } else if (bomb.kind === BOMB_KIND.RED) {
+            timeDelta -= RED_BOMB_TIME_LOSS
+          } else {
+            timeDelta += GREEN_BOMB_TIME_GAIN
+          }
+
+          continue
+        }
+
+        if (!isInsideBoard(nextCell, state.fieldSize)) {
+          continue
+        }
+
+        nextBombs.push({
+          ...bomb,
+          cell: nextCell
+        })
+      }
+
+      commit(MUTATIONS.SET_BOMBS, nextBombs)
+
+      if (islandChanged) {
+        commit(MUTATIONS.SET_ISLAND_CELLS, currentIsland)
+      }
+
+      if (scoreDelta !== 0) {
+        commit(MUTATIONS.SET_SCORE, Math.max(0, state.score + scoreDelta))
+      }
+
+      if (timeDelta !== 0) {
+        const nextTime = state.timeLeft + timeDelta
+
+        if (nextTime <= 0) {
+          commit(MUTATIONS.SET_TIME_LEFT, 0)
+          dispatch('finishGame')
+          return
+        }
+
+        commit(MUTATIONS.SET_TIME_LEFT, nextTime)
+      }
+
+      dispatch('scheduleBombTick')
+    },
+
+    setSpeedMode: ({ commit }, value) => {
+      commit(MUTATIONS.SET_SPEED_MODE, Boolean(value))
+    },
+
+    setBombsMode: ({ state, commit, dispatch }, value) => {
+      const nextValue = Boolean(value)
+
+      commit(MUTATIONS.SET_BOMBS_MODE, nextValue)
+
+      if (!nextValue) {
+        clearBombTick(state, commit)
+        clearBombSpawn(state, commit)
+        commit(MUTATIONS.SET_BOMBS, [])
+        return
+      }
+
+      if (state.status === STATUS.RUNNING) {
+        dispatch('scheduleBombTick')
+        dispatch('scheduleBombSpawn')
+      }
     }
   }
 }

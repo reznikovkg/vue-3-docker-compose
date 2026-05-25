@@ -56,6 +56,26 @@
             Ускорить фигуру
           </button>
         </div>
+
+        <div class="prom__modes">
+          <label class="prom__mode">
+            <input
+              type="checkbox"
+              :checked="getSpeedMode"
+              @change="(event) => onSpeedModeChange(event)"
+            >
+            <span>Растущая скорость</span>
+          </label>
+
+          <label class="prom__mode">
+            <input
+              type="checkbox"
+              :checked="getBombsMode"
+              @change="(event) => onBombsModeChange(event)"
+            >
+            <span>Бомбы и бонусы</span>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -89,6 +109,15 @@ type Cell = {
 
 type Direction = 'up' | 'right' | 'down' | 'left'
 type RotationDirection = 'cw' | 'ccw'
+type BombKind = 'black' | 'red' | 'green'
+
+type Bomb = {
+  id: number
+  kind: BombKind
+  side: string
+  vector: Cell
+  cell: Cell
+}
 
 const KEY_DIRECTIONS: Record<string, Direction> = {
   ArrowUp: 'up',
@@ -121,7 +150,10 @@ export default {
       'getScore',
       'getBestScore',
       'getTimeLeft',
-      'getStatus'
+      'getStatus',
+      'getBombs',
+      'getSpeedMode',
+      'getBombsMode'
     ]),
 
     statusLabel (): string {
@@ -163,6 +195,16 @@ export default {
       )
     },
 
+    bombsByKey (): Record<string, BombKind> {
+      const map: Record<string, BombKind> = {}
+
+      for (const bomb of this.getBombs as Bomb[]) {
+        map[`${bomb.cell.x}:${bomb.cell.y}`] = bomb.kind
+      }
+
+      return map
+    },
+
     canBoost (): boolean {
       return this.getStatus === 'running' && Boolean(this.getActiveFigure)
     }
@@ -185,7 +227,9 @@ export default {
       'stopGame',
       'moveIsland',
       'rotateIsland',
-      'boostFigure'
+      'boostFigure',
+      'setSpeedMode',
+      'setBombsMode'
     ]),
 
     startPromGame () {
@@ -243,12 +287,29 @@ export default {
       return this.getBaseCell.x === x && this.getBaseCell.y === y
     },
 
+    getBombKind (x: number, y: number): BombKind | null {
+      return this.bombsByKey[`${x}:${y}`] ?? null
+    },
+
     getCellClasses (x: number, y: number) {
+      const bombKind = this.getBombKind(x, y)
+
       return {
         'prom__cell--figure': this.isFigureCell(x, y),
         'prom__cell--island': this.isIslandCell(x, y),
-        'prom__cell--base': this.isBaseCell(x, y)
+        'prom__cell--base': this.isBaseCell(x, y),
+        'prom__cell--bomb-black': bombKind === 'black',
+        'prom__cell--bomb-red': bombKind === 'red',
+        'prom__cell--bomb-green': bombKind === 'green'
       }
+    },
+
+    onSpeedModeChange (event: Event) {
+      this.setSpeedMode((event.target as HTMLInputElement).checked)
+    },
+
+    onBombsModeChange (event: Event) {
+      this.setBombsMode((event.target as HTMLInputElement).checked)
     }
   }
 }
@@ -411,6 +472,37 @@ export default {
       background: #009dff;
       border-color: #007ed0;
     }
+
+    &--bomb-black {
+      background: #1a1a1a;
+      border-color: #000;
+    }
+
+    &--bomb-red {
+      background: #ff3030;
+      border-color: #c20000;
+    }
+
+    &--bomb-green {
+      background: #5be05b;
+      border-color: #2a8a2a;
+    }
+  }
+
+  &__modes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  &__mode {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
   }
 
   &__overlay {
