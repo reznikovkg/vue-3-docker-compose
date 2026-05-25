@@ -1,12 +1,17 @@
 const STORAGE_KEY = 'compose-pair-game'
 const GRID_SIZE = 8
 const START_ITEMS_COUNT = 6
+const START_SCORE = 100
+const ADD_ITEM_COST = 10
+const FINAL_ITEM_COST = 5
 export const ACTIONS = {
   INIT_GAME: 'INIT_GAME',
   ADD_RANDOM_ITEM: 'ADD_RANDOM_ITEM',
   MERGE_ITEMS: 'MERGE_ITEMS',
   RESET_GAME: 'RESET_GAME',
   SET_SELECTED_CELL: 'SET_SELECTED_CELL',
+  SELL_ITEM: 'SELL_ITEM',
+  USE_FINAL_ITEM: 'USE_FINAL_ITEM',
 }
 export const MUTATIONS = {
   SET_GRID: 'SET_GRID',
@@ -15,28 +20,58 @@ export const MUTATIONS = {
 }
 const ITEM_TYPES = [
   {
+    branch: 'water',
     level: 1,
     name: 'Капля',
     emoji: '💧',
-    score: 10,
   },
   {
+    branch: 'water',
     level: 2,
     name: 'Лёд',
     emoji: '🧊',
-    score: 25,
   },
   {
+    branch: 'water',
     level: 3,
     name: 'Росток',
     emoji: '🌱',
-    score: 40,
   },
   {
+    branch: 'water',
     level: 4,
     name: 'Дерево',
     emoji: '🌳',
-    score: 60,
+    final: true,
+    usesLeft: 6,
+    used: false,
+  },
+  {
+    branch: 'magic',
+    level: 1,
+    name: 'Искра',
+    emoji: '✨',
+  },
+  {
+    branch: 'magic',
+    level: 2,
+    name: 'Шар',
+    emoji: '🔮',
+  },
+  {
+    branch: 'magic',
+    level: 3,
+    name: 'Корона',
+    emoji: '👑',
+  },
+  {
+    branch: 'magic',
+    level: 4,
+    name: 'Планета',
+    emoji: '🪐',
+    final: true,
+    usesLeft: 6,
+    used: false,
   }
 ]
 const createEmptyGrid = () => {
@@ -72,18 +107,20 @@ const loadFromStorage = () => {
   return JSON.parse(data)
 }
 const generateRandomItem = () => {
+  const levelOneItems = ITEM_TYPES.filter((item) => {
+    return item.level === 1
+  })
   return {
-    level: 1,
-    ...ITEM_TYPES[0],
+    ...levelOneItems[getRandomNumber(levelOneItems.length)],
   }
 }
-const addRandomItemToGrid = (grid) => {
+const addRandomItemToGrid = (grid,item = null) => {
   const emptyCells = getEmptyCells(grid)
   if (!emptyCells.length) {
     return grid
   }
   const randomCell = emptyCells[getRandomNumber(emptyCells.length)]
-  grid[randomCell.row][randomCell.column] = generateRandomItem()
+  grid[randomCell.row][randomCell.column] = item || generateRandomItem()
   return grid
 }
 export default {
@@ -91,7 +128,7 @@ export default {
   state () {
     return {
       grid: createEmptyGrid(),
-      score: 0,
+      score: START_SCORE,
       selectedCell: null,
       gridSize: GRID_SIZE,
     }
@@ -106,11 +143,9 @@ export default {
     [MUTATIONS.SET_GRID]: (state, value) => {
       state.grid = value
     },
-
     [MUTATIONS.SET_SCORE]: (state, value) => {
       state.score = value
     },
-
     [MUTATIONS.SET_SELECTED_CELL]: (state, value) => {
       state.selectedCell = value
     },
@@ -137,9 +172,13 @@ export default {
       })
     },
     [ACTIONS.ADD_RANDOM_ITEM]: ({ state, commit, dispatch }) => {
+      if (state.score < ADD_ITEM_COST) {
+        return
+      }
       const grid = JSON.parse(JSON.stringify(state.grid))
       addRandomItemToGrid(grid)
       commit(MUTATIONS.SET_GRID, grid)
+      commit(MUTATIONS.SET_SCORE, state.score - ADD_ITEM_COST)
       dispatch('saveGame')
     },
     [ACTIONS.MERGE_ITEMS]: ({ state, commit, dispatch }, payload) => {
@@ -155,12 +194,16 @@ export default {
       if (!sourceItem || !targetItem) {
         return
       }
-      if (sourceItem.level !== targetItem.level) {
+      if (
+        sourceItem.level !== targetItem.level
+        || sourceItem.branch !== targetItem.branch
+      ) {
         return
       }
       const nextLevel = sourceItem.level + 1
       const nextItem = ITEM_TYPES.find((item) => {
         return item.level === nextLevel
+        && item.branch === sourceItem.branch
       })
       if (!nextItem) {
         return
@@ -170,7 +213,53 @@ export default {
         ...nextItem,
       }
       commit(MUTATIONS.SET_GRID, grid)
-      commit(MUTATIONS.SET_SCORE, state.score + nextItem.score)
+      commit(MUTATIONS.SET_SCORE, state.score + sourceItem.level)
+      dispatch('saveGame')
+    },
+    [ACTIONS.SELL_ITEM]: ({ state, commit, dispatch }, payload) => {
+      const grid = JSON.parse(JSON.stringify(state.grid))
+      const item = grid[payload.row][payload.column]
+      if (!item) {
+        return
+      }
+      if (!item.final) {
+        return
+      }
+      if (item.used) {
+        return
+      }
+      grid[payload.row][payload.column] = null
+      commit(MUTATIONS.SET_GRID, grid)
+      commit(MUTATIONS.SET_SCORE, state.score + ((item.level - 1) * 10))
+      dispatch('saveGame')
+    },
+    [ACTIONS.USE_FINAL_ITEM]: ({ state, commit, dispatch }, payload) => {
+      if (state.score < FINAL_ITEM_COST) {
+        return
+      }
+      const grid = JSON.parse(JSON.stringify(state.grid))
+      const item = grid[payload.row][payload.column]
+      if (!item?.final) {
+        return
+      }
+      if (item.usesLeft <= 0) {
+        grid[payload.row][payload.column] = null
+        commit(MUTATIONS.SET_GRID, grid)
+        dispatch('saveGame')
+        return
+      }
+      const startItem = ITEM_TYPES.find((gridItem) => {
+        return gridItem.branch === item.branch
+        && gridItem.level === 1
+      })
+      addRandomItemToGrid(grid,startItem)
+      grid[payload.row][payload.column].usesLeft -= 1
+      grid[payload.row][payload.column].used = true
+      if (grid[payload.row][payload.column].usesLeft <= 0) {
+        grid[payload.row][payload.column] = null
+      }
+      commit(MUTATIONS.SET_GRID, grid)
+      commit(MUTATIONS.SET_SCORE, state.score - FINAL_ITEM_COST)
       dispatch('saveGame')
     },
     [ACTIONS.SET_SELECTED_CELL]: ({ commit }, payload) => {
@@ -183,7 +272,7 @@ export default {
         addRandomItemToGrid(grid)
       }
       commit(MUTATIONS.SET_GRID, grid)
-      commit(MUTATIONS.SET_SCORE, 0)
+      commit(MUTATIONS.SET_SCORE, START_SCORE)
       commit(MUTATIONS.SET_SELECTED_CELL, null)
       dispatch('saveGame')
     },

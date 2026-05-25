@@ -7,6 +7,8 @@
     @dragover.prevent
     @drop="handleDrop"
     @click="handleTouchClick"
+    @dblclick="handleFinalItem"
+    @contextmenu.prevent="handleSellItem"
   >
     <div
       v-if="cell"
@@ -56,6 +58,8 @@ export default {
     ...mapActions({
       mergeItems: `game/${ACTIONS.MERGE_ITEMS}`,
       setSelectedCell: `game/${ACTIONS.SET_SELECTED_CELL}`,
+      useFinalItem: `game/${ACTIONS.USE_FINAL_ITEM}`,
+      sellItem: `game/${ACTIONS.SELL_ITEM}`,
     }),
     handleDragStart (event) {
       if (!this.cell) {
@@ -108,6 +112,24 @@ export default {
         toColumn: this.column,
       })
       this.setSelectedCell(null)
+    },
+    handleFinalItem () {
+      if (!this.cell?.final) {
+        return
+      }
+      this.useFinalItem({
+        row: this.row,
+        column: this.column,
+      })
+    },
+    handleSellItem () {
+      if (!this.cell) {
+        return
+      }
+      this.sellItem({
+        row: this.row,
+        column: this.column,
+      })
     },
   },
 }

@@ -10,7 +10,7 @@
     </div>
     <div class="game-page__actions">
       <BaseButton
-        text="Добавить предмет"
+        text="Добавить предмет (-10)"
         data-action="add-item"
         @click="handleAddItem"
       />
@@ -21,6 +21,9 @@
       />
     </div>
     <GameGrid />
+    <div class="game-page__rules">
+    Двойной клик по финальному предмету создаёт стартовый предмет этой ветки за 5 очков. Использовать можно 6 раз. После этого предмет исчезает. ПКМ по финальному предмету продаёт его за 30 очков. После использования финальный предмет продать нельзя.
+    </div> 
   </div>
 </template>
 
@@ -83,6 +86,11 @@ export default {
     display: flex;
     gap: 16px;
     margin-bottom: 24px;
+  }
+  &__rules {
+  margin-top: 24px;
+  font-size: 14px;
+  line-height: 1.5;
   }
 }
 </style>
