@@ -12,12 +12,12 @@
       <BaseButton
         text="Добавить предмет (-10)"
         data-action="add-item"
-        @click="handleAddItem"
+        @click="() => handleAddItem()"
       />
       <BaseButton
         text="Новая игра"
         data-action="reset-game"
-        @click="handleResetGame"
+        @click="() => handleResetGame()"
       />
     </div>
     <GameGrid />
@@ -88,9 +88,9 @@ export default {
     margin-bottom: 24px;
   }
   &__rules {
-  margin-top: 24px;
-  font-size: 14px;
-  line-height: 1.5;
+    margin-top: 24px;
+    font-size: 14px;
+    line-height: 1.5;
   }
 }
 </style>

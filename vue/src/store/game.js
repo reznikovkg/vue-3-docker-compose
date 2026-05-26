@@ -253,9 +253,10 @@ export default {
         && gridItem.level === 1
       })
       addRandomItemToGrid(grid,startItem)
-      grid[payload.row][payload.column].usesLeft -= 1
-      grid[payload.row][payload.column].used = true
-      if (grid[payload.row][payload.column].usesLeft <= 0) {
+      const finalItem = grid[payload.row][payload.column]
+      finalItem.usesLeft -= 1
+      finalItem.used = true
+      if (finalItem.usesLeft <= 0) {
         grid[payload.row][payload.column] = null
       }
       commit(MUTATIONS.SET_GRID, grid)

@@ -5,10 +5,10 @@
     :draggable="Boolean(cell)"
     @dragstart="handleDragStart"
     @dragover.prevent
-    @drop="handleDrop"
-    @click="handleTouchClick"
-    @dblclick="handleFinalItem"
-    @contextmenu.prevent="handleSellItem"
+    @drop="(event) => handleDrop(event)"
+    @click="() => handleTouchClick()"
+    @dblclick="() => handleFinalItem()"
+    @contextmenu.prevent="() => handleSellItem()"
   >
     <div
       v-if="cell"
