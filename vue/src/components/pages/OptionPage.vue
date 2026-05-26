@@ -115,8 +115,8 @@ export default {
       // иначе остаются дефолтные
     },
     applySettings() {
-      if (this.userSettings.colorsCount < 1 || this.userSettings.colorsCount > 8) {
-        alert('Количество цветов должно быть от 1 до 8')
+      if (this.userSettings.colorsCount < 1 || this.userSettings.colorsCount > 7) {
+        alert('Количество цветов должно быть от 1 до 7')
         return
       }
       if (this.userSettings.spawnSpeed < 0.1) {

@@ -1,6 +1,6 @@
 import { RADIUS } from '@/config/gameConfig'
 
-export function getCoords(event, stageRef) {
+export const getCoords = (event, stageRef) => {
     if (!stageRef) return { x: 0, y: 0 }
     const rect = stageRef.getBoundingClientRect()
     return {
@@ -9,7 +9,7 @@ export function getCoords(event, stageRef) {
     }
 }
 
-export function spawnChildrenSync(state, getters, parent, customConfig = null) {
+export const spawnChildrenSync = (state, getters, parent, customConfig = null) => {
     const children = []
     const parentSize = parent.size
     const parentColor = parent.color
@@ -69,7 +69,7 @@ export function spawnChildrenSync(state, getters, parent, customConfig = null) {
     return children
 }
 
-export function spawnBombSmallsSync(state, getters, parent) {
+export const spawnBombSmallsSync = (state, getters, parent) => {
     const children = []
     const childRadius = RADIUS.small
     const count = 7

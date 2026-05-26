@@ -82,8 +82,8 @@
         <button
             class = "bomb-btn"
             :class = "{ 'bomb-btn--active': bombActive }"
-            @click = "() => toggleBomb()"
             :disabled = "bombs <= 0"
+            @click = "() => toggleBomb()"
         >
           💣 Бомба ({{ bombs }})
         </button>

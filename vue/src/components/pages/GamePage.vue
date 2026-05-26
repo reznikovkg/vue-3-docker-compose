@@ -3,7 +3,7 @@
     <div v-if = "isFinished" class = "play-zone__overlay">
       <div class = "play-zone__overlay__panel">
         <h2>Время закончилось!</h2>
-        <p>Твой результат: {{ finalPoints.toFixed(1) }}</p>
+        <p>Твой результат: {{ formattedFinalPoints }}</p>
         <button class = "play-zone__overlay__btn" @click = "() => restartMatch()">Ещё раз</button>
         <RouterLink
             :to = "{ name: $routes.MAINMENU }"
@@ -51,7 +51,10 @@ export default {
       storedSpawnSpeed: 'spawnRate',
       storedPointsSuccess: 'pointsCorrect',
       storedPointsFail: 'pointsWrong'
-    })
+    }),
+    formattedFinalPoints() {
+      return this.finalPoints.toFixed(1)
+    }
   },
   methods: {
     handleStart() {
