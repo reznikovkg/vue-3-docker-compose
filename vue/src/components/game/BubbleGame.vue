@@ -31,20 +31,15 @@
           v-for = "mark in marks"
           :key = "mark.id"
           class = "bubble-playground__mark"
-          :style = "{ left: mark.x + 'px', top: mark.y + 'px' }"
+          :style = "getMarkStyle(mark)"
       ></div>
 
       <div
           v-for = "item in items"
           :key = "item.id"
           class = "bubble-playground__bubble"
-          :class = "`bubble-playground__bubble--${item.size}`"
-          :style = "{
-          width: (item.radius * 2) + 'px',
-          height: (item.radius * 2) + 'px',
-          backgroundImage: `url(${COLOR_IMAGES[item.color]})`,
-          transform: `translate(${item.x}px, ${item.y}px)`
-        }"
+          :class = "getBubbleClass(item.size)"
+          :style = "getBubbleStyle(item)"
       ></div>
     </div>
 
@@ -180,6 +175,20 @@ export default {
     },
     restartGame() {
       this.resetGame()
+    },
+    getBubbleClass(size) {
+      return `bubble-playground__bubble--${size}`
+    },
+    getBubbleStyle(item) {
+      return {
+        width: (item.radius * 2) + 'px',
+        height: (item.radius * 2) + 'px',
+        backgroundImage: `url(${COLOR_IMAGES[item.color]})`,
+        transform: `translate(${item.x}px, ${item.y}px)`
+      }
+    },
+    getMarkStyle(mark) {
+      return { left: mark.x + 'px', top: mark.y + 'px' }
     }
   }
 }
