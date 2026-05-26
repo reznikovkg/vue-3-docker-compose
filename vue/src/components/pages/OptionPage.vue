@@ -1,14 +1,9 @@
 <template>
   <div class = "preferences">
-    <div class = "preferences__back">
-      <RouterLink :to = "{ name: $routes.MAINMENU }" class = "preferences__back__link">
-        ← Вернуться в меню
-      </RouterLink>
-    </div>
+    <BackLink />
     <h2 class = "preferences__title">Персональные настройки</h2>
     <div class = "preferences__params">
-      <div class = "preferences__params__group">
-        <label>Количество оттенков:</label>
+      <OptionGroup label = "Количество оттенков:" hint = "от 1 до 7">
         <input
             type = "number"
             min = "1"
@@ -16,24 +11,16 @@
             step = "1"
             v-model.number = "userSettings.colorsCount"
         />
-        <span class = "hint">от 1 до 7</span>
-      </div>
-      <div class = "preferences__params__group">
-        <label>Целевой цвет:</label>
-        <div class = "preferences__params__color--palette">
-          <div
-              v-for = "color in colorVariants"
-              :key = "color.value"
-              class = "preferences__params__color--palette__swatch"
-              :class = "{ active: color.value === userSettings.selectedColor }"
-              @click = "() => pickColor(color.value)"
-          >
-            <img :src = "color.image" :alt = "color.name" />
-          </div>
-        </div>
-      </div>
-      <div class = "preferences__params__group">
-        <label>Скорость появления (шт/сек):</label>
+      </OptionGroup>
+
+      <OptionGroup label = "Целевой цвет:">
+        <ColorPalette
+            v-model = "userSettings.selectedColor"
+            :colors = "colorVariants"
+        />
+      </OptionGroup>
+
+      <OptionGroup label = "Скорость появления (шт/сек):" :hint = "formattedHint">
         <input
             type = "number"
             min = "0.1"
@@ -41,40 +28,42 @@
             step = "0.1"
             v-model.number = "userSettings.spawnSpeed"
         />
-        <span class = "hint">{{ formattedSpawnInterval }} сек на пузырь</span>
-      </div>
-      <div class = "preferences__params__group">
-        <label>Награда за попадание:</label>
+      </OptionGroup>
+
+      <OptionGroup label = "Награда за попадание:">
         <input
             type = "number"
             min = "1"
             max = "10"
             v-model.number = "userSettings.pointsSuccess"
         />
-      </div>
-      <div class = "preferences__params__group">
-        <label>Штраф за промах:</label>
+      </OptionGroup>
+
+      <OptionGroup label = "Штраф за промах:">
         <input
             type = "number"
             min = "-20"
             max = "0"
             v-model.number = "userSettings.pointsFail"
         />
-      </div>
+      </OptionGroup>
     </div>
-    <div class = "preferences__actions">
-      <button class = "preferences__actions__save" @click = "() => applySettings()">Применить</button>
-      <button class = "preferences__actions__reset" @click = "() => restoreDefaults()">Сброс</button>
-    </div>
+
+    <ActionButtons @apply = "() => applySettings()" @reset = "() => restoreDefaults()" />
   </div>
 </template>
 
 <script lang="ts">
 import { mapGetters, mapActions } from 'vuex'
 import { COLOR_IMAGES, COLOR_NAMES, COLOR_LIST } from '@/config/gameConfig'
+import BackLink from '@/components/options/BackLink.vue'
+import OptionGroup from '@/components/options/OptionGroup.vue'
+import ColorPalette from '@/components/options/ColorPalette.vue'
+import ActionButtons from '@/components/options/ActionButtons.vue'
 
 export default {
   name: 'OptionPage',
+  components: {BackLink, OptionGroup, ColorPalette, ActionButtons },
   data() {
     return {
       userSettings: {
@@ -99,6 +88,9 @@ export default {
     },
     formattedSpawnInterval(): string {
       return (1 / this.userSettings.spawnSpeed).toFixed(2)
+    },
+    formattedHint() {
+      return `${this.formattedSpawnInterval} сек на пузырь`
     }
   },
   mounted() {
@@ -121,9 +113,6 @@ export default {
         }
       }
       // иначе остаются дефолтные
-    },
-    pickColor(colorValue: string) {
-      this.userSettings.selectedColor = colorValue
     },
     applySettings() {
       if (this.userSettings.colorsCount < 1 || this.userSettings.colorsCount > 8) {
@@ -151,14 +140,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-$bgMain: #fff9f0;
-$bgSoft: #fce9e1;
-$bgHover: #f5d9cd;
-$textPrimary: #a58d7b;
-$textMuted: #d6c6b8;
-$accentSoft: #f3b3a1;
-$borderSoft: #f0d9cf;
-
+@import '@/assets/styles/variables.scss';
 :global(html), :global(body) {
   margin: 0;
   padding: 0;
@@ -166,25 +148,6 @@ $borderSoft: #f0d9cf;
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-}
-
-@mixin input-field {
-  padding: 10px 12px;
-  border: 2px solid $bgSoft;
-  border-radius: 20px;
-  background: $bgSoft;
-  color: $textPrimary;
-  font-size: 16px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: $bgHover;
-  }
-  &:focus {
-    outline: none;
-    border-color: $accentSoft;
-    box-shadow: 0 0 0 3px rgba($accentSoft, 0.2);
-  }
 }
 
 .preferences {
@@ -204,26 +167,6 @@ $borderSoft: #f0d9cf;
   border: 2px solid $borderSoft;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
 
-  &__back {
-    margin-bottom: 25px;
-
-    &__link {
-      display: inline-block;
-      padding: 8px 20px;
-      background: $bgSoft;
-      color: $textPrimary;
-      text-decoration: none;
-      border-radius: 40px;
-      font-size: 14px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: $bgHover;
-        transform: translateX(-5px);
-      }
-    }
-  }
-
   &__title {
     text-align: center;
     color: $textPrimary;
@@ -238,102 +181,6 @@ $borderSoft: #f0d9cf;
     flex-direction: column;
     gap: 25px;
     margin-bottom: 35px;
-
-    &__group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-
-      label {
-        color: $textPrimary;
-        font-weight: 500;
-        font-size: 15px;
-        letter-spacing: 0.3px;
-      }
-
-      input {
-        @include input-field;
-      }
-
-      .hint {
-        font-size: 12px;
-        color: $textMuted;
-        font-style: italic;
-        padding-left: 10px;
-      }
-    }
-
-    &__color--palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 5px;
-
-      &__swatch {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        border: 3px solid transparent;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        &:hover {
-          transform: scale(1.1);
-          border-color: $accentSoft;
-        }
-
-        &.active {
-          border-color: $accentSoft;
-          box-shadow: 0 0 0 3px rgba($accentSoft, 0.3);
-        }
-      }
-    }
-  }
-
-  &__actions {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-bottom: 35px;
-
-    button {
-      padding: 12px 35px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 40px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba($accentSoft, 0.3);
-      }
-    }
-
-    &__save {
-      background: $accentSoft;
-      color: white;
-    }
-
-    &__reset {
-      background: $bgSoft;
-      color: $textPrimary;
-
-      &:hover {
-        background: $bgHover;
-      }
-    }
   }
 }
 </style>
