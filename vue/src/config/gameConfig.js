@@ -70,3 +70,13 @@ export const COLOR_NAMES = {
 
 /** @type {string[]} */
 export const COLOR_LIST = Object.keys(COLOR_IMAGES)
+
+/**
+ * @type {string}
+ */
+export const laserCursor = "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"8\" fill=\"%2300ff00\" stroke=\"white\" stroke-width=\"2\"/%3E%3C/svg%3E') 12 12, crosshair"
+
+/**
+ * @type {string}
+ */
+export const autoCursor = "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"8\" fill=\"%23ff0000\" stroke=\"white\" stroke-width=\"2\"/%3E%3C/svg%3E') 12 12, crosshair"

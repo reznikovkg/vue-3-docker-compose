@@ -1,86 +1,5 @@
-import { RADIUS, WRONG_PENALTIES, ESCAPE_PENALTIES, PUSH_FACTORS, COLOR_IMAGES, COLOR_NAMES, COLOR_LIST } from '@/config/gameConfig'
-
-const laserCursor = "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"8\" fill=\"%2300ff00\" stroke=\"white\" stroke-width=\"2\"/%3E%3C/svg%3E') 12 12, crosshair"
-const autoCursor = "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"%3E%3Ccircle cx=\"12\" cy=\"12\" r=\"8\" fill=\"%23ff0000\" stroke=\"white\" stroke-width=\"2\"/%3E%3C/svg%3E') 12 12, crosshair"
-
-function getCoords(event, stageRef) {
-    if (!stageRef) return { x: 0, y: 0 }
-    const rect = stageRef.getBoundingClientRect()
-    return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
-    }
-}
-
-function spawnChildrenSync(state, getters, parent, customConfig = null) {
-    const children = []
-    const parentSize = parent.size
-    const parentColor = parent.color
-    const parentX = parent.x
-    const parentY = parent.y
-    let childSize, childRadius, count
-    if (customConfig) {
-        childSize = customConfig.size
-        childRadius = customConfig.radius
-        count = customConfig.count
-    } else {
-        if (parentSize === 'large') { childSize = 'medium'; childRadius = RADIUS.medium; count = 3 }
-        else if (parentSize === 'medium') { childSize = 'small'; childRadius = RADIUS.small; count = 5 }
-        else return []
-    }
-    const orbitRadius = parent.radius + childRadius + 5
-    const angleStep = (Math.PI * 2) / count
-    for (let i = 0; i < count; i++) {
-        const angle = i * angleStep
-        const x = parentX + Math.cos(angle) * orbitRadius
-        const y = parentY + Math.sin(angle) * orbitRadius
-        let randomColor
-        do { randomColor = getters.activeColors[Math.floor(Math.random() * getters.activeColors.length)] }
-        while (randomColor === parentColor && getters.activeColors.length > 1)
-        children.push({
-            id: Date.now() + Math.random() + i,
-            color: i === 0 ? parentColor : randomColor,
-            x: x,
-            y: y,
-            radius: childRadius,
-            size: childSize,
-            speedX: (Math.random() - 0.5) * 1.5,
-            speedY: 1 + Math.random() * 2.5,
-            wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.02 + Math.random() * 0.03,
-            active: true
-        })
-    }
-    return children
-}
-
-function spawnBombSmallsSync(state, getters, parent) {
-    const children = []
-    const childRadius = RADIUS.small
-    const count = 7
-    const orbitRadius = parent.radius + childRadius + 5
-    const angleStep = (Math.PI * 2) / count
-    for (let i = 0; i < count; i++) {
-        const angle = i * angleStep
-        const x = parent.x + Math.cos(angle) * orbitRadius
-        const y = parent.y + Math.sin(angle) * orbitRadius
-        const randomColor = getters.activeColors[Math.floor(Math.random() * getters.activeColors.length)]
-        children.push({
-            id: Date.now() + Math.random() + i,
-            color: i === 0 ? parent.color : randomColor,
-            x: x,
-            y: y,
-            radius: childRadius,
-            size: 'small',
-            speedX: (Math.random() - 0.5) * 3,
-            speedY: 1 + Math.random() * 3,
-            wobble: Math.random() * Math.PI * 2,
-            wobbleSpeed: 0.02 + Math.random() * 0.03,
-            active: true
-        })
-    }
-    return children
-}
+import {RADIUS, WRONG_PENALTIES, ESCAPE_PENALTIES, PUSH_FACTORS, COLOR_IMAGES, COLOR_NAMES, COLOR_LIST, laserCursor, autoCursor} from '@/config/gameConfig'
+import { getCoords, spawnChildrenSync, spawnBombSmallsSync } from '@/store/gameHelpers.js'
 
 export default {
     namespaced: true,
@@ -117,8 +36,9 @@ export default {
         onStart: null,
         onScore: null,
         onFinish: null,
-        images: {},
+        laserLastShot: 0
     }),
+
     getters: {
         timeDisplay: (state) => {
             const minutes = Math.floor(state.remaining / 60)
@@ -128,45 +48,135 @@ export default {
         targetIcon: (state) => COLOR_IMAGES[state.targetColor] || '',
         targetLabel: (state) => COLOR_NAMES[state.targetColor] || state.targetColor,
         activeColors: (state) => COLOR_LIST.slice(0, state.totalColors),
-        laserCursor: () => laserCursor,
-        autoCursor: () => autoCursor,
         COLOR_IMAGES: () => COLOR_IMAGES,
         currentCursor: (state) => {
-            if (state.currentMode === 'laser') return laserCursor;
-            if (state.currentMode === 'auto') return autoCursor;
-            return 'crosshair';
+            if (state.currentMode === 'laser') return laserCursor
+            if (state.currentMode === 'auto') return autoCursor
+            return 'crosshair'
         }
     },
+
     mutations: {
-        ADD_POINTS(state, delta) { state.points += delta },
-        DECREMENT_REMAINING(state) { if (state.remaining > 0) state.remaining-- },
-        SET_SESSION_ENDED(state, val) { state.sessionEnded = val },
-        ADD_ITEMS(state, newItems) { state.items.push(...newItems) },
-        REMOVE_ITEM_BY_INDEX(state, idx) { state.items.splice(idx, 1) },
-        SET_STAGE_SIZE(state, { width, height }) { state.stageWidth = width; state.stageHeight = height },
-        SET_LAST_CREATION(state, time) { state.lastCreation = time },
-        SET_FRAME_ID(state, id) { state.frameId = id },
-        SET_COUNTDOWN_ID(state, id) { state.countdownId = id },
-        SET_TUTORIAL_VISIBLE(state, val) { state.tutorialVisible = val },
-        SET_TUTORIAL_BLOCKING(state, val) { state.tutorialBlocking = val },
-        SET_TUTORIAL_TIMER(state, timer) { state.tutorialTimer = timer },
-        SET_CURRENT_MODE(state, mode) { state.currentMode = mode },
-        SET_DRAGGING(state, val) { state.isDragging = val },
-        SET_MOUSE_COORDS(state, { x, y }) { state.mouseX = x; state.mouseY = y },
-        SET_AUTO_TIMER(state, timer) { state.autoTimer = timer },
-        ADD_MARK(state, mark) { state.marks.push(mark) },
-        REMOVE_MARK_BY_ID(state, id) { state.marks = state.marks.filter(m => m.id !== id) },
-        SET_COMBO(state, val) { state.combo = val },
-        SET_PENALTY_COMBO(state, val) { state.penaltyCombo = val },
-        INCREMENT_SUCCESS_COUNT(state) { state.successCount++ },
-        SET_BOMBS(state, val) { state.bombs = val },
-        ADD_BOMB(state) { state.bombs++ },
-        SET_BOMB_ACTIVE(state, val) { state.bombActive = val },
-        SET_IMAGES(state, images) { state.images = images },
+        ADD_POINTS(state, delta) {
+            state.points += delta
+        },
+
+        DECREMENT_REMAINING(state) {
+            if (state.remaining > 0) {
+                state.remaining--
+            }
+        },
+
+        SET_SESSION_ENDED(state, val) {
+            state.sessionEnded = val
+        },
+
+        ADD_ITEMS(state, newItems) {
+            state.items.push(...newItems)
+        },
+
+        REMOVE_ITEM_BY_ID(state, id) {
+            const index = state.items.findIndex(item => item.id === id)
+            if (index !== -1) {
+                state.items.splice(index, 1)
+            }
+        },
+
+        SET_STAGE_SIZE(state, { width, height }) {
+            state.stageWidth = width
+            state.stageHeight = height
+        },
+
+        SET_LAST_CREATION(state, time) {
+            state.lastCreation = time
+        },
+
+        SET_FRAME_ID(state, id) {
+            state.frameId = id
+        },
+
+        SET_COUNTDOWN_ID(state, id) {
+            state.countdownId = id
+        },
+
+        SET_TUTORIAL_VISIBLE(state, val) {
+            state.tutorialVisible = val
+        },
+
+        SET_TUTORIAL_BLOCKING(state, val) {
+            state.tutorialBlocking = val
+        },
+
+        SET_TUTORIAL_TIMER(state, timer) {
+            state.tutorialTimer = timer
+        },
+
+        SET_CURRENT_MODE(state, mode) {
+            state.currentMode = mode
+        },
+
+        SET_DRAGGING(state, val) {
+            state.isDragging = val
+        },
+
+        SET_MOUSE_COORDS(state, { x, y }) {
+            state.mouseX = x
+            state.mouseY = y
+        },
+
+        SET_AUTO_TIMER(state, timer) {
+            state.autoTimer = timer
+        },
+
+        ADD_MARK(state, mark) {
+            state.marks.push(mark)
+        },
+
+        REMOVE_MARK_BY_ID(state, id) {
+            state.marks = state.marks.filter(m => m.id !== id)
+        },
+
+        SET_COMBO(state, val) {
+            state.combo = val
+        },
+
+        SET_PENALTY_COMBO(state, val) {
+            state.penaltyCombo = val
+        },
+
+        INCREMENT_SUCCESS_COUNT(state) {
+            state.successCount++
+        },
+
+        SET_BOMBS(state, val) {
+            state.bombs = val
+        },
+
+        ADD_BOMB(state) {
+            state.bombs++
+        },
+
+        SET_BOMB_ACTIVE(state, val) {
+            state.bombActive = val
+        },
+
+        SET_LASER_LAST_SHOT(state, time) {
+            state.laserLastShot = time
+        },
+
+        UPDATE_ITEM_POSITION(state, { id, updates }) {
+            const index = state.items.findIndex(i => i.id === id)
+            if (index !== -1) {
+                const updated = { ...state.items[index], ...updates }
+                state.items.splice(index, 1, updated)
+            }
+        },
+
         APPLY_IMPULSE(state, { item, impulseX, impulseY }) {
             item.speedX += impulseX;
             item.speedY += impulseY;
         },
+
         INIT_SETTINGS(state, settings) {
             state.totalColors = settings.totalColors
             state.targetColor = settings.targetColor
@@ -191,7 +201,9 @@ export default {
             state.tutorialBlocking = true
             state.tutorialVisible = true
             state.lastCreation = performance.now()
+            state.laserLastShot = 0
         },
+
         RESET_STATE(state) {
             state.points = 0
             state.remaining = state.gameDuration
@@ -207,16 +219,26 @@ export default {
             state.tutorialBlocking = true
             state.tutorialVisible = true
             state.lastCreation = performance.now()
-            if (state.autoTimer) clearInterval(state.autoTimer)
-            if (state.frameId) cancelAnimationFrame(state.frameId)
-            if (state.countdownId) clearInterval(state.countdownId)
-            if (state.tutorialTimer) clearTimeout(state.tutorialTimer)
-            state.autoTimer = null
-            state.frameId = null
-            state.countdownId = null
-            state.tutorialTimer = null
-        },
+            state.laserLastShot = 0
+            if (state.frameId) {
+                cancelAnimationFrame(state.frameId)
+                state.frameId = null
+            }
+            if (state.countdownId) {
+                clearInterval(state.countdownId)
+                state.countdownId = null
+            }
+            if (state.autoTimer) {
+                clearInterval(state.autoTimer)
+                state.autoTimer = null
+            }
+            if (state.tutorialTimer) {
+                clearTimeout(state.tutorialTimer)
+                state.tutorialTimer = null
+            }
+        }
     },
+
     actions: {
         updateStageSize({ commit }, { stageRef }) {
             if (stageRef) {
@@ -234,21 +256,21 @@ export default {
         loadImages({ commit, state, dispatch }) {
             let loaded = 0
             const total = Object.keys(COLOR_IMAGES).length
-            const images = {}
+            if (total === 0) {
+                dispatch('beginSession')
+                return
+            }
             Object.entries(COLOR_IMAGES).forEach(([color, src]) => {
                 const img = new Image()
                 img.onload = () => {
                     loaded++
-                    images[color] = img
                     if (loaded === total) {
-                        commit('SET_IMAGES', images)
                         dispatch('beginSession')
                     }
                 }
                 img.onerror = () => {
                     loaded++
                     if (loaded === total) {
-                        commit('SET_IMAGES', images)
                         dispatch('beginSession')
                     }
                 }
@@ -291,12 +313,16 @@ export default {
                 if (!state.tutorialBlocking) {
                     dispatch('moveElements', now)
                 }
+                const frameId = requestAnimationFrame((ts) => dispatch('animationStep', ts))
+                commit('SET_FRAME_ID', frameId)
+            } else if (state.frameId) {
+                cancelAnimationFrame(state.frameId)
+                commit('SET_FRAME_ID', null)
             }
-            const frameId = requestAnimationFrame((ts) => dispatch('animationStep', ts))
-            commit('SET_FRAME_ID', frameId)
         },
 
         moveElements({ commit, state, dispatch }, now) {
+            if (state.stageWidth === 0 || state.stageHeight === 0) return
             const interval = 1000 / state.spawnRate
             if (now - state.lastCreation > interval) {
                 dispatch('addItem')
@@ -304,20 +330,30 @@ export default {
             }
             for (let i = state.items.length - 1; i >= 0; i--) {
                 const item = state.items[i]
-                item.speedX *= 0.98
-                item.speedY = item.speedY < 2 ? item.speedY + 0.08 : item.speedY * 0.99
-                item.x += item.speedX
-                item.y += item.speedY
-                item.wobble += item.wobbleSpeed
-                item.x += Math.sin(item.wobble) * 0.3
-                if (item.y - item.radius > state.stageHeight + 100 ||
-                    item.x + item.radius < -100 ||
-                    item.x - item.radius > state.stageWidth + 100) {
+                let newSpeedX = item.speedX * 0.98
+                let newSpeedY = item.speedY < 2 ? item.speedY + 0.08 : item.speedY * 0.99
+                let newX = item.x + newSpeedX
+                let newY = item.y + newSpeedY
+                const newWobble = item.wobble + item.wobbleSpeed
+                newX += Math.sin(newWobble) * 0.3
+                commit('UPDATE_ITEM_POSITION', {
+                    id: item.id,
+                    updates: {
+                        speedX: newSpeedX,
+                        speedY: newSpeedY,
+                        x: newX,
+                        y: newY,
+                        wobble: newWobble
+                    }
+                })
+                if (newY - item.radius > state.stageHeight + 100 ||
+                    newX + item.radius < -100 ||
+                    newX - item.radius > state.stageWidth + 100) {
                     if (item.color === state.targetColor) {
                         commit('ADD_POINTS', ESCAPE_PENALTIES[item.size])
                         commit('SET_COMBO', 1.0)
                     }
-                    commit('REMOVE_ITEM_BY_INDEX', i)
+                    commit('REMOVE_ITEM_BY_ID', item.id)
                 }
             }
         },
@@ -332,9 +368,16 @@ export default {
             const randomColor = colors[Math.floor(Math.random() * colors.length)]
             const rand = Math.random()
             let size, radius
-            if (rand < 0.2) { size = 'large'; radius = RADIUS.large }
-            else if (rand < 0.7) { size = 'medium'; radius = RADIUS.medium }
-            else { size = 'small'; radius = RADIUS.small }
+            if (rand < 0.2) {
+                size = 'large'
+                radius = RADIUS.large
+            } else if (rand < 0.7) {
+                size = 'medium'
+                radius = RADIUS.medium
+            } else {
+                size = 'small'
+                radius = RADIUS.small
+            }
             const spawnWidth = state.stageWidth * 0.6
             const startX = (state.stageWidth - spawnWidth) / 2
             const x = startX + Math.random() * spawnWidth
@@ -363,7 +406,8 @@ export default {
                 const dy = itemCenterY - centerY
                 const dist = Math.hypot(dx, dy)
                 if (dist > 0 && dist < PUSH_DISTANCE) {
-                    const strength = PUSH_FACTORS[sourceSize][item.size] * 4 * (1 - dist / PUSH_DISTANCE)
+                    const factor = PUSH_FACTORS[sourceSize]?.[item.size] ?? 0
+                    const strength = factor * 4 * (1 - dist / PUSH_DISTANCE)
                     const angle = Math.atan2(dy, dx)
                     commit('APPLY_IMPULSE', {
                         item,
@@ -376,7 +420,9 @@ export default {
 
         tryPopBubbles({ commit, state, getters, dispatch }, { clickX, clickY }) {
             if (state.sessionEnded) return
-            const hit = state.items.filter(item => Math.hypot(clickX - (item.x + item.radius), clickY - (item.y + item.radius)) <= item.radius)
+            const hit = state.items.filter(item =>
+                Math.hypot(clickX - (item.x + item.radius), clickY - (item.y + item.radius)) <= item.radius
+            )
             if (hit.length === 0) return
             let totalPoints = 0
             let newChildren = []
@@ -393,10 +439,15 @@ export default {
                     commit('SET_PENALTY_COMBO', Math.min(7, state.penaltyCombo * 1.3))
                     commit('SET_COMBO', 1.0)
                 }
-                dispatch('applyPush', { centerX: item.x + item.radius, centerY: item.y + item.radius, sourceSize: item.size })
+                dispatch('applyPush', {
+                    centerX: item.x + item.radius,
+                    centerY: item.y + item.radius,
+                    sourceSize: item.size
+                })
                 const children = spawnChildrenSync(state, getters, item)
                 if (children && children.length) newChildren.push(...children)
-                commit('REMOVE_ITEM_BY_INDEX', state.items.indexOf(item))
+
+                commit('REMOVE_ITEM_BY_ID', item.id)
             }
             if (newChildren.length) commit('ADD_ITEMS', newChildren)
             commit('ADD_POINTS', totalPoints)
@@ -404,7 +455,9 @@ export default {
         },
 
         toggleBomb({ commit, state }) {
-            if (state.bombs > 0) commit('SET_BOMB_ACTIVE', !state.bombActive)
+            if (state.bombs > 0) {
+                commit('SET_BOMB_ACTIVE', !state.bombActive)
+            }
         },
 
         explodeBomb({ commit, state, getters }, { x, y }) {
@@ -419,7 +472,7 @@ export default {
                         const children = spawnBombSmallsSync(state, getters, item)
                         if (children && children.length) newChildren.push(...children)
                     }
-                    commit('REMOVE_ITEM_BY_INDEX', i)
+                    commit('REMOVE_ITEM_BY_ID', item.id)
                 }
             }
             if (newChildren.length) commit('ADD_ITEMS', newChildren)
@@ -430,7 +483,10 @@ export default {
             commit('SET_DRAGGING', true)
             const coords = getCoords(event, stageRef)
             commit('SET_MOUSE_COORDS', coords)
-            if (state.bombActive) { dispatch('explodeBomb', { x: coords.x, y: coords.y }); return }
+            if (state.bombActive) {
+                dispatch('explodeBomb', { x: coords.x, y: coords.y })
+                return
+            }
             if (state.currentMode === 'standard' || state.currentMode === 'laser') {
                 dispatch('tryPopBubbles', { clickX: coords.x, clickY: coords.y })
             }
@@ -440,24 +496,41 @@ export default {
             const coords = getCoords(event, stageRef)
             commit('SET_MOUSE_COORDS', coords)
             if (state.currentMode === 'laser' && state.isDragging && !state.bombActive) {
-                dispatch('tryPopBubbles', { clickX: coords.x, clickY: coords.y })
+                const now = performance.now()
+                if (now - state.laserLastShot > 50) {
+                    commit('SET_LASER_LAST_SHOT', now)
+                    dispatch('tryPopBubbles', { clickX: coords.x, clickY: coords.y })
+                }
             }
         },
 
-        setDragging({ commit }, val) { commit('SET_DRAGGING', val) },
+        setDragging({ commit }, val) {
+            commit('SET_DRAGGING', val)
+        },
 
         setMode({ commit, state, dispatch }, mode) {
             commit('SET_CURRENT_MODE', mode)
             commit('SET_BOMB_ACTIVE', false)
-            if (mode === 'auto') dispatch('startAutoShoot')
-            else { if (state.autoTimer) clearInterval(state.autoTimer); commit('SET_AUTO_TIMER', null) }
+            if (mode === 'auto') {
+                dispatch('startAutoShoot')
+            } else {
+                if (state.autoTimer) {
+                    clearInterval(state.autoTimer)
+                    commit('SET_AUTO_TIMER', null)
+                }
+            }
         },
 
         startAutoShoot({ commit, state, dispatch }) {
             if (state.autoTimer) clearInterval(state.autoTimer)
             const timer = setInterval(() => {
                 if (state.sessionEnded || state.tutorialBlocking || state.currentMode !== 'auto' || state.bombActive) return
-                const mark = { id: Date.now() + Math.random(), x: state.mouseX, y: state.mouseY, time: performance.now() }
+                const mark = {
+                    id: Date.now() + Math.random(),
+                    x: state.mouseX,
+                    y: state.mouseY,
+                    time: performance.now()
+                }
                 commit('ADD_MARK', mark)
                 setTimeout(() => commit('REMOVE_MARK_BY_ID', mark.id), 2000)
                 dispatch('tryPopBubbles', { clickX: state.mouseX, clickY: state.mouseY })
@@ -465,13 +538,41 @@ export default {
             commit('SET_AUTO_TIMER', timer)
         },
 
-        resetGame({ commit, dispatch }) { commit('RESET_STATE'); dispatch('beginSession') },
+        resetGame({ commit, dispatch, state }) {
+            const settings = {
+                totalColors: state.totalColors,
+                targetColor: state.targetColor,
+                spawnRate: state.spawnRate,
+                pointsForCorrect: state.pointsForCorrect,
+                pointsForWrong: state.pointsForWrong,
+                gameDuration: state.gameDuration,
+                onStart: state.onStart,
+                onScore: state.onScore,
+                onFinish: state.onFinish
+            }
+            commit('RESET_STATE')
+            dispatch('initGame', settings)
+        },
 
         finishSession({ commit, state }) {
+            if (state.sessionEnded) return
             commit('SET_SESSION_ENDED', true)
-            if (state.countdownId) clearInterval(state.countdownId)
-            if (state.tutorialTimer) clearTimeout(state.tutorialTimer)
-            if (state.autoTimer) clearInterval(state.autoTimer)
+            if (state.countdownId) {
+                clearInterval(state.countdownId)
+                commit('SET_COUNTDOWN_ID', null)
+            }
+            if (state.tutorialTimer) {
+                clearTimeout(state.tutorialTimer)
+                commit('SET_TUTORIAL_TIMER', null)
+            }
+            if (state.autoTimer) {
+                clearInterval(state.autoTimer)
+                commit('SET_AUTO_TIMER', null)
+            }
+            if (state.frameId) {
+                cancelAnimationFrame(state.frameId)
+                commit('SET_FRAME_ID', null)
+            }
             commit('SET_TUTORIAL_VISIBLE', false)
             commit('SET_TUTORIAL_BLOCKING', false)
             if (state.onFinish) state.onFinish({ score: state.points, timeElapsed: state.gameDuration })

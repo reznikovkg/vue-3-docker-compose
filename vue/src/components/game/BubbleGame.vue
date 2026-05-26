@@ -1,7 +1,7 @@
 <template>
   <div class = "bubble-playground">
     <div class = "bubble-playground__header">
-      <div class = "bubble-playground__score">{{ points.toFixed(0) }}</div>
+      <div class = "bubble-playground__score">{{ formattedPoints }}</div>
       <div
           class = "bubble-playground__timer"
           :class = "{ 'bubble-playground__timer--urgent': remaining <= 15 }"
@@ -50,22 +50,40 @@
 
     <div class = "bubble-playground__controls">
       <div class = "controls-group">
-        <button @click = "() => setMode('standard')" :class = "{ active: currentMode === 'standard' }">Клик</button>
-        <button @click = "() => setMode('laser')" :class = "{ active: currentMode === 'laser' }">Лазер</button>
-        <button @click = "() => setMode('auto')" :class = "{ active: currentMode === 'auto' }">Автомат</button>
+        <button
+            class = "controls-group__btn"
+            :class = "{ 'controls-group__btn--active': currentMode === 'standard' }"
+            @click = "() => setMode('standard')"
+        >
+          Клик
+        </button>
+        <button
+            class = "controls-group__btn"
+            :class = "{ 'controls-group__btn--active': currentMode === 'laser' }"
+            @click = "() => setMode('laser')"
+        >
+          Лазер
+        </button>
+        <button
+            class = "controls-group__btn"
+            :class = "{ 'controls-group__btn--active': currentMode === 'auto' }"
+            @click = "() => setMode('auto')"
+        >
+          Автомат
+        </button>
       </div>
 
       <div class = "controls-stats">
-        <span class = "combo--good">Комбо: x{{ combo.toFixed(1) }}</span>
-        <span class = "combo--bad">Штраф: x{{ penaltyCombo.toFixed(1) }}</span>
+        <span class = "combo--good">Комбо: x{{ formattedCombo }}</span>
+        <span class = "combo--bad">Штраф: x{{ formattedPenaltyCombo }}</span>
       </div>
 
       <div class = "controls-group">
         <button
             class = "bomb-btn"
+            :class = "{ 'bomb-btn--active': bombActive }"
             @click = "() => toggleBomb()"
             :disabled = "bombs <= 0"
-            :class = "{ active: bombActive }"
         >
           💣 Бомба ({{ bombs }})
         </button>
@@ -79,7 +97,8 @@ import { mapState, mapGetters, mapActions } from 'vuex'
 import { COLOR_IMAGES } from '@/config/gameConfig'
 
 export default {
-  name: 'BubblePlayground',
+  name: 'BubbleGame',
+  emits: [],
   props: {
     totalColors: { type: Number, required: true },
     targetColor: { type: String, required: true },
@@ -105,6 +124,15 @@ export default {
     ...mapGetters('game', [
       'timeDisplay', 'targetIcon', 'targetLabel', 'COLOR_IMAGES', 'currentCursor'
     ]),
+    formattedPoints() {
+      return this.points.toFixed(0)
+    },
+    formattedCombo() {
+      return this.combo.toFixed(1)
+    },
+    formattedPenaltyCombo() {
+      return this.penaltyCombo.toFixed(1)
+    }
   },
   mounted() {
     this.resizeHandler = () => this.updateStageSize({ stageRef: this.$refs.stageRef })
@@ -129,15 +157,20 @@ export default {
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler)
     }
+    this.finishSession()
   },
   methods: {
-    ...mapActions('game', ['setMode', 'toggleBomb', 'setDragging', 'resetGame', 'updateStageSize', 'initGame']),
-
+    ...mapActions('game', [
+      'setMode', 'toggleBomb', 'setDragging', 'resetGame', 'updateStageSize',
+      'initGame', 'handleMouseDown', 'handleMouseMove', 'finishSession'
+    ]),
     onMouseDown(event) {
-      this.$store.dispatch('game/handleMouseDown', { event, stageRef: this.$refs.stageRef })
+      if (!this.$refs.stageRef) return
+      this.handleMouseDown({ event, stageRef: this.$refs.stageRef })
     },
     onMouseMove(event) {
-      this.$store.dispatch('game/handleMouseMove', { event, stageRef: this.$refs.stageRef })
+      if (!this.$refs.stageRef) return
+      this.handleMouseMove({ event, stageRef: this.$refs.stageRef })
     },
     onMouseUp() {
       this.setDragging(false)
@@ -146,13 +179,13 @@ export default {
       this.setDragging(false)
     },
     restartGame() {
-      this.$store.dispatch('game/resetGame')
+      this.resetGame()
     }
   }
 }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 $bgGradientStart: #fce9e1;
 $bgGradientEnd: #fff9f0;
 $textLight: #a58d7b;
@@ -308,6 +341,27 @@ $dangerColor: #e57373;
     .controls-group {
       display: flex;
       gap: 10px;
+
+      &__btn {
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        background: #fff;
+        color: $textLight;
+        border: 2px solid $accentPastel;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #fafafa;
+        }
+
+        &--active {
+          background: $accentPastel;
+          color: #fff;
+        }
+      }
     }
 
     .controls-stats {
@@ -317,24 +371,39 @@ $dangerColor: #e57373;
       font-size: 1.1rem;
       text-align: center;
       min-width: 120px;
-      .combo--good { color: $successColor; }
-      .combo--bad { color: $dangerColor; }
+
+      .combo--good {
+        color: $successColor;
+      }
+      .combo--bad {
+        color: $dangerColor;
+      }
     }
 
-    button {
+    .bomb-btn {
       padding: 10px 20px;
       border-radius: 20px;
       font-weight: bold;
       font-size: 1rem;
       cursor: pointer;
       background: #fff;
-      color: $textLight;
-      border: 2px solid $accentPastel;
+      color: #ffb74d;
+      border: 2px solid #ffb74d;
       transition: all 0.2s;
-      &:hover { background: #fafafa; }
-      &.active { background: $accentPastel; color: #fff; }
-      &:disabled { opacity: 0.5; cursor: not-allowed; }
-      &.bomb-btn { border-color: #ffb74d; color: #ffb74d; &.active { background: #ffb74d; color: #fff; } }
+
+      &:hover {
+        background: #fafafa;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      &--active {
+        background: #ffb74d;
+        color: #fff;
+      }
     }
   }
 }
