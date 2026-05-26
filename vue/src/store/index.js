@@ -1,5 +1,5 @@
 import { createStore } from 'vuex'
-import listModule from './list'
+import listModule from '@/store/game/index.js'
 import game from './game'
 
 const MUTATION_TYPES = {
