@@ -237,10 +237,8 @@ export default {
       0 14px 28px rgba(41, 65, 85, 0.1),
       inset 0 1px 0 rgba(255, 255, 255, 0.75);
   }
-}
-
-@media (max-width: 900px) {
-  .settings {
+  
+  @media (max-width: 900px) {
     &__sliders {
       grid-template-columns: 1fr;
       gap: 28px;

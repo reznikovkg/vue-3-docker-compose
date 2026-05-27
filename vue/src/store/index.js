@@ -32,7 +32,7 @@ const MUTATIONS = {
   SET_DRAGGED_FLASK_INDEX: 'SET_DRAGGED_FLASK_INDEX'
 }
 
-function loadRecordsFromStorage() {
+const loadRecordsFromStorage = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.RECORDS)
     if (!raw) {
@@ -47,7 +47,7 @@ function loadRecordsFromStorage() {
   }
 }
 
-function saveRecordsToStorage(records) {
+const saveRecordsToStorage = (records) => {
   try {
     localStorage.setItem(STORAGE_KEYS.RECORDS, JSON.stringify(records))
   } catch (error) {
@@ -55,14 +55,14 @@ function saveRecordsToStorage(records) {
   }
 }
 
-function calculateScore({ time, qtyFlasks, qtyColors, maxQtyLayers, hardMode }) {
+const calculateScore = ({ time, qtyFlasks, qtyColors, maxQtyLayers, hardMode }) => {
   const safeTime = Math.max(time, 1)
   const complexity = qtyColors * 100 + maxQtyLayers * 40 + qtyFlasks * 15 + (hardMode ? 120 : 0)
 
   return Number((complexity / safeTime).toFixed(4))
 }
 
-function normalizeRecord(record) {
+const normalizeRecord = (record) => {
   return {
     time: Number(record.time) || 0,
     qtyFlasks: Number(record.qtyFlasks) || 0,
@@ -103,104 +103,104 @@ export default createStore({
   },
 
   getters: {
-    getIsStartedGame: state => state.isStartedGame,
-    getIsGameWon: state => state.isGameWon,
+    getIsStartedGame: (state) => state.isStartedGame,
+    getIsGameWon: (state) => state.isGameWon,
 
-    getQtyFlasks: state => state.qtyFlasks,
-    getQtyColors: state => state.qtyColors,
-    getMaxQtyLayers: state => state.maxQtyLayers,
+    getQtyFlasks: (state) => state.qtyFlasks,
+    getQtyColors: (state) => state.qtyColors,
+    getMaxQtyLayers: (state) => state.maxQtyLayers,
 
-    getActiveFlask: state => state.isActiveFlask,
-    getTargetFlask: state => state.isTargetFlask,
-    getClicks: state => state.clicks,
+    getActiveFlask: (state) => state.isActiveFlask,
+    getTargetFlask: (state) => state.isTargetFlask,
+    getClicks: (state) => state.clicks,
 
-    getLayersActive: state => state.layersActive,
-    getLimitsForRandom: state => state.limitsForRandom,
-    getIsReadyFlasks: state => state.isReadyFlasks,
-    getFlasks: state => state.flasks,
+    getLayersActive: (state) => state.layersActive,
+    getLimitsForRandom: (state) => state.limitsForRandom,
+    getIsReadyFlasks: (state) => state.isReadyFlasks,
+    getFlasks: (state) => state.flasks,
 
-    getHardMode: state => state.hardMode,
-    getNumberBlockedFlask: state => state.numberBlockedFlask,
-    getTime: state => state.time,
+    getHardMode: (state) => state.hardMode,
+    getNumberBlockedFlask: (state) => state.numberBlockedFlask,
+    getTime: (state) => state.time,
 
-    getRecords: state => state.records,
-    getTopRecords: state => state.records,
-    getDraggedFlaskIndex: state => state.draggedFlaskIndex
+    getRecords: (state) => state.records,
+    getTopRecords: (state) => state.records,
+    getDraggedFlaskIndex: (state) => state.draggedFlaskIndex
   },
 
   mutations: {
-    [MUTATIONS.SET_IS_STARTED_GAME](state, value) {
+    [MUTATIONS.SET_IS_STARTED_GAME]: (state, value) => {
       state.isStartedGame = value
     },
-    [MUTATIONS.SET_IS_GAME_WON](state, value) {
+    [MUTATIONS.SET_IS_GAME_WON]: (state, value) => {
       state.isGameWon = value
     },
-    [MUTATIONS.SET_QTY_FLASKS](state, value) {
+    [MUTATIONS.SET_QTY_FLASKS]: (state, value) => {
       state.qtyFlasks = value
     },
-    [MUTATIONS.SET_QTY_COLORS](state, value) {
+    [MUTATIONS.SET_QTY_COLORS]: (state, value) => {
       state.qtyColors = value
     },
-    [MUTATIONS.SET_MAX_QTY_LAYERS](state, value) {
+    [MUTATIONS.SET_MAX_QTY_LAYERS]: (state, value) => {
       state.maxQtyLayers = value
     },
 
-    [MUTATIONS.SET_ACTIVE_FLASK](state, value) {
+    [MUTATIONS.SET_ACTIVE_FLASK]: (state, value) => {
       state.isActiveFlask = value
     },
-    [MUTATIONS.RESET_ACTIVE_FLASK](state) {
+    [MUTATIONS.RESET_ACTIVE_FLASK]: (state, value) => {
       state.isActiveFlask = 0
     },
-    [MUTATIONS.SET_TARGET_FLASK](state, value) {
+    [MUTATIONS.SET_TARGET_FLASK]: (state, value) => {
       state.isTargetFlask = value
     },
-    [MUTATIONS.RESET_TARGET_FLASK](state) {
+    [MUTATIONS.RESET_TARGET_FLASK]: (state, value) => {
       state.isTargetFlask = 0
     },
-    [MUTATIONS.INCREMENT_CLICKS](state) {
+    [MUTATIONS.INCREMENT_CLICKS]: (state, value) => {
       state.clicks += 1
     },
-    [MUTATIONS.RESET_CLICKS](state) {
+    [MUTATIONS.RESET_CLICKS]: (state, value) => {
       state.clicks = 0
     },
 
-    [MUTATIONS.SET_LAYERS_ACTIVE](state, value) {
+    [MUTATIONS.SET_LAYERS_ACTIVE]: (state, value) => {
       state.layersActive = value
     },
-    [MUTATIONS.SET_LIMITS_RANDOM](state, value) {
+    [MUTATIONS.SET_LIMITS_RANDOM]: (state, value) => {
       state.limitsForRandom = value
     },
-    [MUTATIONS.SET_IS_READY_FLASKS](state, value) {
+    [MUTATIONS.SET_IS_READY_FLASKS]: (state, value) => {
       state.isReadyFlasks = value
     },
-    [MUTATIONS.SET_FLASKS](state, value) {
+    [MUTATIONS.SET_FLASKS]: (state, value) => {
       state.flasks = value
     },
-    [MUTATIONS.UPDATE_FLASK_LAYERS](state, { index, layers }) {
+    [MUTATIONS.UPDATE_FLASK_LAYERS]: (state, { index, layers }) => {
       state.flasks[index - 1] = layers
     },
 
-    [MUTATIONS.SET_HARD_MODE](state, value) {
+    [MUTATIONS.SET_HARD_MODE]: (state, value) => {
       state.hardMode = value
     },
-    [MUTATIONS.SET_NUMBER_BLOCKED_FLASK](state, value) {
+    [MUTATIONS.SET_NUMBER_BLOCKED_FLASK]: (state, value) => {
       state.numberBlockedFlask = value
     },
-    [MUTATIONS.SET_TIME](state, value) {
+    [MUTATIONS.SET_TIME]: (state, value) => {
       state.time = value
     },
 
-    [MUTATIONS.SET_RECORDS](state, value) {
+    [MUTATIONS.SET_RECORDS]: (state, value) => {
       state.records = value
     },
 
-    [MUTATIONS.SET_DRAGGED_FLASK_INDEX](state, value) {
+    [MUTATIONS.SET_DRAGGED_FLASK_INDEX]: (state, value) => {
       state.draggedFlaskIndex = value
     }
   },
 
   actions: {
-    startGame(store, { isStartedGame, qtyFlasks, qtyColors, maxQtyLayers, hardMode }) {
+    startGame: (store, { isStartedGame, qtyFlasks, qtyColors, maxQtyLayers, hardMode }) => {
       store.commit(MUTATIONS.SET_IS_STARTED_GAME, isStartedGame)
       store.commit(MUTATIONS.SET_IS_GAME_WON, 0)
 
@@ -223,60 +223,60 @@ export default createStore({
       store.commit(MUTATIONS.SET_DRAGGED_FLASK_INDEX, 0)
     },
 
-    pickActiveFlask(store, { isActiveFlask }) {
+    pickActiveFlask: (store, { isActiveFlask }) => {
       store.commit(MUTATIONS.SET_ACTIVE_FLASK, isActiveFlask)
       store.commit(MUTATIONS.INCREMENT_CLICKS)
     },
 
-    updateActiveFlask(store, { layersActive }) {
+    updateActiveFlask: (store, { layersActive }) => {
       store.commit(MUTATIONS.SET_LAYERS_ACTIVE, layersActive)
     },
 
-    pickTargetFlask(store, { isTargetFlask }) {
+    pickTargetFlask: (store, { isTargetFlask }) => {
       store.commit(MUTATIONS.SET_TARGET_FLASK, isTargetFlask)
       store.commit(MUTATIONS.RESET_CLICKS)
     },
 
-    resetFlasks(store) {
+    resetFlasks: (store) => {
       store.commit(MUTATIONS.RESET_ACTIVE_FLASK)
       store.commit(MUTATIONS.RESET_TARGET_FLASK)
       store.commit(MUTATIONS.SET_NUMBER_BLOCKED_FLASK, 0)
     },
 
-    updateLimitsRandom(store, { limitsForRandom }) {
+    updateLimitsRandom: (store, { limitsForRandom }) => {
       store.commit(MUTATIONS.SET_LIMITS_RANDOM, limitsForRandom)
     },
 
-    updateReadyFlasks(store, { isReadyFlasks }) {
+    updateReadyFlasks: (store, { isReadyFlasks }) => {
       store.commit(MUTATIONS.SET_IS_READY_FLASKS, isReadyFlasks)
     },
 
-    updateIsGameWon(store, { isGameWon }) {
+    updateIsGameWon: (store, { isGameWon }) => {
       store.commit(MUTATIONS.SET_IS_GAME_WON, isGameWon)
     },
 
-    updateFlaskLayers(store, { index, layers }) {
+    updateFlaskLayers: (store, { index, layers }) => {
       store.commit(MUTATIONS.UPDATE_FLASK_LAYERS, { index, layers })
     },
 
-    setHardMode(store, { hardMode }) {
+    setHardMode: (store, { hardMode }) => {
       store.commit(MUTATIONS.SET_HARD_MODE, hardMode)
     },
 
-    setNumberBlockedFlask(store, { numberBlockedFlask }) {
+    setNumberBlockedFlask: (store, { numberBlockedFlask }) => {
       store.commit(MUTATIONS.SET_NUMBER_BLOCKED_FLASK, numberBlockedFlask)
     },
 
-    setTime(store, { time }) {
+    setTime: (store, { time }) => {
       store.commit(MUTATIONS.SET_TIME, time)
     },
 
-    loadRecords(store) {
+    loadRecords: (store) => {
       const records = loadRecordsFromStorage().map(normalizeRecord)
       store.commit(MUTATIONS.SET_RECORDS, records)
     },
 
-    saveRecord(store) {
+    saveRecord: (store) => {
       const record = normalizeRecord({
         time: store.state.time,
         qtyFlasks: store.state.qtyFlasks,
@@ -307,11 +307,11 @@ export default createStore({
       saveRecordsToStorage(records)
     },
 
-    setDraggedFlaskIndex(store, { index }) {
+    setDraggedFlaskIndex: (store, { index }) => {
       store.commit(MUTATIONS.SET_DRAGGED_FLASK_INDEX, index)
     },
 
-    reorderFlasks(store, { fromIndex, toIndex }) {
+    reorderFlasks: (store, { fromIndex, toIndex }) => {
       if (!fromIndex || !toIndex || fromIndex === toIndex) {
         return
       }

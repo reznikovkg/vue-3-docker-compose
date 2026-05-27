@@ -64,14 +64,12 @@ export default {
       if (this.getActiveFlask === this.index) {
         return this.getLayersActive
       }
-
       return this.layers
     },
     emptySpace() {
       if (this.currentLayers.length === 0) {
         return this.getMaxQtyLayers
       }
-
       return this.currentLayers.at(-1).fill_level_end
     },
     displayLayers() {
@@ -79,13 +77,10 @@ export default {
     },
     flaskStyle() {
       const rows = []
-
       if (this.emptySpace > 0) {
         rows.push(`${this.emptySpace}fr`)
       }
-
       rows.push(...this.displayLayers.map((layer) => `${layer.width}fr`))
-
       return {
         gridTemplateRows: rows.join(' ')
       }
@@ -99,13 +94,11 @@ export default {
           transform: 'translateY(-6px) scale(1.03)'
         }
       }
-
       if (this.getActiveFlask === this.index && this.getClicks === 0) {
         return {
           borderWidth: '3px'
         }
       }
-
       return {}
     },
     blockedFlaskStyle() {
@@ -221,10 +214,8 @@ export default {
           lastLayer.width += curResidualFillLevel
           localReadyFlasks[this.index - 1][localReadyFlasks[this.index - 1].length - 1] += curResidualFillLevel
         }
-
         curResidualFillLevel = 0
       }
-
       return {
         localLimits,
         localReadyFlasks,
@@ -236,11 +227,9 @@ export default {
       return FLASK_COLORS[color - 1]
     },
     wrapperClick() {
-      if (this.getDraggedFlaskIndex !== 0) {
-        return
-      }
+      const isBlockedTarget = this.getHardMode && this.getClicks === 1 && this.getNumberBlockedFlask === this.index
 
-      if (this.getHardMode && this.getClicks === 1 && this.getNumberBlockedFlask === this.index) {
+      if (isBlockedTarget) {
         return
       }
 
@@ -251,21 +240,20 @@ export default {
         return
       }
 
-      if (this.getClicks === 0) {
-        const activeIndex = this.getActiveFlask
+      const activeIndex = this.getActiveFlask
 
-        if (this.index === activeIndex) {
-          this.resetFlasks()
-          return
-        }
-
-        this.perelivator(activeIndex)
+      if (this.index === activeIndex) {
         this.resetFlasks()
-
-        const localReadyFlasks = this.updateCurrentChangesLocalReadyFlasks(activeIndex)
-        const counter = this.countReadyFlasks(localReadyFlasks)
-        this.checkWin(counter)
+        return
       }
+
+      this.perelivator(activeIndex)
+      this.resetFlasks()
+
+      const localReadyFlasks = this.updateCurrentChangesLocalReadyFlasks(activeIndex)
+      const counter = this.countReadyFlasks(localReadyFlasks)
+
+      this.checkWin(counter)
     },
     pushLayer(layers, color, fillLevelStart, fillLevelEnd, width) {
       layers.push({
@@ -369,20 +357,17 @@ export default {
     },
     countReadyFlasks(localReadyFlasks) {
       let counter = 0
-
       for (let i = 0; i < localReadyFlasks.length; i += 1) {
         if (localReadyFlasks[i][0] === this.getMaxQtyLayers) {
           counter += 1
         }
       }
-
       return counter
     },
     checkWin(counter) {
       if (counter === this.getQtyColors) {
         this.updateIsGameWon({ isGameWon: 1 })
         this.saveRecord()
-
         setTimeout(() => {
           this.$router.push({ name: this.$routes.END })
         }, 700)
@@ -393,12 +378,10 @@ export default {
     },
     handleDragOver(event) {
       event.preventDefault()
-
       if (this.getDraggedFlaskIndex === 0 || this.getDraggedFlaskIndex === this.index) {
         this.isDropTarget = false
         return
       }
-
       this.isDropTarget = true
     },
     handleDrop() {
@@ -406,12 +389,10 @@ export default {
         this.isDropTarget = false
         return
       }
-
       this.reorderFlasks({
         fromIndex: this.getDraggedFlaskIndex,
         toIndex: this.index
       })
-
       this.isDropTarget = false
     },
     handleDragEnd() {

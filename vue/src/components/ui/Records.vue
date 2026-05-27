@@ -116,10 +116,8 @@ export default {
       font-weight: 800;
     }
   }
-}
 
-@media (max-width: 900px) {
-  .records {
+  @media (max-width: 900px) {
     &__row {
       grid-template-columns: repeat(6, minmax(52px, 1fr));
       font-size: 13px;
