@@ -10,7 +10,7 @@
     </div>
     <div class="game-page__actions">
       <BaseButton
-        text="Добавить предмет (-10)"
+        text="Добавить предмет (-5)"
         data-action="add-item"
         @click="() => handleAddItem()"
       />
@@ -19,11 +19,18 @@
         data-action="reset-game"
         @click="() => handleResetGame()"
       />
+      <BaseButton
+        text="Расширить поле"
+        data-action="expand-grid"
+        @click="() => handleExpandGrid()"
+      />
     </div>
-    <GameGrid />
     <div class="game-page__rules">
-    Двойной клик по финальному предмету создаёт стартовый предмет этой ветки за 5 очков. Использовать можно 6 раз. После этого предмет исчезает. ПКМ по финальному предмету продаёт его за 30 очков. После использования финальный предмет продать нельзя.
-    </div> 
+      Двойной клик по финальному предмету создаёт стартовый предмет этой ветки за 1 очко. Использовать можно 6 раз. После этого предмет исчезает. ПКМ по финальному предмету продаёт его за 30 очков. После использования финальный предмет продать нельзя.
+      <br>Для расширения поля требуется минимум {{ requiredExpandScore }} очков.
+      <br>Стоимость расширения: {{ expandCost }} очков.
+    </div>
+    <GameGrid /> 
   </div>
 </template>
 
@@ -43,6 +50,18 @@ export default {
     ...mapGetters({
       score: 'game/getScore',
     }),
+    gridSize () {
+      return this.$store.getters['game/getGridSize']
+    },
+    nextExpandLevel () {
+      return Math.floor((this.gridSize - 8) / 2)
+    },
+    requiredExpandScore () {
+      return 200 * (10 ** this.nextExpandLevel)
+    },
+    expandCost () {
+      return 100 * (10 ** this.nextExpandLevel)
+    },
   },
   mounted () {
     this.initGame()
@@ -52,12 +71,16 @@ export default {
       initGame: `game/${ACTIONS.INIT_GAME}`,
       addRandomItem: `game/${ACTIONS.ADD_RANDOM_ITEM}`,
       resetGame: `game/${ACTIONS.RESET_GAME}`,
+      expandGrid: `game/${ACTIONS.EXPAND_GRID}`,
     }),
     handleAddItem () {
       this.addRandomItem()
     },
     handleResetGame () {
       this.resetGame()
+    },
+    handleExpandGrid () {
+      this.expandGrid()
     },
   },
 }
@@ -68,6 +91,7 @@ export default {
   min-height: 100vh;
   padding: 24px;
   background: #f4f4f4;
+  min-width: 100vh;
   &__header {
     display: flex;
     align-items: center;

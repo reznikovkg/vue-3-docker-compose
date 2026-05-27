@@ -1,9 +1,10 @@
 const STORAGE_KEY = 'compose-pair-game'
-const GRID_SIZE = 8
 const START_ITEMS_COUNT = 6
 const START_SCORE = 100
-const ADD_ITEM_COST = 10
-const FINAL_ITEM_COST = 5
+const ADD_ITEM_COST = 5
+const FINAL_ITEM_COST = 1
+const DEFAULT_GRID_SIZE = 8
+const GRID_SIZE = DEFAULT_GRID_SIZE
 export const ACTIONS = {
   INIT_GAME: 'INIT_GAME',
   ADD_RANDOM_ITEM: 'ADD_RANDOM_ITEM',
@@ -12,11 +13,13 @@ export const ACTIONS = {
   SET_SELECTED_CELL: 'SET_SELECTED_CELL',
   SELL_ITEM: 'SELL_ITEM',
   USE_FINAL_ITEM: 'USE_FINAL_ITEM',
+  EXPAND_GRID: 'EXPAND_GRID',
 }
 export const MUTATIONS = {
   SET_GRID: 'SET_GRID',
   SET_SCORE: 'SET_SCORE',
   SET_SELECTED_CELL: 'SET_SELECTED_CELL',
+  SET_GRID_SIZE: 'SET_GRID_SIZE',
 }
 const ITEM_TYPES = [
   {
@@ -123,6 +126,18 @@ const addRandomItemToGrid = (grid,item = null) => {
   grid[randomCell.row][randomCell.column] = item || generateRandomItem()
   return grid
 }
+const createExpandedGrid = (grid,size) => {
+  const nextGrid = Array.from({ length: size }, () => {
+    return Array.from({ length: size }, () => null)
+  })
+  const offset = 1
+  grid.forEach((row,rowIndex) => {
+    row.forEach((cell,columnIndex) => {
+      nextGrid[rowIndex + offset][columnIndex + offset] = cell
+    })
+  })
+  return nextGrid
+}
 export default {
   namespaced: true,
   state () {
@@ -149,6 +164,9 @@ export default {
     [MUTATIONS.SET_SELECTED_CELL]: (state, value) => {
       state.selectedCell = value
     },
+    [MUTATIONS.SET_GRID_SIZE]: (state, value) => {
+      state.gridSize = value
+    },
   },
   actions: {
     [ACTIONS.INIT_GAME]: ({ commit, dispatch }) => {
@@ -156,6 +174,7 @@ export default {
       if (savedData) {
         commit(MUTATIONS.SET_GRID, savedData.grid)
         commit(MUTATIONS.SET_SCORE, savedData.score)
+        commit(MUTATIONS.SET_GRID_SIZE, savedData.gridSize || GRID_SIZE)
         return
       }
       const grid = createEmptyGrid()
@@ -169,6 +188,7 @@ export default {
       saveToStorage({
         grid: state.grid,
         score: state.score,
+        gridSize: state.gridSize,
       })
     },
     [ACTIONS.ADD_RANDOM_ITEM]: ({ state, commit, dispatch }) => {
@@ -213,7 +233,7 @@ export default {
         ...nextItem,
       }
       commit(MUTATIONS.SET_GRID, grid)
-      commit(MUTATIONS.SET_SCORE, state.score + sourceItem.level)
+      commit(MUTATIONS.SET_SCORE, state.score + (sourceItem.level*5))
       dispatch('saveGame')
     },
     [ACTIONS.SELL_ITEM]: ({ state, commit, dispatch }, payload) => {
@@ -266,6 +286,26 @@ export default {
     [ACTIONS.SET_SELECTED_CELL]: ({ commit }, payload) => {
       commit(MUTATIONS.SET_SELECTED_CELL, payload)
     },
+    [ACTIONS.EXPAND_GRID]: ({ state, commit, dispatch }) => {
+      const nextLevel = Math.floor((state.gridSize - DEFAULT_GRID_SIZE) / 2)
+      const requiredScore = 200 * (10 ** nextLevel)
+      const expandCost = 100 * (10 ** nextLevel)
+      if (state.score < requiredScore) {
+        return
+      }
+      const nextSize = state.gridSize + 2
+      const nextGrid = createExpandedGrid(
+        state.grid,
+        nextSize
+      )
+      commit(MUTATIONS.SET_GRID,nextGrid)
+      commit(MUTATIONS.SET_GRID_SIZE,nextSize)
+      commit(
+        MUTATIONS.SET_SCORE,
+        state.score - expandCost
+      )
+      dispatch('saveGame')
+    },
     [ACTIONS.RESET_GAME]: ({ commit, dispatch }) => {
       localStorage.removeItem(STORAGE_KEY)
       const grid = createEmptyGrid()
@@ -275,6 +315,7 @@ export default {
       commit(MUTATIONS.SET_GRID, grid)
       commit(MUTATIONS.SET_SCORE, START_SCORE)
       commit(MUTATIONS.SET_SELECTED_CELL, null)
+      commit(MUTATIONS.SET_GRID_SIZE, GRID_SIZE)
       dispatch('saveGame')
     },
   },
