@@ -1,44 +1,40 @@
 <template>
   <div class="game-wrapper">
     <div class="game-wrapper__top">
-      <h1 class="game-wrapper__name">Числовое слияние</h1>
+      <h1 class="game-wrapper__name">МИНУС Сити</h1>
       <p class="game-wrapper__points">
-        Очки: <b>{{ scrore }}</b>
+        Очки: <b>{{ score }}</b>
       </p>
     </div>
     <div class="game-wrapper__btns">
-      <button
-        class="btn btn--green"
-        :disabled="draging"
-        @click="() => spawnNumber()"
-      >
-        + Число
+      <button class="btn btn--green" @click="() => spawnItem()">
+        + Предмет (−10)
       </button>
-      <button
-        class="btn btn--danger"
-        @click="() => restartGame()"
-      >
+      <button class="btn btn--danger" @click="() => restartGame()">
         Сбросить
       </button>
     </div>
-    <div
-      class="game-wrapper__field"
-      :style="{ 'grid-template-columns': `repeat(${grdiSize}, 1fr)` }"
-      @dragover.prevent
-      @drop="() => onFieldDrop()"
-    >
-      <CellItem
-        v-for="(cell, i) in cells"
-        :key="i"
-        :data="cell"
-        :idx="i"
-        :is-drag="draging"
-        @start-drag="(data, idx) => onStartDrag(data, idx)"
-        @stop-drag="() => onStopDrag()"
-        @cell-drop="(idx) => onCellDrop(idx)"
-        @cell-touch-move="(evt, idx) => onCellTouchMove(evt, idx)"
-        @cell-touch-end="(evt, idx) => onCellTouchEnd(evt, idx)"
-      />
+    <div class="game-wrapper__field">
+      <div v-for="(row, y) in grid" :key="y" class="game-wrapper__row">
+        <CellItem
+          v-for="(cell, x) in row"
+          :key="x"
+          :item="cell"
+          :x="x"
+          :y="y"
+          @drag-start="(pos) => onDragStart(pos)"
+          @drop="(pos) => onDrop(pos)"
+          @cell-click="(data) => onCellClick(data)"
+          @cell-right-click="(pos) => onCellRightClick(pos)"
+        />
+      </div>
+    </div>
+    <div class="game-wrapper__legend">
+      <span>Уровни: 1 → 2 → 3 → <b>4 (макс)</b></span>
+      <span class="game-wrapper__legend-sep">|</span>
+      <span>ПКМ (ур. 2+) — продать</span>
+      <span class="game-wrapper__legend-sep">|</span>
+      <span>Клик по <b>4</b> — призвать ветку (−5)</span>
     </div>
   </div>
 </template>
@@ -50,71 +46,34 @@ import CellItem from '../ui/CellItem.vue'
 
 const store = useStore()
 
-const cells = computed(() => store.getters['game/getCells'])
-const scrore = computed(() => store.getters['game/getScore'])
-const grdiSize = computed(() => store.getters['game/getGridSize'])
+const grid = computed(() => store.getters['game/getGrid'])
+const score = computed(() => store.getters['game/getScore'])
 
-const draging = ref(false)
-const dragItem = ref(null)
-const dragFromIdx = ref(null)
-const touchStart = ref(null)
+const dragged = ref(null)
 
-onMounted(() => {
-  store.dispatch('game/loadState')
-})
+onMounted(() => store.dispatch('game/initGame'))
 
-const spawnNumber = () => {
-  if (draging.value) return
-  store.dispatch('game/spawnNumber')
-}
+const spawnItem = () => store.dispatch('game/spawn')
 
 const restartGame = () => {
   if (!confirm('Точно хочешь начать заново?')) return
-  store.dispatch('game/createField')
+  store.dispatch('game/restart')
 }
 
-const onStartDrag = (data, idx) => {
-  if (!data) return
-  draging.value = true
-  dragItem.value = data
-  dragFromIdx.value = idx
+const onDragStart = (pos) => { dragged.value = pos }
+
+const onDrop = (positionTo) => {
+  if (!dragged.value) return
+  store.dispatch('game/handleDrop', { positionFrom: dragged.value, positionTo })
+  dragged.value = null
 }
 
-const onStopDrag = () => {
-  draging.value = false
-  dragItem.value = null
-  dragFromIdx.value = null
-  touchStart.value = null
+const onCellClick = ({ item }) => {
+  if (item && item.level === 4) store.dispatch('game/spawnFromMax', item.branch)
 }
 
-const onCellDrop = (targetIdx) => {
-  if (!dragItem.value || dragFromIdx.value === targetIdx) {
-    onStopDrag()
-    return
-  }
-  store.dispatch('game/tryMerge', { from: dragFromIdx.value, to: targetIdx })
-  onStopDrag()
-}
-
-const onFieldDrop = () => {
-  onStopDrag()
-}
-
-const onCellTouchMove = (evt, idx) => {
-  if (!touchStart.value) {
-    touchStart.value = { index: idx, data: cells.value[idx] }
-  }
-}
-
-const onCellTouchEnd = (evt, targetIdx) => {
-  if (!touchStart.value || !touchStart.value.data) {
-    touchStart.value = null
-    return
-  }
-  if (touchStart.value.index !== targetIdx) {
-    store.dispatch('game/tryMerge', { from: touchStart.value.index, to: targetIdx })
-  }
-  touchStart.value = null
+const onCellRightClick = (position) => {
+  store.dispatch('game/sellItem', position)
 }
 </script>
 
@@ -124,6 +83,7 @@ const onCellTouchEnd = (evt, targetIdx) => {
   margin: 10px auto;
   padding: 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
   &__top {
     display: flex;
     justify-content: space-between;
@@ -135,32 +95,59 @@ const onCellTouchEnd = (evt, targetIdx) => {
     color: #e0e0e0;
     border: 1px solid #2a2a4a;
   }
+
   &__name {
     margin: 0;
     font-size: 22px;
     letter-spacing: 0.5px;
   }
+
   &__points {
     margin: 0;
     font-size: 18px;
+
     b {
       color: #f7d354;
       font-size: 22px;
     }
   }
+
   &__btns {
     display: flex;
     gap: 8px;
     margin-bottom: 16px;
   }
+
   &__field {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 5px;
     background: #0f3460;
     padding: 8px;
     border-radius: 12px;
-    min-height: 380px;
     border: 1px solid #1a4a7a;
+  }
+
+  &__row {
+    display: flex;
+    gap: 5px;
+  }
+
+  &__legend {
+    margin-top: 10px;
+    color: #8a9ab5;
+    font-size: 13px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    b { color: #f7d354; }
+  }
+
+  &__legend-sep {
+    color: #3a4a6a;
   }
 }
 </style>

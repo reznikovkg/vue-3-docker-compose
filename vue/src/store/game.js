@@ -1,111 +1,143 @@
-const SAVE_KEY = 'number-merge-save'
-const FIELD_SIZE = 8
-const NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8]
-const POINTS_TABLE = [10, 25, 50, 100, 200, 400, 800, 1600]
-
 const MUTATIONS = {
-  SET_CELLS: 'SET_CELLS',
+  SET_GRID: 'SET_GRID',
   SET_SCORE: 'SET_SCORE',
-  SET_CELL: 'SET_CELL',
-  ADD_SCORE: 'ADD_SCORE',
+  LOAD_GAME: 'LOAD_GAME',
 }
+
+const MAX_LEVEL = 4
+const MAX_BRANCH = 3
+const START_SCORE = 100
+const SAVE_KEY = 'game'
 
 export default {
   namespaced: true,
+
   state: () => ({
-    cells: [],
-    scrore: 0,
-    gridSize: FIELD_SIZE,
+    grid: [],
+    gridSize: 8,
+    score: START_SCORE,
   }),
+
   getters: {
-    getCells: (state) => state.cells,
-    getScore: (state) => state.scrore,
-    getGridSize: (state) => state.gridSize,
-    getNumbers: () => NUMBERS,
-    getPointsTable: () => POINTS_TABLE,
+    getGrid: (state) => state.grid,
+    getScore: (state) => state.score,
+    getSize: (state) => state.gridSize,
   },
+
   mutations: {
-    [MUTATIONS.SET_CELLS]: (state, payload) => {
-      state.cells = payload
-    },
-    [MUTATIONS.SET_SCORE]: (state, payload) => {
-      state.scrore = payload
-    },
-    [MUTATIONS.SET_CELL]: (state, { idx, value }) => {
-      state.cells[idx] = value
-    },
-    [MUTATIONS.ADD_SCORE]: (state, payload) => {
-      state.scrore += payload
+    [MUTATIONS.SET_GRID]: (state, grid) => { state.grid = grid },
+    [MUTATIONS.SET_SCORE]: (state, score) => { state.score = score },
+    [MUTATIONS.LOAD_GAME]: (state, data) => {
+      state.grid = data.grid
+      state.score = data.score ?? START_SCORE
     },
   },
+
   actions: {
-    persistState: ({ state }) => {
-      const data = { cells: state.cells, scrore: state.scrore }
-      localStorage.setItem(SAVE_KEY, JSON.stringify(data))
+    initGame: ({ state, commit, dispatch }) => {
+      const saved = localStorage.getItem(SAVE_KEY)
+      if (saved) {
+        try {
+          const data = JSON.parse(saved)
+          if (Array.isArray(data.grid) && data.grid.length === state.gridSize) {
+            commit(MUTATIONS.LOAD_GAME, data)
+            return
+          }
+        } catch {}
+        localStorage.removeItem(SAVE_KEY)
+      }
+      const grid = Array.from({ length: state.gridSize }, () =>
+        Array.from({ length: state.gridSize }, () => null)
+      )
+      commit(MUTATIONS.SET_GRID, grid)
+      dispatch('spawnStart')
     },
-    loadState: ({ commit, dispatch }) => {
-      const raw = localStorage.getItem(SAVE_KEY)
-      if (!raw) {
-        dispatch('createField')
-        return
+
+    spawnStart: ({ state, commit, dispatch }) => {
+      const grid = state.grid.map(row => [...row])
+      let spawned = 0
+      while (spawned < 4) {
+        const empty = []
+        grid.forEach((row, y) => row.forEach((col, x) => { if (!col) empty.push({ x, y }) }))
+        if (empty.length === 0) break
+        const pos = empty[Math.floor(Math.random() * empty.length)]
+        grid[pos.y][pos.x] = { id: Date.now() + Math.random(), level: 1, branch: Math.floor(Math.random() * MAX_BRANCH) + 1 }
+        spawned++
       }
-      try {
-        const parsed = JSON.parse(raw)
-        commit(MUTATIONS.SET_CELLS, parsed.cells)
-        commit(MUTATIONS.SET_SCORE, parsed.scrore)
-      } catch {
-        dispatch('createField')
+      commit(MUTATIONS.SET_GRID, grid)
+      dispatch('saveGame')
+    },
+
+    spawn: ({ state, commit, dispatch }) => {
+      if (state.score < 10) return
+      const grid = state.grid.map(row => [...row])
+      const empty = []
+      grid.forEach((row, y) => row.forEach((col, x) => { if (!col) empty.push({ x, y }) }))
+      if (empty.length === 0) return
+      const pos = empty[Math.floor(Math.random() * empty.length)]
+      grid[pos.y][pos.x] = { id: Date.now() + Math.random(), level: 1, branch: Math.floor(Math.random() * MAX_BRANCH) + 1 }
+      commit(MUTATIONS.SET_SCORE, state.score - 10)
+      commit(MUTATIONS.SET_GRID, grid)
+      dispatch('saveGame')
+    },
+
+    spawnFromMax: ({ state, commit, dispatch }, branch) => {
+      if (state.score < 5) return
+      const grid = state.grid.map(row => [...row])
+      const empty = []
+      grid.forEach((row, y) => row.forEach((col, x) => { if (!col) empty.push({ x, y }) }))
+      if (empty.length === 0) return
+      const pos = empty[Math.floor(Math.random() * empty.length)]
+      grid[pos.y][pos.x] = { id: Date.now() + Math.random(), level: 1, branch }
+      commit(MUTATIONS.SET_SCORE, state.score - 5)
+      commit(MUTATIONS.SET_GRID, grid)
+      dispatch('saveGame')
+    },
+
+    restart: ({ state, commit, dispatch }) => {
+      const grid = Array.from({ length: state.gridSize }, () =>
+        Array.from({ length: state.gridSize }, () => null)
+      )
+      commit(MUTATIONS.SET_GRID, grid)
+      commit(MUTATIONS.SET_SCORE, START_SCORE)
+      dispatch('spawnStart')
+    },
+
+    sellItem: ({ state, commit, dispatch }, position) => {
+      const grid = state.grid.map(row => [...row])
+      const item = grid[position.y][position.x]
+      if (!item || item.level === 1) return
+      const sellPrice = (item.level - 1) * 10
+      grid[position.y][position.x] = null
+      commit(MUTATIONS.SET_SCORE, state.score + sellPrice)
+      commit(MUTATIONS.SET_GRID, grid)
+      dispatch('saveGame')
+    },
+
+    handleDrop: ({ state, commit, dispatch }, { positionFrom, positionTo }) => {
+      const grid = state.grid.map(row => [...row])
+      const source = grid[positionFrom.y][positionFrom.x]
+      const dest = grid[positionTo.y][positionTo.x]
+      if (!source) return
+      let moved = false
+      if (!dest) {
+        grid[positionTo.y][positionTo.x] = source
+        grid[positionFrom.y][positionFrom.x] = null
+        moved = true
+      } else if (dest.level === source.level && dest.level < MAX_LEVEL && dest.branch === source.branch) {
+        commit(MUTATIONS.SET_SCORE, state.score + source.level * 10)
+        grid[positionTo.y][positionTo.x] = { ...dest, level: dest.level + 1 }
+        grid[positionFrom.y][positionFrom.x] = null
+        moved = true
+      }
+      if (moved) {
+        commit(MUTATIONS.SET_GRID, grid)
+        dispatch('saveGame')
       }
     },
-    createField: ({ state, commit, dispatch }) => {
-      commit(MUTATIONS.SET_CELLS, new Array(state.gridSize * state.gridSize).fill(null))
-      commit(MUTATIONS.SET_SCORE, 0)
-      for (let k = 0; k < 8; k++) {
-        dispatch('spawnNumber')
-      }
-      dispatch('persistState')
-    },
-    spawnNumber: ({ state, commit, dispatch }) => {
-      const free = []
-      state.cells.forEach((c, i) => {
-        if (c === null) free.push(i)
-      })
-      if (free.length === 0) {
-        alert('Поле заполнено!')
-        return
-      }
-      const pos = free[Math.floor(Math.random() * free.length)]
-      const lvl = Math.floor(Math.random() * 3)
-      commit(MUTATIONS.SET_CELL, {
-        idx: pos,
-        value: { tier: lvl, val: NUMBERS[lvl] },
-      })
-      dispatch('persistState')
-    },
-    tryMerge: ({ state, commit, dispatch }, { from, to }) => {
-      const itemFrom = state.cells[from]
-      const itemTo = state.cells[to]
-      if (!itemFrom) return
-      if (!itemTo) {
-        commit(MUTATIONS.SET_CELL, { idx: to, value: itemFrom })
-        commit(MUTATIONS.SET_CELL, { idx: from, value: null })
-        dispatch('persistState')
-        return
-      }
-      if (itemFrom.tier === itemTo.tier) {
-        const nextTier = Math.min(itemFrom.tier + 1, NUMBERS.length - 1)
-        commit(MUTATIONS.ADD_SCORE, POINTS_TABLE[nextTier])
-        commit(MUTATIONS.SET_CELL, {
-          idx: to,
-          value: { tier: nextTier, val: NUMBERS[nextTier] },
-        })
-        commit(MUTATIONS.SET_CELL, { idx: from, value: null })
-      } else {
-        const tmp = state.cells[from]
-        commit(MUTATIONS.SET_CELL, { idx: from, value: state.cells[to] })
-        commit(MUTATIONS.SET_CELL, { idx: to, value: tmp })
-      }
-      dispatch('persistState')
+
+    saveGame: ({ state }) => {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ grid: state.grid, score: state.score }))
     },
   },
 }

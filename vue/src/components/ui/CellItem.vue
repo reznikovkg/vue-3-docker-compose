@@ -1,199 +1,90 @@
 <template>
   <div
     class="cell-item"
-    :class="{
-      'cell-item--has-data': data,
-      'cell-item--drag-active': isDrag && data,
-      'cell-item--no-data': !data,
-    }"
-    data-cell
-    :data-idx="idx"
-    :draggable="!!data && !isDrag"
-    @dragstart="(e) => handleDragStart(e)"
-    @dragend="() => handleDragEnd()"
+    :class="{ 'cell-item--empty': !item }"
     @dragover.prevent
-    @drop.prevent="() => handleDrop()"
-    @touchstart="() => handleTouchStart()"
-    @touchmove.prevent="(e) => handleTouchMove(e)"
-    @touchend="(e) => handleTouchEnd(e)"
+    @drop.prevent="handleDrop"
   >
-    <span
-      v-if="data"
-      class="cell-item__num"
-      :class="'cell-item__num--lvl-' + data.tier"
+    <div
+      v-if="item"
+      class="cell-item__inner"
+      draggable="true"
+      @dragstart="handleDragStart"
+      @click="handleClick"
+      @contextmenu.prevent="handleRightClick"
     >
-      {{ data.val }}
-    </span>
+      <span
+        class="cell-item__num"
+        :class="`cell-item__num--branch-${item.branch} cell-item__num--lvl-${item.level}`"
+      >
+        {{ item.level }}
+      </span>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
 const props = defineProps({
-  data: { type: Object, default: null },
-  idx: { type: Number, required: true },
-  isDrag: { type: Boolean, default: false },
+  item: { type: Object, default: null },
+  x: { type: Number, required: true },
+  y: { type: Number, required: true },
 })
 
-const emit = defineEmits([
-  'start-drag',
-  'stop-drag',
-  'cell-drop',
-  'cell-touch-move',
-  'cell-touch-end',
-])
+const emit = defineEmits(['drag-start', 'drop', 'cell-click', 'cell-right-click'])
 
-const pressTimer = ref(null)
-
-const handleDragStart = (e) => {
-  if (!props.data) return
-
-  e.dataTransfer.effectAllowed = 'move'
-  e.dataTransfer.setData('text/plain', String(props.idx))
-
-  const preview = document.createElement('div')
-  preview.className = 'cell-item__preview'
-  preview.textContent = props.data.val
-  document.body.appendChild(preview)
-  e.dataTransfer.setDragImage(preview, 25, 25)
-  setTimeout(() => preview.remove(), 0)
-
-  emit('start-drag', props.data, props.idx)
-}
-
-const handleDragEnd = () => {
-  emit('stop-drag')
-}
-
-const handleDrop = () => {
-  emit('cell-drop', props.idx)
-}
-
-const handleTouchStart = () => {
-  if (!props.data) return
-  pressTimer.value = setTimeout(() => {
-    emit('cell-touch-move', null, props.idx)
-  }, 200)
-}
-
-const handleTouchMove = (e) => {
-  if (!props.data) return
-  clearTimeout(pressTimer.value)
-
-  const t = e.touches[0]
-  const el = document.elementFromPoint(t.clientX, t.clientY)
-  const cellEl = el?.closest('[data-cell]')
-  if (cellEl && cellEl.dataset.idx !== undefined) {
-    emit('cell-touch-move', e, parseInt(cellEl.dataset.idx))
-  }
-}
-
-const handleTouchEnd = (e) => {
-  clearTimeout(pressTimer.value)
-
-  const t = e.changedTouches[0]
-  const el = document.elementFromPoint(t.clientX, t.clientY)
-  const cellEl = el?.closest('[data-cell]')
-  if (cellEl && cellEl.dataset.idx !== undefined) {
-    emit('cell-touch-end', e, parseInt(cellEl.dataset.idx))
-  }
-}
+const handleDragStart = () => emit('drag-start', { x: props.x, y: props.y })
+const handleDrop = () => emit('drop', { x: props.x, y: props.y })
+const handleClick = () => emit('cell-click', { x: props.x, y: props.y, item: props.item })
+const handleRightClick = () => emit('cell-right-click', { x: props.x, y: props.y })
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .cell-item {
-  aspect-ratio: 1;
+  width: 64px;
+  height: 64px;
   background: #1e2a4a;
   border: 2px solid #2a3a5c;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: transform 0.15s, opacity 0.15s;
   user-select: none;
-  touch-action: none;
   position: relative;
+  flex-shrink: 0;
 
-  &--has-data {
-    cursor: grab;
-    &:active { cursor: grabbing; }
-  }
-
-  &--drag-active {
-    opacity: 0.4;
-    transform: scale(0.9);
-  }
-
-  &--no-data {
+  &--empty {
     background: #141e38;
     border-style: dashed;
     border-color: #253050;
+    cursor: default;
+  }
+
+  &__inner {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
   }
 
   &__num {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
     font-weight: bold;
-    transition: all 0.2s;
+    line-height: 1;
+    pointer-events: none;
 
-    &--lvl-0 {
-      color: #5dade2;
-      font-size: 26px;
-    }
-    &--lvl-1 {
-      color: #58d68d;
-      font-size: 30px;
-    }
-    &--lvl-2 {
-      color: #f0b27a;
-      font-size: 34px;
-    }
-    &--lvl-3 {
-      color: #ec7063;
-      font-size: 38px;
-      font-weight: 700;
-    }
-    &--lvl-4 {
-      color: #bb8fce;
-      font-size: 42px;
-      font-weight: 700;
-    }
-    &--lvl-5 {
-      color: #48c9b0;
-      font-size: 46px;
-      font-weight: 800;
-    }
-    &--lvl-6 {
-      color: #f7dc6f;
-      font-size: 50px;
-      font-weight: 800;
-    }
-    &--lvl-7 {
-      color: #ff6b6b;
-      font-size: 54px;
-      font-weight: 900;
-    }
-  }
+    &--lvl-1 { font-size: 26px; }
+    &--lvl-2 { font-size: 34px; }
+    &--lvl-3 { font-size: 42px; font-weight: 700; }
+    &--lvl-4 { font-size: 50px; font-weight: 800; }
 
-  &__preview {
-    position: absolute;
-    top: -9999px;
-    width: 50px;
-    height: 50px;
-    background: #e74c3c;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    font-size: 22px;
-    font-weight: bold;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    &--branch-1 { color: #5dade2; }
+    &--branch-2 { color: #58d68d; }
+    &--branch-3 { color: #f0b27a; }
   }
 }
 </style>
