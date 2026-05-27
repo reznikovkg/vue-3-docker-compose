@@ -11,6 +11,11 @@
       To PROM
     </RouterLink>
   </div>
+  <div>
+    <RouterLink :to="{ name: $routes.EDITOR }">
+      To Figure Editor
+    </RouterLink>
+  </div>
 </template>
 
 <script lang="ts">

@@ -72,51 +72,6 @@ const SIDE_VECTORS = {
 
 const SIDES = Object.keys(SIDE_VECTORS)
 
-const TETROMINOES = {
-  I: [
-    { x: -1, y: 0 },
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 2, y: 0 }
-  ],
-  O: [
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1 }
-  ],
-  T: [
-    { x: -1, y: 0 },
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 0, y: 1 }
-  ],
-  S: [
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: -1, y: 1 },
-    { x: 0, y: 1 }
-  ],
-  Z: [
-    { x: -1, y: 0 },
-    { x: 0, y: 0 },
-    { x: 0, y: 1 },
-    { x: 1, y: 1 }
-  ],
-  J: [
-    { x: -1, y: 0 },
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: 1, y: 1 }
-  ],
-  L: [
-    { x: -1, y: 0 },
-    { x: 0, y: 0 },
-    { x: 1, y: 0 },
-    { x: -1, y: 1 }
-  ]
-}
-
 const createDefaultState = () => ({
   fieldSize: DEFAULT_FIELD_SIZE,
   baseCell: null,
@@ -144,6 +99,7 @@ const cellKey = (cell) => `${cell.x}:${cell.y}`
 const createCellKeySet = (cells) => new Set(cells.map((cell) => cellKey(cell)))
 
 const translateCells = (cells, vector) => cells.map((cell) => ({
+  ...cell,
   x: cell.x + vector.x,
   y: cell.y + vector.y
 }))
@@ -169,6 +125,7 @@ const rotateCellsAroundBase = (cells, baseCell, direction) => cells.map((cell) =
   }, direction)
 
   return {
+    ...cell,
     x: baseCell.x + rotatedOffset.x,
     y: baseCell.y + rotatedOffset.y
   }
@@ -178,7 +135,15 @@ const rotateRelativeCells = (cells, turns) => {
   let nextCells = cells.map((cell) => ({ ...cell }))
 
   for (let index = 0; index < turns; index += 1) {
-    nextCells = nextCells.map((cell) => rotateOffset(cell, ROTATIONS.CW))
+    nextCells = nextCells.map((cell) => {
+      const rotated = rotateOffset(cell, ROTATIONS.CW)
+
+      return {
+        ...cell,
+        x: rotated.x,
+        y: rotated.y
+      }
+    })
   }
 
   return nextCells
@@ -305,17 +270,26 @@ const getSpawnAnchor = (cells, side, fieldSize) => {
   }
 }
 
-const buildFigure = (type, rotationIndex, side, fieldSize) => {
-  const shape = rotateRelativeCells(TETROMINOES[type], rotationIndex)
+const buildFigure = (figure, side, fieldSize) => {
+  const rotationIndex = getRandomInt(0, 3)
+  const baseShape = figure.cells.map((cell) => ({ x: cell.x, y: cell.y }))
+  const shape = rotateRelativeCells(baseShape, rotationIndex)
   const anchor = getSpawnAnchor(shape, side, fieldSize)
+  const placedCells = translateCells(shape, anchor).map((cell) => ({
+    x: cell.x,
+    y: cell.y,
+    color: figure.color
+  }))
 
   return {
-    type,
+    figureId: figure.id,
+    name: figure.name,
+    color: figure.color,
     rotationIndex,
     side,
     vector: { ...SIDE_VECTORS[side] },
     anchor,
-    cells: translateCells(shape, anchor)
+    cells: placedCells
   }
 }
 
@@ -711,16 +685,20 @@ export default {
       clearBombSpawn(state, commit)
     },
 
-    spawnFigure: ({ state, commit, dispatch }) => {
+    spawnFigure: ({ state, commit, dispatch, rootGetters }) => {
       if (state.status !== STATUS.RUNNING) {
         return
       }
 
-      const typeKeys = Object.keys(TETROMINOES)
-      const type = typeKeys[getRandomInt(0, typeKeys.length - 1)]
-      const rotationIndex = getRandomInt(0, 3)
+      const figures = rootGetters['figures/getFigures']
+
+      if (!Array.isArray(figures) || figures.length === 0) {
+        return
+      }
+
+      const figure = figures[getRandomInt(0, figures.length - 1)]
       const side = pickSpawnSide(state.lastSpawnSide)
-      const figure = buildFigure(type, rotationIndex, side, state.fieldSize)
+      const builtFigure = buildFigure(figure, side, state.fieldSize)
 
       let nextBaseDelay = state.baseDelay
 
@@ -728,7 +706,7 @@ export default {
         nextBaseDelay = Math.max(MIN_FIGURE_DELAY, state.baseDelay - SPEED_STEP)
       }
 
-      commit(MUTATIONS.SET_ACTIVE_FIGURE, figure)
+      commit(MUTATIONS.SET_ACTIVE_FIGURE, builtFigure)
       commit(MUTATIONS.SET_LAST_SPAWN_SIDE, side)
       commit(MUTATIONS.SET_BASE_DELAY, nextBaseDelay)
       commit(MUTATIONS.SET_FIGURE_DELAY, nextBaseDelay)

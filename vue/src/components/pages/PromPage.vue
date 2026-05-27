@@ -87,6 +87,7 @@
             :key="`${row}-${col}`"
             class="prom__cell"
             :class="getCellClasses(col, row)"
+            :style="getCellStyle(col, row)"
           />
         </template>
       </div>
@@ -105,6 +106,12 @@ import { mapActions, mapGetters } from 'vuex'
 type Cell = {
   x: number
   y: number
+}
+
+type ColoredCell = {
+  x: number
+  y: number
+  color?: string
 }
 
 type Direction = 'up' | 'right' | 'down' | 'left'
@@ -183,16 +190,24 @@ export default {
       }
     },
 
-    islandCellKeys (): Set<string> {
-      return new Set(
-        (this.getIslandCells as Cell[]).map((cell: Cell) => `${cell.x}:${cell.y}`)
-      )
+    islandCellsByKey (): Record<string, ColoredCell> {
+      const map: Record<string, ColoredCell> = {}
+
+      for (const cell of this.getIslandCells as ColoredCell[]) {
+        map[`${cell.x}:${cell.y}`] = cell
+      }
+
+      return map
     },
 
-    activeFigureCellKeys (): Set<string> {
-      return new Set(
-        (this.getActiveFigureCells as Cell[]).map((cell: Cell) => `${cell.x}:${cell.y}`)
-      )
+    activeFigureCellsByKey (): Record<string, ColoredCell> {
+      const map: Record<string, ColoredCell> = {}
+
+      for (const cell of this.getActiveFigureCells as ColoredCell[]) {
+        map[`${cell.x}:${cell.y}`] = cell
+      }
+
+      return map
     },
 
     bombsByKey (): Record<string, BombKind> {
@@ -272,11 +287,11 @@ export default {
     },
 
     isIslandCell (x: number, y: number) {
-      return this.islandCellKeys.has(`${x}:${y}`)
+      return Boolean(this.islandCellsByKey[`${x}:${y}`])
     },
 
     isFigureCell (x: number, y: number) {
-      return this.activeFigureCellKeys.has(`${x}:${y}`)
+      return Boolean(this.activeFigureCellsByKey[`${x}:${y}`])
     },
 
     isBaseCell (x: number, y: number) {
@@ -302,6 +317,37 @@ export default {
         'prom__cell--bomb-red': bombKind === 'red',
         'prom__cell--bomb-green': bombKind === 'green'
       }
+    },
+
+    getCellStyle (x: number, y: number): Record<string, string> {
+      if (this.getBombKind(x, y) !== null) {
+        return {}
+      }
+
+      if (this.isBaseCell(x, y)) {
+        return {}
+      }
+
+      const key = `${x}:${y}`
+      const figureCell = this.activeFigureCellsByKey[key]
+
+      if (figureCell && figureCell.color) {
+        return {
+          background: figureCell.color,
+          borderColor: figureCell.color
+        }
+      }
+
+      const islandCell = this.islandCellsByKey[key]
+
+      if (islandCell && islandCell.color) {
+        return {
+          background: islandCell.color,
+          borderColor: islandCell.color
+        }
+      }
+
+      return {}
     },
 
     onSpeedModeChange (event: Event) {

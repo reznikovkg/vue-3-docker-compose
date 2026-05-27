@@ -1,6 +1,7 @@
 import { createStore } from 'vuex'
 import list from './list'
 import island from './island.js'
+import figures from './figures.js'
 
 const MUTATIONS = {
   INCREMENT: 'INCREMENT',
@@ -39,6 +40,7 @@ export default createStore({
   },
   modules: {
     list,
-    island
+    island,
+    figures
   }
 })
