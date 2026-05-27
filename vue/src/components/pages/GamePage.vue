@@ -1,15 +1,14 @@
 <template>
-  <Game/>
+  <Game />
 </template>
 
 <script>
-import Game from "@/components/ui/Game.vue";
+import Game from '@/components/ui/Game.vue'
 
 export default {
-  name: "GamePage",
-  components: {Game}
+  name: 'GamePage',
+  components: {
+    Game
+  }
 }
 </script>
-
-<style scoped lang="scss">
-</style>

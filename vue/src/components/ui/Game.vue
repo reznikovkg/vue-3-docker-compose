@@ -1,31 +1,42 @@
 <template>
-  <div class="game" :style="gameStyle">
-    <Flask
-      v-for="i in qtyFlasks"
-      :key="i"
-      :style="flaskStyle"
-      :index="i"
-      @click="handleClick(i)">
-    </Flask>
+  <div class="game-shell">
+    <div class="game-shell__top">
+      <Stopwatch />
+      <p class="game-shell__hint">Перетаскивай колбы, чтобы менять их порядок</p>
+    </div>
+
+    <div class="game" :style="gameStyle">
+      <Flask
+        v-for="i in qtyFlasks"
+        :key="i"
+        :style="flaskStyle"
+        :index="i"
+        @flask-click="() => handleClick(i)"
+      ></Flask>
+    </div>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
-import Flask from "@/components/ui/Flask.vue";
+import Flask from '@/components/ui/Flask.vue'
+import Stopwatch from '@/components/ui/StopWatch.vue'
 
 export default {
-  name: "Game",
-  components: { Flask },
+  name: 'Game',
+  components: { Flask, Stopwatch },
   data() {
     return {
-      columnCount: 0,
+      columnCount: 1
     }
   },
   computed: {
     ...mapGetters({
       qtyFlasks: 'getQtyFlasks',
-      clicks: "getClicks"
+      clicks: 'getClicks',
+      readyFlasks: 'getIsReadyFlasks',
+      hardMode: 'getHardMode',
+      blockedFlask: 'getNumberBlockedFlask'
     }),
     rowsCount() {
       return Math.ceil(this.qtyFlasks / this.columnCount)
@@ -53,30 +64,86 @@ export default {
   methods: {
     ...mapActions([
       'pickActiveFlask',
-      'pickTargetFlask'
+      'pickTargetFlask',
+      'setNumberBlockedFlask'
     ]),
     updateColumnCount() {
       this.$nextTick(() => {
-        const gameElement = this.$el
+        const gameElement = this.$el.querySelector('.game')
+
+        if (!gameElement) {
+          return
+        }
+
         const gridStyles = window.getComputedStyle(gameElement)
         const gridTemplateColumns = gridStyles.getPropertyValue('grid-template-columns')
-        const columnCount = gridTemplateColumns.split(' ').filter(x => parseFloat(x) > 0).length
-        this.columnCount = columnCount
+        const columnCount = gridTemplateColumns.split(' ').filter((value) => parseFloat(value) > 0).length
+
+        this.columnCount = columnCount || 1
       })
     },
     handleClick(index) {
       if (this.clicks === 0) {
+        if (this.hardMode) {
+          this.blockRandomFlask(index)
+        }
+
         this.pickActiveFlask({ isActiveFlask: index })
         return
       }
 
+      if (this.hardMode && index === this.blockedFlask) {
+        return
+      }
+
       this.pickTargetFlask({ isTargetFlask: index })
+    },
+    blockRandomFlask(activeIndex) {
+      const candidates = []
+
+      for (let i = 0; i < this.readyFlasks.length; i += 1) {
+        const flaskIndex = i + 1
+        const currentFlask = this.readyFlasks[i]
+
+        if (flaskIndex !== activeIndex && currentFlask.length !== 0) {
+          candidates.push(flaskIndex)
+        }
+      }
+
+      if (candidates.length === 0) {
+        this.setNumberBlockedFlask({ numberBlockedFlask: 0 })
+        return
+      }
+
+      const randomIndex = Math.floor(Math.random() * candidates.length)
+      this.setNumberBlockedFlask({ numberBlockedFlask: candidates[randomIndex] })
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
+.game-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+
+  &__top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__hint {
+    color: #516675;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+  }
+}
+
 .game {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10vw, 1fr));
