@@ -72,6 +72,14 @@ export default {
       type: Number,
       default: 0
     },
+    vx: {
+      type: Number,
+      default: 0
+    },
+    vy: {
+      type: Number,
+      default: 0
+    },
     type: {
       type: String,
       default: "warrior"
@@ -79,6 +87,10 @@ export default {
     direction: {
       type: String,
       default: "up"
+    },
+    speed: {
+      type: Number,
+      default: 5
     }
   },
   data () {
@@ -127,7 +139,38 @@ export default {
           downRight: [tank_downRight_0, tank_downRight_1]
         }
       }
-      return sprites[this.type][this.direction][this.frame]
+      return sprites[this.type][this.enemyDirection][this.frame]
+    },
+    enemyDirection () {
+      if (!this.vx && !this.vy) {
+        return 'down'
+      }
+      if (this.vx > 0 && this.vy < 0) {
+        return 'upRight'
+      }
+      if (this.vx < 0 && this.vy < 0) {
+        return 'upLeft'
+      }
+      if (this.vx > 0 && this.vy > 0) {
+        return 'downRight'
+      }
+      if (this.vx < 0 && this.vy > 0) {
+        return 'downLeft'
+      }
+      if (Math.abs(this.vx) > Math.abs(this.vy)) {
+        if (this.vx > 0) {
+          return 'right'
+        }
+        else {
+          return 'left'
+        }
+      }
+      if (this.vy > 0) {
+        return 'down'
+      }
+      else {
+        return 'up'
+      }
     }
   },
   mounted () {
@@ -137,18 +180,13 @@ export default {
     animationDelay () {
       const maxDelay = 200
       const minDelay = 60
-      return Math.max(minDelay, maxDelay - this.speedLevel * 30)
+      return Math.max(minDelay, maxDelay - this.speed * 30)
     },
     loop (time = 0) {
       const delay = this.animationDelay()
-      if (this.isMoving) {
-        if (time - this.lastFrameTime > delay) {
-          this.frame = (this.frame + 1) % 2
-          this.lastFrameTime = time
-        }
-      }
-      else {
-        this.frame = 0
+      if (time - this.lastFrameTime > delay) {
+        this.frame = (this.frame + 1) % 2
+        this.lastFrameTime = time
       }
       requestAnimationFrame((time) => this.loop(time))
     }

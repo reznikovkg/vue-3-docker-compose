@@ -5,8 +5,8 @@
     <AreaShot v-if="getAreaShot" :x="cameraOffsetX(getAreaShot.x)" :y="cameraOffsetY(getAreaShot.y)" :radius="getAreaShot.radius" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
     <!-- <div class="map__player" /> -->
-     <Player :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="speedLevel" :isMoving="isMoving"></Player>
-    <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :direction="enemy.direction" :id="enemy.id" />
+     <Player :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="speedLevel" :isMoving="isMoving" :upgraded="upgraded"></Player>
+    <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :vx="enemy.vx" :vy="enemy.vy" :type="enemy.type" :direction="enemy.direction" :speed="enemy.speed" :id="enemy.id" />
     <div class="map__hotbar">
       <div class="map__hotbar__slot">Points: {{ getPoints }}</div>
       <div class="map__hotbar__slot">HP: {{ getHealth }} / {{ getHealthLimit }}</div>
@@ -22,10 +22,10 @@
     <div v-if="getPause" class="map__pause">
       Пауза
       <button class="map__pause__upgrade" @click="() => buyHeal()"> Купить хил (10) </button>
-      <button class="map__pause__upgrade" @click="() => increaseDamage()"> Увеличение урона (25) </button>
+      <button class="map__pause__upgrade" @click="() => increaseDamageUpgrade()"> Увеличение урона (25) </button>
       <button class="map__pause__upgrade" @click="() => buyMana()"> Купить ману (15) </button>
-      <button class="map__pause__upgrade" @click="() => increaseHealthLimit()"> Увеличить лимит хп (20) </button>
-      <button class="map__pause__upgrade" @click="() => increaseManaLimit()"> Увеличить лимит маны (30) </button>
+      <button class="map__pause__upgrade" @click="() => increaseHealthLimitUpGrade()"> Увеличить лимит хп (20) </button>
+      <button class="map__pause__upgrade" @click="() => increaseManaLimitUpgrade()"> Увеличить лимит маны (30) </button>
     </div>
   </div>
 </template>
@@ -59,7 +59,8 @@ export default {
       },
       direction: 'up',
       speedLevel: 1,
-      isMoving: false
+      isMoving: false,
+      upgraded: false
     }
   },
   computed: {
@@ -206,6 +207,18 @@ export default {
     handleMouseCoords (e) {
       this.mouseCoords.x = e.clientX + this.cameraCoords.x - window.innerWidth / 2
       this.mouseCoords.y = e.clientY + this.cameraCoords.y - window.innerHeight / 2
+    },
+    increaseDamageUpgrade () {
+      this.increaseHealthLimit()
+      this.upgraded = true
+    },
+    increaseHealthLimitUpGrade () {
+      this.increaseHealthLimit()
+      this.upgraded = true
+    },
+    increaseManaLimitUpgrade () {
+      this.increaseManaLimit()
+      this.upgraded = true
     },
     bulletMovement () {
       setInterval(() => {

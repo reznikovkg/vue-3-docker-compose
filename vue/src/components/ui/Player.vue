@@ -22,6 +22,15 @@ import downLeft_1 from './../../assets/player/downLeft_1.png'
 import downRight_0 from './../../assets/player/downRight_0.png'
 import downRight_1 from './../../assets/player/downRight_1.png'
 
+import upgraded_up_0 from './../../assets/player/upgraded_up_0.png'
+import upgraded_down_0 from './../../assets/player/upgraded_down_0.png'
+import upgraded_left_0 from './../../assets/player/upgraded_left_0.png'
+import upgraded_right_0 from './../../assets/player/upgraded_right_0.png'
+import upgraded_upLeft_0 from './../../assets/player/upgraded_upLeft_0.png'
+import upgraded_upRight_0 from './../../assets/player/upgraded_upRight_0.png'
+import upgraded_downLeft_0 from './../../assets/player/upgraded_downLeft_0.png'
+import upgraded_downRight_0 from './../../assets/player/upgraded_downRight_0.png'
+
 export default {
   name: 'Player',
   props: {
@@ -44,7 +53,11 @@ export default {
     isMoving: {
       type: Boolean,
       default: false
-    }
+    },
+    upgraded: {
+      type: Boolean,
+      default: false
+    },
   },
   data () {
     return {
@@ -61,16 +74,31 @@ export default {
     },
     currentSprite () {
       const sprites = {
-        up: [up_0, up_1],
-        down: [down_0, down_1],
-        left: [left_0, left_1],
-        right: [right_0, right_1],
-        upLeft: [upLeft_0, upLeft_1],
-        upRight: [upRight_0, upRight_1],
-        downLeft: [downLeft_0, downLeft_1],
-        downRight: [downRight_0, downRight_1]
+        notUpgraded: {
+          up: [up_0, up_1],
+          down: [down_0, down_1],
+          left: [left_0, left_1],
+          right: [right_0, right_1],
+          upLeft: [upLeft_0, upLeft_1],
+          upRight: [upRight_0, upRight_1],
+          downLeft: [downLeft_0, downLeft_1],
+          downRight: [downRight_0, downRight_1]
+        },
+        upgraded: {
+          up: [upgraded_up_0, up_1],
+          down: [upgraded_down_0, down_1],
+          left: [upgraded_left_0, left_1],
+          right: [upgraded_right_0, right_1],
+          upLeft: [upgraded_upLeft_0, upLeft_1],
+          upRight: [upgraded_upRight_0, upRight_1],
+          downLeft: [upgraded_downLeft_0, downLeft_1],
+          downRight: [upgraded_downRight_0, downRight_1]
+        }
       }
-      return sprites[this.direction][this.frame]
+      if (!this.upgraded) {
+        return sprites['notUpgraded'][this.direction][this.frame]
+      }
+      return sprites['upgraded'][this.direction][this.frame]
     }
   },
   mounted () {

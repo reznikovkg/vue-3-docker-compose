@@ -281,6 +281,8 @@ export default {
         hp: hp,
         type: type,
         speed,
+        vx: 0,
+        vy: 0,
         direction: 'up'
       })
     },
@@ -324,22 +326,8 @@ export default {
           const vy = (dy / length) * enemy.speed
           enemy.x += vx
           enemy.y += vy
-          if (Math.abs(dx) > Math.abs(dy)) {
-            if (dx > 0) {
-              enemy.direction = 'right'
-            }
-            else {
-              enemy.direction = 'left'
-            }
-          }
-          else {
-            if (dy > 0) {
-              enemy.direction = 'down'
-            }
-            else {
-              enemy.direction = 'up'
-            }
-          }
+          enemy.vx = vx
+          enemy.vy = vy
         }
       })
     },
