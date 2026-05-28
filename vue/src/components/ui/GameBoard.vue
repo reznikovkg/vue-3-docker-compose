@@ -9,16 +9,16 @@
           :item="cell"
           :x="x"
           :y="y"
-          @drop="(e) => onDrop(e)"
-          @drag-start="(e) => onDragStart(e)"
-          @cell-click="(e) => onCellClick(e)"
-          @cell-right-click="(e) => onCellRightClick(e)"
+          @drop="(positionTo) => onDrop(positionTo)"
+          @drag-start="(position) => onDragStart(position)"
+          @cell-click="(item) => onCellClick(item)"
+          @cell-right-click="(position) => onCellRightClick(position)"
           />
       </div>
     </div>
     <button
       class="game-board--btn btn-expand"
-      @click="(e) => expandGrid(e)"
+      @click="() => expandGrid()"
       :disabled="!expandInfo.canExpand"
     >
       Расширить поле ({{expandInfo.cost}} очков)
@@ -26,12 +26,13 @@
         Требуется баланс: {{expandInfo.condition}}
       </div>
     </button>
-    <button class="game-board--btn" @click="spawn">Добавить</button>
-    <button class="game-board--btn" @click="restart">Перезапустить</button>
+    <button class="game-board--btn" @click="() => spawn()">Добавить</button>
+    <button class="game-board--btn" @click="() => restart()">Перезапустить</button>
 
     <div class="game-board--hints">
       <i>ЛКМ по 4 уровню — спавн нового предмета за 5 очков <br>
-        ПКМ по клетке — продать</i>
+        ПКМ по клетке — продать
+      </i>
     </div>
   </div>
 </template>
@@ -112,16 +113,6 @@ export default {
     color: white;
     border: none;
     cursor: pointer;
-
-    &:hover:not(:disabled) {
-      opacity: 0.9;
-    }
-
-    &:disabled {
-      background: grey;
-      cursor: not-allowed;
-      opacity: 0.8;
-    }
   }
   .btn-expand {
     background: dodgerblue;

@@ -2,14 +2,14 @@
   <div
     class="cell"
     @dragover.prevent
-    @drop="(e) => onDrop(e)"
+    @drop="() => onDrop()"
 
   >
     <Item v-if="item"
           :item="item"
-          @drag-start="(e) => onDragStart(e)"
-          @item-click="(e) => onItemClick(e)"
-          @item-right-click="(e) => onItemRightClick(e)"
+          @drag-start="() => onDragStart()"
+          @item-click="() => onItemClick()"
+          @item-right-click="() => onItemRightClick()"
     />
   </div>
 </template>
