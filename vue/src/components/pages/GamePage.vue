@@ -5,7 +5,7 @@
     <AreaShot v-if="getAreaShot" :x="cameraOffsetX(getAreaShot.x)" :y="cameraOffsetY(getAreaShot.y)" :radius="getAreaShot.radius" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
     <!-- <div class="map__player" /> -->
-     <Player :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="speedLevel" :isMoving="isMoving" :upgraded="upgraded"></Player>
+    <Player :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="playerSpeedLevel" :isMoving="isMoving" :upgraded="upgraded"></Player>
     <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :vx="enemy.vx" :vy="enemy.vy" :type="enemy.type" :direction="enemy.direction" :speed="enemy.speed" :id="enemy.id" />
     <div class="map__hotbar">
       <div class="map__hotbar__slot">Points: {{ getPoints }}</div>
@@ -26,6 +26,7 @@
       <button class="map__pause__upgrade" @click="() => buyMana()"> Купить ману (15) </button>
       <button class="map__pause__upgrade" @click="() => increaseHealthLimitUpGrade()"> Увеличить лимит хп (20) </button>
       <button class="map__pause__upgrade" @click="() => increaseManaLimitUpgrade()"> Увеличить лимит маны (30) </button>
+      <button class="map__pause__upgrade" @click="() => increaseSpeedUpgrade()"> Увеличить скорость (15) </button>
     </div>
   </div>
 </template>
@@ -86,6 +87,15 @@ export default {
     },
     playerScreenY () {
       return window.innerHeight / 2
+    },
+    playerSpeedLevel () {
+      if (this.getSpeed < 25) {
+        return 1
+      }
+      if (this.getSpeed > 25 && this.getSpeed < 35) {
+        return 2
+      }
+      return 3
     }
   },
   mounted () {
@@ -116,6 +126,7 @@ export default {
       'buyMana',
       'increaseHealthLimit',
       'increaseManaLimit',
+      'increaseSpeed',
       'setGameStatus',
       'setPause'
     ]),
@@ -218,6 +229,10 @@ export default {
     },
     increaseManaLimitUpgrade () {
       this.increaseManaLimit()
+      this.upgraded = true
+    },
+    increaseSpeedUpgrade () {
+      this.increaseSpeed()
       this.upgraded = true
     },
     bulletMovement () {
@@ -349,7 +364,7 @@ export default {
     gap: 10px;
     position: absolute;
     width: 900px;
-    height: 450px;
+    height: 525px;
     top: 50%;
     left: 50%;
     color: white;

@@ -436,19 +436,27 @@ export default {
       commit(MUTATIONS.SET_MANA_LIMIT, state.manaLimit + 25)
     },
     increaseSpeed: ({ state, commit }, payload) => {
-      commit(MUTATIONS.SET_SPEED, state.speed + 2)
+      if (state.points < 15) {
+        return
+      }
+      commit(MUTATIONS.SET_POINTS, state.points - 15)
+      commit(MUTATIONS.SET_SPEED, state.speed + 10)
     },
     moveLeft: ({ state, commit }, payload) => {
-      commit(MUTATIONS.SET_X_COORD, state.coords.x - 20)
+      const step = state.speed
+      commit(MUTATIONS.SET_X_COORD, state.coords.x - step)
     },
     moveRight: ({ state, commit }, payload) => {
-      commit(MUTATIONS.SET_X_COORD, state.coords.x + 20)
+      const step = state.speed
+      commit(MUTATIONS.SET_X_COORD, state.coords.x + step)
     },
     moveUp: ({ state, commit }, payload) => {
-      commit(MUTATIONS.SET_Y_COORD, state.coords.y - 20)
+      const step = state.speed
+      commit(MUTATIONS.SET_Y_COORD, state.coords.y - step)
     },
     moveDown: ({ state, commit }, payload) => {
-      commit(MUTATIONS.SET_Y_COORD, state.coords.y + 20)
+      const step = state.speed
+      commit(MUTATIONS.SET_Y_COORD, state.coords.y + step)
     },
     addPoints: ({ commit, state }, payload) => {
       commit(MUTATIONS.SET_POINTS, state.points + payload)
