@@ -245,65 +245,65 @@ export default {
       return {}
     },
 
-    async onSave () {
+    onSave () {
       if (!this.canSave) {
         return
       }
 
-      const nextId = await this.saveFigure({
+      this.saveFigure({
         id: this.selectedId,
         name: this.draftName.trim(),
         cells: this.draftCells,
         color: this.draftColor
+      }).then((nextId: unknown) => {
+        if (typeof nextId === 'string') {
+          this.selectedId = nextId
+        }
       })
-
-      if (typeof nextId === 'string') {
-        this.selectedId = nextId
-      }
     },
 
-    async onSaveAsNew () {
+    onSaveAsNew () {
       if (!this.canSave) {
         return
       }
 
-      const nextId = await this.saveAsNewFigure({
+      this.saveAsNewFigure({
         name: this.draftName.trim(),
         cells: this.draftCells,
         color: this.draftColor
+      }).then((nextId: unknown) => {
+        if (typeof nextId === 'string') {
+          this.selectedId = nextId
+        }
       })
-
-      if (typeof nextId === 'string') {
-        this.selectedId = nextId
-      }
     },
 
-    async onDelete () {
+    onDelete () {
       if (!this.canDelete || this.selectedId === null) {
         return
       }
 
-      await this.deleteFigure(this.selectedId)
+      this.deleteFigure(this.selectedId).then(() => {
+        const figures = this.getFigures as Figure[]
 
-      const figures = this.getFigures as Figure[]
-
-      if (figures.length > 0) {
-        this.selectFigure(figures[0].id)
-      } else {
-        this.createNew()
-      }
+        if (figures.length > 0) {
+          this.selectFigure(figures[0].id)
+        } else {
+          this.createNew()
+        }
+      })
     },
 
-    async onReset () {
-      await this.resetFigures()
+    onReset () {
+      this.resetFigures().then(() => {
+        const figures = this.getFigures as Figure[]
 
-      const figures = this.getFigures as Figure[]
-
-      if (figures.length > 0) {
-        this.selectFigure(figures[0].id)
-      } else {
-        this.createNew()
-      }
+        if (figures.length > 0) {
+          this.selectFigure(figures[0].id)
+        } else {
+          this.createNew()
+        }
+      })
     }
   }
 }
