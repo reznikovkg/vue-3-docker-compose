@@ -186,15 +186,15 @@ export default {
       const info = getters.getExpandInfo;
 
       if(!info.canExpand) return;
-      const newSize = state.gridSize + 1;
-
+      const newSize = state.gridSize + 2;
+      const offset = (newSize - state.gridSize) / 2
       const newGrid = Array.from({length: newSize}, () =>
         Array.from({length: newSize}, () => null)
       );
 
       state.grid.forEach((row, y) => {
         row.forEach((col, x) => {
-          newGrid[y][x] = col;
+          newGrid[y + offset][x + offset] = col;
         });
       });
       commit(MUTATIONS.SET_GRID, newGrid);
