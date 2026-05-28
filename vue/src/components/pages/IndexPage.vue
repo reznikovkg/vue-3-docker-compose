@@ -6,12 +6,20 @@
      To Example
     </RouterLink>
   </div>
+  <div>
+    <RouterLink :to="{ name: $routes.PROM }">
+      To PROM
+    </RouterLink>
+  </div>
+  <div>
+    <RouterLink :to="{ name: $routes.EDITOR }">
+      To Figure Editor
+    </RouterLink>
+  </div>
 </template>
 
-<script setup lang="ts">
-
+<script lang="ts">
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
 </style>
