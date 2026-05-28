@@ -4,8 +4,8 @@
     <MegaShot v-if="getMegaShot" :startX="cameraOffsetX(getMegaShot.startX)" :startY="cameraOffsetY(getMegaShot.startY)" :endX="cameraOffsetX(getMegaShot.endX)" :endY="cameraOffsetY(getMegaShot.endY)" />
     <AreaShot v-if="getAreaShot" :x="cameraOffsetX(getAreaShot.x)" :y="cameraOffsetY(getAreaShot.y)" :radius="getAreaShot.radius" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
-    <Character :characterType="player" :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="playerSpeedLevel" :isMoving="isMoving" :upgraded="upgraded" />
-    <Character v-for="enemy in getEnemies" :key="enemy.id" :characterType="enemy" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :vx="enemy.vx" :vy="enemy.vy" :enemyType="enemy.type" :direction="enemy.direction" :speed="enemy.speed" :id="enemy.id" />
+    <Character characterType="player" :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="playerSpeedLevel" :isMoving="isMoving" :upgraded="upgraded" />
+    <Character v-for="enemy in getEnemies" :key="enemy.id" characterType="enemy" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :vx="enemy.vx" :vy="enemy.vy" :enemyType="enemy.type" :direction="enemy.direction" :speed="enemy.speed" :id="enemy.id" />
     <div class="map__hotbar">
       <div class="map__hotbar__slot">Points: {{ getPoints }}</div>
       <div class="map__hotbar__slot">HP: {{ getHealth }} / {{ getHealthLimit }}</div>
