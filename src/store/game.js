@@ -113,54 +113,34 @@ export default {
     clearGameState: ({commit}) => {
       commit(MUTATIONS.CLEAR_STATE)
     },
-    spawnEnemy: ({commit, state}, levelId) => {
+    spawnEnemies: ({commit, state}, levelId) => {
       const level = levels.find(l => l.id === levelId)
       if (!level || level.path.length === 0) return
       const start = level.path[0]
-      commit(MUTATIONS.SPAWN_ENEMY, {
-        id: Date.now() + Math.random(),
-        x: start.x,
-        y: start.y,
-        pathIndex: 0,
-        progress: 0
-      })
+      // Спавним ровно 2 врага в начале пути
+      for (let i = 0; i < 2; i++) {
+        commit(MUTATIONS.SPAWN_ENEMY, {
+          id: Date.now() + Math.random(),
+          x: start.x,
+          y: start.y
+          // pathIndex и progress больше не нужны
+        })
+      }
     },
-    startSpawner: ({state, dispatch, commit}, levelId) => new Promise((resolve) => {
-      setTimeout(() => {
-        dispatch('spawnEnemy', levelId)
-        // Рекурсивный вызов каждые 1.5 сек
-        dispatch('startSpawner', levelId).then(resolve)
-      }, 1500)
-    }),
     gameLoop: ({state, commit}) => {
       commit(MUTATIONS.UPDATE_COOLDOWN)
       
-      // Движение врагов по пути
-      const level = levels.find(l => l.id === state.curLevelMap)
-      if (level) {
-        state.activeEnemies.forEach(enemy => {
-          if (enemy.pathIndex < level.path.length - 1) {
-            enemy.progress += 0.4 // скорость врага
-            if (enemy.progress >= 1) {
-              enemy.progress = 0
-              enemy.pathIndex += 1
-            }
-            const p1 = level.path[enemy.pathIndex]
-            const p2 = level.path[enemy.pathIndex + 1]
-            enemy.x = p1.x + (p2.x - p1.x) * enemy.progress
-            enemy.y = p1.y + (p2.y - p1.y) * enemy.progress
-          } else {
-            // Враг дошел до конца пути → удаляем
-            state.activeEnemies = state.activeEnemies.filter(e => e.id !== enemy.id)
-          }
-        })
-      }
+      // ← УБРАНО: автоматическое движение врагов
+      // Враги теперь двигаются только через drag (moveEnemy)
 
       state.activeTowers.forEach(tower => {
-        if (tower.coolDown  >= 1000 / tower.speed) {
+        const speed = tower.speed || 1
+        const radius = tower.radius || 50
+        
+        if (tower.coolDown >= 1000 / speed) {
           const targets = state.activeEnemies.filter(e => {
             const dist = Math.sqrt(Math.pow(e.x - tower.x, 2) + Math.pow(e.y - tower.y, 2))
-            return dist <= tower.radius
+            return dist <= radius
           })
           if (targets.length > 0) {
             targets.forEach(target => {
@@ -175,17 +155,14 @@ export default {
           }
         }
       })
+      
       const moveBullets = state.activeBullets.map(b => {
         const target = state.activeEnemies.find(e => e.id === b.targetId)
-        if (!target) {
-          return null
-        }
+        if (!target) return null
         const dx = target.x - b.x
         const dy = target.y - b.y
         const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 1) {
-          return null
-        }
+        if (dist < 1) return null
         return {
           ...b, 
           x: b.x + (dx / dist) * 2,

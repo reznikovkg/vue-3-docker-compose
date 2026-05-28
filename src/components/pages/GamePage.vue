@@ -84,7 +84,7 @@ export default {
   },
   mounted () {
     this.initLevel(1)
-    this.startSpawner(1)
+    this.spawnEnemies(1)
     this.run()
   },
   beforeUnmount() {
@@ -101,7 +101,7 @@ export default {
       'moveEnemy',
       'gameLoop',
       'clearGameState',
-      'startSpawner'
+      'spawnEnemies'
     ]),
     run () {
       this.gameLoop()
@@ -138,7 +138,7 @@ export default {
     selectLevel (levelId) {
       this.initLevel(levelId)
       this.clearGameState()
-      this.startSpawner(levelId)
+      this.spawnEnemies(levelId)
     }
   },
 }
