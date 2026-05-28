@@ -4,8 +4,9 @@
     <MegaShot v-if="getMegaShot" :startX="cameraOffsetX(getMegaShot.startX)" :startY="cameraOffsetY(getMegaShot.startY)" :endX="cameraOffsetX(getMegaShot.endX)" :endY="cameraOffsetY(getMegaShot.endY)" />
     <AreaShot v-if="getAreaShot" :x="cameraOffsetX(getAreaShot.x)" :y="cameraOffsetY(getAreaShot.y)" :radius="getAreaShot.radius" />
     <Bullet v-for="enemyBullet in getEnemyBullets" :key="enemyBullet.id" :x="cameraOffsetX(enemyBullet.x)" :y="cameraOffsetY(enemyBullet.y)" :id="enemyBullet.id" />
-    <div class="map__player" />
-    <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :id="enemy.id" />
+    <!-- <div class="map__player" /> -->
+     <Player :x="playerScreenX" :y="playerScreenY" :direction="direction" :speedLevel="speedLevel" :isMoving="isMoving"></Player>
+    <Enemy v-for="enemy in getEnemies" :key="enemy.id" :x="cameraOffsetX(enemy.x)" :y="cameraOffsetY(enemy.y)" :type="enemy.type" :direction="enemy.direction" :id="enemy.id" />
     <div class="map__hotbar">
       <div class="map__hotbar__slot">Points: {{ getPoints }}</div>
       <div class="map__hotbar__slot">HP: {{ getHealth }} / {{ getHealthLimit }}</div>
@@ -34,6 +35,7 @@ import Bullet from './../ui/Bullet.vue'
 import Enemy from './../ui/Enemy.vue'
 import MegaShot from './../ui/MegaShot.vue'
 import AreaShot from './../ui/AreaShot.vue'
+import Player from './../ui/Player.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -42,7 +44,8 @@ export default {
     Bullet,
     Enemy,
     MegaShot,
-    AreaShot
+    AreaShot,
+    Player
   },
   data () {
     return {
@@ -53,7 +56,10 @@ export default {
       cameraCoords: {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2
-      }
+      },
+      direction: 'up',
+      speedLevel: 1,
+      isMoving: false
     }
   },
   computed: {
@@ -65,6 +71,7 @@ export default {
       'getDamage',
       'getMana',
       'getManaLimit',
+      'getSpeed',
       'getBullets',
       'getEnemyBullets',
       'getEnemies',
@@ -72,10 +79,17 @@ export default {
       'getAreaShot',
       'getGameStatus',
       'getPause'
-    ])
+    ]),
+    playerScreenX () {
+      return window.innerWidth / 2
+    },
+    playerScreenY () {
+      return window.innerHeight / 2
+    }
   },
   mounted () {
     window.addEventListener('keydown', (e) => this.pressedKey(e))
+    window.addEventListener('keyup', () => this.upKey())
     this.bulletMovement()
     this.enemyMovement()
   },
@@ -114,6 +128,8 @@ export default {
       if (!this.getGameStatus) {
         return
       }
+      this.isMoving = true
+      const step = this.getSpeed
       if (e.key === 'Escape') {
         this.setPause(!this.getPause)
       }
@@ -131,23 +147,61 @@ export default {
           playerY: this.getCoords.y
         })
       }
-      const step = 20
-      if (e.key === 'ArrowRight') {
+      if (e.key === 'ArrowUp' && this.direction === 'left') {
+        this.direction = 'upLeft'
+      }
+      else if (e.key === 'ArrowLeft' && this.direction === 'up') {
+        this.direction = 'upLeft'
+      }
+      else if (e.key === 'ArrowUp' && this.direction === 'right') {
+        this.direction = 'upRight'
+      }
+      else if (e.key === 'ArrowRight' && this.direction === 'up') {
+        this.direction = 'upRight'
+      }
+      else if (e.key === 'ArrowDown' && this.direction === 'left') {
+        this.direction = 'downLeft'
+      }
+      else if (e.key === 'ArrowLeft' && this.direction === 'down') {
+        this.direction = 'downLeft'
+      }
+      else if (e.key === 'ArrowDown' && this.direction === 'right') {
+        this.direction = 'downRight'
+      }
+      else if (e.key === 'ArrowRight' && this.direction === 'down') {
+        this.direction = 'downRight'
+      }
+      else if (e.key === 'ArrowUp') {
+        this.direction = 'up'
+      }
+      else if (e.key === 'ArrowDown') {
+        this.direction = 'down'
+      }
+      else if (e.key === 'ArrowLeft') {
+        this.direction = 'left'
+      }
+      else if (e.key === 'ArrowRight') {
+        this.direction = 'right'
+      }
+      if (e.key.includes('Right')) {
         this.moveRight()
         this.cameraCoords.x += step
       }
-      if (e.key === 'ArrowLeft') {
+      if (e.key.includes('Left')) {
         this.moveLeft()
         this.cameraCoords.x -= step
       }
-      if (e.key === 'ArrowUp') {
+      if (e.key.includes('Up')) {
         this.moveUp()
         this.cameraCoords.y -= step
       }
-      if (e.key === 'ArrowDown') {
+      if (e.key.includes('Down')) {
         this.moveDown()
         this.cameraCoords.y += step
       }
+    },
+    upKey () {
+      this.isMoving = false
     },
     handleMouseCoords (e) {
       this.mouseCoords.x = e.clientX + this.cameraCoords.x - window.innerWidth / 2
