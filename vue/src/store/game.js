@@ -24,10 +24,10 @@ export default {
     getScore: (state) => state.score,
     getSize: (state) => state.gridSize,
     getExpandInfo: (state) => {
-      const expansions = state.gridSize - START_GRID_SIZE;
+      const expansions = state.gridSize - START_GRID_SIZE - 1;
 
-      const condition = 200 * (10 ** expansions);
-      const cost = START_SCORE * (10 ** expansions);
+      const condition = state.gridSize === START_GRID_SIZE ? 200 : 200 * (10 ** expansions);
+      const cost = state.gridSize === START_GRID_SIZE ? START_SCORE : 100 * (10 ** expansions);
       return {
         condition,
         cost,

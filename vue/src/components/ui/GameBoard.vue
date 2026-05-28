@@ -125,6 +125,10 @@ export default {
       color: snow;
       margin-top: 4px;
     }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
   }
 
   .btn-restart {
