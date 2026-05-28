@@ -1,6 +1,6 @@
 <template>
   <div class="menu">
-    <h1 class="menu__title">МИНУС Сити</h1>
+    <h1 class="menu__title">Собери пару</h1>
     <RouterLink :to="{ name: $routes.GAME }">
       <button class="btn btn--green menu__btn">Играть</button>
     </RouterLink>

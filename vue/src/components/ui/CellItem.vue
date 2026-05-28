@@ -9,9 +9,9 @@
       v-if="item"
       class="cell-item__inner"
       draggable="true"
-      @dragstart="handleDragStart"
-      @click="handleClick"
-      @contextmenu.prevent="handleRightClick"
+      @dragstart="() => handleDragStart()"
+      @click="() => handleClick()"
+      @contextmenu.prevent="() => handleRightClick()"
     >
       <span
         class="cell-item__num"

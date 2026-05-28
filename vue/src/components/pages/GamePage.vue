@@ -1,12 +1,22 @@
 <template>
   <div class="game-wrapper">
     <div class="game-wrapper__top">
-      <h1 class="game-wrapper__name">МИНУС Сити</h1>
+      <h1 class="game-wrapper__name">Собери пару</h1>
       <p class="game-wrapper__points">
         Очки: <b>{{ score }}</b>
       </p>
     </div>
     <div class="game-wrapper__btns">
+      <button
+        class="btn btn--blue"
+        :disabled="!expandInfo.canExpand"
+        @click="() => expandField()"
+      >
+        Расширить ({{ expandInfo.cost }} оч.)
+        <span v-if="!expandInfo.canExpand" class="btn--blue__hint">
+          нужно {{ expandInfo.condition }}
+        </span>
+      </button>
       <button class="btn btn--green" @click="() => spawnItem()">
         + Предмет (−10)
       </button>
@@ -48,12 +58,14 @@ const store = useStore()
 
 const grid = computed(() => store.getters['game/getGrid'])
 const score = computed(() => store.getters['game/getScore'])
+const expandInfo = computed(() => store.getters['game/getExpandInfo'])
 
 const dragged = ref(null)
 
 onMounted(() => store.dispatch('game/initGame'))
 
 const spawnItem = () => store.dispatch('game/spawn')
+const expandField = () => store.dispatch('game/expandGrid')
 
 const restartGame = () => {
   if (!confirm('Точно хочешь начать заново?')) return
@@ -116,6 +128,7 @@ const onCellRightClick = (position) => {
     display: flex;
     gap: 8px;
     margin-bottom: 16px;
+    align-items: flex-start;
   }
 
   &__field {
@@ -126,11 +139,14 @@ const onCellRightClick = (position) => {
     padding: 8px;
     border-radius: 12px;
     border: 1px solid #1a4a7a;
+    width: fit-content;
+    margin: 0 auto;
   }
 
   &__row {
     display: flex;
     gap: 5px;
+    justify-content: center;
   }
 
   &__legend {
@@ -148,6 +164,19 @@ const onCellRightClick = (position) => {
 
   &__legend-sep {
     color: #3a4a6a;
+  }
+}
+
+.btn--blue {
+  background: #1a6fbf;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  &__hint {
+    font-size: 11px;
+    color: #cce0ff;
+    margin-top: 3px;
   }
 }
 </style>
