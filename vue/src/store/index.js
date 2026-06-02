@@ -1,39 +1,43 @@
 import { createStore } from 'vuex'
 import list from './list'
-
 const MUTATIONS = {
-  INCREMENT: 'INCREMENT',
-  SET_COUNT: 'SET_COUNT',
+  SET_COLORS_COUNT: 'SET_COLORS_COUNT',
+  SET_TARGET_COLOR: 'SET_TARGET_COLOR',
+  SET_SPAWN_RATE: 'SET_SPAWN_RATE',
 }
-
 export default createStore({
-  state () {
+  state() {
     return {
-      count: 0
+      colorsCount: 7,
+      targetColor: 'red',
+      spawnRate: 1
     }
   },
   getters: {
-    getCount: (state) => state.count,
-    getCount2: (state) => state.count * 2,
-    // getList: (state) => [4, 3]
+    getColorsCount: (state) => state.colorsCount,
+    getTargetColor: (state) => state.targetColor,
+    getSpawnRate: (state) => state.spawnRate,
   },
   mutations: {
-    [MUTATIONS.INCREMENT]: (state, value) => {
-      state.count += value
+    [MUTATIONS.SET_COLORS_COUNT](state, value) {
+      state.colorsCount = value
     },
-    [MUTATIONS.SET_COUNT]: (state, value) => {
-      state.count = value
+    [MUTATIONS.SET_TARGET_COLOR](state, value) {
+      state.targetColor = value
+    },
+    [MUTATIONS.SET_SPAWN_RATE](state, value) {
+      state.spawnRate = value
     },
   },
   actions: {
-    runIncrement: (store, value) => {
-      store.commit(MUTATIONS.INCREMENT, value)
+    setColorsCount(store, value) {
+      store.commit(MUTATIONS.SET_COLORS_COUNT, value)
     },
-    setCount: (store, payload) => {
-      const { value, timeout = 0 } = payload
-      setTimeout(() => {
-        store.commit(MUTATIONS.SET_COUNT, value)
-      }, timeout)
+    setTargetColor(store, value) {
+      store.commit(MUTATIONS.SET_TARGET_COLOR, value)
+    },
+    setSpawnRate(store, value) {
+      store.commit(MUTATIONS.SET_SPAWN_RATE, value)
     },
   },
   modules: {
