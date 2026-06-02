@@ -2,16 +2,17 @@
   Index
 
   <div>
-    <RouterLink :to="{ name: $routes.EXAMPLE }">
-     To Example
+    <RouterLink :to="{ name: $routes.GAME }">
+     To game
     </RouterLink>
   </div>
+  
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
+
 
 </script>
-
-<style scoped>
+<style scoped lang="scss">
 
 </style>
