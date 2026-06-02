@@ -1,10 +1,9 @@
 <template>
-  <div class="enemy" :style="styles">
-
+  <div class = "enemy" :style = "styles">
   </div>
 </template>
 
-<script lang="ts">
+<script lang = "ts">
 export default {
   name: 'enemy',
   props: {
@@ -28,7 +27,7 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped lang = "scss">
 .enemy {
   position: absolute;
   transform: translate(-50%, -50%);

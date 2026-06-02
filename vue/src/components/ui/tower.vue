@@ -1,20 +1,21 @@
 <template>
-  <div class="tower" :style="styles" @click="() => menuClick()">
-    <div class="tower__level"> level: {{ level }} </div>
-    <div class="tower__stats"> 
+  <div class = "tower" :style = "styles" @click = "() => menuClick()">
+    <div class = "tower__level"> level: {{ level }} </div>
+    <div class = "tower__stats"> 
       <div> hp: {{ stats.hp }}</div>
       <div> damage: {{ stats.damage }}</div>
       <div> speed: {{ stats.speed }}</div>
       <div> radius: {{ stats.radius }}</div>
+      <div> cost: {{ stats.cost }}</div>
     </div>
-    <div class="tower__menu" v-if="isOpenMenu">
-      <button class="tower__menu__up" v-if="!isMaxLevel" @click.stop="() => upClick()">+</button>  
-      <button class="tower__menu__del" @click.stop="() => delClick()">-</button>  
+    <div class = "tower__menu" v-if = "isOpenMenu">
+      <button class = "tower__menu__up" v-if = "!isMaxLevel" @click.stop = "() => upClick()">+</button>  
+      <button class = "tower__menu__del" @click.stop = "() => delClick()">-</button>  
     </div>
   </div>
 </template>
 
-<script lang="ts">
+<script lang = "ts">
 import {characteristics} from '../../data/characteristics'
 export default {
   name: 'tower',
@@ -37,7 +38,7 @@ export default {
     },
     stats: {
       type: Object,
-      default: {hp: 0, damage: 0, speed: 0, radius: 0}
+      default: {hp: 0, damage: 0, speed: 0, radius: 0, cost: 0}
     }
   },
   emits: ['upgrade', 'delete'],
@@ -73,7 +74,7 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
+<style scoped lang = "scss">
 .tower {
   position: absolute;
   transform: translate(-50%, -50%);

@@ -1,12 +1,12 @@
 <template>
-  <button class="btn" :style="styles">
-    <span class="btn__plus">
+  <button class = "btn" :style = "styles">
+    <span class = "btn__plus">
       +
     </span>
   </button>
 </template>
 
-<script lang="ts">
+<script lang = "ts">
 export default {
   name: 'addButton',
   props: {
@@ -21,7 +21,7 @@ export default {
   },
   computed: {
     styles () {
-      return{
+      return {
         left: `${this.x}%`,
         top: `${this.y}%`
       }
@@ -30,7 +30,7 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style scoped lang = "scss">
 .btn {
   position: absolute;
   transform: translate(-50%, -50%);

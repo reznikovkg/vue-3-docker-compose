@@ -11,12 +11,20 @@
         Level {{ lvl }}
       </button>
     </div>
+    <div class = "map__stats" v-if = "!getIsGameOver">
+      <div class = "map__stats-item">Money: {{ getMoney }}</div>
+      <div class = "map__stats-item">Points: {{ getPoints }}</div>
+    </div>
+    <div class = "map__game-over" v-if = "getIsGameOver">
+      <div class = "map__game-over-text">GAME OVER</div>
+      <button class = "map__game-over-btn" @click = "() => restartGame()">Restart</button>
+    </div>
     <svg 
       v-if = "getCurLevelData" 
       width = "100%" 
       height = "100%" 
       viewBox = "0 0 100 100"
-      preserveAspectRatio = "xMinYMin meet"
+      preserveAspectRatio = "none"
       style = "position: absolute; top: 0; left: 0;"
     >
       <polyline
@@ -29,9 +37,9 @@
       ></polyline>
     </svg>
     <div v-if = "getCurLevelData">
-      <addTowerBtn v-for = "slot in slotTower" :key = "slot.id" :x = "slot.x" :y = "slot.y" 
+      <addButton v-for = "slot in slotTower" :key = "slot.id" :x = "slot.x" :y = "slot.y" 
         @click = "() => plusClick(slot)">
-      </addTowerBtn>
+      </addButton>
       <tower v-for = "tower in getActiveTowers" :key = "tower.id" :id = "tower.id" :x = "tower.x" :y = "tower.y" 
         :level = "tower.levelId" :stats = "tower" @upgrade = "(id) => upgradeTower(id)" @delete = "(id) => deleteTower(id)">
       </tower>
@@ -42,7 +50,7 @@
 </template>
 
 <script lang = "ts">
-import addTowerBtn from '../ui/addButton.vue';
+import addButton from '../ui/addButton.vue';
 import tower from '../ui/tower.vue';
 import enemy from '../ui/enemy.vue';
 import { mapGetters, mapActions } from 'vuex';
@@ -50,7 +58,7 @@ import { mapGetters, mapActions } from 'vuex';
 export default {
   name: 'GamePage',
   components: {
-    addTowerBtn,
+    addButton,
     tower,
     enemy
   },
@@ -68,6 +76,9 @@ export default {
       'getCurLevelData',
       'getActiveEnemies',
       'getActiveBullets',
+      'getIsGameOver',
+      'getMoney',
+      'getPoints'
     ]),
     pathPoints () {
       const level = this.getCurLevelData
@@ -101,7 +112,8 @@ export default {
       'moveEnemy',
       'gameLoop',
       'clearGameState',
-      'spawnEnemies'
+      'spawnEnemies',
+      'restartGame'
     ]),
     run () {
       this.gameLoop()
@@ -139,6 +151,10 @@ export default {
       this.initLevel(levelId)
       this.clearGameState()
       this.spawnEnemies(levelId)
+    },
+    restartGame () {
+      this.clearGameState()
+      this.spawnEnemies(this.getCurLevelMap)
     }
   },
 }
@@ -172,6 +188,60 @@ export default {
         background: #4caf50;
         color: white;
         border-color: #2e7d32;
+      }
+    }
+  }
+
+  &__stats {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+    display: flex;
+    gap: 20px;
+    
+    &-item {
+      background: #f4f4f4;
+      color: #000;
+      padding: 8px 16px;
+      border: 2px solid #333;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  }
+
+  &__game-over {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    
+    &-text {
+      font-size: 72px;
+      color: #f00;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+    
+    &-btn {
+      padding: 15px 40px;
+      font-size: 24px;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      
+      &:hover {
+        background: #45a049;
       }
     }
   }
