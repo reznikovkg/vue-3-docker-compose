@@ -1,29 +1,31 @@
 <template>
   <section class="bubble-page">
-    <div v-if="isGameOver" class="bubble-page__modal">
-      <div class="bubble-page__modal-box">
-        <h2 class="bubble-page__modal-title">Игра завершена</h2>
-        <p class="bubble-page__modal-text">Итоговый счёт: {{ finalPoints }}</p>
-        <button class="bubble-page__modal-button" @click="startNewGame">
-          Начать заново
-        </button>
-        <RouterLink class="bubble-page__modal-button bubble-page__modal-button--menu" :to="{ name: 'MENU' }">
-          В главное меню
-        </RouterLink>
+    <teleport to="body">
+      <div v-if="isGameOver" class="bubble-page__modal">
+        <div class="bubble-page__modal-box">
+          <h2 class="bubble-page__modal-title">Игра завершена</h2>
+          <p class="bubble-page__modal-text">Итоговый счёт: {{ finalPoints }}</p>
+          <button class="bubble-page__modal-button" @click="() => startNewGame()">
+            Начать заново
+          </button>
+          <RouterLink class="bubble-page__modal-button bubble-page__modal-button--menu" :to="{ name: 'MENU' }">
+            В главное меню
+          </RouterLink>
+        </div>
       </div>
-    </div>
 
-    <div v-if="isPauseOpen" class="bubble-page__modal">
-      <div class="bubble-page__modal-box">
-        <h2 class="bubble-page__modal-title">Пауза</h2>
-        <button class="bubble-page__modal-button" @click="continueGame">
-          Продолжить
-        </button>
-        <RouterLink class="bubble-page__modal-button bubble-page__modal-button--menu" :to="{ name: 'MENU' }">
-          В главное меню
-        </RouterLink>
+      <div v-if="isPauseOpen" class="bubble-page__modal" @click.self="() => closePause()">
+        <div class="bubble-page__modal-box">
+          <h2 class="bubble-page__modal-title">Пауза</h2>
+          <button class="bubble-page__modal-button" @click="() => continueGame()">
+            Продолжить
+          </button>
+          <RouterLink class="bubble-page__modal-button bubble-page__modal-button--menu" :to="{ name: 'MENU' }">
+            В главное меню
+          </RouterLink>
+        </div>
       </div>
-    </div>
+    </teleport>
 
     <aside class="bubble-page__sidebar">
       <h1 class="bubble-page__title">Мыльные пузыри</h1>
@@ -31,18 +33,19 @@
       <p class="bubble-page__info">Количество цветов: {{ colorsCount }}</p>
       <p class="bubble-page__info">Шариков в секунду: {{ spawnRate }}</p>
       <p class="bubble-page__info">За правильный пузырь: +1</p>
-      <p class="bubble-page__info">За неправильный пузырь: -5</p>
+      <p class="bubble-page__info">Штраф за ошибку: большой -5, средний -3, маленький -1</p>
+      <p class="bubble-page__info">Пропуск нужного пузыря: большой -10, средний -6, маленький -3</p>
       <p class="bubble-page__info">Осталось времени: {{ timeLeft }} сек.</p>
       <p class="bubble-page__info">Текущие очки: {{ currentPoints }}</p>
 
       <div class="bubble-page__buttons">
-        <button v-if="!gameStarted" class="bubble-page__button" @click="startNewGame">
+        <button v-if="!gameStarted" class="bubble-page__button" @click="() => startNewGame()">
           Старт
         </button>
         <button
           v-if="gameStarted && !isGameOver"
           class="bubble-page__button bubble-page__button--stop"
-          @click="openPause"
+          @click="() => openPause()"
         >
           Стоп
         </button>
@@ -71,14 +74,11 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
 import BubbleGame from './../game/BubbleGame.vue'
 
 export default {
   name: 'GamePage',
-  components: {
-    BubbleGame
-  },
+  components: { BubbleGame },
   data() {
     return {
       currentPoints: 0,
@@ -90,7 +90,15 @@ export default {
     }
   },
   computed: {
-    ...mapState(['colorsCount', 'targetColor', 'spawnRate']),
+    colorsCount() {
+      return this.$store.state.colorsCount
+    },
+    targetColor() {
+      return this.$store.state.targetColor
+    },
+    spawnRate() {
+      return this.$store.state.spawnRate
+    },
     targetColorLabel() {
       const colorNames = {
         blue: 'синий',
@@ -130,21 +138,18 @@ export default {
       this.isPauseOpen = false
       this.timeLeft = 60
       this.gameStarted = true
-      if (this.$refs.gameRef) {
-        this.$refs.gameRef.restartGame()
-      }
+      if (this.$refs.gameRef) this.$refs.gameRef.restartGame()
     },
     openPause() {
       this.isPauseOpen = true
-      if (this.$refs.gameRef) {
-        this.$refs.gameRef.pauseGame()
-      }
+      if (this.$refs.gameRef) this.$refs.gameRef.pauseGame()
+    },
+    closePause() {
+      this.isPauseOpen = false
     },
     continueGame() {
       this.isPauseOpen = false
-      if (this.$refs.gameRef) {
-        this.$refs.gameRef.resumeGame()
-      }
+      if (this.$refs.gameRef) this.$refs.gameRef.resumeGame()
     }
   }
 }
@@ -197,14 +202,14 @@ export default {
     text-decoration: none;
     text-align: center;
     box-sizing: border-box;
+  }
 
-    &--stop {
-      background-color: #e85d75;
-    }
+  &__button--stop {
+    background-color: #e85d75;
+  }
 
-    &--menu {
-      background-color: #6c757d;
-    }
+  &__button--menu {
+    background-color: #6c757d;
   }
 
   &__game-area {
@@ -255,10 +260,10 @@ export default {
     cursor: pointer;
     text-decoration: none;
     box-sizing: border-box;
+  }
 
-    &--menu {
-      background-color: #6c757d;
-    }
+  &__modal-button--menu {
+    background-color: #6c757d;
   }
 }
 </style>
