@@ -244,12 +244,14 @@ export default {
 
     getScreenProjectiles: (state) => state.projectiles.map((projectile) => ({
       ...projectile,
+      isEnemy: false,
       screenX: projectile.x - state.camera.x,
       screenY: projectile.y - state.camera.y
     })),
 
     getScreenEnemyProjectiles: (state) => state.enemyProjectiles.map((projectile) => ({
       ...projectile,
+      isEnemy: true,
       screenX: projectile.x - state.camera.x,
       screenY: projectile.y - state.camera.y
     })),

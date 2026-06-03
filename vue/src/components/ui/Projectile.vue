@@ -12,33 +12,20 @@ export default {
   name: 'Projectile',
 
   props: {
-    x: {
-      type: Number,
-      default: 0
-    },
-
-    y: {
-      type: Number,
-      default: 0
-    },
-
-    size: {
-      type: Number,
-      default: 10
-    },
-
-    isEnemy: {
-      type: Boolean,
-      default: false
+    projectile: {
+      type: Object,
+      default() {
+          return {}
+      }
     }
   },
 
   computed: {
     styles() {
       return {
-        width: `${this.size}px`,
-        height: `${this.size}px`,
-        transform: `translateX(${this.x}px) translateY(${this.y}px) translate(-50%, -50%)`
+        width: `${this.projectile.size}px`,
+        height: `${this.projectile.size}px`,
+        transform: `translateX(${this.projectile.screenX}px) translateY(${this.projectile.screenY}px) translate(-50%, -50%)`
       }
     },
 

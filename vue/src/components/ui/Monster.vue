@@ -19,36 +19,18 @@ export default {
   name: 'Monster',
 
   props: {
-    x: {
-      type: Number,
-      default: 0
-    },
-
-    y: {
-      type: Number,
-      default: 0
-    },
-
-    type: {
-      type: String,
-      default: 'basic'
-    },
-
-    hp: {
-      type: Number,
-      default: 1
-    },
-
-    maxHp: {
-      type: Number,
-      default: 1
+    monster: {
+      type: Object,
+      default() {
+        return {}
+      }
     }
   },
 
   computed: {
     styles() {
       return {
-        transform: `translateX(${this.x}px) translateY(${this.y}px) translate(-50%, -50%)`
+        transform: `translateX(${this.monster.screenX}px) translateY(${this.monster.screenY}px) translate(-50%, -50%)`
       }
     },
 

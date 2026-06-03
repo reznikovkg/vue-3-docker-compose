@@ -13,29 +13,19 @@
     <Projectile
       v-for = "projectile in getScreenProjectiles"
       :key = "projectile.id"
-      :x = "projectile.screenX"
-      :y = "projectile.screenY"
-      :size = "projectile.size"
-      :is-enemy = "false"
+      :projectile = "projectile"
     />
 
     <Projectile
       v-for = "projectile in getScreenEnemyProjectiles"
       :key = "projectile.id"
-      :x = "projectile.screenX"
-      :y = "projectile.screenY"
-      :size = "projectile.size"
-      :is-enemy = "true"
+      :projectile = "projectile"
     />
 
     <Monster
       v-for = "monster in getScreenMonsters"
       :key = "monster.id"
-      :x = "monster.screenX"
-      :y = "monster.screenY"
-      :type = "monster.type"
-      :hp = "monster.hp"
-      :max-hp = "monster.maxHp"
+      :monster = "monster"
     />
 
     <div
