@@ -1,1 +1,1 @@
-
+export const centers = [4.25, 29.25, 54.75, 79.75]
