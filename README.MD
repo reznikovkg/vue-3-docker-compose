@@ -1,118 +1,124 @@
-# TetrisLand
+# Island Survival — Vue 3 + Vuex Game
 
-A Tetris-style game built with **Vue 3**, containerized with **Docker** and **Docker Compose**. The project runs on a Vite dev server inside a container, so you can play or develop it without installing Node.js locally.
+A browser puzzle/survival game built with **Vue 3**, **TypeScript**, and **Vuex**, containerized with **Docker Compose**. Grow your island by catching falling Tetris-style figures, clear layers for points and bonus time, dodge (or exploit) bombs, and survive as long as possible before the walls close in.
 
-> This repository is a fork of [reznikovkg/vue-3-docker-compose](https://github.com/reznikovkg/vue-3-docker-compose), extended with the TetrisLand game on the `kolle_game_tetrisland_lab3` branch.
+## 🎮 Gameplay
 
-## About the game
+The game takes place on an **N × N** grid (N is always odd, so the board always has a true center cell).
 
-**TetrisLand** is a survival puzzle game: the player controls a growing "island" at the center of a grid while classic Tetris-style shapes fly in from the edges and try to crash into it.
-
-### The field
-
-- The playing field is an **N × N** grid (default `11`). N is configurable via the field-size input, and should always be **odd** so the grid has a single, well-defined center cell.
-- At the start of the game, there is exactly **one cell** in the very center of the field — the **core** — this is the player-controlled **island**.
+- The game starts with a single cell — the **core** — placed exactly in the center of the field. This core is your controllable **island**.
+- **Tetris-shaped figures** (I, O, T, S, Z, L, J) spawn from a random side of the field and fly straight across toward the opposite side.
+  - A figure never spawns from the same side it spawned from on the previous flight.
+  - When a figure collides with the island, it **attaches** to it, growing the island's shape.
+- **Layers**: cells are grouped into concentric square "rings" (layers) around the core, based on Chebyshev distance. Whenever a layer is **completely filled**, it clears:
+  - Every cell in the cleared layer gives **+5 points**.
+  - Every cell further out than the cleared layer "falls off" and gives **+1 point** each.
+  - The island resets down to just its core.
+  - The timer gets a **+60 second bonus**.
+- **Game over** condition: if any island cell touches any wall of the field, the game ends immediately.
+- **Timer**: the game runs on a 60-second countdown by default. Time runs out → game over. Layer clears refill the clock (see above).
+- **Scoring penalty**: any figure that flies past the island and off the field docks a small point penalty for the miss.
 
 ### Controls
 
-| Action | Keyboard | On-screen button |
-|---|---|---|
-| Move island | Arrow keys (↑ ↓ ← →) | Arrow buttons |
-| Rotate island counter-clockwise / clockwise | `Q` / `E` | Curved-arrow buttons |
-| Speed up the next flying figure ("turbo") | `Space` | "Ускорить фигуры" button |
-| Toggle gradual speed-up mode | `S` | "Режим разгона" button |
-| Toggle bomb mode | `B` | "Режим бомб" button |
+| Action | Input |
+|---|---|
+| Move island | Arrow buttons / Arrow keys |
+| Rotate island 90° clockwise | `E` |
+| Rotate island 90° counter-clockwise | `Q` |
+| Accelerate the next incoming figure | `Space` / "Ускорить фигуры" button |
+| Toggle gradually increasing figure speed | `S` / "Режим разгона" button |
+| Toggle bomb mode | `B` / "Режим бомб" button |
 
-### Falling shapes
+The island rotates around its core cell, and all resulting coordinates are clamped to stay within the field bounds.
 
-- Shapes are the classic base Tetris tetrominoes (I, O, T, S, Z, L, J), each with its own color, spawned from the currently active shape in the shape editor (defaults to a base tetromino).
-- A new figure spawns every **2 seconds**, from a random side of the field, flying straight across toward the opposite side. The spawn side is never the same as the previous figure's.
-- When a flying figure's cells overlap with any island cell, it **attaches** to the island (its cells become island cells, keeping the figure's color).
-- If a figure flies all the way to the opposite wall without hitting the island, it's removed and the player gets a **-3 points** penalty for missing it.
+### Speed & difficulty modes
 
-### Layers, clearing & scoring
+- **Instant boost** — a one-off speed boost applied to the *next* spawned figure only.
+- **Ramp-up mode** — once enabled, global figure speed increases by 1 every 15 seconds until turned off (speed resets to 1 when disabled).
 
-- Layers are counted as concentric square rings around the island's original core cell (Chebyshev distance from the core).
-- A layer is "full" once it contains exactly the number of cells a complete ring of that radius would have (`layer × 8`).
-- When a layer fills up completely:
-  - The island **resets down to just its core cell**.
-  - Every cell in the cleared layer grants **+5 points**.
-  - Every remaining cell that was further out (and falls away) grants **+1 point**.
-  - The timer gets a **+60 seconds** bonus.
+### Bombs
 
-### Timer & game over
+When bomb mode is active, bombs spawn periodically (up to **3 on screen at once**) and fly across the field the same way figures do. There are three types:
 
-- The game starts with a **60-second** timer that counts down every second; reaching 0 ends the game ("Время вышло! Игра окончена!").
-- The island's position is clamped to the field, and the game also ends the instant any island cell touches the outer wall of the field ("Игра окончена! Остров коснулся стены.").
-- High score and best survival time are saved to `localStorage` and shown on screen (Рекорд / Лучшее время).
+| Bomb | Effect on hit |
+|---|---|
+| ⚫ Black (1×1) | Strips every attached cell off the island (keeps only the core) and applies a point penalty per lost cell |
+| 🔴 Red | Subtracts **30 seconds** from the timer |
+| 🟢 Green | Bonus — adds **10 seconds** to the timer |
 
-### Goal
+### Figure editor
 
-Survive as long as possible and rack up the highest score you can — it's a race for the record.
+An in-game editor (gear icon) lets you inspect and customize the falling figures:
 
-## Bomb mode
+- Browse the 7 base Tetris figures (I, O, T, S, Z, L, J).
+- Edit a figure's cell layout on a 7×7 grid, rename it, and recolor it via a color picker.
+- Save changes to an existing figure, or save any edit as a brand-new custom figure.
+- Delete custom figures (base figures are protected from deletion).
+- Reset the whole figure library back to the 7 base defaults.
 
-Toggle with the **"Режим бомб" (`B`)** button. While active, a bomb spawns every 5 seconds (up to 3 bombs on the field at once), flying in a straight line from a random side like a regular figure:
+## 🎯 Goal
 
-| Bomb | Spawn chance | Effect on hitting the island |
-|---|---|---|
-| ⚫ Black | ~45% | Knocks off every attached cell except the core; **-2 points per cell** lost |
-| 🔴 Red | ~45% | **-30 seconds** off the timer |
-| 🟢 Green (bonus) | ~10% | **+10 seconds** to the timer |
+Survive as long as possible and rack up the highest score by chaining layer clears while avoiding walls, misses, and hostile bombs. High score and best survival time are saved locally between sessions.
 
-## Speed-up mode
+## 🛠 Tech Stack
 
-Toggle with the **"Режим разгона" (`S`)** button. While active, the global figure movement speed increases by 1 every 15 seconds. The dedicated turbo action (`Space`) additionally gives the *next single* spawned figure a one-off speed boost.
+- [Vue 3](https://vuejs.org/) (Options API, `<script lang="ts">`)
+- [Vuex 4](https://vuex.vuejs.org/) with namespaced modules (`figure`, `figureShapes`)
+- TypeScript
+- SCSS (scoped component styles)
+- Docker & Docker Compose for local development/deployment
 
-## Figure editor
+## 📂 Project Structure
 
-Opened via the gear icon button. Lets you manage the set of shapes used by the game:
+```
+src/
+├── components/
+│   ├── pages/
+│   │   └── GamingPage.vue      # Main game page: game loop, controls, timer, HUD
+│   ├── ui/
+│   │   ├── PlayingField.vue    # Renders the grid, island, figures, and bombs
+│   │   └── FigureEditor.vue    # Figure library editor (create/edit/delete shapes)
+├── store/
+│   ├── index.ts                # Root Vuex store
+│   ├── figure.ts                # Figures, bombs, collisions, scoring, timer-affecting logic
+│   └── figureShapes.ts          # Base/custom figure shape definitions
+```
 
-- Browse all shapes (7 base Tetris shapes + any custom ones) with a live preview and color swatch.
-- **Edit** an existing shape's name, color, and cell layout on a 7×7 grid (click cells to toggle them).
-- **Save as new** to create a custom shape without overwriting the original.
-- **Delete** custom shapes (base shapes I/O/T/S/Z/L/J cannot be deleted).
-- **Reset all** to restore the 7 base shapes and discard custom ones.
+## 🚀 Getting Started
 
-## Requirements
+### Prerequisites
 
-- [Docker](https://www.docker.com/get-started/)
-- [Docker Compose](https://docs.docker.com/compose/) (v2 or the standalone `docker-compose` binary)
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed
 
-## Getting started
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/nastya-kolle/vue-3-docker-compose.git
-   cd vue-3-docker-compose
-   ```
-
-2. Build and start the container:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-3. Open the game in your browser:
-
-   ```
-   http://localhost:9999
-   ```
-
-   The container's internal Vite dev server runs on port `5173`, which is mapped to port `9999` on your host machine (see `docker-compose.yml`).
-
-## How it works
-
-The `docker-compose.yml` builds an image from the `./vue` directory and mounts the following as volumes for live development:
-
-- `./vue/src` → `/vue/src`
-- `./vue/package.json` → `/vue/package.json`
-
-This means any changes you make to the source files or `package.json` are reflected inside the running container without needing to rebuild the image, enabling hot-reload during development.
-
-To stop the container:
+### Run with Docker Compose
 
 ```bash
-docker-compose down
+git clone https://github.com/nastya-kolle/vue-3-docker-compose.git
+cd vue-3-docker-compose
+docker compose up --build
 ```
+
+The app will be available at the port configured in `docker-compose.yml` (check the file for the exact mapping, typically `http://localhost:8080` or `http://localhost:3000`).
+
+To stop the containers:
+
+```bash
+docker compose down
+```
+
+### Run locally without Docker
+
+```bash
+npm install
+npm run serve
+```
+
+## 📝 Notes
+
+- Field size is configurable at runtime via the input field (must be an odd number) — the "Применить" button re-centers the island and rebuilds the grid.
+- Game state (score, figures, bombs) lives entirely in Vuex; high score and best survival time are persisted to `localStorage`.
+
+## 📄 License
+
+Add your preferred license here (e.g., MIT).
