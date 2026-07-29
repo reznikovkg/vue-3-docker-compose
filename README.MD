@@ -119,19 +119,19 @@ npm run dev
 
 **Gameplay** — island growing as it catches falling figures:
 
-![Gameplay](game.png)
+![Gameplay](vue_game.png)
 
 **Bomb mode** — bombs (black/red/green) flying across the field alongside a figure:
 
-![Bomb mode](game-bomb-mode.png)
+![Bomb mode](vue_game_bomb.png)
 
 **Game over** — the island touched the wall:
 
-![Game over](game-over.png)
+![Game over](vue_end_game.png)
 
 **Figure editor** — browsing and editing the T-figure shape:
 
-![Figure editor](figure-editor.png)
+![Figure editor](vue_game_settings.png)
 
 ## Video Demos
 
