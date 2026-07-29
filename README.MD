@@ -2,7 +2,7 @@
 
 A browser puzzle/survival game built with **Vue 3**, **TypeScript**, and **Vuex**, containerized with **Docker Compose**. Grow your island by catching falling Tetris-style figures, clear layers for points and bonus time, dodge (or exploit) bombs, and survive as long as possible before the walls close in.
 
-## 🎮 Gameplay
+## Gameplay
 
 The game takes place on an **N × N** grid (N is always odd, so the board always has a true center cell).
 
@@ -57,11 +57,11 @@ An in-game editor (gear icon) lets you inspect and customize the falling figures
 - Delete custom figures (base figures are protected from deletion).
 - Reset the whole figure library back to the 7 base defaults.
 
-## 🎯 Goal
+## Goal
 
 Survive as long as possible and rack up the highest score by chaining layer clears while avoiding walls, misses, and hostile bombs. High score and best survival time are saved locally between sessions.
 
-## 🛠 Tech Stack
+## Tech Stack
 
 - [Vue 3](https://vuejs.org/) (Options API, `<script lang="ts">`)
 - [Vuex 4](https://vuex.vuejs.org/) with namespaced modules (`figure`, `figureShapes`)
@@ -69,7 +69,7 @@ Survive as long as possible and rack up the highest score by chaining layer clea
 - SCSS (scoped component styles)
 - Docker & Docker Compose for local development/deployment
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 src/
@@ -85,7 +85,7 @@ src/
 │   └── figureShapes.ts          # Base/custom figure shape definitions
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -110,15 +110,36 @@ docker compose down
 ### Run locally without Docker
 
 ```bash
+cd vue
 npm install
-npm run serve
+npm run dev
 ```
 
-## 📝 Notes
+## Screenshots
+
+**Gameplay** — island growing as it catches falling figures:
+
+![Gameplay](game.png)
+
+**Bomb mode** — bombs (black/red/green) flying across the field alongside a figure:
+
+![Bomb mode](game-bomb-mode.png)
+
+**Game over** — the island touched the wall:
+
+![Game over](game-over.png)
+
+**Figure editor** — browsing and editing the T-figure shape:
+
+![Figure editor](figure-editor.png)
+
+## Video Demos
+
+- **Lab 1:** [Google Drive](https://drive.google.com/file/d/1BtWNQQZol6D8Yd_vDCyetf6tEGHUBYWn/view?usp=sharing)
+- **Lab 2:** [Google Drive](https://drive.google.com/file/d/1-RGN5Hs8Nx8KLm4dY58jNzEJZt8JS9EJ/view?usp=sharing)
+- **Lab 3:** [Google Drive (part 1)](https://drive.google.com/file/d/16Hgz5x1ItKExQ1TibZZ-QvnTV7RualDW/view?usp=sharing) · [Google Drive (part 2)](https://drive.google.com/file/d/1x0OImoFsL_--NtnNYPsSdmUj-ImCspOz/view?usp=sharing)
+
+## Notes
 
 - Field size is configurable at runtime via the input field (must be an odd number) — the "Применить" button re-centers the island and rebuilds the grid.
 - Game state (score, figures, bombs) lives entirely in Vuex; high score and best survival time are persisted to `localStorage`.
-
-## 📄 License
-
-Add your preferred license here (e.g., MIT).
