@@ -1,0 +1,193 @@
+<template>
+  <div class="PlayingField">
+
+    <div 
+      v-for="(cell, index) in cells" 
+      :key="index" 
+      class="PlayingField__cell"
+      :class="{
+        'has-figure': hasFigureAt(cell),
+        'has-island': isIslandAt(cell),
+        'has-bomb': hasBlackBombAt(cell)
+      }">
+      
+      <div 
+        v-if="hasFigureAt(cell)" 
+        class="PlayingField__figure" 
+        :style="{background: getFigureColor(cell)}"
+      >
+      </div>
+
+      <div v-if="hasBlackBombAt(cell)" class="PlayingField__bomb">
+        <img src="/icons/icons8-bomb-80(1).png" class="PlayingField__bomb--img">
+      </div>
+
+      <div v-if="hasRedBombAt(cell)" class="PlayingField__bomb">
+        <img src="/icons/icons8-bomb-80.png" class="PlayingField__bomb--img">
+      </div>
+
+      <div v-if="hasGreenBombAt(cell)" class="PlayingField__bomb">
+        <img src="/icons/icons8-bomb-80(2).png" class="PlayingField__bomb--img">
+      </div>
+      
+      <div 
+        v-if="isIslandAt(cell)"
+        class="PlayingField__island"
+        :class="{'core': isCoreCell(cell)}"
+        :style="!isCoreCell(cell) ? {background: getIslandCellColor(cell)} : {}"
+      >
+      </div>
+    </div>
+  </div>
+</template>
+
+<script lang="ts">
+const DEFAULT_FIGURE_COLOR = '#ff4444'
+const DEFAULT_ISLAND_COLOR = '#2207ef'
+
+export default{
+    name: 'PlayingField',
+    props:{
+        fieldSize:{
+            type: Number,
+            default: 11
+        },
+        islandPosition: {
+            type: Array as () => {row: number; col: number; color?: string}[],
+            required: true,
+        },
+        corePosition: {
+          type: Object,
+          default: () => ({row: -1, col: -1})
+        },
+        figures:{
+          type: Array as () => any[],
+          default: () => []
+        },
+        bombs:{
+          type: Array as () => any[],
+          default: () => []
+        }
+    },
+    computed: {
+      cells() {
+        const cells = []
+        const totalCells = this.fieldSize * this.fieldSize
+        
+        for (let i = 0; i < totalCells; i++) {
+          const row = Math.floor(i / this.fieldSize)
+          const col = i % this.fieldSize
+          cells.push({
+            id: i,
+            row,
+            col,
+            value: ''
+          })
+        }
+        return cells
+      }
+    },
+    methods: {
+      hasFigureAt(position: {row: number; col: number}) {
+        return this.figures.some(figure => {
+          if (!figure.shapeCells){
+            return figure.row === position.row && figure.col === position.col
+          }
+          return figure.shapeCells.some((cell: any) => figure.row + cell.row  === position.row && figure.col + cell.col === position.col)
+        })
+      },
+      isIslandAt(position: {row: number; col: number}) {
+        return this.islandPosition.some(cell => cell.row === position.row && cell.col === position.col)
+      },
+      isCoreCell(position: {row: number; col: number}){
+        const base = this.islandPosition[0];
+        return base && position.row === base.row && position.col === base.col;
+      },
+      hasBlackBombAt(position: {row: number; col: number}) {
+        return this.bombs.some(bomb => bomb.type === 'black' && bomb.row === position.row && bomb.col === position.col)
+      },
+      hasRedBombAt(position: {row: number; col: number}) {
+        return this.bombs.some(bomb => bomb.type === 'red' && bomb.row === position.row && bomb.col === position.col)
+      },
+      hasGreenBombAt(position: {row: number; col: number}) {
+        return this.bombs.some(bomb => bomb.type === 'green' && bomb.row === position.row && bomb.col === position.col)
+      },
+      getFigureColor(position: {row: number; col: number}){
+        const figure = this.figures.find(figure =>{
+          if (!figure.shapeCells){
+            return figure.row === position.row && figure.col === position.col
+          }
+          return figure.shapeCells.some((cell: any) => figure.row + cell.row === position.row && figure.col + cell.col === position.col)
+        })
+        return figure?.color ?? DEFAULT_FIGURE_COLOR 
+      },
+      getIslandCellColor(position: {row: number; col: number}) {
+        const cell = this.islandPosition.find(c => c.row === position.row && c.col === position.col)
+        return cell?.color ?? DEFAULT_ISLAND_COLOR
+      },
+  }
+}
+</script>
+
+<style scoped lang="scss">
+$cGray: #7c3939;
+.PlayingField{
+  display: grid;
+  grid-template-rows: repeat(v-bind(fieldSize), 50px);
+  grid-template-columns: repeat(v-bind(fieldSize), 50px);
+  grid-gap: 1px;
+  position: relative;
+  
+  &__cell{
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    z-index: 1;
+  }
+
+  &__figure{
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    display: block;
+    align-items: center;
+    justify-content: center;
+    background: #ff4444;
+    z-index: 2;
+    font-weight: bold;
+    font-size: 24px;
+  }
+
+  &__bomb{
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    overflow: hidden;       
+    display: flex;           
+    align-items: center;     
+    justify-content: center; 
+
+    &--img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;  
+    }
+  }
+
+  &__island{
+    width: 100%;
+    height: 100%;
+    background: #2207ef;
+  }
+
+  &__island.core{
+    background: #ffd700;
+    box-shadow: 0 0 12px 4px #ffeb3b;
+    z-index: 3;
+  }
+}
+</style>
