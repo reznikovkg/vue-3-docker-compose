@@ -23,6 +23,10 @@ export default {
       type: String,
       default: '#d64545'
     },
+    direction: {
+      type: Number,
+      default: 0
+    },
     x: {
       type: Number,
       default: 0
@@ -41,6 +45,7 @@ export default {
       return {
         left: `${this.x - 7.5}%`,
         top: this.y + '%',
+        transform: `rotate(${this.direction * 180}deg)`,
         '--car-color': this.color,
         '--car-dark': this.shade(this.color, -45),
       }
@@ -124,7 +129,10 @@ export default {
       height: calc(var(--car-depth) * 1vmin);
       transform-origin: top;
       transform: rotateX(90deg);
-      background: var(--car-color);
+      background:
+        radial-gradient(circle at 18% 78%, #ffe9a8 0 12%, transparent 13%),
+        radial-gradient(circle at 82% 78%, #ffe9a8 0 12%, transparent 13%),
+        linear-gradient(to bottom, #22303f 0%, #22303f 28%, var(--car-color) 28%);
     }
 
     &__left {

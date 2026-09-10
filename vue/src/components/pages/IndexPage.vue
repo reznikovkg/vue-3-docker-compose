@@ -1,10 +1,18 @@
 <template>
   <div class="game">
     <div class="game__header">
-      Счёт: {{ Math.floor(score) }} м. Осталось жизней: {{ player.lives }}.
+      <span class="game__stat">Счёт: {{ Math.floor(getScore) }} м</span>
+      <span class="game__stat">Скорость: {{ kmh }} км/ч</span>
+      <span class="game__stat">
+        <svg v-for="n in getPlayer.lives" :key="n" viewBox="0 0 24 24" class="game__heart">
+          <path d="M12 21s-6.7-4.35-9.33-8.11C.9 10.35 1.96 6.5 5.2 5.5c2.03-.62 4.07.06 5.3 1.75L12 8.7l1.5-1.45c1.23-1.69 3.27-2.37 5.3-1.75 3.24 1 4.3 4.85 2.53 7.39C18.7 16.65 12 21 12 21z"/>
+        </svg>
+      </span>
+      <span class="game__stat">Рекорд: {{ getRecord }} м</span>
     </div>
-    <div v-if="isOver" class="game__finished">
-      <div>Игра окончена! Итоговый счёт: {{ Math.floor(score) }} м</div>
+    <div v-if="getIsOver" class="game__finished">
+      <div>Игра окончена! Итоговый счёт: {{ Math.floor(getScore) }} м</div>
+      <div class="game__record">Рекорд: {{ getRecord }} м</div>
       <button class="game__restart" @click="restart">Начать заново</button>
     </div>
     <div class="game__world">
@@ -12,8 +20,22 @@
         <svg width="100%" height="100%">
           <line v-for="line in 3" :key="line" class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" :x1="line * 25 + '%'" y1="0" :x2="line * 25 + '%'" y2="100%" stroke="#f2f2f2" stroke-width="2" />
         </svg>
-        <Car :color="player.color" :x="player.x" :y="playerY" />
-        <Car v-for="obstacle in obstacles" :key="obstacle.id" :color="obstacle.color" :x="obstacle.x" :y="obstacle.y" :hit="obstacle.hit" />
+        <Car :color="PLAYER_COLOR" :x="getPlayer.x" :y="playerY" />
+        <template v-for="obstacle in getObstacles" :key="obstacle.id">
+          <Car v-if="obstacle.type === 'car'" :color="obstacle.color" :direction="obstacle.direction" :x="obstacle.x" :y="obstacle.y" :hit="obstacle.hit" />
+          <div v-else-if="obstacle.type === 'hole'" class="game__hole" :style="placeObject(obstacle.x, obstacle.y, 6.5)" />
+          <div v-else class="game__barrier" :style="placeObject(obstacle.x, obstacle.y, 8.5)" />
+        </template>
+        <template v-for="bonus in getBonuses" :key="bonus.id">
+          <div class="game__bonus" :class="'game__bonus--' + bonus.type" :style="placeObject(bonus.x, bonus.y, 4.5)">
+            <svg v-if="bonus.type === 'heart'" viewBox="0 0 24 24" class="game__bonus-icon">
+              <path d="M12 21s-6.7-4.35-9.33-8.11C.9 10.35 1.96 6.5 5.2 5.5c2.03-.62 4.07.06 5.3 1.75L12 8.7l1.5-1.45c1.23-1.69 3.27-2.37 5.3-1.75 3.24 1 4.3 4.85 2.53 7.39C18.7 16.65 12 21 12 21z"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" class="game__bonus-icon">
+              <path d="M13 2 L4 14 H11 L9 22 L20 8 H12 Z"/>
+            </svg>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -21,20 +43,18 @@
 
 <script lang="ts">
 import Car from '../ui/Car.vue';
+import { mapGetters, mapActions } from 'vuex';
 
-interface Obstacle {
-  id: number
-  color: string
-  x: number
-  y: number
-  hit: boolean
-  changeTimer: number
-}
-
-const X_MIN = 12.5
-const X_MAX = 87.5
 const X_STEP = 6
-const X_CENTERS = [12.5, 37.5, 62.5, 87.5]
+const PLAYER_COLOR = '#d64545'
+const PLAYER_Y = 65
+
+function boxesOverlap(a: any, b: any) {
+  return !(b.x > a.x + a.w ||
+    b.x + b.w < a.x ||
+    b.y > a.y + a.h ||
+    b.y + b.h < a.y)
+}
 
 export default {
   name: 'IndexPage',
@@ -43,37 +63,35 @@ export default {
   },
   data () {
     return {
-      score: 0,
-      speed: 1,
-      carId: 0,
-      playerY: 65,
-      player: {
-        color: '#d64545',
-        x: 50,
-        lives: 3,
-      },
-      obstacles: [] as Obstacle[],
-      isMoving: false,
-      isOver: false,
-      invulnerable: 0,
-      spawnProgress: 0,
-      spawnGap: 45,
+      PLAYER_COLOR,
+      playerY: PLAYER_Y,
       gameInterval: null as any,
     }
   },
   computed: {
+    ...mapGetters('game', [
+      'getScore',
+      'getRecord',
+      'getSpeed',
+      'getPlayer',
+      'getObstacles',
+      'getBonuses',
+      'getInvulnerable',
+      'getIsStunned',
+      'getIsOver',
+    ]),
+    kmh() {
+      return Math.round(this.getSpeed * 28.6)
+    },
     roadLineStyle() {
-      if (this.isOver) {
+      if (this.getIsOver || this.getSpeed < 0.05) {
         return {
           animation: 'none'
         }
       }
       return {
-        animationDuration: 1 / this.speed + 's'
+        animationDuration: 1 / this.getSpeed + 's'
       }
-    },
-    colors() {
-      return ['#4a7fd4', '#4fae5c', '#e8c64a', '#e88a3a']
     },
   },
   mounted() {
@@ -85,105 +103,90 @@ export default {
     clearInterval(this.gameInterval)
   },
   methods: {
+    ...mapActions('game', [
+      'updatePlayerX',
+      'updateGame',
+      'handleAccident',
+      'handleBonus',
+      'gameOver',
+      'removeObjects',
+      'resetGame',
+    ]),
     arrow(event: KeyboardEvent) {
-      if (this.isOver) {
+      if (this.getIsOver) {
         if (event.key === 'Enter') {
           this.restart()
         }
         return
       }
       if (event.key === 'ArrowLeft') {
-        this.movePlayer(-X_STEP)
+        this.updatePlayerX(this.getPlayer.x - X_STEP)
       }
       if (event.key === 'ArrowRight') {
-        this.movePlayer(X_STEP)
+        this.updatePlayerX(this.getPlayer.x + X_STEP)
       }
     },
-    movePlayer(delta: number) {
-      if (this.isMoving) return
-      this.player.x = Math.min(X_MAX, Math.max(X_MIN, this.player.x + delta))
-      this.isMoving = true
-      setTimeout(() => {
-        this.isMoving = false
-      }, 250)
+    restart() {
+      this.resetGame()
+      this.runGame()
     },
-    newObstacle() {
-      const color = this.colors[Math.floor(Math.random() * this.colors.length)]
-      const x = X_CENTERS[Math.floor(Math.random() * X_CENTERS.length)]
-      this.obstacles.push({
-        id: this.carId++,
-        color: color,
-        x: x,
-        y: -30,
-        hit: false,
-        changeTimer: this.randomChangeTimer(),
-      })
+    runGame() {
+      clearInterval(this.gameInterval)
+      this.gameInterval = setInterval(() => {
+        this.updateGame()
+        this.collectBonus()
+        this.isAccident()
+        if (this.getPlayer.lives <= 0) {
+          this.gameOver()
+          clearInterval(this.gameInterval)
+          return
+        }
+        this.removeObjects()
+      }, 50)
     },
-    randomChangeTimer() {
-      return Math.floor(60 + Math.random() * 100)
+    placeObject(x: number, y: number, halfWidth: number) {
+      return {
+        top: y + '%',
+        left: `${x - halfWidth}%`,
+      }
     },
-    changeObstacleTrajectory(obstacle: Obstacle) {
-      if (obstacle.y > 40) return
-      const options = X_CENTERS.filter((center) => Math.abs(center - obstacle.x) > 1)
-      obstacle.x = options[Math.floor(Math.random() * options.length)]
+    playerBox() {
+      return {
+        x: this.getPlayer.x - 6,
+        y: PLAYER_Y + 2,
+        w: 12,
+        h: 26,
+      }
+    },
+    obstacleBox(obstacle: any) {
+      if (obstacle.type === 'hole') {
+        return { x: obstacle.x - 4.5, y: obstacle.y + 1, w: 9, h: 10 }
+      }
+      if (obstacle.type === 'barrier') {
+        return { x: obstacle.x - 6, y: obstacle.y + 1, w: 12, h: 7 }
+      }
+      return { x: obstacle.x - 6, y: obstacle.y + 2, w: 12, h: 26 }
     },
     isAccident() {
-      if (this.invulnerable > 0) return
-      for (const obstacle of this.obstacles) {
-        const closeByX = Math.abs(obstacle.x - this.player.x) < 14
-        const closeByY = obstacle.y > 35 && obstacle.y < 95
-        if (!obstacle.hit && closeByX && closeByY) {
-          this.player.lives -= 1
-          obstacle.hit = true
-          this.invulnerable = 16
-          if (this.player.lives <= 0) {
-            this.gameOver()
-          }
+      if (this.getInvulnerable > 0) return
+      const player = this.playerBox()
+      for (const obstacle of this.getObstacles) {
+        if (obstacle.hit) continue
+        if (boxesOverlap(player, this.obstacleBox(obstacle))) {
+          this.handleAccident(obstacle.id)
           return
         }
       }
     },
-    gameOver() {
-      this.isOver = true
-      clearInterval(this.gameInterval)
-    },
-    restart() {
-      this.score = 0
-      this.speed = 1
-      this.carId = 0
-      this.player.lives = 3
-      this.player.x = 50
-      this.obstacles = []
-      this.isOver = false
-      this.invulnerable = 0
-      this.spawnProgress = 0
-      this.spawnGap = 45
-      this.runGame()
-    },
-    runGame() {
-      this.gameInterval = setInterval(() => {
-        this.score += 0.05 * this.speed
-        this.speed = Math.min(this.speed + 0.0015, 3.5)
-        if (this.invulnerable > 0) {
-          this.invulnerable -= 1
+    collectBonus() {
+      const player = this.playerBox()
+      for (const bonus of this.getBonuses) {
+        const box = { x: bonus.x - 5, y: bonus.y + 1, w: 10, h: 9 }
+        if (boxesOverlap(player, box)) {
+          this.handleBonus({ bonusId: bonus.id, bonusType: bonus.type })
+          return
         }
-        this.spawnProgress += 1.5 * this.speed
-        if (this.spawnProgress >= this.spawnGap) {
-          this.spawnProgress = 0
-          this.spawnGap = 38 + Math.random() * 14
-          this.newObstacle()
-        }
-        for (const obstacle of this.obstacles) {
-          obstacle.y += 1.5 * this.speed
-          obstacle.changeTimer -= 1
-          if (obstacle.changeTimer <= 0) {
-            this.changeObstacleTrajectory(obstacle)
-            obstacle.changeTimer = this.randomChangeTimer()
-          }
-        }
-        this.isAccident()
-        this.obstacles = this.obstacles.filter((obstacle) => obstacle.y < 120)
-      }, 50)
+      }
     },
   },
 }
@@ -205,13 +208,26 @@ export default {
     height: 6%;
     top: 0;
     left: 0;
-    font-size: 22px;
+    font-size: 18px;
     color: #ffd166;
     background-color: rgba(18, 22, 32, 0.92);
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 26px;
+  }
+
+  &__stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__heart {
+    width: 16px;
+    height: 16px;
+    fill: #ff4d5a;
   }
 
   &__finished {
@@ -230,7 +246,12 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
+  }
+
+  &__record {
+    font-size: 16px;
+    color: #9aa4bd;
   }
 
   &__restart {
@@ -277,6 +298,60 @@ export default {
 
   &__line {
     animation: moveRoad linear infinite;
+  }
+
+  &__hole {
+    position: absolute;
+    width: 13%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 42%, #060709 0 52%, #1b1e25 70%, #34343a 100%);
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  &__barrier {
+    position: absolute;
+    width: 17%;
+    height: 8%;
+    border-radius: 4px;
+    border: 2px solid #101218;
+    background: repeating-linear-gradient(45deg, #f4c531 0px, #f4c531 10px, #1a1d24 10px, #1a1d24 20px);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+  }
+
+  &__bonus {
+    position: absolute;
+    width: 9%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 60%, transparent 100%);
+    animation: bonusPulse 1.1s ease-in-out infinite;
+
+    &--heart .game__bonus-icon {
+      fill: #ff4d5a;
+    }
+
+    &--boost .game__bonus-icon {
+      fill: #ffd166;
+    }
+  }
+
+  &__bonus-icon {
+    width: 70%;
+    height: 70%;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  }
+
+  @keyframes bonusPulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.65;
+    }
   }
 
   @keyframes moveRoad {
