@@ -31,10 +31,10 @@ interface Obstacle {
   changeTimer: number
 }
 
-const X_MIN = 7.5
-const X_MAX = 52.5
+const X_MIN = 12.5
+const X_MAX = 87.5
 const X_STEP = 6
-const X_CENTERS = [7.5, 22.5, 37.5, 52.5]
+const X_CENTERS = [12.5, 37.5, 62.5, 87.5]
 
 export default {
   name: 'IndexPage',
@@ -49,7 +49,7 @@ export default {
       playerY: 65,
       player: {
         color: '#d64545',
-        x: 30,
+        x: 50,
         lives: 3,
       },
       obstacles: [] as Obstacle[],
@@ -152,7 +152,7 @@ export default {
       this.speed = 1
       this.carId = 0
       this.player.lives = 3
-      this.player.x = 30
+      this.player.x = 50
       this.obstacles = []
       this.isOver = false
       this.invulnerable = 0
