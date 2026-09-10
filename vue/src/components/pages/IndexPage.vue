@@ -7,32 +7,34 @@
       <div>Игра окончена! Итоговый счёт: {{ Math.floor(score) }} м</div>
       <button class="game__restart" @click="restart">Начать заново</button>
     </div>
-    <div class="game__road">
-      <svg width="100%" height="100%">
-        <line v-for="line in 3" :key="line" class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" :x1="line * 25 + '%'" y1="0" :x2="line * 25 + '%'" y2="100%" stroke="#f2f2f2" stroke-width="2" />
-      </svg>
-      <Car :image="player.image" :lane="player.lane" :y="playerY" />
-      <Car v-for="obstacle in obstacles" :key="obstacle.id" :image="obstacle.image" :lane="obstacle.lane" :y="obstacle.y" :hit="obstacle.hit" />
+    <div class="game__world">
+      <div class="game__road">
+        <svg width="100%" height="100%">
+          <line v-for="line in 3" :key="line" class="game__line" :style="roadLineStyle" stroke-dasharray="50,40" :x1="line * 25 + '%'" y1="0" :x2="line * 25 + '%'" y2="100%" stroke="#f2f2f2" stroke-width="2" />
+        </svg>
+        <Car :color="player.color" :x="player.x" :y="playerY" />
+        <Car v-for="obstacle in obstacles" :key="obstacle.id" :color="obstacle.color" :x="obstacle.x" :y="obstacle.y" :hit="obstacle.hit" />
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import Car from '../ui/Car.vue';
-import blueCar from './../../assets/cars/blue.svg'
-import greenCar from './../../assets/cars/green.svg'
-import yellowCar from './../../assets/cars/yellow.svg'
-import orangeCar from './../../assets/cars/orange.svg'
-import redCar from './../../assets/cars/red.svg'
 
 interface Obstacle {
   id: number
-  image: string
-  lane: number
+  color: string
+  x: number
   y: number
   hit: boolean
   changeTimer: number
 }
+
+const X_MIN = 7.5
+const X_MAX = 52.5
+const X_STEP = 6
+const X_CENTERS = [7.5, 22.5, 37.5, 52.5]
 
 export default {
   name: 'IndexPage',
@@ -44,10 +46,10 @@ export default {
       score: 0,
       speed: 1,
       carId: 0,
-      playerY: 68,
+      playerY: 65,
       player: {
-        image: redCar,
-        lane: 2,
+        color: '#d64545',
+        x: 30,
         lives: 3,
       },
       obstacles: [] as Obstacle[],
@@ -71,7 +73,7 @@ export default {
       }
     },
     colors() {
-      return [blueCar, greenCar, yellowCar, orangeCar]
+      return ['#4a7fd4', '#4fae5c', '#e8c64a', '#e88a3a']
     },
   },
   mounted() {
@@ -91,30 +93,28 @@ export default {
         return
       }
       if (event.key === 'ArrowLeft') {
-        this.changeLane(-1)
+        this.movePlayer(-X_STEP)
       }
       if (event.key === 'ArrowRight') {
-        this.changeLane(1)
+        this.movePlayer(X_STEP)
       }
     },
-    changeLane(delta: number) {
+    movePlayer(delta: number) {
       if (this.isMoving) return
-      const lane = this.player.lane + delta
-      if (lane < 1 || lane > 4) return
-      this.player.lane = lane
+      this.player.x = Math.min(X_MAX, Math.max(X_MIN, this.player.x + delta))
       this.isMoving = true
       setTimeout(() => {
         this.isMoving = false
-      }, 350)
+      }, 250)
     },
     newObstacle() {
-      const image = this.colors[Math.floor(Math.random() * this.colors.length)]
-      const lane = Math.floor(Math.random() * 4) + 1
+      const color = this.colors[Math.floor(Math.random() * this.colors.length)]
+      const x = X_CENTERS[Math.floor(Math.random() * X_CENTERS.length)]
       this.obstacles.push({
         id: this.carId++,
-        image: image,
-        lane: lane,
-        y: -20,
+        color: color,
+        x: x,
+        y: -30,
         hit: false,
         changeTimer: this.randomChangeTimer(),
       })
@@ -122,24 +122,26 @@ export default {
     randomChangeTimer() {
       return Math.floor(60 + Math.random() * 100)
     },
-    changeObstacleLane(obstacle: Obstacle) {
-      if (obstacle.y > 45) return
-      const options = [1, 2, 3, 4].filter((lane) => lane !== obstacle.lane)
-      obstacle.lane = options[Math.floor(Math.random() * options.length)]
+    changeObstacleTrajectory(obstacle: Obstacle) {
+      if (obstacle.y > 40) return
+      const options = X_CENTERS.filter((center) => Math.abs(center - obstacle.x) > 1)
+      obstacle.x = options[Math.floor(Math.random() * options.length)]
     },
-    isAccident(lane: number) {
+    isAccident() {
+      if (this.invulnerable > 0) return
       for (const obstacle of this.obstacles) {
-        if (!obstacle.hit && obstacle.lane === lane && obstacle.y > 46 && obstacle.y < 90) {
+        const closeByX = Math.abs(obstacle.x - this.player.x) < 14
+        const closeByY = obstacle.y > 35 && obstacle.y < 95
+        if (!obstacle.hit && closeByX && closeByY) {
           this.player.lives -= 1
           obstacle.hit = true
           this.invulnerable = 16
           if (this.player.lives <= 0) {
             this.gameOver()
           }
-          return true
+          return
         }
       }
-      return false
     },
     gameOver() {
       this.isOver = true
@@ -150,7 +152,7 @@ export default {
       this.speed = 1
       this.carId = 0
       this.player.lives = 3
-      this.player.lane = 2
+      this.player.x = 30
       this.obstacles = []
       this.isOver = false
       this.invulnerable = 0
@@ -175,13 +177,11 @@ export default {
           obstacle.y += 1.5 * this.speed
           obstacle.changeTimer -= 1
           if (obstacle.changeTimer <= 0) {
-            this.changeObstacleLane(obstacle)
+            this.changeObstacleTrajectory(obstacle)
             obstacle.changeTimer = this.randomChangeTimer()
           }
         }
-        if (this.invulnerable <= 0) {
-          this.isAccident(this.player.lane)
-        }
+        this.isAccident()
         this.obstacles = this.obstacles.filter((obstacle) => obstacle.y < 120)
       }, 50)
     },
@@ -197,7 +197,7 @@ export default {
   top: 0;
   left: 0;
   overflow: hidden;
-  background-color: #2f7d50;
+  background: linear-gradient(180deg, #141b30 0%, #2e4370 60%, #0d1220 100%);
 
   &__header {
     position: absolute;
@@ -248,12 +248,31 @@ export default {
     }
   }
 
+  &__world {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: perspective(900px) rotateX(30deg);
+    transform-origin: center top;
+    background: repeating-linear-gradient(
+      90deg,
+      #2f7d50 0px,
+      #2f7d50 90px,
+      #2a6f46 90px,
+      #2a6f46 180px
+    );
+  }
+
   &__road {
-    position: relative;
-    background-color: #34343a;
+    position: absolute;
+    top: 0;
+    left: 20%;
     width: 60%;
     height: 100%;
-    left: 20%;
+    background-color: #34343a;
+    border-left: 3px solid #e8e8e8;
+    border-right: 3px solid #e8e8e8;
+    transform-style: preserve-3d;
   }
 
   &__line {
