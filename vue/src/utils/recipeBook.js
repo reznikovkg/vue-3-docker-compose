@@ -1,0 +1,81 @@
+export const ELEMENTS = {
+
+  earth: { id: 'earth', name: 'Земля', icon: '🌍' },
+  water: { id: 'water', name: 'Вода', icon: '💧' },
+  fire: { id: 'fire', name: 'Огонь', icon: '🔥' },
+  air: { id: 'air', name: 'Воздух', icon: '💨' },
+
+  steam: { id: 'steam', name: 'Пар', icon: '☁️' },
+  mud: { id: 'mud', name: 'Грязь', icon: '🟫' },
+  lava: { id: 'lava', name: 'Лава', icon: '🌋' },
+  energy: { id: 'energy', name: 'Энергия', icon: '⚡' },
+  dust: { id: 'dust', name: 'Пыль', icon: '🌫️' },
+  rain: { id: 'rain', name: 'Дождь', icon: '🌧️' },
+  stone: { id: 'stone', name: 'Камень', icon: '🪨' },
+  cloud: { id: 'cloud', name: 'Облако', icon: '⛅' },
+  storm: { id: 'storm', name: 'Шторм', icon: '🌩️' },
+  clay: { id: 'clay', name: 'Глина', icon: '🧱' },
+  sand: { id: 'sand', name: 'Песок', icon: '🏖️' },
+  glass: { id: 'glass', name: 'Стекло', icon: '🪟' },
+  life: { id: 'life', name: 'Жизнь', icon: '🌱' },
+  plant: { id: 'plant', name: 'Растение', icon: '🌿' },
+  fish: { id: 'fish', name: 'Рыба', icon: '🐟' },
+  bird: { id: 'bird', name: 'Птица', icon: '🐦' },
+
+  mountain: { id: 'mountain', name: 'Гора', icon: '⛰️' },
+  volcano: { id: 'volcano', name: 'Вулкан', icon: '🗻' },
+  ocean: { id: 'ocean', name: 'Океан', icon: '🌊' },
+  philosopherStone: { id: 'philosopherStone', name: 'Философский камень', icon: '💎' },
+  desert: { id: 'desert', name: 'Пустыня', icon: '🏜️' },
+  forest: { id: 'forest', name: 'Лес', icon: '🌳' },
+  swamp: { id: 'swamp', name: 'Болото', icon: '🐸' },
+  glacier: { id: 'glacier', name: 'Ледник', icon: '🧊' },
+  tsunami: { id: 'tsunami', name: 'Цунами', icon: '🌀' },
+  continent: { id: 'continent', name: 'Континент', icon: '🗺️' },
+  island: { id: 'island', name: 'Остров', icon: '🏝️' },
+  rainbow: { id: 'rainbow', name: 'Радуга', icon: '🌈' },
+  galaxy: { id: 'galaxy', name: 'Галактика', icon: '🌌' },
+  star: { id: 'star', name: 'Звезда', icon: '⭐' },
+  sun: { id: 'sun', name: 'Солнце', icon: '☀️' },
+}
+
+export const BASE_ELEMENTS = ['earth', 'water', 'fire', 'air']
+
+export const FREE_RECIPES = [
+  { result: 'steam', items: { water: 1, fire: 1 } },
+  { result: 'mud', items: { water: 1, earth: 1 } },
+  { result: 'lava', items: { fire: 1, earth: 1 } },
+  { result: 'energy', items: { fire: 1, air: 1 } },
+  { result: 'dust', items: { earth: 1, air: 1 } },
+  { result: 'rain', items: { water: 1, air: 1 } },
+  { result: 'stone', items: { lava: 1, water: 1 } },
+  { result: 'cloud', items: { steam: 1, air: 1 } },
+  { result: 'storm', items: { cloud: 1, water: 1 } },
+  { result: 'clay', items: { dust: 1, water: 1 } },
+  { result: 'sand', items: { stone: 1, dust: 1 } },
+  { result: 'glass', items: { sand: 1, fire: 1 } },
+  { result: 'life', items: { mud: 1, energy: 1 } },
+  { result: 'plant', items: { life: 1, earth: 1 } },
+  { result: 'fish', items: { life: 1, water: 1 } },
+  { result: 'bird', items: { plant: 1, air: 1 } },
+]
+
+export const SLOT_RECIPES = [
+  { result: 'mountain', items: { earth: 2, water: 1 } },
+  { result: 'volcano', items: { fire: 2, air: 1 } },
+  { result: 'ocean', items: { water: 3 } },
+  { result: 'philosopherStone', items: { earth: 1, water: 1, fire: 1, air: 1 } },
+  { result: 'desert', items: { earth: 3, fire: 1 } },
+  { result: 'forest', items: { plant: 2, earth: 1 } },
+  { result: 'swamp', items: { mud: 2, water: 1 } },
+  { result: 'glacier', items: { water: 2, air: 2 } },
+  { result: 'tsunami', items: { ocean: 1, storm: 1 } },
+  { result: 'continent', items: { mountain: 1, desert: 1, forest: 1 } },
+  { result: 'island', items: { ocean: 1, mountain: 1 } },
+  { result: 'rainbow', items: { rain: 1, air: 2 } },
+  { result: 'galaxy', items: { energy: 3, air: 2 } },
+  { result: 'star', items: { energy: 2, fire: 2 } },
+  { result: 'sun', items: { star: 1, fire: 3 } },
+]
+
+export const SLOTS_COUNT = 9
